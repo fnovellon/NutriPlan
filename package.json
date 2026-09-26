@@ -1,0 +1,12 @@
+{
+  "name": "repas-du-jour",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Repas de la journée avec les quantités selon l'activité du jour",
+  "scripts": {
+    "test": "node tests/engine.test.js && node tests/ui.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}
