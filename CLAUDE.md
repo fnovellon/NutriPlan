@@ -17,7 +17,8 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Le moteur (données + `buildDay`) est pur et testable hors navigateur. L'initialisation du DOM est protégée par `if (typeof document !== 'undefined')` : garder cette séparation.
 - Données :
   - `FOOD` : valeurs pour 100 g `[kcal, protéines, glucides, lipides]` ; `UNIT` : valeurs par pièce.
-  - `STARCH` : féculents (poids cru, pas d'arrondi, facteur de cuisson) ; `STARCH_ORDER` pour l'ordre des boutons.
+  - `STARCH` : féculents (poids cru, pas d'arrondi, facteur de cuisson `cook`, accords `raw` / `cooked`) ; `STARCH_ORDER` pour l'ordre des boutons.
+  - Chaque aliment (`it()`) porte ses macros `m` et, si c'est pertinent, `cook : { raw, g, adj }`, le poids cuit estimé. Viande et poisson : rendements `YIELD` (poids cuit / cru, ≈ table USDA des rendements de cuisson 2012) : poulet 0,75, bœuf haché 0,75, poisson blanc 0,80, saumon 0,80, arrondi à 5 g. Féculents : facteurs de `STARCH` (riz 3, pâtes 2,3, quinoa 2,7, semoule 2,3, boulgour 2,5, lentilles 2,5), arrondi à 10 g. Pas de poids cuit pour les pommes de terre, la patate douce et les gnocchis (quasi identique cuit à l'eau) ni pour les aliments déjà prêts (crevettes cuites, jambon, thon, œufs, halloumi).
   - `PROT` : 7 protéines, chacune avec sa matière grasse ajoutée au déjeuner (`dej`) et au dîner (`diner`) ; `PROT_ORDER`.
   - `IDEAS` : une idée de plat par couple protéine × féculent.
   - `SPLIT` : répartition des féculents entre déjeuner et dîner, par activité (poids relatifs).
@@ -74,6 +75,7 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Palette : papier `#EEF1EB`, encre `#1A2620`, betterave `#8A2657` (bandeau de séance, jour actuel, focus), protéines `#2E5C8A`, glucides `#B37E17`, lipides `#667624`. Mode sombre via `prefers-color-scheme` et l'attribut `data-theme`.
 - Typographie : Archivo pour les titres et les grammes (chiffres larges et gras, c'est l'élément signature), Newsreader pour les noms d'aliments.
 - Timeline verticale des repas, bandeau betterave pour la séance.
+- Ligne d'un aliment : à gauche le poids cru en gros et, s'il existe, « cru » puis « ≈ 135 g cuit » en petit dessous ; à droite le nom, la note, puis les calories et les macros en petit (« 198 kcal  P 41 g  G 0 g  L 3 g », petits carrés aux couleurs de la légende, lettres P, G, L expliquées en pied de page). Rien pour le repas libre, qui n'est qu'un budget.
 - À éviter : labels en capitales, surtitres, séparateurs à point médian, cartes identiques avec ombre.
 - Mobile d'abord : `viewport-fit=cover` et marges safe-area, jamais de défilement horizontal de la page (les rangées de boutons défilent dans leur conteneur), focus visible, `prefers-reduced-motion` respecté.
 - Typographie française : espace insécable avant `: ? %` et entre un nombre et son unité.

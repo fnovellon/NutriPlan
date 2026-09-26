@@ -115,7 +115,15 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
 .items{margin:12px 0 0;padding:0;list-style:none;}
 .items li{display:grid;grid-template-columns:5.4rem minmax(0,1fr);column-gap:12px;align-items:baseline;padding:4px 0;}
-.qty{justify-self:end;margin-right:-4px;padding:0 4px;border-radius:6px;font-family:var(--sans);font-weight:800;font-stretch:118%;font-size:22px;line-height:1.2;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.q{display:flex;flex-direction:column;align-items:flex-end;justify-self:end;text-align:right;}
+.ck{font-family:var(--sans);font-weight:600;font-size:13px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
+.mac{display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;font-family:var(--sans);font-stretch:88%;font-style:normal;font-weight:600;font-size:13px;line-height:1.35;color:var(--muted);font-variant-numeric:tabular-nums;}
+.mac abbr{text-decoration:none;font-weight:800;}
+.mac .p::before,.mac .c::before,.mac .f::before{content:"";display:inline-block;width:7px;height:7px;margin-right:3px;border-radius:2px;vertical-align:1px;}
+.mac .p::before{background:var(--prot);}
+.mac .c::before{background:var(--gluc);}
+.mac .f::before{background:var(--lip);}
+.qty{margin-right:-4px;padding:0 4px;border-radius:6px;font-family:var(--sans);font-weight:800;font-stretch:118%;font-size:22px;line-height:1.2;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .name{font-size:17px;line-height:1.35;}
 .note{display:block;font-size:14px;font-style:italic;color:var(--muted);}
 .qty.bump{animation:bump 1s ease-out;}
@@ -273,7 +281,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
   </details>
 
   <footer class="notes">
-    <p>Poids crus pour la viande, le poisson et les féculents, sauf mention contraire.</p>
+    <p>Le poids en gros est celui à peser cru. Le poids cuit, en dessous, est une estimation&nbsp;: il dépend de la cuisson.</p>
+    <p>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</p>
     <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
     <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
     <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
@@ -286,7 +295,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -302,14 +311,14 @@ const UNIT = {
   oeuf:[72,6.3,0.4,4.8], oeufMarine:[80,6.5,1.5,4.8]
 };
 const STARCH = {
-  riz:{label:'Riz', f:[355,8,78,0.7], step:5, cook:3, cooked:'cuit', name:'riz basmati cru'},
-  pates:{label:'Pâtes', f:[355,12.5,71,1.5], step:5, cook:2.3, cooked:'cuites', name:'pâtes crues'},
+  riz:{label:'Riz', f:[355,8,78,0.7], step:5, cook:3, raw:'cru', cooked:'cuit', name:'riz basmati'},
+  pates:{label:'Pâtes', f:[355,12.5,71,1.5], step:5, cook:2.3, raw:'crues', cooked:'cuites', name:'pâtes'},
   pdt:{label:'Pommes de terre', f:[77,2,17,0.1], step:10, name:'pommes de terre'},
   patate:{label:'Patate douce', f:[86,1.6,20,0.1], step:10, name:'patate douce'},
-  quinoa:{label:'Quinoa', f:[368,14,60,6], step:5, cook:2.7, cooked:'cuit', name:'quinoa cru'},
-  semoule:{label:'Semoule', f:[360,12.5,72,1.5], step:5, cook:2.3, cooked:'cuite', name:'semoule crue'},
-  boulgour:{label:'Boulgour', f:[345,12,69,1.5], step:5, cook:2.5, cooked:'cuit', name:'boulgour cru'},
-  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, cook:2.5, cooked:'cuites', name:'lentilles crues'},
+  quinoa:{label:'Quinoa', f:[368,14,60,6], step:5, cook:2.7, raw:'cru', cooked:'cuit', name:'quinoa'},
+  semoule:{label:'Semoule', f:[360,12.5,72,1.5], step:5, cook:2.3, raw:'crue', cooked:'cuite', name:'semoule'},
+  boulgour:{label:'Boulgour', f:[345,12,69,1.5], step:5, cook:2.5, raw:'cru', cooked:'cuit', name:'boulgour'},
+  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, cook:2.5, raw:'crues', cooked:'cuites', name:'lentilles'},
   gnocchis:{label:'Gnocchis', f:[155,4,33,0.6], step:10, name:'gnocchis frais'}
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','gnocchis'];
@@ -318,7 +327,13 @@ function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnPrope
 function grams(n){ return n + NB + 'g'; }
 function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k}; }
 function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n}; }
-function it(key, qty, name, note, m){ return {key:key, qty:qty, name:name, note:note || null, m:m || null}; }
+/* cook : poids cuit estimé, affiché sous la quantité crue, ex. {raw:'cru', g:135, adj:'cuit'} */
+function it(key, qty, name, note, m, cook){ return {key:key, qty:qty, name:name, note:note || null, m:m || null, cook:cook || null}; }
+/* Rendement de cuisson de la viande et du poisson (poids cuit / poids cru, ≈ table USDA des rendements de cuisson, 2012) */
+const YIELD = {poulet:0.75, boeuf:0.75, poisson:0.8, saumon:0.8};
+function meat(g, name, note, food){
+  return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'});
+}
 function oil(g){ return it('oil', grams(g), 'huile d’olive', null, mac('huile', g)); }
 function total(items){
   const t = {kcal:0, p:0, c:0, f:0};
@@ -330,19 +345,19 @@ function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
 const AMANDES_ALT = 'ou 15' + NB + 'g d’amandes';
 const PROT = {
   poulet:{label:'Poulet / dinde',
-    base:function(){ return [it('p1', grams(180), 'poulet ou dinde', 'poids cru', mac('poulet', 180))]; },
+    base:function(){ return [meat(180, 'poulet ou dinde', null, 'poulet')]; },
     dej:function(){ return [oil(10)]; },
     diner:function(){ return [oil(10), it('av', '½', 'avocat', AMANDES_ALT, mac('avocat', 70))]; }},
   boeuf:{label:'Bœuf 5' + NB + '%',
-    base:function(){ return [it('p1', grams(150), 'bœuf haché 5' + NB + '%', 'poids cru', mac('boeuf', 150))]; },
+    base:function(){ return [meat(150, 'bœuf haché 5' + NB + '%', null, 'boeuf')]; },
     dej:function(){ return [oil(5)]; },
     diner:function(){ return [oil(10), it('pm', grams(15), 'parmesan', null, mac('parmesan', 15))]; }},
   poisson:{label:'Poisson blanc',
-    base:function(){ return [it('p1', grams(200), 'poisson blanc', 'cabillaud, colin… poids cru', mac('poisson', 200))]; },
+    base:function(){ return [meat(200, 'poisson blanc', 'cabillaud, colin…', 'poisson')]; },
     dej:function(){ return [oil(10)]; },
     diner:function(){ return [oil(10), it('av', '½', 'avocat', AMANDES_ALT, mac('avocat', 70))]; }},
   saumon:{label:'Saumon',
-    base:function(){ return [it('p1', grams(160), 'saumon', 'poids cru, cuisson sans matière grasse', mac('saumon', 160))]; },
+    base:function(){ return [meat(160, 'saumon', 'cuisson sans matière grasse', 'saumon')]; },
     dej:function(){ return []; },
     diner:function(){ return []; }},
   crevettes:{label:'Crevettes + halloumi',
@@ -510,8 +525,8 @@ function starchItem(id, kcal){
   const S = STARCH[id];
   const q = Math.max(S.step, Math.round(kcal / (S.f[0] / 100) / S.step) * S.step);
   const k = q / 100;
-  return it('st', grams(q), S.name, S.cook ? '≈' + NB + (Math.round(q * S.cook / 10) * 10) + NB + 'g une fois ' + S.cooked : null,
-    {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k});
+  return it('st', grams(q), S.name, null, {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k},
+    S.cook ? {raw:S.raw, g:Math.round(q * S.cook / 10) * 10, adj:S.cooked} : null);
 }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond.
    rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
@@ -709,12 +724,19 @@ if (typeof document !== 'undefined'){
           ' data-value="' + o[0] + '" aria-pressed="' + (o[0] === current) + '">' + o[1] + '</button>';
       }).join('') + '</div></div>';
   };
+  /* Calories et macros d'un aliment, en petit sous son nom */
+  const macHTML = function(m){
+    const g = function(cls, letter, title, v){ return '<span class="' + cls + '"><abbr title="' + title + '">' + letter + '</abbr>' + NB + Math.round(v) + NB + 'g</span>'; };
+    return '<span class="mac"><span>' + fmtInt(m.kcal) + NB + 'kcal</span>' + g('p', 'P', 'protéines', m.p) + g('c', 'G', 'glucides', m.c) + g('f', 'L', 'lipides', m.f) + '</span>';
+  };
   const itemHTML = function(secId, i, next){
     const key = secId + ':' + i.key, val = i.qty + '|' + i.name;
     const changed = prevQty.has(key) && prevQty.get(key) !== val;
     next.set(key, val);
-    return '<li><span class="qty' + (changed ? ' bump' : '') + '">' + i.qty + '</span><span class="name">' + i.name +
-      (i.note ? '<span class="note">' + i.note + '</span>' : '') + '</span></li>';
+    const q = '<span class="q"><span class="qty' + (changed ? ' bump' : '') + '">' + i.qty + '</span>' +
+      (i.cook ? '<span class="ck">' + i.cook.raw + '</span><span class="ck">≈' + NB + grams(i.cook.g) + ' ' + i.cook.adj + '</span>' : '') + '</span>';
+    return '<li>' + q + '<span class="name">' + i.name + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
+      (i.m && i.key !== 'lib' ? macHTML(i.m) : '') + '</span></li>';
   };
   const mealHTML = function(s, next){
     let picks = '';

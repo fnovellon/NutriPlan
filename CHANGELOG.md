@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 1.4.0, 26 septembre 2026
+
+- Sous chaque aliment, ses calories et ses macros en petit (P, G, L : protéines, glucides, lipides).
+- Viande, poisson et féculents : le poids cru reste en gros, le poids cuit estimé s'affiche juste en dessous (poulet 180 g cru, ≈ 135 g cuit).
+
 ## 1.3.0, 26 septembre 2026
 
 - Choix du besoin calorique : **Automatique** (calculé à partir de ton profil) ou **Manuel** (tu indiques ta dépense d'un jour sans sport, l'appli ajoute tes séances, calculées avec ton poids). En manuel, seuls la dépense et le poids sont demandés.

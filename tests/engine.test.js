@@ -120,7 +120,22 @@ assert(fuelOf(1.5) < fuelOf(2) && fuelOf(2) < fuelOf(2.5) && fuelOf(2.5) < fuelO
 assert.strictEqual(fuelOf(3), 180, 'ravito de 60 g/h par défaut');
 assert.strictEqual(fuelOf(3, 45), 135, 'ravito réglé à 45 g/h');
 
-// 9. Version : la même partout, notée en tête des nouveautés
+// 9. Poids cuit et macros de chaque aliment
+const wed = buildDay(DEFAULT_PLAN[3], DEFAULT_CHOICES[3]);
+const itemOf = (r, sec, key) => r.secs.find(s => s.id === sec).items.find(i => i.key === key);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(itemOf(wed, 'dej', 'p1').cook)), { raw: 'cru', g: 135, adj: 'cuit' }, 'poulet 180 g cru');
+const riz = itemOf(wed, 'dej', 'st');
+assert.strictEqual(riz.cook.g, Math.round(parseInt(riz.qty, 10) * 3 / 10) * 10, 'riz cuit = cru × 3');
+assert.strictEqual(itemOf(wed, 'diner', 'p1').cook.g, 160, 'poisson blanc 200 g cru');
+const pdt = buildDay(day('repos'), { pdBase: 'avoine', dej: { prot: 'crevettes', starch: 'pdt' }, diner: { prot: 'saumon', starch: 'pates' } });
+assert(!itemOf(pdt, 'dej', 'st').cook && !itemOf(pdt, 'dej', 'p1').cook, 'pas de poids cuit pour les pommes de terre ni les crevettes cuites');
+assert.strictEqual(itemOf(pdt, 'diner', 'st').cook.adj, 'cuites', 'accord des pâtes');
+for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) for (const natation of [false, true]) {
+  const r = buildDay(day(activity, { natation }), DEFAULT_CHOICES[6]);
+  for (const s of r.secs) for (const i of s.items) assert(i.m && isFinite(i.m.kcal), `${activity} : ${i.name} sans macros`);
+}
+
+// 10. Version : la même partout, notée en tête des nouveautés
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');

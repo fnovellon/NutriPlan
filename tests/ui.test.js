@@ -34,7 +34,7 @@ const tools = dom => {
     sections: () => [...d.querySelectorAll('#day .meal h2, #day .band-t')].map(h => h.childNodes[0].textContent.trim()),
     setSwitch: (k, on) => { const b = $(`[data-action="toggle"][data-key="${k}"]`); if ((b.getAttribute('aria-checked') === 'true') !== on) b.click(); },
     starchLine: slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].map(li => li.textContent)
-      .find(t => /riz basmati|pâtes crues|pommes de terre|patate douce|quinoa|semoule|boulgour|lentilles|gnocchis/.test(t)),
+      .find(t => /riz basmati|pâtes|pommes de terre|patate douce|quinoa|semoule|boulgour|lentilles|gnocchis/.test(t)),
     pressed: action => $(`[data-action="${action}"][aria-pressed="true"]`).dataset.value
   };
 };
@@ -86,6 +86,22 @@ const riz = starchLine('dej');
 click('[data-action="starch"][data-slot="dej"][data-value="pdt"]');
 assert.notStrictEqual(starchLine('dej'), riz, 'la quantité de féculent ne change pas');
 assert($('[aria-labelledby="h-dej"] .qty.bump'), 'changement non mis en évidence');
+
+// Poids cru et cuit sous la quantité, calories et macros sous chaque aliment
+click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
+const dejLi = t => [...d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].find(li => li.querySelector('.name').textContent.startsWith(t));
+const ck = li => [...li.querySelectorAll('.q .ck')].map(e => e.textContent);
+assert.deepStrictEqual(ck(dejLi('poulet')), ['cru', '≈\u00A0135\u00A0g cuit'], 'poids cuit du poulet');
+assert(ck(dejLi('riz')).length === 2 && /cuit$/.test(ck(dejLi('riz'))[1]), 'poids cuit du riz');
+assert.deepStrictEqual(ck(dejLi('légumes')), [], 'poids cuit des légumes');
+for (const li of d.querySelectorAll('#day .items li')) {
+  assert(/kcal\s*P\s\d+\sg\s*G\s\d+\sg\s*L\s\d+\sg/.test(li.querySelector('.mac').textContent), 'macros absentes : ' + li.textContent);
+}
+for (const meal of d.querySelectorAll('#day .meal')) {
+  const shown = [...meal.querySelectorAll('.mac > span:first-child')].reduce((a, e) => a + Number(e.textContent.replace(/\D/g, '')), 0);
+  const head = Number(meal.querySelector('.kcal').textContent.replace(/\D/g, ''));
+  assert(Math.abs(shown - head) <= 10, `kcal des aliments (${shown}) et du repas (${head})`);
+}
 
 // L'idée de plat suit les choix
 click('[data-action="prot"][data-slot="diner"][data-value="boeuf"]');
