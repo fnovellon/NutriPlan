@@ -139,6 +139,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .needs-t{font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
 .needs-s{font-size:15px;color:var(--muted);}
 .needs-body{padding:2px 0 22px;}
+.needs [hidden]{display:none;}
 .fields{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:12px;margin:0 0 16px;}
 .field{display:flex;flex-direction:column;gap:4px;font-size:15px;color:var(--muted);}
 .field.wide{margin:0 0 8px;}
@@ -219,21 +220,34 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
   <details class="needs" id="besoins">
     <summary><span class="needs-t">Tes besoins</span><span class="needs-s" id="needs-sum"></span></summary>
     <div class="needs-body">
-      <p class="warn" id="needs-hint"></p>
       <div class="opt-row">
+        <span class="lbl" id="lbl-mode">Besoin</span>
+        <div class="seg" role="group" aria-labelledby="lbl-mode">
+          <button type="button" data-action="prof" data-key="mode" data-value="auto">Automatique</button>
+          <button type="button" data-action="prof" data-key="mode" data-value="manuel">Manuel</button>
+        </div>
+      </div>
+      <p class="calc" id="mode-hint"></p>
+      <p class="warn" id="needs-hint"></p>
+      <div class="opt-row" data-mode="auto">
         <span class="lbl" id="lbl-sexe">Sexe</span>
         <div class="seg" role="group" aria-labelledby="lbl-sexe">
           <button type="button" data-action="prof" data-key="sexe" data-value="h">Homme</button>
           <button type="button" data-action="prof" data-key="sexe" data-value="f">Femme</button>
         </div>
       </div>
-      <div class="fields">
-        <label class="field"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
-        <label class="field"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
-        <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
-        <label class="field"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
+      <div data-mode="manuel">
+        <label class="field wide"><span>Ta dépense totale un jour sans sport</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1200" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
+        <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
+        <p class="warn" id="warn-repos"></p>
       </div>
-      <div class="opt-row">
+      <div class="fields">
+        <label class="field" data-mode="auto"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
+        <label class="field" data-mode="auto"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
+        <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
+        <label class="field" data-mode="auto"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
+      </div>
+      <div class="opt-row" data-mode="auto">
         <span class="lbl" id="lbl-neat">Hors sport</span>
         <div class="seg" role="group" aria-labelledby="lbl-neat">
           <button type="button" data-action="prof" data-key="neat" data-value="assis">Assis</button>
@@ -241,11 +255,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
           <button type="button" data-action="prof" data-key="neat" data-value="debout">Debout</button>
         </div>
       </div>
-      <p class="calc">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
+      <p class="calc" data-mode="auto">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
       <p class="calc" id="calc-rest"></p>
-      <label class="field wide"><span>Ta dépense totale un jour sans sport, si tu la connais</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1000" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
-      <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
-      <p class="warn" id="warn-repos"></p>
       <div class="range">
         <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
         <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
@@ -275,7 +286,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -399,8 +410,8 @@ const DEFAULT_CHOICES = {
 };
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1000,6000], deficit:[0,25], ravito:[30,90]};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
 /* Séances : MET du Compendium des activités physiques (Ainsworth 2011) et durée en heures */
@@ -410,6 +421,7 @@ const KCAL_PER_KG = 7700;
 function profileFields(o){
   const out = {};
   if (!o || typeof o !== 'object') return out;
+  if (o.mode === 'auto' || o.mode === 'manuel') out.mode = o.mode;
   if (o.sexe === 'h' || o.sexe === 'f') out.sexe = o.sexe;
   if (has(NEAT, o.neat)) out.neat = o.neat;
   Object.keys(PROFILE_RANGES).forEach(function(k){
@@ -418,19 +430,20 @@ function profileFields(o){
   });
   return out;
 }
-function cleanProfile(o){ return Object.assign({}, PROFILE_DEFAULT, profileFields(o)); }
+/* Profil complet. Enregistré avant la 1.3.0 (sans mode) : manuel s'il contient une dépense valide, sinon automatique. */
+function cleanProfile(o){
+  const f = profileFields(o);
+  if (!f.mode) f.mode = has(f, 'repos') ? 'manuel' : 'auto';
+  return Object.assign({}, PROFILE_DEFAULT, f);
+}
 /* Métabolisme de base : Cunningham si la masse grasse est connue (plus juste chez les sportifs), sinon Mifflin-St Jeor */
 function bmr(p){
   if (p.gras !== null) return 500 + 22 * p.poids * (1 - p.gras / 100);
   return 10 * p.poids + 6.25 * p.taille - 5 * p.age + (p.sexe === 'f' ? -161 : 5);
 }
-/* Une dépense saisie sous le métabolisme de base x 1,2 (niveau alitement) est impossible sur une journée entière :
-   elle est ignorée et le calcul reprend la main */
-const REST_MIN_FACTOR = 1.2;
-function restSource(p){
-  if (p.repos === null) return 'calcul';
-  return p.repos >= bmr(p) * REST_MIN_FACTOR ? 'saisie' : 'ignoree';
-}
+/* Dépense d'un jour sans sport : saisie en mode manuel (bornes de PROFILE_RANGES), sinon calculée.
+   En manuel sans dépense valide, le calcul prend le relais. */
+function restSource(p){ return p.mode === 'manuel' && p.repos !== null ? 'saisie' : 'calcul'; }
 function restNeed(p){ return restSource(p) === 'saisie' ? p.repos : bmr(p) * NEAT[p.neat]; }
 /* Coût net d'une séance : (MET - 1) x poids x durée, le repos étant déjà compté */
 function sessionCost(plan, p){
@@ -449,7 +462,7 @@ function energy(plan, p){
   let sum = 0;
   for (let d = 0; d < 7; d++) sum += rest + sessionCost(DEFAULT_PLAN[d], p);
   const avg = sum / 7, deficit = avg * p.deficit / 100, cost = sessionCost(plan, p);
-  return {bmr:bmr(p), rest:rest, restSource:restSource(p), cost:cost, need:rest + cost, avg:avg, deficit:deficit,
+  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, avg:avg, deficit:deficit,
     target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
 }
 
@@ -623,6 +636,7 @@ if (typeof document !== 'undefined'){
   const PKEY = 'repas-du-jour:profil:v1';
   let prof = {};
   try { prof = profileFields(JSON.parse(localStorage.getItem(PKEY) || '{}')); } catch (e) { prof = {}; }
+  if (!has(prof, 'mode')) prof.mode = cleanProfile(prof).mode;
   const saveProf = function(){ try { localStorage.setItem(PKEY, JSON.stringify(prof)); } catch (e) {} };
 
   const noon = function(){ const d = new Date(); d.setHours(12, 0, 0, 0); return d; };
@@ -755,7 +769,10 @@ if (typeof document !== 'undefined'){
     $('sw-lib').setAttribute('aria-checked', String(plan.libre));
   };
   const r10 = function(n){ return fmtInt(Math.round(n / 10) * 10); };
-  const incomplete = function(){ return !has(prof, 'repos') && !(has(prof, 'age') && has(prof, 'taille') && has(prof, 'poids')); };
+  const incomplete = function(){
+    if (cleanProfile(prof).mode === 'manuel') return !has(prof, 'repos') || !has(prof, 'poids');
+    return !(has(prof, 'age') && has(prof, 'taille') && has(prof, 'poids'));
+  };
   const renderSummary = function(res){
     const t = res.tot, en = res.energy;
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
@@ -776,22 +793,20 @@ if (typeof document !== 'undefined'){
     const pr = cleanProfile(prof), en = res.energy;
     document.querySelectorAll('#besoins [data-action="prof"]').forEach(function(b){ b.setAttribute('aria-pressed', String(pr[b.dataset.key] === b.dataset.value)); });
     $('besoins').querySelector('[data-key="repos"]').placeholder = String(Math.round(bmr(pr) * NEAT[pr.neat] / 10) * 10);
-    $('needs-sum').textContent = r10(en.avg) + NB + 'kcal par jour en moyenne, déficit de ' + pr.deficit + NB + '%';
-    $('needs-hint').textContent = incomplete() ? 'Indique ton âge, ta taille et ton poids' + NB + ': en attendant, le calcul utilise les valeurs grisées.' : '';
-    $('calc-rest').textContent = 'Métabolisme de base' + NB + ': ' + r10(en.bmr) + NB + 'kcal (formule de ' +
-      (pr.gras !== null ? 'Cunningham, à partir de ta masse maigre' : 'Mifflin-St' + NB + 'Jeor') + '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal' +
-      (en.restSource === 'saisie' ? ', celle que tu as saisie.' : ', calculée.') + ' Chaque séance s’y ajoute.';
-    const reposField = $('besoins').querySelector('[data-key="repos"]');
-    if (en.restSource === 'ignoree'){
-      reposField.setAttribute('aria-invalid', 'true');
-      $('warn-repos').textContent = fmtInt(pr.repos) + NB + 'kcal, c’est trop bas' + NB + ': même sans bouger de la journée, tu dépenses au moins ' +
-        r10(en.bmr * REST_MIN_FACTOR) + NB + 'kcal. Si c’est le chiffre «' + NB + 'calories actives' + NB + '» de ta montre, prends plutôt le total. En attendant, le calcul utilise ' +
-        r10(en.rest) + NB + 'kcal.';
-    } else {
-      const shown = reposField.value.trim().replace(',', '.');
-      if (shown === '' ? !has(prof, 'repos') : has(prof, 'repos') && Number(shown) === prof.repos) reposField.removeAttribute('aria-invalid');
-      $('warn-repos').textContent = '';
-    }
+    document.querySelectorAll('#besoins [data-mode]').forEach(function(el){ el.hidden = el.dataset.mode !== pr.mode; });
+    $('needs-sum').textContent = r10(en.avg) + NB + 'kcal par jour en moyenne (' + (en.restSource === 'saisie' ? 'saisie' : 'automatique') + '), déficit de ' + pr.deficit + NB + '%';
+    $('mode-hint').textContent = pr.mode === 'manuel'
+      ? 'Tu indiques ta dépense d’un jour sans sport, l’appli ajoute le coût de chaque séance, calculé avec ton poids.'
+      : 'Ta dépense est calculée à partir de ton profil.';
+    let hint = '';
+    if (pr.mode === 'auto' && incomplete()) hint = 'Indique ton âge, ta taille et ton poids' + NB + ': en attendant, le calcul utilise les valeurs grisées.';
+    else if (pr.mode === 'manuel' && en.restSource !== 'saisie') hint = 'Indique ta dépense d’un jour sans sport' + NB + ': en attendant, le calcul automatique est utilisé (' + r10(en.rest) + NB + 'kcal).';
+    else if (pr.mode === 'manuel' && incomplete()) hint = 'Indique ton poids' + NB + ': il sert à calculer tes séances.';
+    $('needs-hint').textContent = hint;
+    $('calc-rest').textContent = en.restSource === 'saisie'
+      ? 'Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, celle que tu as saisie. Chaque séance s’y ajoute.'
+      : 'Métabolisme de base' + NB + ': ' + r10(en.bmr) + NB + 'kcal (formule de ' + (pr.gras !== null ? 'Cunningham, à partir de ta masse maigre' : 'Mifflin-St' + NB + 'Jeor') +
+        '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, calculée. Chaque séance s’y ajoute.';
     $('out-deficit').textContent = pr.deficit + NB + '%';
     $('calc-deficit').textContent = pr.deficit > 0
       ? pr.deficit + NB + '% de ta dépense moyenne sur ta semaine type, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
@@ -799,7 +814,7 @@ if (typeof document !== 'undefined'){
       : 'Pas de déficit' + NB + ': tu manges ce que tu dépenses.';
     const warn = [];
     if (pr.deficit > 20) warn.push('Au-delà de 20' + NB + '%, tu perds plus vite mais tu risques de perdre du muscle et de la forme à l’entraînement.');
-    if (pr.gras !== null){
+    if (pr.mode === 'auto' && pr.gras !== null){
       const ea = (en.rest - en.deficit) / (pr.poids * (1 - pr.gras / 100));
       if (ea < 30) warn.push('Il te reste environ ' + Math.round(ea) + NB + 'kcal par kilo de masse maigre une fois tes séances payées, sous le seuil de 30' + NB + ': baisse le déficit.');
     }
@@ -885,6 +900,7 @@ if (typeof document !== 'undefined'){
     if (shown === stored) return;
     el.value = stored === null ? '' : String(stored);
     el.removeAttribute('aria-invalid');
+    if (k === 'repos') $('warn-repos').textContent = '';
     render();
   });
   document.addEventListener('input', function(e){
@@ -895,10 +911,16 @@ if (typeof document !== 'undefined'){
     else {
       const o = {};
       o[k] = Number(raw);
-      if (!has(profileFields(o), k)){ el.setAttribute('aria-invalid', 'true'); return; }
+      if (!has(profileFields(o), k)){
+        el.setAttribute('aria-invalid', 'true');
+        if (k === 'repos') $('warn-repos').textContent = 'Entre ' + fmtInt(PROFILE_RANGES.repos[0]) + ' et ' + fmtInt(PROFILE_RANGES.repos[1]) + NB +
+          'kcal' + NB + ': c’est le total de ta journée, même sans bouger, pas les calories actives de ta montre.';
+        return;
+      }
       prof[k] = o[k];
     }
     el.removeAttribute('aria-invalid');
+    if (k === 'repos') $('warn-repos').textContent = '';
     saveProf();
     render();
   });

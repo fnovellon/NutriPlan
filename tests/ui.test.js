@@ -183,7 +183,7 @@ p.click('[data-action="needs"]');
 assert(p.$('#besoins').open, 'le lien Régler n’ouvre pas les besoins');
 
 type('age', 40); type('taille', 180); type('poids', 70);
-assert.deepStrictEqual(prof(), { age: 40, taille: 180, poids: 70 }, 'profil enregistré');
+assert.deepStrictEqual(prof(), { mode: 'auto', age: 40, taille: 180, poids: 70 }, 'profil enregistré');
 assert(!/Complète/.test(note()) && !p.$('#needs-hint').textContent, 'profil complet encore signalé');
 type('age', 5);
 assert.strictEqual(field('age').getAttribute('aria-invalid'), 'true', 'âge invalide non signalé');
@@ -193,18 +193,32 @@ assert(field('age').value === '40' && !field('age').hasAttribute('aria-invalid')
 type('age', 41);
 assert(!field('age').hasAttribute('aria-invalid') && prof().age === 41, 'âge corrigé');
 
+// Mode manuel : dépense saisie d'un jour sans sport, paramètres du calcul masqués sauf le poids
+const shown = k => !field(k).closest('[hidden]');
+assert(/automatique/.test(p.$('#needs-sum').textContent) && !shown('repos') && shown('age'), 'mode automatique par défaut');
+p.click('[data-action="prof"][data-key="mode"][data-value="manuel"]');
+assert.strictEqual(prof().mode, 'manuel', 'mode non enregistré');
+assert(shown('repos') && shown('poids') && !shown('age') && !shown('taille') && !shown('gras'), 'champs du mode manuel');
+assert(p.$('[data-key="neat"]').closest('[hidden]') && p.$('[data-key="sexe"]').closest('[hidden]'), 'paramètres du calcul visibles en manuel');
+assert(/Indique ta dépense/.test(p.$('#needs-hint').textContent) && /2\s280/.test(p.$('#needs-hint').textContent), 'manuel sans dépense : ' + p.$('#needs-hint').textContent);
 type('repos', 2600);
-assert(/saisie/.test(p.$('#calc-rest').textContent) && /2\s600/.test(note()), 'dépense de repos saisie');
-// Dépense saisie impossible (sous métabolisme de base x 1,2) : refusée avec un message, le calcul reprend la main
+assert(/saisie/.test(p.$('#calc-rest').textContent) && /2\s600/.test(note()) && /saisie/.test(p.$('#needs-sum').textContent), 'dépense saisie');
+assert(!p.$('#needs-hint').textContent, 'profil manuel complet encore signalé');
+// Hors bornes (1 200 à 6 000 kcal) : refusée avec un message, la dernière valeur valide reste utilisée
 type('repos', 1000);
-assert(/trop bas/.test(p.$('#warn-repos').textContent) && /calories actives/.test(p.$('#warn-repos').textContent), 'dépense trop basse non signalée');
+assert(/1\s200/.test(p.$('#warn-repos').textContent) && /calories actives/.test(p.$('#warn-repos').textContent), 'dépense trop basse non signalée');
 assert.strictEqual(field('repos').getAttribute('aria-invalid'), 'true', 'champ de dépense trop basse non marqué');
-assert(!/saisie/.test(p.$('#calc-rest').textContent) && !/1\s000/.test(note()), 'dépense trop basse utilisée : ' + note());
+assert.strictEqual(prof().repos, 2600, 'dépense hors bornes enregistrée');
 field('repos').dispatchEvent(new pw.Event('change', { bubbles: true }));
-assert.strictEqual(field('repos').value, '1000', 'la valeur saisie doit rester affichée pour être corrigée');
+assert(field('repos').value === '2600' && !field('repos').hasAttribute('aria-invalid') && !p.$('#warn-repos').textContent, 'le champ de dépense ne reprend pas la valeur utilisée');
+// Retour en automatique : le calcul reprend, la dépense saisie est gardée pour plus tard
+p.click('[data-action="prof"][data-key="mode"][data-value="auto"]');
+assert(!/saisie/.test(p.$('#calc-rest').textContent) && !/2\s600/.test(note()) && prof().repos === 2600, 'retour en automatique');
+p.click('[data-action="prof"][data-key="mode"][data-value="manuel"]');
+assert(/2\s600/.test(note()), 'dépense saisie perdue en changeant de mode');
 type('repos', '');
 assert(!('repos' in prof()), 'dépense de repos non effacée');
-assert(!field('repos').hasAttribute('aria-invalid') && !p.$('#warn-repos').textContent, 'alerte de dépense non effacée');
+p.click('[data-action="prof"][data-key="mode"][data-value="auto"]');
 type('gras', 12);
 assert(/Cunningham/.test(p.$('#calc-rest').textContent), 'formule avec masse grasse');
 
@@ -233,6 +247,12 @@ const again = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 41, defici
 assert.strictEqual(again.$('#besoins input[data-key="age"]').value, '41', 'âge non relu');
 assert.strictEqual(again.$('#besoins input[data-key="deficit"]').value, '10', 'déficit non relu');
 assert.strictEqual(again.$('#besoins input[data-key="poids"]').value, '', 'poids invalide relu');
+// Profils d'avant la 1.3.0 (sans mode) : manuel si la dépense saisie est valide, sinon automatique
+const legacy = x => tools(open(ls => ls.setItem(PKEY, JSON.stringify(x))));
+const lm = legacy({ age: 30, taille: 168, poids: 71, repos: 2500 });
+assert(/saisie/.test(lm.$('#needs-sum').textContent) && lm.$('[data-action="prof"][data-value="manuel"]').getAttribute('aria-pressed') === 'true', 'ancien profil manuel');
+const la = legacy({ age: 30, taille: 168, poids: 71, repos: 1000, deficit: 0 });
+assert(/automatique/.test(la.$('#needs-sum').textContent) && /2\s750/.test(la.$('#needs-sum').textContent), 'ancien profil à 1 000 kcal : ' + la.$('#needs-sum').textContent);
 for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);

@@ -23,16 +23,25 @@ near(bmr(cleanProfile({ sexe: 'f', poids: 60, taille: 165, age: 30 })), 1320.25,
 near(bmr(cleanProfile({ gras: 15 })), 1846.4, 0.01, 'Cunningham 72 kg à 15 % de masse grasse');
 near(restNeed(P), 2327.5, 0.01, 'dépense de repos, activité assise');
 near(restNeed(cleanProfile({ neat: 'debout' })), 1662.5 * 1.7, 0.01, 'dépense de repos, debout');
-near(restNeed(cleanProfile({ repos: 2500 })), 2500, 0, 'dépense de repos saisie');
-// Dépense saisie impossible (sous métabolisme de base x 1,2) : ignorée. Profil de la capture : 30 ans, 168 cm, 71 kg.
+// Modes : automatique (calcul à partir du profil) ou manuel (dépense saisie d'un jour sans sport). Profil de la capture : 30 ans, 168 cm, 71 kg.
 const me = { age: 30, taille: 168, poids: 71 };
 near(bmr(cleanProfile(me)), 1615, 0.01, 'Mifflin-St Jeor 71 kg, 168 cm, 30 ans');
-for (const [repos, source] of [[1000, 'ignoree'], [1930, 'ignoree'], [1940, 'saisie'], [2000, 'saisie']]) {
-  const x = energy(day('repos'), cleanProfile(Object.assign({ repos }, me)));
-  assert.strictEqual(x.restSource, source, `dépense saisie de ${repos} kcal`);
-  near(x.rest, source === 'saisie' ? repos : 1615 * 1.4, 0.01, `dépense de repos retenue pour ${repos} kcal saisies`);
-}
-assert.strictEqual(energy(day('repos'), cleanProfile(me)).restSource, 'calcul', 'dépense calculée');
+assert.strictEqual(cleanProfile(me).mode, 'auto', 'mode par défaut');
+assert.strictEqual(energy(day('repos'), cleanProfile(me)).restSource, 'calcul', 'dépense calculée en automatique');
+const manual = x => energy(day('repos'), cleanProfile(Object.assign({ mode: 'manuel' }, me, x)));
+assert(manual({ repos: 2400 }).restSource === 'saisie' && manual({ repos: 2400 }).rest === 2400, 'dépense saisie en manuel');
+assert.strictEqual(manual({}).restSource, 'calcul', 'manuel sans dépense : le calcul prend le relais');
+near(manual({}).rest, 1615 * 1.4, 0.01, 'manuel sans dépense');
+for (const bad of [1000, 1190, 6010]) assert.strictEqual(manual({ repos: bad }).restSource, 'calcul', `dépense hors bornes acceptée : ${bad}`);
+assert.strictEqual(manual({ repos: 1200 }).rest, 1200, 'borne basse de la dépense saisie');
+assert.strictEqual(energy(day('repos'), cleanProfile(Object.assign({ mode: 'auto', repos: 2400 }, me))).restSource, 'calcul', 'la dépense saisie est ignorée en automatique');
+near(energy(day('course'), cleanProfile({ mode: 'manuel', repos: 2400, poids: 71 })).need, 2400 + 8.8 * 71, 0.01, 'en manuel, la séance est calculée avec le poids');
+// Profils enregistrés avant la 1.3.0 (sans mode)
+assert.strictEqual(cleanProfile({ repos: 2500 }).mode, 'manuel', 'ancien profil avec dépense valide');
+near(restNeed(cleanProfile({ repos: 2500 })), 2500, 0, 'ancien profil : dépense saisie conservée');
+assert.strictEqual(cleanProfile({ repos: 1000 }).mode, 'auto', 'ancien profil avec dépense invalide');
+assert.strictEqual(cleanProfile({}).mode, 'auto', 'profil vide');
+assert.strictEqual(cleanProfile({ mode: 'constructor', repos: 2500 }).mode, 'manuel', 'mode invalide ignoré');
 near(sessionCost(day('muscu'), P), 288, 0.01, 'muscu');
 near(sessionCost(day('course'), P), 633.6, 0.01, 'course');
 near(sessionCost(day('double'), P), 921.6, 0.01, 'muscu + course');
@@ -51,7 +60,7 @@ for (const a of ['muscu', 'course', 'double', 'longue']) {
 assert.strictEqual(energy(day('course'), cleanProfile({ deficit: 0 })).target, Math.round((2327.5 + 633.6) / 10) * 10, 'déficit nul');
 
 // 2. Profil : valeurs hors limites ou piégées ignorées
-assert.deepStrictEqual(JSON.parse(JSON.stringify(profileFields({ age: '35', sexe: 'x', neat: 'constructor', deficit: 40, ravito: 10, gras: null, poids: 70 }))), { poids: 70 });
+assert.deepStrictEqual(JSON.parse(JSON.stringify(profileFields({ mode: 'x', age: '35', sexe: 'x', neat: 'constructor', deficit: 40, ravito: 10, gras: null, poids: 70 }))), { poids: 70 });
 assert.deepStrictEqual(JSON.parse(JSON.stringify(profileFields('nimporte'))), {});
 
 // 3. Toutes les combinaisons avec le profil par défaut : apport ≈ objectif, planchers respectés

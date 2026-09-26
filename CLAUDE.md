@@ -23,18 +23,21 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
   - `SPLIT` : répartition des féculents entre déjeuner et dîner, par activité (poids relatifs).
   - `DEFAULT_PLAN` / `DEFAULT_CHOICES` : valeurs par défaut par jour, indexées par `Date.getDay()` (0 = dimanche). `DEFAULT_PLAN` sert aussi de « semaine type » pour la dépense moyenne.
   - `PROFILE_DEFAULT`, `PROFILE_RANGES`, `NEAT`, `SESSION` : profil par défaut, bornes des champs, activité hors sport, séances (MET et durée).
-- `energy(plan, profil)` renvoie `{ bmr, rest, restSource, cost, need, avg, deficit, target, kgWeek }` (`restSource` : `'calcul'`, `'saisie'` ou `'ignoree'`).
+- `energy(plan, profil)` renvoie `{ bmr, rest, restSource, cost, need, avg, deficit, target, kgWeek }` (`mode` : `'auto'` ou `'manuel'` ; `restSource` : `'calcul'` ou `'saisie'`).
 - `buildDay(plan, choices, profil)` renvoie `{ secs, tot, libre, energy, ecart }` : `secs` est la timeline (repas + bandeaux de séance), `tot` les totaux, `libre` le budget du repas libre, `ecart` l'apport moins l'objectif (hors repas libre). Le profil est facultatif (valeurs par défaut).
 
 ## Dépense et objectif (à respecter)
 
 - Métabolisme de base : Mifflin-St Jeor (`10 × kg + 6,25 × cm − 5 × âge + 5`, `− 161` pour une femme). Si la masse grasse est saisie : Cunningham (`500 + 22 × masse maigre`), plus juste chez les sportifs d'endurance.
-- Dépense un jour de repos = métabolisme de base × activité hors sport (assis 1,4, mixte 1,55, debout 1,7 ; effet thermique des repas compris). Ou la valeur saisie à la main (le total de la journée, pas les calories actives d'une montre), qui remplace le calcul. Une valeur saisie sous métabolisme de base × 1,2 (niveau alitement) est impossible : elle est ignorée, le calcul reprend la main, le champ passe en erreur avec un message qui l'explique.
+- Deux modes, au choix en tête de la carte « Tes besoins » :
+  - **Automatique** (par défaut) : dépense un jour de repos = métabolisme de base × activité hors sport (assis 1,4, mixte 1,55, debout 1,7 ; effet thermique des repas compris). Paramètres affichés : sexe, âge, taille, poids, masse grasse, hors sport.
+  - **Manuel** : l'utilisateur saisit sa dépense totale d'un jour sans sport (pas les calories actives d'une montre), entre 1 200 et 6 000 kcal. Seuls la dépense et le poids sont affichés : le poids sert au coût des séances. Hors bornes : champ en erreur avec un message, valeur non enregistrée, la dernière valeur valide revient quand on quitte le champ. Sans dépense valide, le calcul automatique prend le relais et la carte le dit.
+  - Changer de mode ne perd rien : les valeurs des deux modes restent enregistrées.
 - Coût net d'une séance = (MET − 1) × poids × durée (Compendium des activités physiques, Ainsworth 2011) : muscu 5 MET pendant 1 h, course 9,8 MET (≈ 10 km/h) pendant 1 h, sortie longue 8 MET (vélo d'endurance) sur la durée choisie, natation 7 MET pendant 45 min. Muscu + course = les deux.
 - Dépense du jour = dépense de repos + coût de la séance.
 - Déficit : un % (0 à 25, 15 par défaut) de la dépense moyenne de la semaine type (`DEFAULT_PLAN`), retiré de la même façon chaque jour. Les séances restent donc entièrement couvertes et la disponibilité énergétique reste la même tous les jours.
 - Objectif du jour = dépense du jour − déficit, arrondi à 10 kcal. Perte estimée = déficit × 7 / 7 700 kg par semaine.
-- Alertes : déficit au-delà de 20 % ; si la masse grasse est connue, disponibilité énergétique `(dépense de repos − déficit) / masse maigre` sous 30 kcal/kg.
+- Alertes : déficit au-delà de 20 % ; en automatique, si la masse grasse est connue, disponibilité énergétique `(dépense de repos − déficit) / masse maigre` sous 30 kcal/kg.
 - Profil par défaut tant que rien n'est saisi : homme, 35 ans, 178 cm, 72 kg, assis, déficit 15 %, ravito 60 g/h. La page demande de compléter âge, taille et poids.
 
 ## Règles de calcul (à respecter)
@@ -56,7 +59,8 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - `localStorage`, clé `repas-du-jour:v1` : `{ plans: { 'AAAA-MM-JJ': plan }, choices: { getDay: choix } }`. L'activité est mémorisée par date, les choix de protéines et féculents par jour de la semaine. Plans purgés après 21 jours.
 - Toujours en try/catch : l'appli doit fonctionner sans stockage ou avec un stockage corrompu (JSON invalide, valeur qui n'est pas un objet). Les identifiants relus (activité, protéine, féculent) sont validés avec `has()` (propriété propre), jamais avec `OBJ[clé]` qui laisserait passer `constructor` ou `__proto__`.
 - Navigation : semaine en cours, précédente et suivante (flèches). Le titre et la date sont relatifs (hier, aujourd'hui, demain, « lundi prochain »). Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
-- Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ sexe, age, taille, poids, gras, neat, repos, deficit, ravito }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme.
+- Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ mode, sexe, age, taille, poids, gras, neat, repos, deficit, ravito }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme.
+- Migration du profil (1.3.0, champ `mode` ajouté) : un profil sans `mode` est lu en `'manuel'` s'il contient une dépense valide, sinon en `'auto'` (`cleanProfile`), et le mode déduit est fixé au chargement.
 - Si le format change, passer à une nouvelle clé (v2) ou migrer, sans casser les données existantes.
 
 ## Version
