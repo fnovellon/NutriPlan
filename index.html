@@ -47,7 +47,11 @@ button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 button:focus-visible{outline:2px solid var(--beet);outline-offset:2px;}
 .app{max-width:36rem;margin:0 auto;padding:20px 18px 48px;}
 
-.date{margin:0 0 12px;font-style:italic;color:var(--muted);font-size:16px;}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;}
+.date{margin:0;font-style:italic;color:var(--muted);font-size:16px;}
+.wk{display:flex;flex:none;gap:6px;}
+.wk button{width:40px;height:40px;padding:0 0 2px;border:1px solid var(--line);border-radius:50%;background:transparent;font-family:var(--sans);font-weight:700;font-size:22px;line-height:1;}
+.wk button:disabled{opacity:.35;cursor:default;}
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:0 0 26px;}
 .week button{position:relative;height:42px;padding:0;border:1px solid var(--line);border-radius:10px;background:transparent;font-family:var(--sans);font-weight:600;font-size:15px;}
 .week button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
@@ -72,6 +76,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .switch{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;font-size:17px;}
 .switch:last-child{border-bottom:1px solid var(--line);}
 .switch[hidden]{display:none;}
+.hint{margin:10px 0 0;font-size:15px;color:var(--beet);}
+.hint:empty{display:none;}
 .knob{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--line);transition:background .2s ease;}
 .knob::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--paper);transition:transform .2s ease;}
 .switch[aria-checked="true"] .knob{background:var(--beet);}
@@ -131,7 +137,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 </head>
 <body>
 <main class="app">
-  <p class="date" id="date"></p>
+  <div class="top">
+    <p class="date" id="date"></p>
+    <div class="wk" role="group" aria-label="Changer de semaine">
+      <button type="button" data-action="week" data-value="-1" id="wk-prev" aria-label="Semaine précédente">‹</button>
+      <button type="button" data-action="week" data-value="1" id="wk-next" aria-label="Semaine suivante">›</button>
+    </div>
+  </div>
   <div class="week" id="week" role="group" aria-label="Jour de la semaine"></div>
 
   <h1 id="title">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
@@ -158,6 +170,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="natation" id="sw-nat"><span>Natation entre midi et deux</span><span class="knob" aria-hidden="true"></span></button>
       <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="libre" id="sw-lib"><span>Repas libre ce soir</span><span class="knob" aria-hidden="true"></span></button>
     </div>
+    <p class="hint" id="hint" role="status"></p>
   </div>
 
   <section class="sum" aria-label="Total de la journée">
@@ -171,7 +184,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
   <footer class="notes">
     <p>Poids crus pour la viande, le poisson et les féculents, sauf mention contraire.</p>
     <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes glucides.</p>
-    <p>Les calories sont des estimations : c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
+    <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
     <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
     <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
   </footer>
@@ -207,6 +220,7 @@ const STARCH = {
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','gnocchis'];
 
+function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
 function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k}; }
 function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n}; }
@@ -358,7 +372,7 @@ function mainItems(slot, choice, carbs){
 function ideaFor(choice){ const row = IDEAS[choice.prot]; return row && row[choice.starch] ? row[choice.starch] : null; }
 function fuel(d){
   const g = Math.round(45 * d / 5) * 5;
-  return it('fuel', grams(g), 'glucides pendant l’effort', '30 à 60' + NB + 'g par heure : boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0});
+  return it('fuel', grams(g), 'glucides pendant l’effort', '30 à 60' + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0});
 }
 
 function buildDay(plan, ch){
@@ -436,33 +450,38 @@ function buildDay(plan, ch){
 if (typeof document !== 'undefined'){
   const KEY = 'repas-du-jour:v1';
   let store = {};
-  try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { store = {}; }
+  try { store = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { store = {}; }
+  if (!store || typeof store !== 'object' || Array.isArray(store)) store = {};
   if (!store.plans || typeof store.plans !== 'object') store.plans = {};
   if (!store.choices || typeof store.choices !== 'object') store.choices = {};
   const persist = function(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
 
-  const today = new Date(); today.setHours(12, 0, 0, 0);
-  const todayJs = today.getDay();
-  Object.keys(store.plans).forEach(function(k){
-    const d = new Date(k + 'T12:00:00');
-    if (isNaN(d.getTime()) || Math.abs(today - d) > 21 * 864e5) delete store.plans[k];
-  });
+  const noon = function(){ const d = new Date(); d.setHours(12, 0, 0, 0); return d; };
+  let today = noon(), todayJs = today.getDay(), weekOffset = 0;
+  const purge = function(){
+    Object.keys(store.plans).forEach(function(k){
+      const d = new Date(k + 'T12:00:00');
+      if (isNaN(d.getTime()) || Math.abs(today - d) > 21 * 864e5) delete store.plans[k];
+    });
+  };
+  purge();
 
   const $ = function(id){ return document.getElementById(id); };
   const cap = function(s){ return s.charAt(0).toUpperCase() + s.slice(1); };
   const isoDate = function(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const dateForJsDay = function(js){
     const d = new Date(today);
-    d.setDate(today.getDate() - ((todayJs + 6) % 7) + ((js + 6) % 7));
+    d.setDate(today.getDate() - ((todayJs + 6) % 7) + ((js + 6) % 7) + 7 * weekOffset);
     return d;
   };
+  const dayDiff = function(js){ return Math.round((dateForJsDay(js) - today) / 864e5); };
 
   let sel = todayJs, plan = null, ch = null, recenter = true, prevQty = new Map();
 
   const cleanPlan = function(p, js){
     const d = DEFAULT_PLAN[js];
     const out = Object.assign({}, d, p && typeof p === 'object' ? p : {});
-    if (!CARBS[out.activity]) out.activity = d.activity;
+    if (!has(CARBS, out.activity)) out.activity = d.activity;
     if (out.moment !== 'matin' && out.moment !== 'soir') out.moment = d.moment;
     if (!DUREES.some(function(x){ return x[0] === out.duree; })) out.duree = d.duree;
     out.natation = !!out.natation;
@@ -475,9 +494,9 @@ if (typeof document !== 'undefined'){
     if (c && typeof c === 'object'){
       if (c.pdBase === 'avoine' || c.pdBase === 'pain') out.pdBase = c.pdBase;
       ['dej', 'diner'].forEach(function(s){
-        if (c[s]){
-          if (PROT[c[s].prot]) out[s].prot = c[s].prot;
-          if (STARCH[c[s].starch]) out[s].starch = c[s].starch;
+        if (c[s] && typeof c[s] === 'object'){
+          if (has(PROT, c[s].prot)) out[s].prot = c[s].prot;
+          if (has(STARCH, c[s].starch)) out[s].starch = c[s].starch;
         }
       });
     }
@@ -486,6 +505,18 @@ if (typeof document !== 'undefined'){
   const loadSel = function(){ plan = cleanPlan(store.plans[isoDate(dateForJsDay(sel))], sel); ch = cleanCh(store.choices[sel], sel); };
   const savePlan = function(){ store.plans[isoDate(dateForJsDay(sel))] = plan; persist(); };
   const saveCh = function(){ store.choices[sel] = ch; persist(); };
+  /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */
+  const clearOtherLibre = function(){
+    const moved = [];
+    DAYS.forEach(function(x){
+      if (x.js === sel) return;
+      const iso = isoDate(dateForJsDay(x.js));
+      const p = cleanPlan(store.plans[iso], x.js);
+      if (p.libre){ p.libre = false; store.plans[iso] = p; moved.push(x.long); }
+    });
+    if (!moved.length) return '';
+    return 'Un seul repas libre par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' + moved.join(' et de ') + ' sont retirés.' : 'celui de ' + moved[0] + ' est retiré.');
+  };
 
   const pickRow = function(key, label, opts, current, action, slot){
     return '<div class="pick">' + (label ? '<p class="pick-l">' + label + '</p>' : '') +
@@ -522,14 +553,24 @@ if (typeof document !== 'undefined'){
   };
 
   const renderControls = function(){
-    const d = dateForJsDay(sel);
+    const d = dateForJsDay(sel), diff = dayDiff(sel);
     const lab = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
     const dayName = DAYS.find(function(x){ return x.js === sel; }).long;
-    $('date').textContent = sel === todayJs ? 'Aujourd’hui, ' + lab : cap(lab);
-    $('title').textContent = sel === todayJs ? 'Qu’est-ce que tu fais aujourd’hui' + NB + '?' : 'Qu’est-ce que tu fais ' + dayName + NB + '?';
+    const rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
+    $('date').textContent = rel ? rel + ', ' + lab : cap(lab) + (weekOffset > 0 ? ', semaine prochaine' : weekOffset < 0 ? ', semaine dernière' : '');
+    let q;
+    if (diff === 0) q = 'Qu’est-ce que tu fais aujourd’hui';
+    else if (diff === 1) q = 'Qu’est-ce que tu fais demain';
+    else if (diff === -1) q = 'Qu’est-ce que tu as fait hier';
+    else if (diff < 0) q = 'Qu’est-ce que tu as fait ' + dayName + (weekOffset < 0 ? ' dernier' : '');
+    else q = 'Qu’est-ce que tu fais ' + dayName + (weekOffset > 0 ? ' prochain' : '');
+    $('title').textContent = q + NB + '?';
+    $('wk-prev').disabled = weekOffset <= -1;
+    $('wk-next').disabled = weekOffset >= 1;
     $('week').innerHTML = DAYS.map(function(x){
+      const isToday = weekOffset === 0 && x.js === todayJs;
       return '<button type="button" data-action="day" data-value="' + x.js + '" aria-pressed="' + (x.js === sel) + '" aria-label="' + cap(x.long) +
-        (x.js === todayJs ? ', aujourd’hui' : '') + '"' + (x.js === todayJs ? ' class="is-today"' : '') + '>' + x.short + '</button>';
+        (isToday ? ', aujourd’hui' : '') + '"' + (isToday ? ' class="is-today"' : '') + '>' + x.short + '</button>';
     }).join('');
     $('acts').innerHTML = ACTS.map(function(a){
       return '<button type="button" data-action="activity" data-value="' + a.id + '" aria-pressed="' + (plan.activity === a.id) + '"' +
@@ -578,24 +619,49 @@ if (typeof document !== 'undefined'){
     const b = e.target.closest('[data-action]');
     if (!b) return;
     const v = b.dataset.value;
+    let msg = '';
     switch (b.dataset.action){
       case 'day': sel = parseInt(v, 10); loadSel(); recenter = true; prevQty = new Map(); break;
+      case 'week':
+        weekOffset = Math.max(-1, Math.min(1, weekOffset + parseInt(v, 10)));
+        loadSel(); recenter = true; prevQty = new Map();
+        break;
       case 'activity': plan.activity = v; savePlan(); break;
       case 'moment': plan.moment = v; savePlan(); break;
       case 'duree': plan.duree = parseFloat(v); savePlan(); break;
-      case 'toggle': plan[b.dataset.key] = !plan[b.dataset.key]; savePlan(); break;
+      case 'toggle':
+        plan[b.dataset.key] = !plan[b.dataset.key];
+        if (b.dataset.key === 'libre' && plan.libre) msg = clearOtherLibre();
+        savePlan();
+        break;
       case 'pd': ch.pdBase = v; saveCh(); break;
       case 'prot': ch[b.dataset.slot].prot = v; saveCh(); break;
       case 'starch': ch[b.dataset.slot].starch = v; saveCh(); break;
       case 'reset':
         delete store.plans[isoDate(dateForJsDay(sel))];
         delete store.choices[sel];
-        persist(); loadSel(); recenter = true; prevQty = new Map();
+        loadSel();
+        if (plan.libre) msg = clearOtherLibre();
+        persist(); recenter = true; prevQty = new Map();
         break;
       default: return;
     }
+    $('hint').textContent = msg;
     render();
   });
+
+  /* Si la page reste ouverte d'un jour à l'autre, revenir sur le nouveau jour */
+  const refreshToday = function(){
+    const n = noon();
+    if (isoDate(n) === isoDate(today)) return;
+    today = n; todayJs = n.getDay(); weekOffset = 0; sel = todayJs;
+    purge(); loadSel(); recenter = true; prevQty = new Map();
+    $('hint').textContent = '';
+    render();
+  };
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') refreshToday(); });
+  window.addEventListener('focus', refreshToday);
+  window.addEventListener('pageshow', refreshToday);
 
   loadSel();
   render();

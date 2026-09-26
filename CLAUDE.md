@@ -9,7 +9,7 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Protéines ~150 g/jour (≈ 2 g/kg), jamais sous 140 g. Lipides ~60 g, jamais sous 55 g. Glucides périodisés selon l'activité.
 - Repères kcal : repos ~1 800 ; muscu ~2 000 ; course (~1 h) ~2 300 ; muscu + course ~2 450 ; sortie longue 1h30+ de ~2 600 à ~2 900 selon la durée (ravito compris).
 - Planning habituel : muscu lundi et vendredi (soir), course mardi et jeudi (soir) et dimanche (matin), vélo long samedi matin, mercredi repos. Natation parfois entre midi et deux (en pause pour l'instant).
-- Un repas libre par semaine, le samedi soir par défaut.
+- Un repas libre par semaine, le samedi soir par défaut. L'activer un autre jour retire celui déjà prévu dans la même semaine (lundi → dimanche), avec un message.
 
 ## Architecture
 
@@ -40,7 +40,8 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 ## Stockage
 
 - `localStorage`, clé `repas-du-jour:v1` : `{ plans: { 'AAAA-MM-JJ': plan }, choices: { getDay: choix } }`. L'activité est mémorisée par date, les choix de protéines et féculents par jour de la semaine. Plans purgés après 21 jours.
-- Toujours en try/catch : l'appli doit fonctionner sans stockage ou avec un stockage corrompu.
+- Toujours en try/catch : l'appli doit fonctionner sans stockage ou avec un stockage corrompu (JSON invalide, valeur qui n'est pas un objet). Les identifiants relus (activité, protéine, féculent) sont validés avec `has()` (propriété propre), jamais avec `OBJ[clé]` qui laisserait passer `constructor` ou `__proto__`.
+- Navigation : semaine en cours, précédente et suivante (flèches). Le titre et la date sont relatifs (hier, aujourd'hui, demain, « lundi prochain »). Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
 - Si le format change, passer à une nouvelle clé (v2) ou migrer, sans casser les données existantes.
 
 ## Design
@@ -56,3 +57,4 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 
 - Voir l'appli : ouvrir `index.html` dans un navigateur.
 - Tests : `npm install` puis `npm test` (moteur de calcul + simulation de l'interface avec jsdom). Les lancer après chaque modification.
+- Le test d'interface tourne à date fixe (mercredi 7 octobre 2026, horloge simulée) : il ne doit jamais dépendre du jour réel.
