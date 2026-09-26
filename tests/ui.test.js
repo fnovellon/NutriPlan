@@ -5,7 +5,7 @@ const assert = require('assert');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const KEY = 'repas-du-jour:v1';
+const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1';
 const errors = [];
 const vc = new VirtualConsole();
 vc.on('jsdomError', e => errors.push((e && e.message) || String(e)));
@@ -35,40 +35,53 @@ const tools = dom => {
     setSwitch: (k, on) => { const b = $(`[data-action="toggle"][data-key="${k}"]`); if ((b.getAttribute('aria-checked') === 'true') !== on) b.click(); },
     starchLine: slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].map(li => li.textContent)
       .find(t => /riz basmati|pâtes|pommes de terre|patate douce|quinoa|semoule|boulgour|lentilles|gnocchis/.test(t)),
-    pressed: action => $(`[data-action="${action}"][aria-pressed="true"]`).dataset.value
+    pressed: action => $(`[data-action="${action}"][aria-pressed="true"]`).dataset.value,
+    sess: () => [...d.querySelectorAll('#sess .srow .s-t')].map(e => e.childNodes[0].textContent),
+    add: size => click(`[data-action="add"][data-value="${size}"]`),
+    at: (i, m) => click(`[data-action="smoment"][data-index="${i}"][data-value="${m}"]`),
+    rm: i => click(`[data-action="rm"][data-index="${i}"]`)
   };
 };
 
 const dom = open();
-const { d, $, click, stored, sections, setSwitch, starchLine, pressed } = tools(dom);
+const { d, $, click, stored, sections, setSwitch, starchLine, pressed, sess, add, at, rm } = tools(dom);
 
 assert(/kcal/.test($('#sum-text').textContent), 'résumé absent au chargement');
 assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
 assert(/aujourd’hui/.test($('#title').textContent), 'titre du jour');
-assert.strictEqual(pressed('activity'), 'repos', 'le mercredi est un jour de repos');
+assert.deepStrictEqual(sess(), [], 'le jour part sans séance');
+assert(/Repos/.test($('#sess').textContent), 'repos non affiché');
 
-// Activités et moment de la séance (choix fixés pour que le skyr du soir ne s'ajoute pas)
+// Séances du jour : ajout, moment, retrait (choix fixés pour que le skyr du soir ne s'ajoute pas)
 click('[data-action="prot"][data-slot="dej"][data-value="poulet"]');
 click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
 click('[data-action="prot"][data-slot="diner"][data-value="poisson"]');
 click('[data-action="starch"][data-slot="diner"][data-value="pdt"]');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner']);
-assert(/shaker de protéines/.test(d.querySelector('[aria-labelledby="h-co"]').textContent), 'shaker dans la collation un jour de repos');
-click('[data-action="activity"][data-value="muscu"]');
-click('[data-action="moment"][data-value="soir"]');
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Séance de muscu', 'Shaker', 'Dîner']);
-click('[data-action="moment"][data-value="matin"]');
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Séance de muscu', 'Collation', 'Déjeuner', 'Dîner']);
-click('[data-action="activity"][data-value="longue"]');
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Sortie longue', 'Shaker', 'Déjeuner', 'Goûter', 'Dîner']);
-assert(!$('#row-duree').hidden && $('#row-moment').hidden && $('#sw-nat').hidden, 'options de la sortie longue');
-
-// Natation
-click('[data-action="activity"][data-value="course"]');
-click('[data-action="moment"][data-value="soir"]');
-setSwitch('natation', true);
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Avant la natation', 'Natation', 'Déjeuner', 'Collation', 'Course', 'Shaker', 'Dîner']);
-setSwitch('natation', false);
+assert(/shaker de protéines/.test(d.querySelector('[aria-labelledby="h-co"]').textContent), 'shaker dans la collation un jour sans séance');
+add('petite');
+assert.deepStrictEqual(sess(), ['Petite séance']);
+assert.strictEqual(pressed('smoment'), 'soir', 'nouvelle séance le soir par défaut');
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Petite séance', 'Shaker', 'Dîner']);
+at(0, 'matin');
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Petite séance', 'Collation', 'Déjeuner', 'Dîner']);
+add('moyenne');
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Petite séance', 'Déjeuner', 'Collation', 'Séance moyenne', 'Shaker', 'Dîner']);
+add('longue');
+assert.deepStrictEqual(sess(), ['Petite séance', 'Séance moyenne', 'Sortie longue']);
+assert($('[data-action="add"][data-value="longue"]').disabled && !$('[data-action="add"][data-value="petite"]').disabled, 'une seule sortie longue');
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Petite séance', 'Sortie longue', 'Déjeuner', 'Goûter', 'Séance moyenne', 'Shaker', 'Dîner']);
+click('[data-action="sduree"][data-index="2"][data-value="3"]');
+assert(/^180\sg/.test($('#day .band .qty').textContent), 'ravito de la sortie longue de 3 h');
+add('petite');
+assert([...d.querySelectorAll('[data-action="add"]')].every(b => b.disabled), 'quatre séances au plus');
+rm(3); rm(2); rm(1); rm(0);
+assert.deepStrictEqual(sess(), [], 'séances non retirées');
+add('petite'); at(0, 'midi');
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Avant la séance', 'Petite séance', 'Shaker', 'Déjeuner', 'Collation', 'Dîner']);
+rm(0);
+add('moyenne');
+assert.deepStrictEqual(stored().plans['2026-10-07'].seances, [{ taille: 'moyenne', moment: 'soir' }], 'séances enregistrées');
 
 // Repas libre : un seul par semaine, celui du samedi (par défaut) est retiré
 setSwitch('libre', true);
@@ -125,7 +138,7 @@ assert(/demain/.test($('#title').textContent), 'titre de demain');
 click('[data-action="day"][data-value="1"]');
 assert(/as fait lundi/.test($('#title').textContent), 'titre d’un jour passé');
 click('[data-action="day"][data-value="3"]');
-assert.strictEqual(pressed('activity'), 'course', 'activité du jour perdue');
+assert.deepStrictEqual(sess(), ['Séance moyenne'], 'séances du jour perdues');
 
 // Semaine suivante : dates, titre, bornes, enregistrement à la bonne date
 assert($('#wk-prev').disabled === false && $('#wk-next').disabled === false, 'flèches de semaine');
@@ -134,14 +147,14 @@ assert.strictEqual($('#date').textContent, 'Mercredi 14 octobre, semaine prochai
 assert(/mercredi prochain/.test($('#title').textContent), 'titre de la semaine prochaine');
 assert($('#wk-next').disabled, 'pas plus loin que la semaine prochaine');
 assert(!d.querySelector('#week .is-today'), 'aujourd’hui marqué dans une autre semaine');
-assert.strictEqual(pressed('activity'), 'repos', 'plan par défaut la semaine prochaine');
-click('[data-action="activity"][data-value="muscu"]');
-assert.strictEqual(stored().plans['2026-10-14'].activity, 'muscu', 'plan de la semaine prochaine');
+assert.deepStrictEqual(sess(), [], 'jour sans séance la semaine prochaine');
+add('petite');
+assert.strictEqual(stored().plans['2026-10-14'].seances[0].taille, 'petite', 'plan de la semaine prochaine');
 click('#wk-prev');
 click('#wk-prev');
 assert(/semaine dernière/.test($('#date').textContent) && $('#wk-prev').disabled, 'semaine dernière');
 click('#wk-next');
-assert.strictEqual(pressed('activity'), 'course', 'retour sur la semaine en cours');
+assert.deepStrictEqual(sess(), ['Séance moyenne'], 'retour sur la semaine en cours');
 
 // Revenir au plan de base efface le jour (le samedi garde sa modification)
 click('[data-action="reset"]');
@@ -157,36 +170,43 @@ assert.strictEqual($('#date').textContent, 'Aujourd’hui, jeudi 8 octobre', 'da
 assert.strictEqual(pressed('day'), '4', 'jour sélectionné non mis à jour');
 now = new Date(2026, 9, 7, 9, 0, 0).getTime();
 
-// Données v1 existantes : reprises telles quelles, anciennes dates purgées
-const seeded = open(ls => ls.setItem(KEY, JSON.stringify({
+// Données v1 (activité par sport) : converties en séances, v1 laissée intacte, anciennes dates purgées
+const oldData = JSON.stringify({
   plans: {
     '2026-10-07': { activity: 'course', moment: 'matin', duree: 2, natation: false, libre: false },
+    '2026-10-06': { activity: 'double', moment: 'soir', duree: 2, natation: true, libre: false },
     '2026-09-30': { activity: 'muscu', moment: 'soir', duree: 2, natation: false, libre: false },
     '2026-09-01': { activity: 'muscu', moment: 'soir', duree: 2, natation: false, libre: false }
   },
   choices: { 3: { pdBase: 'pain', dej: { prot: 'thon', starch: 'semoule' }, diner: { prot: 'saumon', starch: 'riz' } } }
-})));
+});
+const seeded = open(ls => ls.setItem(OLD_KEY, oldData));
 const s2 = tools(seeded);
-assert.strictEqual(s2.pressed('activity'), 'course', 'plan v1 perdu');
-assert.strictEqual(s2.pressed('moment'), 'matin', 'moment v1 perdu');
+assert.deepStrictEqual(s2.sess(), ['Séance moyenne'], 'course v1 non convertie');
+assert.strictEqual(s2.pressed('smoment'), 'matin', 'moment v1 perdu');
 assert.strictEqual(s2.$('[data-action="prot"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'thon', 'choix v1 perdus');
 assert.strictEqual(s2.$('[data-action="pd"][aria-pressed="true"]').dataset.value, 'pain', 'petit-déjeuner v1 perdu');
-s2.click('[data-action="moment"][data-value="soir"]');
-assert.deepStrictEqual(Object.keys(s2.stored().plans).sort(), ['2026-09-30', '2026-10-07'], 'purge des plans de plus de 21 jours');
+const conv = s2.stored();
+assert.deepStrictEqual(Object.keys(conv.plans).sort(), ['2026-09-30', '2026-10-06', '2026-10-07'], 'purge des plans de plus de 21 jours');
+assert.deepStrictEqual(conv.plans['2026-10-06'].seances, [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'soir' }, { taille: 'petite', moment: 'midi' }], 'muscu + course + natation');
+assert.strictEqual(seeded.window.localStorage.getItem(OLD_KEY), oldData, 'la v1 a été modifiée');
+// La v2 existe : la v1 n'est plus relue
+const both = tools(open(ls => { ls.setItem(OLD_KEY, oldData); ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { seances: [{ taille: 'petite', moment: 'midi' }], libre: false } }, choices: {} })); }));
+assert.deepStrictEqual(both.sess(), ['Petite séance'], 'la v1 écrase la v2');
 
 // Stockage corrompu ou piégé : la page s'affiche avec les valeurs par défaut
 for (const bad of ['{pas du json', '5', 'null', '[1,2]', JSON.stringify({
-  plans: { '2026-10-07': { activity: 'constructor', moment: 'toString' } },
+  plans: { '2026-10-07': { seances: [{ taille: 'constructor', moment: 'toString' }, 'x'], libre: 'oui' } },
   choices: { 3: { pdBase: 'x', dej: { prot: '__proto__', starch: 'constructor' }, diner: 'poulet' } }
 })]) {
   const b = tools(open(ls => ls.setItem(KEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le stockage : ' + bad);
-  assert.strictEqual(b.pressed('activity'), 'repos', 'valeurs par défaut non appliquées : ' + bad);
+  assert.deepStrictEqual(b.sess(), [], 'valeurs par défaut non appliquées : ' + bad);
 }
 
 // Profil et déficit : clé séparée, la clé v1 n'est pas touchée
 const PKEY = 'repas-du-jour:profil:v1';
-const v1 = JSON.stringify({ plans: { '2026-10-07': { activity: 'repos', moment: 'soir', duree: 2, natation: false, libre: false } }, choices: {} });
+const v1 = JSON.stringify({ plans: { '2026-10-07': { seances: [], libre: false } }, choices: {} });
 const pdom = open(ls => ls.setItem(KEY, v1));
 const p = tools(pdom);
 const pw = pdom.window;
@@ -198,8 +218,8 @@ const note = () => p.$('#sum-note').textContent;
 
 assert(/Complète ton profil/.test(note()) && p.$('#needs-hint').textContent, 'profil à compléter non signalé');
 assert(/déficit de 15\s%/.test(p.$('#needs-sum').textContent), 'résumé des besoins');
-assert(/Dépense estimée\s:\s2\s330\skcal, moins 420\skcal de déficit/.test(note()), 'dépense du jour de repos : ' + note());
-assert.strictEqual(kcal(), 1900, 'objectif du jour de repos');
+assert(/Dépense estimée\s:\s2\s330\skcal, moins 350\skcal de déficit/.test(note()), 'dépense du jour sans séance : ' + note());
+assert(Math.abs(kcal() - 1980) <= 30, 'objectif du jour sans séance : ' + kcal());
 p.click('[data-action="needs"]');
 assert(p.$('#besoins').open, 'le lien Régler n’ouvre pas les besoins');
 
@@ -266,11 +286,20 @@ assert(/25\sg/.test(p.$('#warn-shaker').textContent), 'protéines au-delà de kc
 type('shakerProt', 20);
 assert(!p.$('#warn-shaker').textContent, 'alerte du shaker non effacée');
 
-p.click('[data-action="activity"][data-value="longue"]');
+// Calories des séances : placeholder d'après le poids, valeur saisie reprise
+assert.strictEqual(field('kcalMoyenne').placeholder, String(Math.round(6.3 * 70 / 10) * 10), 'calories par défaut d’une moyenne');
+p.add('moyenne');
+const needMoy = () => Number(note().match(/Dépense estimée\s:\s([\d\s]+)kcal/)[1].replace(/\D/g, ''));
+const beforeMoy = needMoy();
+type('kcalMoyenne', 700);
+assert(prof().kcalMoyenne === 700 && needMoy() > beforeMoy, 'calories de la moyenne non prises en compte');
+p.rm(0);
+
+p.add('longue');
 type('ravito', 45);
 assert(/^90\sg/.test(p.$('#day .band .qty').textContent), 'ravito réglé non appliqué : ' + p.$('#day .band .qty').textContent);
 assert.deepStrictEqual(JSON.parse(pw.localStorage.getItem(KEY)).choices, {}, 'la clé v1 a changé de forme');
-assert.strictEqual(JSON.parse(pw.localStorage.getItem(KEY)).plans['2026-10-07'].activity, 'longue', 'plan v1 non enregistré');
+assert.strictEqual(JSON.parse(pw.localStorage.getItem(KEY)).plans['2026-10-07'].seances[0].taille, 'longue', 'plan non enregistré');
 
 // Version affichée en bas de page
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version;
@@ -286,7 +315,7 @@ const legacy = x => tools(open(ls => ls.setItem(PKEY, JSON.stringify(x))));
 const lm = legacy({ age: 30, taille: 168, poids: 71, repos: 2500 });
 assert(/saisie/.test(lm.$('#needs-sum').textContent) && lm.$('[data-action="prof"][data-value="manuel"]').getAttribute('aria-pressed') === 'true', 'ancien profil manuel');
 const la = legacy({ age: 30, taille: 168, poids: 71, repos: 1000, deficit: 0 });
-assert(/automatique/.test(la.$('#needs-sum').textContent) && /2\s750/.test(la.$('#needs-sum').textContent), 'ancien profil à 1 000 kcal : ' + la.$('#needs-sum').textContent);
+assert(/automatique/.test(la.$('#needs-sum').textContent) && /2\s260/.test(la.$('#needs-sum').textContent), 'ancien profil à 1 000 kcal : ' + la.$('#needs-sum').textContent);
 for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);

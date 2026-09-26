@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 2.0.0, 26 septembre 2026
+
+- Fini les activités par sport : chaque jour, tu ajoutes tes séances par taille, **petite** (muscu, footing ou vélo court), **moyenne** (sortie normale, ≈ 7 km) ou **longue** (1h30 et plus), et tu choisis quand (matin, midi, soir). Jusqu'à 4 séances par jour.
+- Calories de chaque taille calculées d'après ton poids (≈ 290, 450 et 500 kcal par heure), réglables dans « Tes besoins ».
+- La journée se construit autour de tes séances : collation avant la séance du soir, shaker juste après la dernière, féculents surtout au repas qui suit.
+- Plus de semaine type : chaque jour part sans séance (seul le repas libre du samedi reste prévu). Le déficit est maintenant un % de ta dépense d'un jour sans sport, retiré chaque jour, séances toujours couvertes.
+- Tes jours déjà enregistrés sont convertis (muscu → petite, course → moyenne, muscu + course → les deux, sortie longue → longue, natation → petite à midi). L'ancien stockage est gardé tel quel.
+
 ## 1.6.0, 26 septembre 2026
 
 - Shaker de protéines tous les jours : juste après la séance (après la sortie longue, dans la collation après une séance du matin), dans la collation de l'après-midi les jours de repos.

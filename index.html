@@ -58,13 +58,21 @@ button:focus-visible{outline:2px solid var(--beet);outline-offset:2px;}
 .week button.is-today::after{content:"";position:absolute;left:50%;bottom:5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--beet);}
 
 h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:clamp(26px,7.4vw,34px);line-height:1.06;letter-spacing:-0.015em;}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
 .acts button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:62px;padding:12px 14px 13px;text-align:left;border:1.5px solid var(--line);border-radius:14px;background:transparent;}
-.acts button.wide{grid-column:1/-1;}
 .a-t{font-family:var(--sans);font-weight:700;font-stretch:108%;font-size:18px;line-height:1.15;}
 .a-s{font-size:14px;line-height:1.3;color:var(--muted);}
-.acts button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
-.acts button[aria-pressed="true"] .a-s{color:inherit;opacity:.75;}
+.acts button:disabled{opacity:.4;cursor:default;}
+.acts button{padding:11px 10px 12px;}
+.acts .a-t{font-size:16px;font-stretch:100%;white-space:nowrap;}
+.acts .a-s{font-size:13.5px;}
+.sess{margin:0;}
+.sess .rest-t{margin:0;font-size:17px;color:var(--muted);font-style:italic;}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:10px 0;border-bottom:1px solid var(--line);}
+.srow:first-child{border-top:1px solid var(--line);}
+.srow .seg{grid-column:1/-1;justify-self:start;}
+.s-t{font-family:var(--sans);font-weight:700;font-stretch:108%;font-size:18px;line-height:1.2;}
+.rm{width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;font-family:var(--sans);font-size:20px;line-height:1;}
 
 .opts{margin-top:18px;}
 .opt-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 14px;}
@@ -191,27 +199,15 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
   <div class="week" id="week" role="group" aria-label="Jour de la semaine"></div>
 
   <h1 id="title">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
-  <div class="acts" id="acts" role="group" aria-label="Activité du jour"></div>
+  <div class="sess" id="sess"></div>
+  <div class="acts" id="acts" role="group" aria-label="Ajouter une séance">
+    <button type="button" data-action="add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
+    <button type="button" data-action="add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
+    <button type="button" data-action="add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
+  </div>
 
   <div class="opts">
-    <div class="opt-row" id="row-moment">
-      <span class="lbl" id="lbl-moment">Séance</span>
-      <div class="seg" role="group" aria-labelledby="lbl-moment">
-        <button type="button" data-action="moment" data-value="matin">Le matin</button>
-        <button type="button" data-action="moment" data-value="soir">Le soir</button>
-      </div>
-    </div>
-    <div class="opt-row" id="row-duree">
-      <span class="lbl" id="lbl-duree">Durée</span>
-      <div class="seg" role="group" aria-labelledby="lbl-duree">
-        <button type="button" data-action="duree" data-value="1.5">1h30</button>
-        <button type="button" data-action="duree" data-value="2">2&nbsp;h</button>
-        <button type="button" data-action="duree" data-value="2.5">2h30</button>
-        <button type="button" data-action="duree" data-value="3">3&nbsp;h et +</button>
-      </div>
-    </div>
     <div class="switches">
-      <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="natation" id="sw-nat"><span>Natation entre midi et deux</span><span class="knob" aria-hidden="true"></span></button>
       <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="libre" id="sw-lib"><span>Repas libre ce soir</span><span class="knob" aria-hidden="true"></span></button>
     </div>
     <p class="hint" id="hint" role="status"></p>
@@ -277,6 +273,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
         <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
       </div>
       <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
+      <p class="blk">Tes séances</p>
+      <div class="fields">
+        <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
+        <label class="field"><span>Moyenne</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalMoyenne" min="150" max="1500" step="10"><span class="unit">kcal</span></span></label>
+        <label class="field"><span>Longue, par heure</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalLongueH" min="200" max="1200" step="10"><span class="unit">kcal</span></span></label>
+      </div>
+      <p class="calc" id="calc-seances"></p>
       <p class="blk">Shaker de protéines</p>
       <div class="fields">
         <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-key="shakerKcal" min="100" max="160" step="1"><span class="unit">kcal</span></span></label>
@@ -303,7 +306,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '2.0.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -394,35 +397,51 @@ const IDEAS = {
   thon:{riz:'salade de riz au thon', pates:'pâtes au thon et aux tomates', pdt:'salade niçoise', patate:'salade de patate douce au thon', quinoa:'salade quinoa-thon', semoule:'taboulé au thon', boulgour:'taboulé de boulgour au thon', lentilles:'salade de lentilles au thon', gnocchis:'gnocchis au thon et aux tomates'}
 };
 
-/* Répartition des féculents entre déjeuner et dîner selon l'activité (poids relatifs) */
-const SPLIT = {
-  repos:{dej:45, diner:30}, muscu:{dej:55, diner:45}, course:{dej:55, diner:85},
-  double:{dej:55, diner:85}, longue:{dej:85, diner:60}
+/* Séances par taille. Coût net par défaut = net × poids (MET·h nets ; pour la longue, par heure), réglable dans le profil. */
+const SIZES = {
+  petite:{band:'Petite séance', net:4},
+  moyenne:{band:'Séance moyenne', net:6.3},
+  longue:{band:'Sortie longue', net:7}
 };
-const ACTS = [
-  {id:'repos', label:'Repos', sub:'pas de séance'},
-  {id:'muscu', label:'Muscu', sub:'séance de force'},
-  {id:'course', label:'Course', sub:'environ 1' + NB + 'h'},
-  {id:'double', label:'Muscu + course', sub:'le même jour'},
-  {id:'longue', label:'Sortie longue', sub:'vélo ou course, 1h30 et plus', wide:true}
-];
-const BAND = {muscu:'Séance de muscu', course:'Course', double:'Muscu + course', longue:'Sortie longue'};
+const MOMENTS = [['matin', 'Matin'], ['midi', 'Midi'], ['soir', 'Soir']];
+const MOMENT_RANK = {matin:0, midi:1, soir:2};
+const MAX_SEANCES = 4;
 const DUREES = [[1.5,'1h30'],[2,'2' + NB + 'h'],[2.5,'2h30'],[3,'3' + NB + 'h et +']];
 const DAYS = [
   {js:1, short:'L', long:'lundi'}, {js:2, short:'M', long:'mardi'}, {js:3, short:'M', long:'mercredi'},
   {js:4, short:'J', long:'jeudi'}, {js:5, short:'V', long:'vendredi'}, {js:6, short:'S', long:'samedi'},
   {js:0, short:'D', long:'dimanche'}
 ];
-/* Planning habituel : muscu lundi et vendredi, course mardi, jeudi et dimanche, vélo samedi */
-const DEFAULT_PLAN = {
-  0:{activity:'course', moment:'matin', duree:2, natation:false, libre:false},
-  1:{activity:'muscu', moment:'soir', duree:2, natation:false, libre:false},
-  2:{activity:'course', moment:'soir', duree:2, natation:false, libre:false},
-  3:{activity:'repos', moment:'soir', duree:2, natation:false, libre:false},
-  4:{activity:'course', moment:'soir', duree:2, natation:false, libre:false},
-  5:{activity:'muscu', moment:'soir', duree:2, natation:false, libre:false},
-  6:{activity:'longue', moment:'matin', duree:2, natation:false, libre:true}
-};
+/* Chaque jour part sans séance ; seul le repas libre du samedi est prévu par défaut */
+function emptyPlan(js){ return {seances:[], libre:js === 6}; }
+/* Plan d'un jour relu du stockage : séances valides (au plus 4, une seule longue, toujours le matin) */
+function cleanPlan(p, js){
+  const out = emptyPlan(js);
+  if (!p || typeof p !== 'object') return out;
+  if (has(p, 'libre')) out.libre = !!p.libre;
+  let long = false;
+  (Array.isArray(p.seances) ? p.seances : []).forEach(function(x){
+    if (!x || typeof x !== 'object' || !has(SIZES, x.taille) || out.seances.length >= MAX_SEANCES) return;
+    if (x.taille === 'longue'){
+      if (long) return;
+      long = true;
+      out.seances.push({taille:'longue', moment:'matin', duree:DUREES.some(function(d){ return d[0] === x.duree; }) ? x.duree : 2});
+    } else {
+      out.seances.push({taille:x.taille, moment:has(MOMENT_RANK, x.moment) ? x.moment : 'soir'});
+    }
+  });
+  return out;
+}
+/* Plan enregistré avant la 2.0.0 (activité par sport) converti en séances */
+function migratePlan(p){
+  if (!p || typeof p !== 'object') return null;
+  const m = p.moment === 'matin' ? 'matin' : 'soir', a = p.activity, list = [];
+  if (a === 'muscu' || a === 'double') list.push({taille:'petite', moment:m});
+  if (a === 'course' || a === 'double') list.push({taille:'moyenne', moment:m});
+  if (a === 'longue') list.push({taille:'longue', moment:'matin', duree:p.duree});
+  if (p.natation && a !== 'longue') list.push({taille:'petite', moment:'midi'});
+  return {seances:list, libre:!!p.libre};
+}
 const DEFAULT_CHOICES = {
   0:{pdBase:'pain', dej:{prot:'poulet', starch:'pdt'}, diner:{prot:'oeufs', starch:'riz'}},
   1:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'crevettes', starch:'quinoa'}},
@@ -434,12 +453,10 @@ const DEFAULT_CHOICES = {
 };
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shakerKcal:120, shakerProt:24};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40]};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
-/* Séances : MET du Compendium des activités physiques (Ainsworth 2011) et durée en heures */
-const SESSION = {muscu:{met:5, h:1}, course:{met:9.8, h:1}, velo:{met:8}, natation:{met:7, h:0.75}};
 const KCAL_PER_KG = 7700;
 
 function profileFields(o){
@@ -469,31 +486,25 @@ function bmr(p){
    En manuel sans dépense valide, le calcul prend le relais. */
 function restSource(p){ return p.mode === 'manuel' && p.repos !== null ? 'saisie' : 'calcul'; }
 function restNeed(p){ return restSource(p) === 'saisie' ? p.repos : bmr(p) * NEAT[p.neat]; }
-/* Coût net d'une séance : (MET - 1) x poids x durée, le repos étant déjà compté */
-function sessionCost(plan, p){
-  const net = function(s, h){ return (s.met - 1) * p.poids * h; };
-  const a = plan.activity;
-  let k = 0;
-  if (a === 'muscu' || a === 'double') k += net(SESSION.muscu, SESSION.muscu.h);
-  if (a === 'course' || a === 'double') k += net(SESSION.course, SESSION.course.h);
-  if (a === 'longue') k += net(SESSION.velo, plan.duree);
-  if (plan.natation && a !== 'longue') k += net(SESSION.natation, SESSION.natation.h);
-  return k;
+/* Coût net d'une séance (le repos est déjà compté) : valeur du profil, sinon net × poids.
+   Petite ≈ 1 h de muscu (5 MET), moyenne ≈ 7 km de course (≈ 0,9 kcal/kg/km), longue ≈ vélo d'endurance (8 MET) par heure. */
+function seanceCost(x, p){
+  if (x.taille === 'petite') return p.kcalPetite !== null ? p.kcalPetite : SIZES.petite.net * p.poids;
+  if (x.taille === 'moyenne') return p.kcalMoyenne !== null ? p.kcalMoyenne : SIZES.moyenne.net * p.poids;
+  return (p.kcalLongueH !== null ? p.kcalLongueH : SIZES.longue.net * p.poids) * x.duree;
 }
-/* Le déficit est un % de la dépense moyenne de la semaine type, retiré chaque jour : les séances restent couvertes */
+function dayCost(plan, p){ return plan.seances.reduce(function(a, x){ return a + seanceCost(x, p); }, 0); }
+/* Le déficit est un % de la dépense d'un jour sans sport, retiré chaque jour : les séances restent couvertes */
 function energy(plan, p){
-  const rest = restNeed(p);
-  let sum = 0;
-  for (let d = 0; d < 7; d++) sum += rest + sessionCost(DEFAULT_PLAN[d], p);
-  const avg = sum / 7, deficit = avg * p.deficit / 100, cost = sessionCost(plan, p);
-  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, avg:avg, deficit:deficit,
+  const rest = restNeed(p), cost = dayCost(plan, p), deficit = rest * p.deficit / 100;
+  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, deficit:deficit,
     target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
 }
 
 function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }
 
-function breakfast(type, base){
-  const long = type === 'longue';
+/* Petit-déjeuner : menu de sortie longue si longue ; banane dès qu'il y a une séance moyenne ou longue */
+function breakfast(long, banane, base){
   const items = [];
   if (base === 'pain'){
     const g = long ? 110 : 80;
@@ -504,7 +515,7 @@ function breakfast(type, base){
   }
   const sk = long ? 150 : 250;
   items.push(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk)));
-  if (long || type === 'course' || type === 'double'){
+  if (long || banane){
     items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
   } else {
     items.push(it('fruit', grams(125), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', 125)));
@@ -513,10 +524,11 @@ function breakfast(type, base){
   items.push(it('am', grams(15), 'amandes', null, mac('amandes', 15)));
   return items;
 }
-function snackItems(type){
+/* Collation : œufs marinés, + banane s'il y a une séance, + compote s'il y a une moyenne ou une longue */
+function snackItems(seance, grosse){
   const items = [it('oe', '2', 'œufs marinés', null, unitMac('oeufMarine', 2))];
-  if (type === 'muscu' || type === 'course' || type === 'double') items.push(it('ban', '1', 'banane', null, unitMac('banane', 1)));
-  if (type === 'course' || type === 'double') items.push(it('comp', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)));
+  if (seance) items.push(it('ban', '1', 'banane', null, unitMac('banane', 1)));
+  if (grosse) items.push(it('comp', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)));
   return items;
 }
 /* Shaker de protéines, une dose à l'eau : protéines saisies (au plus kcal / 4),
@@ -568,70 +580,77 @@ function fuel(d, rate){
 function buildDay(plan, ch, profile){
   const pr = cleanProfile(profile);
   const en = energy(plan, pr);
-  const t = plan.activity;
-  const long = t === 'longue';
-  const training = t === 'muscu' || t === 'course' || t === 'double';
-  const matin = training && plan.moment === 'matin';
-  const swim = !!plan.natation && !long;
+  const S = plan.seances.slice().sort(function(a, b){ return MOMENT_RANK[a.moment] - MOMENT_RANK[b.moment]; });
+  const at = function(m){ return S.filter(function(x){ return x.moment === m; }); };
+  const matin = at('matin'), midi = at('midi'), soir = at('soir');
+  const long = S.some(function(x){ return x.taille === 'longue'; });
+  const grosse = S.some(function(x){ return x.taille !== 'petite'; });
+  const last = S.length ? S[S.length - 1].moment : null;
   const secs = [];
 
-  const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(t, ch.pdBase)};
+  const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(long, grosse, ch.pdBase)};
   if (long) pd.when = '1h30 à 2' + NB + 'h avant la sortie';
-  else if (matin) pd.when = '1h30 avant la séance';
+  else if (matin.length) pd.when = '1h30 avant la séance';
   secs.push(pd);
 
   const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej), idea:ideaFor(ch.dej)};
   const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:mainItems('diner', ch.diner), idea:ideaFor(ch.diner)};
-  let co = null;
+  let co = null, nb = 0;
 
-  function band(){
-    if (long) return {band:true, id:'band', title:BAND.longue, sub:'Vélo ou course, ' + dureeLabel(plan.duree) + '.', items:[fuel(plan.duree, pr.ravito)]};
-    return {band:true, id:'band', title:BAND[t], sub:null, items:[]};
+  /* Un bandeau par séance, à son moment */
+  const bands = function(list){
+    list.forEach(function(x){
+      const b = {band:true, id:'band' + (nb++), title:SIZES[x.taille].band, sub:null, items:[]};
+      if (x.taille === 'longue'){ b.sub = 'Vélo ou course, ' + dureeLabel(x.duree) + '.'; b.items = [fuel(x.duree, pr.ravito)]; }
+      secs.push(b);
+    });
+  };
+  /* Shaker juste après la dernière séance du jour ; sans séance, dans la collation de l'après-midi */
+  const shakerSec = function(when){ secs.push({id:'shk', title:'Shaker', when:when, items:[shakerItem(pr)]}); };
+
+  if (matin.length){
+    bands(matin);
+    if (!long && !soir.length){
+      co = {id:'co', title:'Collation', when:'juste après la séance', items:snackItems(true, grosse)};
+      if (last === 'matin') co.items.push(shakerItem(pr));
+      secs.push(co);
+    } else if (last === 'matin'){
+      shakerSec(long ? 'juste après la sortie' : 'juste après la séance');
+    }
   }
-  function pushSwim(){
-    secs.push({id:'sw', title:'Avant la natation', when:'vers 11' + NB + 'h' + NB + '30', items:[it('ban', '1', 'banane', null, unitMac('banane', 1))]});
-    secs.push({band:true, id:'bandsw', title:'Natation', sub:'Entre midi et deux', items:[]});
-    lunch.when = 'après la natation';
+  if (midi.length){
+    secs.push({id:'sw', title:'Avant la séance', when:'vers 11' + NB + 'h' + NB + '30', items:[it('ban', '1', 'banane', null, unitMac('banane', 1))]});
+    bands(midi);
+    if (last === 'midi') shakerSec('juste après la séance');
+    lunch.when = 'après la séance';
     lunch.items.push(it('comp', '1', 'compote', 'sans sucre ajouté, en dessert', unitMac('compote', 1)));
-  }
-
-  /* Shaker juste après la séance ; les jours de repos, dans la collation de l'après-midi */
-  const shakerSec = function(when){ return {id:'shk', title:'Shaker', when:when, items:[shakerItem(pr)]}; };
-  if (long){
-    secs.push(band());
-    secs.push(shakerSec('juste après la sortie'));
+  } else if (long){
     lunch.when = 'après la sortie';
-    secs.push(lunch);
-    co = {id:'co', title:'Goûter', when:null, items:gouterItems()};
+  }
+  secs.push(lunch);
+  if (!co){
+    if (long) co = {id:'co', title:'Goûter', when:null, items:gouterItems()};
+    else if (soir.length) co = {id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(true, grosse)};
+    else co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems(S.length > 0, grosse)};
+    if (!S.length) co.items.push(shakerItem(pr));
     secs.push(co);
-  } else if (matin){
-    secs.push(band());
-    co = {id:'co', title:'Collation', when:'juste après la séance', items:snackItems(t).concat([shakerItem(pr)])};
-    secs.push(co);
-    if (swim) pushSwim();
-    secs.push(lunch);
-  } else if (training){
-    if (swim) pushSwim();
-    secs.push(lunch);
-    co = {id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(t)};
-    secs.push(co);
-    secs.push(band());
-    secs.push(shakerSec('juste après la séance'));
+  }
+  if (soir.length){
+    bands(soir);
+    shakerSec('juste après la séance');
     dinner.when = 'après la séance';
-  } else {
-    if (swim) pushSwim();
-    secs.push(lunch);
-    co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems('repos').concat([shakerItem(pr)])};
-    secs.push(co);
   }
   secs.push(dinner);
 
-  /* Les féculents complètent jusqu'à l'objectif. Au-delà de leur plafond, du pain complet s'ajoute à la collation. */
-  const w = SPLIT[t];
+  /* Les féculents complètent jusqu'à l'objectif, répartis selon les séances qui précèdent chaque repas.
+     Au-delà de leur plafond, du pain complet s'ajoute à la collation. */
+  const before = matin.concat(midi).reduce(function(a, x){ return a + seanceCost(x, pr); }, 0);
+  const after = soir.reduce(function(a, x){ return a + seanceCost(x, pr); }, 0);
+  const wDej = 45 + 0.05 * before, wDiner = 30 + 0.02 * before + 0.07 * after;
   const fill = function(){
     co.items = co.items.filter(function(i){ return i.key !== 'xtra'; });
     const fixed = total(allItems(secs).filter(function(i){ return i.key !== 'st'; })).kcal;
-    const sp = splitStarch(en.target - fixed, w.dej / (w.dej + w.diner));
+    const sp = splitStarch(en.target - fixed, wDej / (wDej + wDiner));
     setStarch(lunch, starchItem(ch.dej.starch, sp.dej));
     setStarch(dinner, starchItem(ch.diner.starch, sp.diner));
     if (sp.rest >= 50){
@@ -660,13 +679,24 @@ function buildDay(plan, ch, profile){
 }
 
 if (typeof document !== 'undefined'){
-  const KEY = 'repas-du-jour:v1';
-  let store = {};
-  try { store = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { store = {}; }
-  if (!store || typeof store !== 'object' || Array.isArray(store)) store = {};
+  /* Stockage v2 (séances). Au premier chargement, la v1 (activité par sport) est convertie et laissée intacte. */
+  const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1';
+  const readObj = function(k){
+    try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch (e) { return null; }
+  };
+  const persist = function(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+  let store = readObj(KEY), migrated = false;
+  if (!store){
+    const old = readObj(OLD_KEY);
+    store = {plans:{}, choices:{}};
+    if (old){
+      if (old.plans && typeof old.plans === 'object') Object.keys(old.plans).forEach(function(k){ const m = migratePlan(old.plans[k]); if (m) store.plans[k] = m; });
+      if (old.choices && typeof old.choices === 'object' && !Array.isArray(old.choices)) store.choices = old.choices;
+      migrated = true;
+    }
+  }
   if (!store.plans || typeof store.plans !== 'object') store.plans = {};
   if (!store.choices || typeof store.choices !== 'object') store.choices = {};
-  const persist = function(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
   /* Profil : clé séparée, seules les valeurs saisies sont gardées (les autres prennent les valeurs par défaut) */
   const PKEY = 'repas-du-jour:profil:v1';
   let prof = {};
@@ -683,6 +713,7 @@ if (typeof document !== 'undefined'){
     });
   };
   purge();
+  if (migrated) persist();
 
   const $ = function(id){ return document.getElementById(id); };
   const cap = function(s){ return s.charAt(0).toUpperCase() + s.slice(1); };
@@ -696,16 +727,6 @@ if (typeof document !== 'undefined'){
 
   let sel = todayJs, plan = null, ch = null, recenter = true, prevQty = new Map();
 
-  const cleanPlan = function(p, js){
-    const d = DEFAULT_PLAN[js];
-    const out = Object.assign({}, d, p && typeof p === 'object' ? p : {});
-    if (!has(SPLIT, out.activity)) out.activity = d.activity;
-    if (out.moment !== 'matin' && out.moment !== 'soir') out.moment = d.moment;
-    if (!DUREES.some(function(x){ return x[0] === out.duree; })) out.duree = d.duree;
-    out.natation = !!out.natation;
-    out.libre = !!out.libre;
-    return out;
-  };
   const cleanCh = function(c, js){
     const d = DEFAULT_CHOICES[js];
     const out = {pdBase:d.pdBase, dej:Object.assign({}, d.dej), diner:Object.assign({}, d.diner)};
@@ -798,17 +819,20 @@ if (typeof document !== 'undefined'){
       return '<button type="button" data-action="day" data-value="' + x.js + '" aria-pressed="' + (x.js === sel) + '" aria-label="' + cap(x.long) +
         (isToday ? ', aujourd’hui' : '') + '"' + (isToday ? ' class="is-today"' : '') + '>' + x.short + '</button>';
     }).join('');
-    $('acts').innerHTML = ACTS.map(function(a){
-      return '<button type="button" data-action="activity" data-value="' + a.id + '" aria-pressed="' + (plan.activity === a.id) + '"' +
-        (a.wide ? ' class="wide"' : '') + '><span class="a-t">' + a.label + '</span><span class="a-s">' + a.sub + '</span></button>';
-    }).join('');
-    const training = plan.activity === 'muscu' || plan.activity === 'course' || plan.activity === 'double';
-    $('row-moment').hidden = !training;
-    $('row-moment').querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.value === plan.moment)); });
-    $('row-duree').hidden = plan.activity !== 'longue';
-    $('row-duree').querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed', String(parseFloat(b.dataset.value) === plan.duree)); });
-    $('sw-nat').hidden = plan.activity === 'longue';
-    $('sw-nat').setAttribute('aria-checked', String(plan.natation));
+    const segBtn = function(action, i, value, label, on){
+      return '<button type="button" data-action="' + action + '" data-index="' + i + '" data-value="' + value + '" aria-pressed="' + on + '">' + label + '</button>';
+    };
+    $('sess').innerHTML = plan.seances.length ? plan.seances.map(function(x, i){
+      const name = SIZES[x.taille].band;
+      const opts = x.taille === 'longue'
+        ? DUREES.map(function(d){ return segBtn('sduree', i, d[0], d[1], d[0] === x.duree); }).join('')
+        : MOMENTS.map(function(m){ return segBtn('smoment', i, m[0], m[1], m[0] === x.moment); }).join('');
+      return '<div class="srow"><span class="s-t">' + name + (x.taille === 'longue' ? '<span class="a-s"> le matin</span>' : '') + '</span>' +
+        '<button type="button" class="rm" data-action="rm" data-index="' + i + '" aria-label="Retirer' + NB + ': ' + name.toLowerCase() + '">×</button>' +
+        '<div class="seg" role="group" aria-label="' + (x.taille === 'longue' ? 'Durée' : 'Moment') + ' de la séance">' + opts + '</div></div>';
+    }).join('') : '<p class="rest-t">Repos, pas de séance.</p>';
+    const full = plan.seances.length >= MAX_SEANCES, hasLong = plan.seances.some(function(x){ return x.taille === 'longue'; });
+    $('acts').querySelectorAll('button').forEach(function(b){ b.disabled = full || (b.dataset.value === 'longue' && hasLong); });
     $('sw-lib').setAttribute('aria-checked', String(plan.libre));
   };
   const r10 = function(n){ return fmtInt(Math.round(n / 10) * 10); };
@@ -837,7 +861,7 @@ if (typeof document !== 'undefined'){
     document.querySelectorAll('#besoins [data-action="prof"]').forEach(function(b){ b.setAttribute('aria-pressed', String(pr[b.dataset.key] === b.dataset.value)); });
     $('besoins').querySelector('[data-key="repos"]').placeholder = String(Math.round(bmr(pr) * NEAT[pr.neat] / 10) * 10);
     document.querySelectorAll('#besoins [data-mode]').forEach(function(el){ el.hidden = el.dataset.mode !== pr.mode; });
-    $('needs-sum').textContent = r10(en.avg) + NB + 'kcal par jour en moyenne (' + (en.restSource === 'saisie' ? 'saisie' : 'automatique') + '), déficit de ' + pr.deficit + NB + '%';
+    $('needs-sum').textContent = r10(en.rest) + NB + 'kcal un jour sans sport (' + (en.restSource === 'saisie' ? 'saisie' : 'automatique') + '), déficit de ' + pr.deficit + NB + '%';
     $('mode-hint').textContent = pr.mode === 'manuel'
       ? 'Tu indiques ta dépense d’un jour sans sport, l’appli ajoute le coût de chaque séance, calculé avec ton poids.'
       : 'Ta dépense est calculée à partir de ton profil.';
@@ -852,7 +876,7 @@ if (typeof document !== 'undefined'){
         '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, calculée. Chaque séance s’y ajoute.';
     $('out-deficit').textContent = pr.deficit + NB + '%';
     $('calc-deficit').textContent = pr.deficit > 0
-      ? pr.deficit + NB + '% de ta dépense moyenne sur ta semaine type, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
+      ? pr.deficit + NB + '% de ta dépense d’un jour sans sport, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
         en.kgWeek.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}) + NB + 'kg par semaine. Tes séances restent couvertes.'
       : 'Pas de déficit' + NB + ': tu manges ce que tu dépenses.';
     const warn = [];
@@ -863,8 +887,14 @@ if (typeof document !== 'undefined'){
     }
     $('warn-deficit').textContent = warn.join(' ');
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
+    [['kcalPetite', {taille:'petite'}], ['kcalMoyenne', {taille:'moyenne'}], ['kcalLongueH', {taille:'longue', duree:1}]].forEach(function(x){
+      $('besoins').querySelector('[data-key="' + x[0] + '"]').placeholder = String(Math.round(seanceCost(x[1], Object.assign({}, pr, {kcalPetite:null, kcalMoyenne:null, kcalLongueH:null})) / 10) * 10);
+    });
+    $('calc-seances').textContent = 'Calories en plus de ta journée pour chaque séance. Par défaut, d’après ton poids' + NB + ': petite ' +
+      r10(SIZES.petite.net * pr.poids) + NB + 'kcal (1' + NB + 'h de muscu), moyenne ' + r10(SIZES.moyenne.net * pr.poids) + NB + 'kcal (≈ 7' + NB + 'km de course), longue ' +
+      r10(SIZES.longue.net * pr.poids) + NB + 'kcal par heure. Tu peux mettre les tiennes, par exemple les calories actives de ta montre pour cette séance.';
     const sm = shakerMac(pr);
-    $('calc-shaker').textContent = 'Tous les jours, juste après la séance (l’après-midi les jours de repos). Une dose à l’eau' + NB + ': ' +
+    $('calc-shaker').textContent = 'Tous les jours, juste après ta dernière séance (l’après-midi les jours de repos). Une dose à l’eau' + NB + ': ' +
       pr.shakerKcal + NB + 'kcal, ' + Math.round(sm.p) + NB + 'g de protéines, environ ' + Math.round(sm.c) + NB + 'g de glucides et ' + Math.round(sm.f) + NB + 'g de lipides.';
     $('warn-shaker').textContent = pr.shakerProt > sm.p
       ? 'Avec ' + pr.shakerKcal + NB + 'kcal, une dose ne peut pas dépasser ' + Math.round(sm.p) + NB + 'g de protéines' + NB + ': le calcul en compte ' + Math.round(sm.p) + NB + 'g.'
@@ -900,9 +930,13 @@ if (typeof document !== 'undefined'){
         weekOffset = Math.max(-1, Math.min(1, weekOffset + parseInt(v, 10)));
         loadSel(); recenter = true; prevQty = new Map();
         break;
-      case 'activity': plan.activity = v; savePlan(); break;
-      case 'moment': plan.moment = v; savePlan(); break;
-      case 'duree': plan.duree = parseFloat(v); savePlan(); break;
+      case 'add':
+        plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
+        plan = cleanPlan(plan, sel); savePlan();
+        break;
+      case 'smoment': plan.seances[+b.dataset.index].moment = v; plan = cleanPlan(plan, sel); savePlan(); break;
+      case 'sduree': plan.seances[+b.dataset.index].duree = parseFloat(v); plan = cleanPlan(plan, sel); savePlan(); break;
+      case 'rm': plan.seances.splice(+b.dataset.index, 1); savePlan(); break;
       case 'toggle':
         plan[b.dataset.key] = !plan[b.dataset.key];
         if (b.dataset.key === 'libre' && plan.libre) msg = clearOtherLibre();
