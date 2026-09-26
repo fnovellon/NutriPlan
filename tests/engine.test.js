@@ -9,50 +9,97 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {buildDay, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, CARBS};', ctx);
-const { buildDay, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, CARBS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {buildDay, energy, bmr, restNeed, sessionCost, cleanProfile, profileFields, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX};', ctx);
+const { buildDay, energy, bmr, restNeed, sessionCost, cleanProfile, profileFields, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX } = ctx.__api;
 
-// 1. Jours par défaut : totaux proches des repères
-const expected = { 1: [1950, 2250], 2: [2200, 2500], 3: [1750, 1950], 4: [2150, 2400], 5: [1900, 2150], 6: [2850, 3200], 0: [2200, 2450] };
-for (const [day, [lo, hi]] of Object.entries(expected)) {
-  const r = buildDay(DEFAULT_PLAN[day], DEFAULT_CHOICES[day]);
-  assert(r.tot.kcal >= lo && r.tot.kcal <= hi, `jour ${day} : ${Math.round(r.tot.kcal)} kcal, attendu entre ${lo} et ${hi}`);
+const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
+const day = (activity, extra) => Object.assign({ activity, moment: 'soir', duree: 2, natation: false, libre: false }, extra);
+const starchKcal = r => ['dej', 'diner'].map(id => r.secs.find(s => s.id === id).items.find(i => i.key === 'st').m.kcal);
+
+// 1. Formules de dépense (valeurs calculées à la main)
+const P = cleanProfile({});
+near(bmr(P), 1662.5, 0.01, 'Mifflin-St Jeor homme 72 kg, 178 cm, 35 ans');
+near(bmr(cleanProfile({ sexe: 'f', poids: 60, taille: 165, age: 30 })), 1320.25, 0.01, 'Mifflin-St Jeor femme');
+near(bmr(cleanProfile({ gras: 15 })), 1846.4, 0.01, 'Cunningham 72 kg à 15 % de masse grasse');
+near(restNeed(P), 2327.5, 0.01, 'dépense de repos, activité assise');
+near(restNeed(cleanProfile({ neat: 'debout' })), 1662.5 * 1.7, 0.01, 'dépense de repos, debout');
+near(restNeed(cleanProfile({ repos: 2500 })), 2500, 0, 'dépense de repos saisie');
+near(sessionCost(day('muscu'), P), 288, 0.01, 'muscu');
+near(sessionCost(day('course'), P), 633.6, 0.01, 'course');
+near(sessionCost(day('double'), P), 921.6, 0.01, 'muscu + course');
+near(sessionCost(day('longue', { duree: 3 }), P), 1512, 0.01, 'vélo 3 h');
+near(sessionCost(day('repos', { natation: true }), P), 324, 0.01, 'natation');
+near(sessionCost(day('longue', { natation: true }), P), 1008, 0.01, 'pas de natation un jour de sortie longue');
+const e = energy(day('repos'), P);
+near(e.avg, (7 * 2327.5 + 2 * 288 + 3 * 633.6 + 1008) / 7, 0.01, 'dépense moyenne de la semaine type');
+near(e.deficit, e.avg * 0.15, 0.01, 'déficit de 15 %');
+assert.strictEqual(e.target, 1900, 'objectif du jour de repos');
+near(e.kgWeek, e.deficit * 7 / 7700, 1e-9, 'perte par semaine');
+for (const a of ['muscu', 'course', 'double', 'longue']) {
+  const x = energy(day(a), P);
+  near(x.need - x.deficit, x.target, 5, `${a} : le déficit est le même chaque jour`);
 }
+assert.strictEqual(energy(day('course'), cleanProfile({ deficit: 0 })).target, Math.round((2327.5 + 633.6) / 10) * 10, 'déficit nul');
 
-// 2. Toutes les combinaisons : protéines, lipides, calories, glucides du féculent
-const ranges = { repos: [1600, 2400], muscu: [1800, 2600], course: [2050, 3100], double: [2150, 3200], longue: [2400, 3300] };
+// 2. Profil : valeurs hors limites ou piégées ignorées
+assert.deepStrictEqual(JSON.parse(JSON.stringify(profileFields({ age: '35', sexe: 'x', neat: 'constructor', deficit: 40, ravito: 10, gras: null, poids: 70 }))), { poids: 70 });
+assert.deepStrictEqual(JSON.parse(JSON.stringify(profileFields('nimporte'))), {});
+
+// 3. Toutes les combinaisons avec le profil par défaut : apport ≈ objectif, planchers respectés
 let n = 0;
-for (const activity of Object.keys(ranges)) {
+for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) {
   for (const moment of ['matin', 'soir']) for (const natation of [false, true]) for (const pdBase of ['avoine', 'pain']) {
     for (const p1 of PROT_ORDER) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const s2 of STARCH_ORDER) {
       const combo = `${activity}/${moment}/${natation ? 'natation' : '-'}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
       const r = buildDay({ activity, moment, duree: 2, natation, libre: false }, { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
+      assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : ${Math.round(r.tot.kcal)} kcal pour un objectif de ${r.energy.target}`);
       assert(r.tot.p >= 140, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
-      assert(r.tot.f >= 50 && r.tot.f <= 95, `${combo} : ${Math.round(r.tot.f)} g de lipides`);
-      const [lo, hi] = ranges[activity];
-      assert(r.tot.kcal >= lo && r.tot.kcal <= hi, `${combo} : ${Math.round(r.tot.kcal)} kcal`);
-      for (const slot of ['dej', 'diner']) {
-        const choice = slot === 'dej' ? s1 : s2;
-        if (choice === 'lentilles') continue;
-        const sec = r.secs.find(s => s.id === slot);
-        const st = sec.items.find(i => i.key === 'st');
-        const target = CARBS[activity][slot];
-        assert(Math.abs(st.m.c - target) <= target * 0.1 + 3, `${combo} : ${slot} apporte ${st.m.c.toFixed(1)} g de glucides au lieu de ${target}`);
-      }
+      assert(r.tot.f >= 55 && r.tot.f <= 95, `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
+      for (const k of starchKcal(r)) assert(k >= STARCH_MIN - 20 && k <= STARCH_MAX + 20, `${combo} : ${Math.round(k)} kcal de féculent dans un repas`);
       n++;
     }
   }
 }
 
-// 3. Repas libre : budget arrondi à 50, compté dans le total, pas de skyr du soir
-for (const activity of Object.keys(ranges)) {
-  const r = buildDay({ activity, moment: 'soir', duree: 2, natation: false, libre: true }, DEFAULT_CHOICES[6]);
-  assert(r.libre > 0 && r.libre % 50 === 0, `${activity} : budget libre ${r.libre}`);
-  assert(r.secs.some(s => s.title === 'Repas libre') && !r.secs.some(s => s.id === 'soir'), `${activity} : sections du repas libre`);
+// 4. Changer de féculent ne change pas le total de la journée (dosage en calories)
+for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) {
+  const totals = STARCH_ORDER.map(s => buildDay(day(activity), { pdBase: 'avoine', dej: { prot: 'poulet', starch: s }, diner: { prot: 'poisson', starch: s } }).tot.kcal);
+  assert(Math.max(...totals) - Math.min(...totals) <= 40, `${activity} : le total varie de ${Math.round(Math.max(...totals) - Math.min(...totals))} kcal selon le féculent`);
 }
 
-// 4. Sortie longue : le ravito suit la durée
-const fuel = d => buildDay({ activity: 'longue', moment: 'matin', duree: d, natation: false, libre: false }, DEFAULT_CHOICES[6]).secs.find(s => s.band).items[0].m.c;
-assert(fuel(1.5) < fuel(2) && fuel(2) < fuel(2.5) && fuel(2.5) < fuel(3), 'ravito non proportionnel à la durée');
+// 5. Déficits extrêmes : planchers toujours tenus, jamais nettement sous l'objectif
+for (const deficit of [0, 25]) for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) {
+  for (const p1 of PROT_ORDER) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const s2 of STARCH_ORDER) {
+    const combo = `${deficit} %/${activity}/${p1}+${s1}/${p2}+${s2}`;
+    const r = buildDay(day(activity, { duree: 3 }), { pdBase: 'avoine', dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, { deficit });
+    assert(r.tot.p >= 140 && r.tot.f >= 55, `${combo} : P ${Math.round(r.tot.p)} g, L ${r.tot.f.toFixed(1)} g`);
+    assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
+    if (r.ecart > r.energy.target * 0.03) {
+      for (const k of starchKcal(r)) assert(k <= STARCH_MIN + 20, `${combo} : au-dessus de l'objectif sans être au plancher`);
+    }
+  }
+}
+
+// 6. Très grosse journée : féculents au plafond, pain complet en plus au goûter
+const big = buildDay(day('longue', { duree: 3 }), DEFAULT_CHOICES[6], { deficit: 0 });
+assert(big.secs.find(s => s.id === 'co').items.some(i => i.key === 'xtra'), 'pas de complément au-delà du plafond');
+assert(Math.abs(big.ecart) <= big.energy.target * 0.03, 'grosse journée loin de l’objectif');
+
+// 7. Repas libre : budget arrondi à 50, compté dans le total, pas de skyr du soir, macros hors repas libre
+for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) {
+  const normal = buildDay(day(activity), DEFAULT_CHOICES[6]);
+  const r = buildDay(day(activity, { libre: true }), DEFAULT_CHOICES[6]);
+  const dinner = normal.secs.find(s => s.id === 'diner');
+  assert(r.libre > 0 && r.libre % 50 === 0, `${activity} : budget libre ${r.libre}`);
+  near(r.libre, dinner.items.reduce((a, i) => a + i.m.kcal, 0) + 300, 25, `${activity} : budget libre`);
+  assert(r.secs.some(s => s.title === 'Repas libre') && !r.secs.some(s => s.id === 'soir'), `${activity} : sections du repas libre`);
+  assert(r.tot.kcal > normal.tot.kcal, `${activity} : repas libre non compté`);
+}
+
+// 8. Ravito : suit la durée et le réglage
+const fuelOf = (d, ravito) => buildDay(day('longue', { duree: d }), DEFAULT_CHOICES[6], ravito ? { ravito } : {}).secs.find(s => s.band).items[0].m.c;
+assert(fuelOf(1.5) < fuelOf(2) && fuelOf(2) < fuelOf(2.5) && fuelOf(2.5) < fuelOf(3), 'ravito non proportionnel à la durée');
+assert.strictEqual(fuelOf(3), 180, 'ravito de 60 g/h par défaut');
+assert.strictEqual(fuelOf(3, 45), 135, 'ravito réglé à 45 g/h');
 
 console.log(`moteur OK (${n} combinaisons vérifiées)`);

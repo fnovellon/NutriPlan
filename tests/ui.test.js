@@ -163,5 +163,66 @@ for (const bad of ['{pas du json', '5', 'null', '[1,2]', JSON.stringify({
   assert.strictEqual(b.pressed('activity'), 'repos', 'valeurs par défaut non appliquées : ' + bad);
 }
 
+// Profil et déficit : clé séparée, la clé v1 n'est pas touchée
+const PKEY = 'repas-du-jour:profil:v1';
+const v1 = JSON.stringify({ plans: { '2026-10-07': { activity: 'repos', moment: 'soir', duree: 2, natation: false, libre: false } }, choices: {} });
+const pdom = open(ls => ls.setItem(KEY, v1));
+const p = tools(pdom);
+const pw = pdom.window;
+const field = k => p.$(`#besoins input[data-key="${k}"]`);
+const type = (k, v) => { const el = field(k); el.value = String(v); el.dispatchEvent(new pw.Event('input', { bubbles: true })); };
+const prof = () => JSON.parse(pw.localStorage.getItem(PKEY));
+const kcal = () => Number(p.$('#sum-text strong').textContent.replace(/\D/g, ''));
+const note = () => p.$('#sum-note').textContent;
+
+assert(/Complète ton profil/.test(note()) && p.$('#needs-hint').textContent, 'profil à compléter non signalé');
+assert(/déficit de 15\s%/.test(p.$('#needs-sum').textContent), 'résumé des besoins');
+assert(/Dépense estimée\s:\s2\s330\skcal, moins 420\skcal de déficit/.test(note()), 'dépense du jour de repos : ' + note());
+assert.strictEqual(kcal(), 1900, 'objectif du jour de repos');
+p.click('[data-action="needs"]');
+assert(p.$('#besoins').open, 'le lien Régler n’ouvre pas les besoins');
+
+type('age', 40); type('taille', 180); type('poids', 70);
+assert.deepStrictEqual(prof(), { age: 40, taille: 180, poids: 70 }, 'profil enregistré');
+assert(!/Complète/.test(note()) && !p.$('#needs-hint').textContent, 'profil complet encore signalé');
+type('age', 5);
+assert.strictEqual(field('age').getAttribute('aria-invalid'), 'true', 'âge invalide non signalé');
+assert.strictEqual(prof().age, 40, 'âge invalide enregistré');
+type('age', 41);
+assert(!field('age').hasAttribute('aria-invalid') && prof().age === 41, 'âge corrigé');
+
+type('repos', 2600);
+assert(/saisie/.test(p.$('#calc-rest').textContent) && /2\s600/.test(note()), 'dépense de repos saisie');
+type('repos', '');
+assert(!('repos' in prof()), 'dépense de repos non effacée');
+type('gras', 12);
+assert(/Cunningham/.test(p.$('#calc-rest').textContent), 'formule avec masse grasse');
+
+const before = kcal();
+type('deficit', 20);
+assert.strictEqual(prof().deficit, 20, 'déficit non enregistré');
+assert(kcal() < before, 'le déficit ne change pas l’apport');
+assert(!p.$('#warn-deficit').textContent, 'alerte à 20 %');
+type('deficit', 25);
+assert(/20\s%/.test(p.$('#warn-deficit').textContent), 'pas d’alerte au-delà de 20 %');
+p.click('[data-action="prof"][data-key="neat"][data-value="debout"]');
+assert.strictEqual(prof().neat, 'debout', 'activité hors sport');
+
+p.click('[data-action="activity"][data-value="longue"]');
+type('ravito', 45);
+assert(/^90\sg/.test(p.$('#day .band .qty').textContent), 'ravito réglé non appliqué : ' + p.$('#day .band .qty').textContent);
+assert.deepStrictEqual(JSON.parse(pw.localStorage.getItem(KEY)).choices, {}, 'la clé v1 a changé de forme');
+assert.strictEqual(JSON.parse(pw.localStorage.getItem(KEY)).plans['2026-10-07'].activity, 'longue', 'plan v1 non enregistré');
+
+// Le profil est relu au chargement, un profil corrompu ne bloque rien
+const again = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 41, deficit: 10, neat: 'constructor', poids: 'lourd' }))));
+assert.strictEqual(again.$('#besoins input[data-key="age"]').value, '41', 'âge non relu');
+assert.strictEqual(again.$('#besoins input[data-key="deficit"]').value, '10', 'déficit non relu');
+assert.strictEqual(again.$('#besoins input[data-key="poids"]').value, '', 'poids invalide relu');
+for (const bad of ['{pas du json', '7', 'null']) {
+  const b = tools(open(ls => ls.setItem(PKEY, bad)));
+  assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);
+}
+
 assert.deepStrictEqual(errors, [], 'erreurs JavaScript : ' + errors.join(' | '));
 console.log('interface OK');

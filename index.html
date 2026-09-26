@@ -127,6 +127,38 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .band-s{margin:0;font-size:15px;}
 .band .items{margin-top:6px;}
 
+.sum p.sum-note{margin:14px 0 0;font-size:15px;line-height:1.45;color:var(--muted);}
+.link{padding:0;border:0;background:none;color:var(--beet);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;}
+
+.needs{margin:10px 0 0;border-top:1px solid var(--line);}
+.needs summary{position:relative;display:flex;flex-direction:column;gap:2px;padding:16px 32px 16px 0;cursor:pointer;list-style:none;}
+.needs summary::-webkit-details-marker{display:none;}
+.needs summary::after{content:"";position:absolute;right:8px;top:24px;width:9px;height:9px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg);transition:transform .2s ease;}
+.needs[open] summary::after{top:28px;transform:rotate(-135deg);}
+.needs summary:focus-visible{outline:2px solid var(--beet);outline-offset:2px;border-radius:6px;}
+.needs-t{font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
+.needs-s{font-size:15px;color:var(--muted);}
+.needs-body{padding:2px 0 22px;}
+.fields{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:12px;margin:0 0 16px;}
+.field{display:flex;flex-direction:column;gap:4px;font-size:15px;color:var(--muted);}
+.field.wide{margin:0 0 18px;}
+.inp{display:flex;align-items:center;gap:8px;}
+.field input{width:100%;min-width:0;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font-family:var(--sans);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield;}
+.field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.field input::placeholder{color:var(--muted);opacity:.6;}
+.field input:focus-visible{outline:2px solid var(--beet);outline-offset:1px;}
+.field input[aria-invalid="true"]{border:2px solid var(--beet);}
+.field.wide input{max-width:9rem;}
+.unit{flex:none;min-width:1.8em;font-size:15px;color:var(--muted);}
+.calc{margin:0 0 14px;font-size:15px;line-height:1.45;color:var(--muted);}
+.warn{margin:-6px 0 14px;font-size:15px;line-height:1.45;color:var(--beet);}
+.calc:empty,.warn:empty{display:none;}
+.range{margin:0 0 8px;}
+.range-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+.range label{font-size:17px;}
+.range output{font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.range input{display:block;width:100%;margin:8px 0 6px;accent-color:var(--beet);}
+
 .notes{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);font-size:15px;color:var(--muted);}
 .notes p{margin:0 0 8px;max-width:62ch;}
 .reset{margin-top:8px;padding:8px 15px;border:1px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:600;font-size:14px;}
@@ -177,13 +209,57 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <p id="sum-text" aria-live="polite"></p>
     <div class="bar" aria-hidden="true"><span class="p" id="bar-p"></span><span class="c" id="bar-c"></span><span class="f" id="bar-f"></span></div>
     <ul class="legend" id="legend"></ul>
+    <p class="sum-note" id="sum-note"></p>
   </section>
 
   <div class="day" id="day"></div>
 
+  <details class="needs" id="besoins">
+    <summary><span class="needs-t">Tes besoins</span><span class="needs-s" id="needs-sum"></span></summary>
+    <div class="needs-body">
+      <p class="warn" id="needs-hint"></p>
+      <div class="opt-row">
+        <span class="lbl" id="lbl-sexe">Sexe</span>
+        <div class="seg" role="group" aria-labelledby="lbl-sexe">
+          <button type="button" data-action="prof" data-key="sexe" data-value="h">Homme</button>
+          <button type="button" data-action="prof" data-key="sexe" data-value="f">Femme</button>
+        </div>
+      </div>
+      <div class="fields">
+        <label class="field"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
+        <label class="field"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
+        <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
+        <label class="field"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
+      </div>
+      <div class="opt-row">
+        <span class="lbl" id="lbl-neat">Hors sport</span>
+        <div class="seg" role="group" aria-labelledby="lbl-neat">
+          <button type="button" data-action="prof" data-key="neat" data-value="assis">Assis</button>
+          <button type="button" data-action="prof" data-key="neat" data-value="mixte">Mixte</button>
+          <button type="button" data-action="prof" data-key="neat" data-value="debout">Debout</button>
+        </div>
+      </div>
+      <p class="calc">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
+      <p class="calc" id="calc-rest"></p>
+      <label class="field wide"><span>Ta dépense un jour de repos, si tu la connais</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1000" max="6000" step="10"><span class="unit">kcal</span></span></label>
+      <div class="range">
+        <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
+        <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
+      </div>
+      <p class="calc" id="calc-deficit"></p>
+      <p class="warn" id="warn-deficit"></p>
+      <div class="range">
+        <div class="range-h"><label for="in-ravito">Ravito des sorties longues</label><output id="out-ravito" for="in-ravito"></output></div>
+        <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
+      </div>
+      <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
+      <p class="calc">Ton profil reste sur cet appareil.</p>
+    </div>
+  </details>
+
   <footer class="notes">
     <p>Poids crus pour la viande, le poisson et les féculents, sauf mention contraire.</p>
-    <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes glucides.</p>
+    <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
     <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
     <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
     <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
@@ -215,7 +291,7 @@ const STARCH = {
   quinoa:{label:'Quinoa', f:[368,14,60,6], step:5, cook:2.7, cooked:'cuit', name:'quinoa cru'},
   semoule:{label:'Semoule', f:[360,12.5,72,1.5], step:5, cook:2.3, cooked:'cuite', name:'semoule crue'},
   boulgour:{label:'Boulgour', f:[345,12,69,1.5], step:5, cook:2.5, cooked:'cuit', name:'boulgour cru'},
-  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, cook:2.5, cooked:'cuites', name:'lentilles crues', protEq:true, extra:'portion ajustée à leurs protéines'},
+  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, cook:2.5, cooked:'cuites', name:'lentilles crues'},
   gnocchis:{label:'Gnocchis', f:[155,4,33,0.6], step:10, name:'gnocchis frais'}
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','gnocchis'];
@@ -276,8 +352,8 @@ const IDEAS = {
   thon:{riz:'salade de riz au thon', pates:'pâtes au thon et aux tomates', pdt:'salade niçoise', patate:'salade de patate douce au thon', quinoa:'salade quinoa-thon', semoule:'taboulé au thon', boulgour:'taboulé de boulgour au thon', lentilles:'salade de lentilles au thon', gnocchis:'gnocchis au thon et aux tomates'}
 };
 
-/* Glucides apportés par le féculent de chaque repas, selon l'activité */
-const CARBS = {
+/* Répartition des féculents entre déjeuner et dîner selon l'activité (poids relatifs) */
+const SPLIT = {
   repos:{dej:45, diner:30}, muscu:{dej:55, diner:45}, course:{dej:55, diner:85},
   double:{dej:55, diner:85}, longue:{dej:85, diner:60}
 };
@@ -315,6 +391,54 @@ const DEFAULT_CHOICES = {
   6:{pdBase:'avoine', dej:{prot:'thon', starch:'pates'}, diner:{prot:'saumon', starch:'pdt'}}
 };
 
+/* Profil et dépense énergétique */
+const PROFILE_DEFAULT = {sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1000,6000], deficit:[0,25], ravito:[30,90]};
+/* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
+const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
+/* Séances : MET du Compendium des activités physiques (Ainsworth 2011) et durée en heures */
+const SESSION = {muscu:{met:5, h:1}, course:{met:9.8, h:1}, velo:{met:8}, natation:{met:7, h:0.75}};
+const KCAL_PER_KG = 7700;
+
+function profileFields(o){
+  const out = {};
+  if (!o || typeof o !== 'object') return out;
+  if (o.sexe === 'h' || o.sexe === 'f') out.sexe = o.sexe;
+  if (has(NEAT, o.neat)) out.neat = o.neat;
+  Object.keys(PROFILE_RANGES).forEach(function(k){
+    const v = o[k], r = PROFILE_RANGES[k];
+    if (typeof v === 'number' && v >= r[0] && v <= r[1]) out[k] = v;
+  });
+  return out;
+}
+function cleanProfile(o){ return Object.assign({}, PROFILE_DEFAULT, profileFields(o)); }
+/* Métabolisme de base : Cunningham si la masse grasse est connue (plus juste chez les sportifs), sinon Mifflin-St Jeor */
+function bmr(p){
+  if (p.gras !== null) return 500 + 22 * p.poids * (1 - p.gras / 100);
+  return 10 * p.poids + 6.25 * p.taille - 5 * p.age + (p.sexe === 'f' ? -161 : 5);
+}
+function restNeed(p){ return p.repos !== null ? p.repos : bmr(p) * NEAT[p.neat]; }
+/* Coût net d'une séance : (MET - 1) x poids x durée, le repos étant déjà compté */
+function sessionCost(plan, p){
+  const net = function(s, h){ return (s.met - 1) * p.poids * h; };
+  const a = plan.activity;
+  let k = 0;
+  if (a === 'muscu' || a === 'double') k += net(SESSION.muscu, SESSION.muscu.h);
+  if (a === 'course' || a === 'double') k += net(SESSION.course, SESSION.course.h);
+  if (a === 'longue') k += net(SESSION.velo, plan.duree);
+  if (plan.natation && a !== 'longue') k += net(SESSION.natation, SESSION.natation.h);
+  return k;
+}
+/* Le déficit est un % de la dépense moyenne de la semaine type, retiré chaque jour : les séances restent couvertes */
+function energy(plan, p){
+  const rest = restNeed(p);
+  let sum = 0;
+  for (let d = 0; d < 7; d++) sum += rest + sessionCost(DEFAULT_PLAN[d], p);
+  const avg = sum / 7, deficit = avg * p.deficit / 100, cost = sessionCost(plan, p);
+  return {bmr:bmr(p), rest:rest, cost:cost, need:rest + cost, avg:avg, deficit:deficit,
+    target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
+}
+
 function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }
 
 function breakfast(type, base){
@@ -351,37 +475,46 @@ function gouterItems(){
     it('am', grams(15), 'amandes', null, mac('amandes', 15))
   ];
 }
-function starchItem(id, carbs){
+/* Énergie du féculent de chaque repas : plancher et plafond, soit 20 et 120 g de glucides sous forme de riz
+   (le plafond en calories évite les assiettes démesurées de lentilles ou de quinoa, moins riches en glucides) */
+const STARCH_MIN = 90, STARCH_MAX = 550;
+/* Féculent dosé en calories : changer de féculent ne change pas le total de la journée */
+function starchItem(id, kcal){
   const S = STARCH[id];
-  const R = STARCH.riz.f;
-  let q = S.protEq ? carbs * (1 + R[1] / R[2]) / ((S.f[1] + S.f[2]) / 100) : carbs / (S.f[2] / 100);
-  q = Math.max(S.step, Math.round(q / S.step) * S.step);
+  const q = Math.max(S.step, Math.round(kcal / (S.f[0] / 100) / S.step) * S.step);
   const k = q / 100;
-  const notes = [];
-  if (S.cook) notes.push('≈' + NB + (Math.round(q * S.cook / 10) * 10) + NB + 'g une fois ' + S.cooked);
-  if (S.extra) notes.push(S.extra);
-  return it('st', grams(q), S.name, notes.join(', '), {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k});
+  return it('st', grams(q), S.name, S.cook ? '≈' + NB + (Math.round(q * S.cook / 10) * 10) + NB + 'g une fois ' + S.cooked : null,
+    {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k});
 }
-function mainItems(slot, choice, carbs){
+/* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond.
+   rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
+function splitStarch(budget, share){
+  const clamp = function(x){ return Math.min(STARCH_MAX, Math.max(STARCH_MIN, x)); };
+  let ka = clamp(budget * share);
+  const kb = clamp(budget - ka);
+  ka = clamp(budget - kb);
+  return {dej:ka, diner:kb, rest:budget - ka - kb};
+}
+function mainItems(slot, choice){
   const P = PROT[choice.prot];
-  const items = P.base();
-  items.push(starchItem(choice.starch, carbs));
-  items.push(it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250)));
-  return items.concat(P[slot]());
+  return P.base().concat([it('st', '', '', null, null), it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], P[slot]());
 }
+function setStarch(sec, item){ sec.items = sec.items.map(function(i){ return i.key === 'st' ? item : i; }); }
+function allItems(secs){ return secs.reduce(function(a, s){ return a.concat(s.items); }, []); }
 function ideaFor(choice){ const row = IDEAS[choice.prot]; return row && row[choice.starch] ? row[choice.starch] : null; }
-function fuel(d){
-  const g = Math.round(45 * d / 5) * 5;
-  return it('fuel', grams(g), 'glucides pendant l’effort', '30 à 60' + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0});
+function fuel(d, rate){
+  const g = Math.round(rate * d / 5) * 5;
+  return it('fuel', grams(g), 'glucides pendant l’effort', rate + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0});
 }
 
-function buildDay(plan, ch){
+function buildDay(plan, ch, profile){
+  const pr = cleanProfile(profile);
+  const en = energy(plan, pr);
   const t = plan.activity;
   const long = t === 'longue';
   const training = t === 'muscu' || t === 'course' || t === 'double';
   const matin = training && plan.moment === 'matin';
   const swim = !!plan.natation && !long;
-  const C = CARBS[t];
   const secs = [];
 
   const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(t, ch.pdBase)};
@@ -389,12 +522,12 @@ function buildDay(plan, ch){
   else if (matin) pd.when = '1h30 avant la séance';
   secs.push(pd);
 
-  const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej, C.dej), idea:ideaFor(ch.dej)};
-  const dinnerItems = mainItems('diner', ch.diner, C.diner);
-  const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:dinnerItems, idea:ideaFor(ch.diner)};
+  const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej), idea:ideaFor(ch.dej)};
+  const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:mainItems('diner', ch.diner), idea:ideaFor(ch.diner)};
+  let co = null;
 
   function band(){
-    if (long) return {band:true, id:'band', title:BAND.longue, sub:'Vélo ou course, ' + dureeLabel(plan.duree) + '.', items:[fuel(plan.duree)]};
+    if (long) return {band:true, id:'band', title:BAND.longue, sub:'Vélo ou course, ' + dureeLabel(plan.duree) + '.', items:[fuel(plan.duree, pr.ravito)]};
     return {band:true, id:'band', title:BAND[t], sub:null, items:[]};
   }
   function pushSwim(){
@@ -408,43 +541,60 @@ function buildDay(plan, ch){
     secs.push(band());
     lunch.when = 'après la sortie';
     secs.push(lunch);
-    secs.push({id:'co', title:'Goûter', when:null, items:gouterItems()});
+    co = {id:'co', title:'Goûter', when:null, items:gouterItems()};
+    secs.push(co);
   } else if (matin){
     secs.push(band());
-    secs.push({id:'co', title:'Collation', when:'juste après la séance', items:snackItems(t)});
+    co = {id:'co', title:'Collation', when:'juste après la séance', items:snackItems(t)};
+    secs.push(co);
     if (swim) pushSwim();
     secs.push(lunch);
   } else if (training){
     if (swim) pushSwim();
     secs.push(lunch);
-    secs.push({id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(t)});
+    co = {id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(t)};
+    secs.push(co);
     secs.push(band());
     dinner.when = 'après la séance';
   } else {
     if (swim) pushSwim();
     secs.push(lunch);
-    secs.push({id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems('repos')});
+    co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems('repos')};
+    secs.push(co);
   }
+  secs.push(dinner);
+
+  /* Les féculents complètent jusqu'à l'objectif. Au-delà de leur plafond, du pain complet s'ajoute à la collation. */
+  const w = SPLIT[t];
+  const fill = function(){
+    co.items = co.items.filter(function(i){ return i.key !== 'xtra'; });
+    const fixed = total(allItems(secs).filter(function(i){ return i.key !== 'st'; })).kcal;
+    const sp = splitStarch(en.target - fixed, w.dej / (w.dej + w.diner));
+    setStarch(lunch, starchItem(ch.dej.starch, sp.dej));
+    setStarch(dinner, starchItem(ch.diner.starch, sp.diner));
+    if (sp.rest >= 50){
+      const g = Math.round(sp.rest / 25) * 10;
+      co.items.push(it('xtra', grams(g), 'pain complet', 'en plus, pour couvrir ta séance', mac('pain', g)));
+    }
+  };
+  fill();
+  let tot = total(allItems(secs));
+  if (!plan.libre && (t === 'double' || tot.p < 140)){
+    secs.push({id:'soir', title:'Soir', when:t === 'double' ? 'pour la récupération' : 'pour compléter tes protéines',
+      items:[it('skyr', grams(150), 'skyr nature', null, mac('skyr', 150))]});
+    fill();
+    tot = total(allItems(secs));
+  }
+  const ecart = tot.kcal - en.target;
 
   let libre = null;
   if (plan.libre){
-    libre = Math.round((total(dinnerItems).kcal + 300) / 50) * 50;
-    secs.push({id:'diner', title:'Repas libre', when:(dinner.when ? dinner.when + ', ' : '') + 'resto ou entre amis', libre:true,
-      items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0})]});
-  } else {
-    secs.push(dinner);
+    libre = Math.round((total(dinner.items).kcal + 300) / 50) * 50;
+    secs[secs.indexOf(dinner)] = {id:'diner', title:'Repas libre', when:(dinner.when ? dinner.when + ', ' : '') + 'resto ou entre amis', libre:true,
+      items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0})]};
+    tot = total(allItems(secs));
   }
-
-  let all = [];
-  secs.forEach(function(s){ all = all.concat(s.items); });
-  let tot = total(all);
-  if (!plan.libre && (t === 'double' || tot.p < 140)){
-    const soir = {id:'soir', title:'Soir', when:t === 'double' ? 'pour la récupération' : 'pour compléter tes protéines',
-      items:[it('skyr', grams(150), 'skyr nature', null, mac('skyr', 150))]};
-    secs.push(soir);
-    tot = total(all.concat(soir.items));
-  }
-  return {secs:secs, tot:tot, libre:libre};
+  return {secs:secs, tot:tot, libre:libre, energy:en, ecart:ecart};
 }
 
 if (typeof document !== 'undefined'){
@@ -455,6 +605,11 @@ if (typeof document !== 'undefined'){
   if (!store.plans || typeof store.plans !== 'object') store.plans = {};
   if (!store.choices || typeof store.choices !== 'object') store.choices = {};
   const persist = function(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+  /* Profil : clé séparée, seules les valeurs saisies sont gardées (les autres prennent les valeurs par défaut) */
+  const PKEY = 'repas-du-jour:profil:v1';
+  let prof = {};
+  try { prof = profileFields(JSON.parse(localStorage.getItem(PKEY) || '{}')); } catch (e) { prof = {}; }
+  const saveProf = function(){ try { localStorage.setItem(PKEY, JSON.stringify(prof)); } catch (e) {} };
 
   const noon = function(){ const d = new Date(); d.setHours(12, 0, 0, 0); return d; };
   let today = noon(), todayJs = today.getDay(), weekOffset = 0;
@@ -481,7 +636,7 @@ if (typeof document !== 'undefined'){
   const cleanPlan = function(p, js){
     const d = DEFAULT_PLAN[js];
     const out = Object.assign({}, d, p && typeof p === 'object' ? p : {});
-    if (!has(CARBS, out.activity)) out.activity = d.activity;
+    if (!has(SPLIT, out.activity)) out.activity = d.activity;
     if (out.moment !== 'matin' && out.moment !== 'soir') out.moment = d.moment;
     if (!DUREES.some(function(x){ return x[0] === out.duree; })) out.duree = d.duree;
     out.natation = !!out.natation;
@@ -585,10 +740,16 @@ if (typeof document !== 'undefined'){
     $('sw-nat').setAttribute('aria-checked', String(plan.natation));
     $('sw-lib').setAttribute('aria-checked', String(plan.libre));
   };
+  const r10 = function(n){ return fmtInt(Math.round(n / 10) * 10); };
+  const incomplete = function(){ return !has(prof, 'repos') && !(has(prof, 'age') && has(prof, 'taille') && has(prof, 'poids')); };
   const renderSummary = function(res){
-    const t = res.tot;
-    $('sum-text').innerHTML = 'Environ <strong>' + fmtInt(Math.round(t.kcal / 10) * 10) + NB + 'kcal</strong> sur la journée' +
-      (res.libre ? ', repas libre compris.' : '.');
+    const t = res.tot, en = res.energy;
+    $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
+      (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.');
+    let note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
+    if (!res.libre && res.ecart > en.target * 0.03) note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal.';
+    if (incomplete()) note += ' Complète ton profil pour un calcul juste.';
+    $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs">Régler</button>';
     $('bar-p').style.flexGrow = String(t.p * 4);
     $('bar-c').style.flexGrow = String(t.c * 4);
     $('bar-f').style.flexGrow = String(t.f * 9);
@@ -597,12 +758,36 @@ if (typeof document !== 'undefined'){
       '<li class="f">Lipides <b>' + Math.round(t.f) + NB + 'g</b></li>' +
       (res.libre ? '<li class="x">hors repas libre</li>' : '');
   };
+  const renderNeeds = function(res){
+    const pr = cleanProfile(prof), en = res.energy;
+    document.querySelectorAll('#besoins [data-action="prof"]').forEach(function(b){ b.setAttribute('aria-pressed', String(pr[b.dataset.key] === b.dataset.value)); });
+    $('besoins').querySelector('[data-key="repos"]').placeholder = String(Math.round(bmr(pr) * NEAT[pr.neat] / 10) * 10);
+    $('needs-sum').textContent = r10(en.avg) + NB + 'kcal par jour en moyenne, déficit de ' + pr.deficit + NB + '%';
+    $('needs-hint').textContent = incomplete() ? 'Indique ton âge, ta taille et ton poids' + NB + ': en attendant, le calcul utilise les valeurs grisées.' : '';
+    $('calc-rest').textContent = 'Métabolisme de base' + NB + ': ' + r10(en.bmr) + NB + 'kcal (formule de ' +
+      (pr.gras !== null ? 'Cunningham, à partir de ta masse maigre' : 'Mifflin-St' + NB + 'Jeor') + '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal' +
+      (pr.repos !== null ? ', celle que tu as saisie.' : '.') + ' Chaque séance s’y ajoute.';
+    $('out-deficit').textContent = pr.deficit + NB + '%';
+    $('calc-deficit').textContent = pr.deficit > 0
+      ? pr.deficit + NB + '% de ta dépense moyenne sur ta semaine type, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
+        en.kgWeek.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}) + NB + 'kg par semaine. Tes séances restent couvertes.'
+      : 'Pas de déficit' + NB + ': tu manges ce que tu dépenses.';
+    const warn = [];
+    if (pr.deficit > 20) warn.push('Au-delà de 20' + NB + '%, tu perds plus vite mais tu risques de perdre du muscle et de la forme à l’entraînement.');
+    if (pr.gras !== null){
+      const ea = (en.rest - en.deficit) / (pr.poids * (1 - pr.gras / 100));
+      if (ea < 30) warn.push('Il te reste environ ' + Math.round(ea) + NB + 'kcal par kilo de masse maigre une fois tes séances payées, sous le seuil de 30' + NB + ': baisse le déficit.');
+    }
+    $('warn-deficit').textContent = warn.join(' ');
+    $('out-ravito').textContent = pr.ravito + NB + 'g/h';
+  };
   const render = function(){
     const scrolls = {};
     document.querySelectorAll('[data-scroll]').forEach(function(el){ scrolls[el.dataset.scroll] = el.scrollLeft; });
     renderControls();
-    const res = buildDay(plan, ch);
+    const res = buildDay(plan, ch, prof);
     renderSummary(res);
+    renderNeeds(res);
     const next = new Map();
     $('day').innerHTML = res.secs.map(function(s){ return s.band ? bandHTML(s, next) : mealHTML(s, next); }).join('');
     prevQty = next;
@@ -635,6 +820,13 @@ if (typeof document !== 'undefined'){
         savePlan();
         break;
       case 'pd': ch.pdBase = v; saveCh(); break;
+      case 'prof': {
+        const o = {};
+        o[b.dataset.key] = v;
+        if (has(profileFields(o), b.dataset.key)){ prof[b.dataset.key] = v; saveProf(); }
+        break;
+      }
+      case 'needs': $('besoins').open = true; $('besoins').querySelector('summary').focus(); break;
       case 'prot': ch[b.dataset.slot].prot = v; saveCh(); break;
       case 'starch': ch[b.dataset.slot].starch = v; saveCh(); break;
       case 'reset':
@@ -647,6 +839,31 @@ if (typeof document !== 'undefined'){
       default: return;
     }
     $('hint').textContent = msg;
+    render();
+  });
+
+  /* Champs du profil : enregistrés à chaque saisie valide, vidés = valeur par défaut */
+  document.querySelectorAll('#besoins input[data-key]').forEach(function(el){
+    const k = el.dataset.key;
+    if (el.type === 'range') el.value = String(cleanProfile(prof)[k]);
+    else {
+      if (has(prof, k)) el.value = String(prof[k]);
+      if (PROFILE_DEFAULT[k] !== null) el.placeholder = String(PROFILE_DEFAULT[k]);
+    }
+  });
+  document.addEventListener('input', function(e){
+    const el = e.target;
+    if (!el.dataset || !el.dataset.key || !el.closest('#besoins')) return;
+    const k = el.dataset.key, raw = el.value.trim().replace(',', '.');
+    if (raw === '') delete prof[k];
+    else {
+      const o = {};
+      o[k] = Number(raw);
+      if (!has(profileFields(o), k)){ el.setAttribute('aria-invalid', 'true'); return; }
+      prof[k] = o[k];
+    }
+    el.removeAttribute('aria-invalid');
+    saveProf();
     render();
   });
 
