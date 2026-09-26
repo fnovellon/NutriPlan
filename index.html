@@ -141,7 +141,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .needs-body{padding:2px 0 22px;}
 .fields{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:12px;margin:0 0 16px;}
 .field{display:flex;flex-direction:column;gap:4px;font-size:15px;color:var(--muted);}
-.field.wide{margin:0 0 18px;}
+.field.wide{margin:0 0 8px;}
 .inp{display:flex;align-items:center;gap:8px;}
 .field input{width:100%;min-width:0;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font-family:var(--sans);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield;}
 .field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
@@ -161,6 +161,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 
 .notes{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);font-size:15px;color:var(--muted);}
 .notes p{margin:0 0 8px;max-width:62ch;}
+.notes .version{display:flex;flex-wrap:wrap;gap:4px 14px;margin:18px 0 0;font-size:14px;}
+.version a{color:inherit;text-underline-offset:3px;}
 .reset{margin-top:8px;padding:8px 15px;border:1px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:600;font-size:14px;}
 
 @media (min-width:640px){.app{padding-top:36px;}}
@@ -241,7 +243,9 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       </div>
       <p class="calc">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
       <p class="calc" id="calc-rest"></p>
-      <label class="field wide"><span>Ta dépense un jour de repos, si tu la connais</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1000" max="6000" step="10"><span class="unit">kcal</span></span></label>
+      <label class="field wide"><span>Ta dépense totale un jour sans sport, si tu la connais</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1000" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
+      <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
+      <p class="warn" id="warn-repos"></p>
       <div class="range">
         <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
         <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
@@ -263,12 +267,15 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
     <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
     <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
+    <p class="version"><span>Version <span id="app-version"></span></span><a href="https://github.com/fnovellon/NutriPlan/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Nouveautés</a></p>
   </footer>
 </main>
 
 <script>
 'use strict';
 const NB = '\u00A0';
+/* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
+const APP_VERSION = '1.2.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -417,7 +424,14 @@ function bmr(p){
   if (p.gras !== null) return 500 + 22 * p.poids * (1 - p.gras / 100);
   return 10 * p.poids + 6.25 * p.taille - 5 * p.age + (p.sexe === 'f' ? -161 : 5);
 }
-function restNeed(p){ return p.repos !== null ? p.repos : bmr(p) * NEAT[p.neat]; }
+/* Une dépense saisie sous le métabolisme de base x 1,2 (niveau alitement) est impossible sur une journée entière :
+   elle est ignorée et le calcul reprend la main */
+const REST_MIN_FACTOR = 1.2;
+function restSource(p){
+  if (p.repos === null) return 'calcul';
+  return p.repos >= bmr(p) * REST_MIN_FACTOR ? 'saisie' : 'ignoree';
+}
+function restNeed(p){ return restSource(p) === 'saisie' ? p.repos : bmr(p) * NEAT[p.neat]; }
 /* Coût net d'une séance : (MET - 1) x poids x durée, le repos étant déjà compté */
 function sessionCost(plan, p){
   const net = function(s, h){ return (s.met - 1) * p.poids * h; };
@@ -435,7 +449,7 @@ function energy(plan, p){
   let sum = 0;
   for (let d = 0; d < 7; d++) sum += rest + sessionCost(DEFAULT_PLAN[d], p);
   const avg = sum / 7, deficit = avg * p.deficit / 100, cost = sessionCost(plan, p);
-  return {bmr:bmr(p), rest:rest, cost:cost, need:rest + cost, avg:avg, deficit:deficit,
+  return {bmr:bmr(p), rest:rest, restSource:restSource(p), cost:cost, need:rest + cost, avg:avg, deficit:deficit,
     target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
 }
 
@@ -766,7 +780,18 @@ if (typeof document !== 'undefined'){
     $('needs-hint').textContent = incomplete() ? 'Indique ton âge, ta taille et ton poids' + NB + ': en attendant, le calcul utilise les valeurs grisées.' : '';
     $('calc-rest').textContent = 'Métabolisme de base' + NB + ': ' + r10(en.bmr) + NB + 'kcal (formule de ' +
       (pr.gras !== null ? 'Cunningham, à partir de ta masse maigre' : 'Mifflin-St' + NB + 'Jeor') + '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal' +
-      (pr.repos !== null ? ', celle que tu as saisie.' : '.') + ' Chaque séance s’y ajoute.';
+      (en.restSource === 'saisie' ? ', celle que tu as saisie.' : ', calculée.') + ' Chaque séance s’y ajoute.';
+    const reposField = $('besoins').querySelector('[data-key="repos"]');
+    if (en.restSource === 'ignoree'){
+      reposField.setAttribute('aria-invalid', 'true');
+      $('warn-repos').textContent = fmtInt(pr.repos) + NB + 'kcal, c’est trop bas' + NB + ': même sans bouger de la journée, tu dépenses au moins ' +
+        r10(en.bmr * REST_MIN_FACTOR) + NB + 'kcal. Si c’est le chiffre «' + NB + 'calories actives' + NB + '» de ta montre, prends plutôt le total. En attendant, le calcul utilise ' +
+        r10(en.rest) + NB + 'kcal.';
+    } else {
+      const shown = reposField.value.trim().replace(',', '.');
+      if (shown === '' ? !has(prof, 'repos') : has(prof, 'repos') && Number(shown) === prof.repos) reposField.removeAttribute('aria-invalid');
+      $('warn-repos').textContent = '';
+    }
     $('out-deficit').textContent = pr.deficit + NB + '%';
     $('calc-deficit').textContent = pr.deficit > 0
       ? pr.deficit + NB + '% de ta dépense moyenne sur ta semaine type, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
@@ -851,6 +876,17 @@ if (typeof document !== 'undefined'){
       if (PROFILE_DEFAULT[k] !== null) el.placeholder = String(PROFILE_DEFAULT[k]);
     }
   });
+  /* Quitter un champ resté invalide : il reprend la valeur réellement utilisée */
+  document.addEventListener('change', function(e){
+    const el = e.target;
+    if (!el.dataset || !el.dataset.key || !el.closest('#besoins') || el.type === 'range') return;
+    const k = el.dataset.key, raw = el.value.trim().replace(',', '.');
+    const shown = raw === '' ? null : Number(raw), stored = has(prof, k) ? prof[k] : null;
+    if (shown === stored) return;
+    el.value = stored === null ? '' : String(stored);
+    el.removeAttribute('aria-invalid');
+    render();
+  });
   document.addEventListener('input', function(e){
     const el = e.target;
     if (!el.dataset || !el.dataset.key || !el.closest('#besoins')) return;
@@ -880,6 +916,7 @@ if (typeof document !== 'undefined'){
   window.addEventListener('focus', refreshToday);
   window.addEventListener('pageshow', refreshToday);
 
+  $('app-version').textContent = APP_VERSION;
   loadSel();
   render();
 }

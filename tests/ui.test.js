@@ -188,13 +188,23 @@ assert(!/Complète/.test(note()) && !p.$('#needs-hint').textContent, 'profil com
 type('age', 5);
 assert.strictEqual(field('age').getAttribute('aria-invalid'), 'true', 'âge invalide non signalé');
 assert.strictEqual(prof().age, 40, 'âge invalide enregistré');
+field('age').dispatchEvent(new pw.Event('change', { bubbles: true }));
+assert(field('age').value === '40' && !field('age').hasAttribute('aria-invalid'), 'le champ invalide ne reprend pas la valeur utilisée');
 type('age', 41);
 assert(!field('age').hasAttribute('aria-invalid') && prof().age === 41, 'âge corrigé');
 
 type('repos', 2600);
 assert(/saisie/.test(p.$('#calc-rest').textContent) && /2\s600/.test(note()), 'dépense de repos saisie');
+// Dépense saisie impossible (sous métabolisme de base x 1,2) : refusée avec un message, le calcul reprend la main
+type('repos', 1000);
+assert(/trop bas/.test(p.$('#warn-repos').textContent) && /calories actives/.test(p.$('#warn-repos').textContent), 'dépense trop basse non signalée');
+assert.strictEqual(field('repos').getAttribute('aria-invalid'), 'true', 'champ de dépense trop basse non marqué');
+assert(!/saisie/.test(p.$('#calc-rest').textContent) && !/1\s000/.test(note()), 'dépense trop basse utilisée : ' + note());
+field('repos').dispatchEvent(new pw.Event('change', { bubbles: true }));
+assert.strictEqual(field('repos').value, '1000', 'la valeur saisie doit rester affichée pour être corrigée');
 type('repos', '');
 assert(!('repos' in prof()), 'dépense de repos non effacée');
+assert(!field('repos').hasAttribute('aria-invalid') && !p.$('#warn-repos').textContent, 'alerte de dépense non effacée');
 type('gras', 12);
 assert(/Cunningham/.test(p.$('#calc-rest').textContent), 'formule avec masse grasse');
 
@@ -213,6 +223,10 @@ type('ravito', 45);
 assert(/^90\sg/.test(p.$('#day .band .qty').textContent), 'ravito réglé non appliqué : ' + p.$('#day .band .qty').textContent);
 assert.deepStrictEqual(JSON.parse(pw.localStorage.getItem(KEY)).choices, {}, 'la clé v1 a changé de forme');
 assert.strictEqual(JSON.parse(pw.localStorage.getItem(KEY)).plans['2026-10-07'].activity, 'longue', 'plan v1 non enregistré');
+
+// Version affichée en bas de page
+const version = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version;
+assert.strictEqual(p.$('#app-version').textContent, version, 'version non affichée');
 
 // Le profil est relu au chargement, un profil corrompu ne bloque rien
 const again = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 41, deficit: 10, neat: 'constructor', poids: 'lourd' }))));

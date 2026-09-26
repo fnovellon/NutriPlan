@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {buildDay, energy, bmr, restNeed, sessionCost, cleanProfile, profileFields, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX};', ctx);
-const { buildDay, energy, bmr, restNeed, sessionCost, cleanProfile, profileFields, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, sessionCost, cleanProfile, profileFields, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, sessionCost, cleanProfile, profileFields, DEFAULT_PLAN, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const day = (activity, extra) => Object.assign({ activity, moment: 'soir', duree: 2, natation: false, libre: false }, extra);
@@ -24,6 +24,15 @@ near(bmr(cleanProfile({ gras: 15 })), 1846.4, 0.01, 'Cunningham 72 kg à 15 % de
 near(restNeed(P), 2327.5, 0.01, 'dépense de repos, activité assise');
 near(restNeed(cleanProfile({ neat: 'debout' })), 1662.5 * 1.7, 0.01, 'dépense de repos, debout');
 near(restNeed(cleanProfile({ repos: 2500 })), 2500, 0, 'dépense de repos saisie');
+// Dépense saisie impossible (sous métabolisme de base x 1,2) : ignorée. Profil de la capture : 30 ans, 168 cm, 71 kg.
+const me = { age: 30, taille: 168, poids: 71 };
+near(bmr(cleanProfile(me)), 1615, 0.01, 'Mifflin-St Jeor 71 kg, 168 cm, 30 ans');
+for (const [repos, source] of [[1000, 'ignoree'], [1930, 'ignoree'], [1940, 'saisie'], [2000, 'saisie']]) {
+  const x = energy(day('repos'), cleanProfile(Object.assign({ repos }, me)));
+  assert.strictEqual(x.restSource, source, `dépense saisie de ${repos} kcal`);
+  near(x.rest, source === 'saisie' ? repos : 1615 * 1.4, 0.01, `dépense de repos retenue pour ${repos} kcal saisies`);
+}
+assert.strictEqual(energy(day('repos'), cleanProfile(me)).restSource, 'calcul', 'dépense calculée');
 near(sessionCost(day('muscu'), P), 288, 0.01, 'muscu');
 near(sessionCost(day('course'), P), 633.6, 0.01, 'course');
 near(sessionCost(day('double'), P), 921.6, 0.01, 'muscu + course');
@@ -101,5 +110,14 @@ const fuelOf = (d, ravito) => buildDay(day('longue', { duree: d }), DEFAULT_CHOI
 assert(fuelOf(1.5) < fuelOf(2) && fuelOf(2) < fuelOf(2.5) && fuelOf(2.5) < fuelOf(3), 'ravito non proportionnel à la durée');
 assert.strictEqual(fuelOf(3), 180, 'ravito de 60 g/h par défaut');
 assert.strictEqual(fuelOf(3, 45), 135, 'ravito réglé à 45 g/h');
+
+// 9. Version : la même partout, notée en tête des nouveautés
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
+const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
+assert(/^\d+\.\d+\.\d+$/.test(APP_VERSION), 'version mal formée : ' + APP_VERSION);
+assert.strictEqual(pkg.version, APP_VERSION, 'version de package.json');
+assert.strictEqual(lock.version, APP_VERSION, 'version de package-lock.json');
+assert.strictEqual((changelog.match(/^## (\d+\.\d+\.\d+)/m) || [])[1], APP_VERSION, 'dernière version de CHANGELOG.md');
 
 console.log(`moteur OK (${n} combinaisons vérifiées)`);

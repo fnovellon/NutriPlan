@@ -23,13 +23,13 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
   - `SPLIT` : répartition des féculents entre déjeuner et dîner, par activité (poids relatifs).
   - `DEFAULT_PLAN` / `DEFAULT_CHOICES` : valeurs par défaut par jour, indexées par `Date.getDay()` (0 = dimanche). `DEFAULT_PLAN` sert aussi de « semaine type » pour la dépense moyenne.
   - `PROFILE_DEFAULT`, `PROFILE_RANGES`, `NEAT`, `SESSION` : profil par défaut, bornes des champs, activité hors sport, séances (MET et durée).
-- `energy(plan, profil)` renvoie `{ bmr, rest, cost, need, avg, deficit, target, kgWeek }`.
+- `energy(plan, profil)` renvoie `{ bmr, rest, restSource, cost, need, avg, deficit, target, kgWeek }` (`restSource` : `'calcul'`, `'saisie'` ou `'ignoree'`).
 - `buildDay(plan, choices, profil)` renvoie `{ secs, tot, libre, energy, ecart }` : `secs` est la timeline (repas + bandeaux de séance), `tot` les totaux, `libre` le budget du repas libre, `ecart` l'apport moins l'objectif (hors repas libre). Le profil est facultatif (valeurs par défaut).
 
 ## Dépense et objectif (à respecter)
 
 - Métabolisme de base : Mifflin-St Jeor (`10 × kg + 6,25 × cm − 5 × âge + 5`, `− 161` pour une femme). Si la masse grasse est saisie : Cunningham (`500 + 22 × masse maigre`), plus juste chez les sportifs d'endurance.
-- Dépense un jour de repos = métabolisme de base × activité hors sport (assis 1,4, mixte 1,55, debout 1,7 ; effet thermique des repas compris). Ou la valeur saisie à la main, qui remplace le calcul.
+- Dépense un jour de repos = métabolisme de base × activité hors sport (assis 1,4, mixte 1,55, debout 1,7 ; effet thermique des repas compris). Ou la valeur saisie à la main (le total de la journée, pas les calories actives d'une montre), qui remplace le calcul. Une valeur saisie sous métabolisme de base × 1,2 (niveau alitement) est impossible : elle est ignorée, le calcul reprend la main, le champ passe en erreur avec un message qui l'explique.
 - Coût net d'une séance = (MET − 1) × poids × durée (Compendium des activités physiques, Ainsworth 2011) : muscu 5 MET pendant 1 h, course 9,8 MET (≈ 10 km/h) pendant 1 h, sortie longue 8 MET (vélo d'endurance) sur la durée choisie, natation 7 MET pendant 45 min. Muscu + course = les deux.
 - Dépense du jour = dépense de repos + coût de la séance.
 - Déficit : un % (0 à 25, 15 par défaut) de la dépense moyenne de la semaine type (`DEFAULT_PLAN`), retiré de la même façon chaque jour. Les séances restent donc entièrement couvertes et la disponibilité énergétique reste la même tous les jours.
@@ -58,6 +58,12 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Navigation : semaine en cours, précédente et suivante (flèches). Le titre et la date sont relatifs (hier, aujourd'hui, demain, « lundi prochain »). Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
 - Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ sexe, age, taille, poids, gras, neat, repos, deficit, ravito }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme.
 - Si le format change, passer à une nouvelle clé (v2) ou migrer, sans casser les données existantes.
+
+## Version
+
+- Une seule source : `APP_VERSION` dans `index.html`, identique au champ `version` de `package.json` (et de `package-lock.json`, régénéré avec `npm install --package-lock-only`). Affichée en bas de page avec un lien vers `CHANGELOG.md`.
+- Semver : correctif → patch (1.2.1), nouveauté → mineure (1.3.0), changement incompatible (refonte des calculs, format de stockage) → majeure (2.0.0).
+- À chaque changement visible : nouvelle version et entrée en tête de `CHANGELOG.md` (en français, pour l'utilisateur), dans le même commit. Les tests vérifient que les trois concordent.
 
 ## Design
 
