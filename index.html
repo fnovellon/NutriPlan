@@ -116,7 +116,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .items{margin:12px 0 0;padding:0;list-style:none;}
 .items li{display:grid;grid-template-columns:5.4rem minmax(0,1fr);column-gap:12px;align-items:baseline;padding:4px 0;}
 .q{display:flex;flex-direction:column;align-items:flex-end;justify-self:end;text-align:right;}
-.ck{font-family:var(--sans);font-weight:600;font-size:13px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
+.ck{white-space:nowrap;font-family:var(--sans);font-stretch:88%;font-weight:600;font-size:12px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
 .mac{display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;font-family:var(--sans);font-stretch:88%;font-style:normal;font-weight:600;font-size:13px;line-height:1.35;color:var(--muted);font-variant-numeric:tabular-nums;}
 .mac abbr{text-decoration:none;font-weight:800;}
 .mac .p::before,.mac .c::before,.mac .f::before{content:"";display:inline-block;width:7px;height:7px;margin-right:3px;border-radius:2px;vertical-align:1px;}
@@ -295,7 +295,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -311,14 +311,14 @@ const UNIT = {
   oeuf:[72,6.3,0.4,4.8], oeufMarine:[80,6.5,1.5,4.8]
 };
 const STARCH = {
-  riz:{label:'Riz', f:[355,8,78,0.7], step:5, cook:3, raw:'cru', cooked:'cuit', name:'riz basmati'},
-  pates:{label:'Pâtes', f:[355,12.5,71,1.5], step:5, cook:2.3, raw:'crues', cooked:'cuites', name:'pâtes'},
-  pdt:{label:'Pommes de terre', f:[77,2,17,0.1], step:10, name:'pommes de terre'},
-  patate:{label:'Patate douce', f:[86,1.6,20,0.1], step:10, name:'patate douce'},
-  quinoa:{label:'Quinoa', f:[368,14,60,6], step:5, cook:2.7, raw:'cru', cooked:'cuit', name:'quinoa'},
-  semoule:{label:'Semoule', f:[360,12.5,72,1.5], step:5, cook:2.3, raw:'crue', cooked:'cuite', name:'semoule'},
-  boulgour:{label:'Boulgour', f:[345,12,69,1.5], step:5, cook:2.5, raw:'cru', cooked:'cuit', name:'boulgour'},
-  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, cook:2.5, raw:'crues', cooked:'cuites', name:'lentilles'},
+  riz:{label:'Riz', f:[355,8,78,0.7], step:5, raw:'cru', cook:[[3, 'cuit']], name:'riz basmati'},
+  pates:{label:'Pâtes', f:[355,12.5,71,1.5], step:5, raw:'crues', cook:[[2.3, 'cuites']], name:'pâtes'},
+  pdt:{label:'Pommes de terre', f:[77,2,17,0.1], step:10, raw:'crues', cook:[[1, 'à l’eau'], [0.75, 'au four']], name:'pommes de terre'},
+  patate:{label:'Patate douce', f:[86,1.6,20,0.1], step:10, raw:'crue', cook:[[1, 'à l’eau'], [0.75, 'au four']], name:'patate douce'},
+  quinoa:{label:'Quinoa', f:[368,14,60,6], step:5, raw:'cru', cook:[[2.7, 'cuit']], name:'quinoa'},
+  semoule:{label:'Semoule', f:[360,12.5,72,1.5], step:5, raw:'crue', cook:[[2.3, 'cuite']], name:'semoule'},
+  boulgour:{label:'Boulgour', f:[345,12,69,1.5], step:5, raw:'cru', cook:[[2.5, 'cuit']], name:'boulgour'},
+  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, raw:'crues', cook:[[2.5, 'cuites']], name:'lentilles'},
   gnocchis:{label:'Gnocchis', f:[155,4,33,0.6], step:10, name:'gnocchis frais'}
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','gnocchis'];
@@ -327,12 +327,13 @@ function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnPrope
 function grams(n){ return n + NB + 'g'; }
 function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k}; }
 function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n}; }
-/* cook : poids cuit estimé, affiché sous la quantité crue, ex. {raw:'cru', g:135, adj:'cuit'} */
+/* cook : poids cuit estimé par mode de cuisson, affiché sous la quantité crue,
+   ex. {raw:'cru', ways:[{g:135, adj:'cuit'}]} ou {raw:'crues', ways:[{g:340, adj:'à l’eau'}, {g:260, adj:'au four'}]} */
 function it(key, qty, name, note, m, cook){ return {key:key, qty:qty, name:name, note:note || null, m:m || null, cook:cook || null}; }
 /* Rendement de cuisson de la viande et du poisson (poids cuit / poids cru, ≈ table USDA des rendements de cuisson, 2012) */
 const YIELD = {poulet:0.75, boeuf:0.75, poisson:0.8, saumon:0.8};
 function meat(g, name, note, food){
-  return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'});
+  return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', ways:[{g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'}]});
 }
 function oil(g){ return it('oil', grams(g), 'huile d’olive', null, mac('huile', g)); }
 function total(items){
@@ -526,7 +527,7 @@ function starchItem(id, kcal){
   const q = Math.max(S.step, Math.round(kcal / (S.f[0] / 100) / S.step) * S.step);
   const k = q / 100;
   return it('st', grams(q), S.name, null, {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k},
-    S.cook ? {raw:S.raw, g:Math.round(q * S.cook / 10) * 10, adj:S.cooked} : null);
+    S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null);
 }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond.
    rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
@@ -734,7 +735,8 @@ if (typeof document !== 'undefined'){
     const changed = prevQty.has(key) && prevQty.get(key) !== val;
     next.set(key, val);
     const q = '<span class="q"><span class="qty' + (changed ? ' bump' : '') + '">' + i.qty + '</span>' +
-      (i.cook ? '<span class="ck">' + i.cook.raw + '</span><span class="ck">≈' + NB + grams(i.cook.g) + ' ' + i.cook.adj + '</span>' : '') + '</span>';
+      (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
+        i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
     return '<li>' + q + '<span class="name">' + i.name + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
       (i.m && i.key !== 'lib' ? macHTML(i.m) : '') + '</span></li>';
   };

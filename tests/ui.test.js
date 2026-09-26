@@ -94,6 +94,10 @@ const ck = li => [...li.querySelectorAll('.q .ck')].map(e => e.textContent);
 assert.deepStrictEqual(ck(dejLi('poulet')), ['cru', '≈\u00A0135\u00A0g cuit'], 'poids cuit du poulet');
 assert(ck(dejLi('riz')).length === 2 && /cuit$/.test(ck(dejLi('riz'))[1]), 'poids cuit du riz');
 assert.deepStrictEqual(ck(dejLi('légumes')), [], 'poids cuit des légumes');
+click('[data-action="starch"][data-slot="dej"][data-value="pdt"]');
+const pdtCk = ck(dejLi('pommes de terre'));
+assert(pdtCk.length === 3 && pdtCk[0] === 'crues' && /à l’eau$/.test(pdtCk[1]) && /au four$/.test(pdtCk[2]), 'cuissons des pommes de terre : ' + pdtCk.join(' | '));
+click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
 for (const li of d.querySelectorAll('#day .items li')) {
   assert(/kcal\s*P\s\d+\sg\s*G\s\d+\sg\s*L\s\d+\sg/.test(li.querySelector('.mac').textContent), 'macros absentes : ' + li.textContent);
 }

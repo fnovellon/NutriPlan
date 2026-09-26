@@ -1,5 +1,9 @@
 # Nouveautés
 
+## 1.5.0, 26 septembre 2026
+
+- Pommes de terre et patate douce : sous le poids cru, le poids cuit à l'eau (≈ le même) et cuit au four (≈ −25 %).
+
 ## 1.4.0, 26 septembre 2026
 
 - Sous chaque aliment, ses calories et ses macros en petit (P, G, L : protéines, glucides, lipides).
