@@ -53,20 +53,21 @@ click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
 click('[data-action="prot"][data-slot="diner"][data-value="poisson"]');
 click('[data-action="starch"][data-slot="diner"][data-value="pdt"]');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner']);
+assert(/shaker de protéines/.test(d.querySelector('[aria-labelledby="h-co"]').textContent), 'shaker dans la collation un jour de repos');
 click('[data-action="activity"][data-value="muscu"]');
 click('[data-action="moment"][data-value="soir"]');
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Séance de muscu', 'Dîner']);
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Séance de muscu', 'Shaker', 'Dîner']);
 click('[data-action="moment"][data-value="matin"]');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Séance de muscu', 'Collation', 'Déjeuner', 'Dîner']);
 click('[data-action="activity"][data-value="longue"]');
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Sortie longue', 'Déjeuner', 'Goûter', 'Dîner']);
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Sortie longue', 'Shaker', 'Déjeuner', 'Goûter', 'Dîner']);
 assert(!$('#row-duree').hidden && $('#row-moment').hidden && $('#sw-nat').hidden, 'options de la sortie longue');
 
 // Natation
 click('[data-action="activity"][data-value="course"]');
 click('[data-action="moment"][data-value="soir"]');
 setSwitch('natation', true);
-assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Avant la natation', 'Natation', 'Déjeuner', 'Collation', 'Course', 'Dîner']);
+assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Avant la natation', 'Natation', 'Déjeuner', 'Collation', 'Course', 'Shaker', 'Dîner']);
 setSwitch('natation', false);
 
 // Repas libre : un seul par semaine, celui du samedi (par défaut) est retiré
@@ -251,6 +252,19 @@ type('deficit', 25);
 assert(/20\s%/.test(p.$('#warn-deficit').textContent), 'pas d’alerte au-delà de 20 %');
 p.click('[data-action="prof"][data-key="neat"][data-value="debout"]');
 assert.strictEqual(prof().neat, 'debout', 'activité hors sport');
+
+// Shaker : composition réglable, reprise dans la journée
+type('shakerKcal', 150); type('shakerProt', 30);
+assert(prof().shakerKcal === 150 && prof().shakerProt === 30, 'shaker non enregistré');
+const pShaker = () => [...pw.document.querySelectorAll('#day li')].find(li => /shaker de protéines/.test(li.textContent)).querySelector('.mac').textContent;
+assert(/150\skcal/.test(pShaker()) && /P\s30\sg/.test(pShaker()), 'shaker réglé non repris : ' + pShaker());
+assert(/150\skcal/.test(p.$('#calc-shaker').textContent), 'ligne du shaker');
+type('shakerKcal', 200);
+assert(field('shakerKcal').getAttribute('aria-invalid') === 'true' && prof().shakerKcal === 150, 'shaker hors bornes accepté');
+type('shakerKcal', 100);
+assert(/25\sg/.test(p.$('#warn-shaker').textContent), 'protéines au-delà de kcal / 4 non signalées');
+type('shakerProt', 20);
+assert(!p.$('#warn-shaker').textContent, 'alerte du shaker non effacée');
 
 p.click('[data-action="activity"][data-value="longue"]');
 type('ravito', 45);

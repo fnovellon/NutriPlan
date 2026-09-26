@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 1.6.0, 26 septembre 2026
+
+- Shaker de protéines tous les jours : juste après la séance (après la sortie longue, dans la collation après une séance du matin), dans la collation de l'après-midi les jours de repos.
+- Sa composition se règle dans « Tes besoins » : calories (100 à 160 kcal) et protéines par dose, 120 kcal et 24 g par défaut.
+- Le total du jour ne change pas : ses calories sont prises sur les féculents.
+- Le skyr du soir ne revient plus que si les protéines passent sous 140 g (le shaker couvre la récupération des jours muscu + course).
+
 ## 1.5.0, 26 septembre 2026
 
 - Pommes de terre et patate douce : sous le poids cru, le poids cuit à l'eau (≈ le même) et cuit au four (≈ −25 %).

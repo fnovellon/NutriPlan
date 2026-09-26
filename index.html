@@ -164,7 +164,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .calc:empty,.warn:empty{display:none;}
 .range{margin:0 0 8px;}
 .range-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
-.range label{font-size:17px;}
+.range label,.blk{font-size:17px;}
+.blk{margin:16px 0 8px;}
 .range output{font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .range input{display:block;width:100%;margin:8px 0 6px;accent-color:var(--beet);}
 
@@ -276,6 +277,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
         <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
       </div>
       <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
+      <p class="blk">Shaker de protéines</p>
+      <div class="fields">
+        <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-key="shakerKcal" min="100" max="160" step="1"><span class="unit">kcal</span></span></label>
+        <label class="field"><span>Protéines par dose</span><span class="inp"><input type="number" inputmode="decimal" data-key="shakerProt" min="10" max="40" step="0.5"><span class="unit">g</span></span></label>
+      </div>
+      <p class="calc" id="calc-shaker"></p>
+      <p class="warn" id="warn-shaker"></p>
       <p class="calc">Ton profil reste sur cet appareil.</p>
     </div>
   </details>
@@ -295,7 +303,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -426,8 +434,8 @@ const DEFAULT_CHOICES = {
 };
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90]};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shakerKcal:120, shakerProt:24};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
 /* Séances : MET du Compendium des activités physiques (Ainsworth 2011) et durée en heures */
@@ -511,6 +519,13 @@ function snackItems(type){
   if (type === 'course' || type === 'double') items.push(it('comp', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)));
   return items;
 }
+/* Shaker de protéines, une dose à l'eau : protéines saisies (au plus kcal / 4),
+   le reste des kcal partagé à parts égales entre glucides et lipides */
+function shakerMac(p){
+  const prot = Math.min(p.shakerProt, p.shakerKcal / 4), rest = p.shakerKcal - 4 * prot;
+  return {kcal:p.shakerKcal, p:prot, c:rest / 8, f:rest / 18};
+}
+function shakerItem(p){ return it('shk', '1', 'shaker de protéines', 'une dose, à l’eau', shakerMac(p)); }
 function gouterItems(){
   return [
     it('skyr', grams(150), 'skyr nature', null, mac('skyr', 150)),
@@ -580,15 +595,18 @@ function buildDay(plan, ch, profile){
     lunch.items.push(it('comp', '1', 'compote', 'sans sucre ajouté, en dessert', unitMac('compote', 1)));
   }
 
+  /* Shaker juste après la séance ; les jours de repos, dans la collation de l'après-midi */
+  const shakerSec = function(when){ return {id:'shk', title:'Shaker', when:when, items:[shakerItem(pr)]}; };
   if (long){
     secs.push(band());
+    secs.push(shakerSec('juste après la sortie'));
     lunch.when = 'après la sortie';
     secs.push(lunch);
     co = {id:'co', title:'Goûter', when:null, items:gouterItems()};
     secs.push(co);
   } else if (matin){
     secs.push(band());
-    co = {id:'co', title:'Collation', when:'juste après la séance', items:snackItems(t)};
+    co = {id:'co', title:'Collation', when:'juste après la séance', items:snackItems(t).concat([shakerItem(pr)])};
     secs.push(co);
     if (swim) pushSwim();
     secs.push(lunch);
@@ -598,11 +616,12 @@ function buildDay(plan, ch, profile){
     co = {id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(t)};
     secs.push(co);
     secs.push(band());
+    secs.push(shakerSec('juste après la séance'));
     dinner.when = 'après la séance';
   } else {
     if (swim) pushSwim();
     secs.push(lunch);
-    co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems('repos')};
+    co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems('repos').concat([shakerItem(pr)])};
     secs.push(co);
   }
   secs.push(dinner);
@@ -622,8 +641,8 @@ function buildDay(plan, ch, profile){
   };
   fill();
   let tot = total(allItems(secs));
-  if (!plan.libre && (t === 'double' || tot.p < 140)){
-    secs.push({id:'soir', title:'Soir', when:t === 'double' ? 'pour la récupération' : 'pour compléter tes protéines',
+  if (!plan.libre && tot.p < 140){
+    secs.push({id:'soir', title:'Soir', when:'pour compléter tes protéines',
       items:[it('skyr', grams(150), 'skyr nature', null, mac('skyr', 150))]});
     fill();
     tot = total(allItems(secs));
@@ -844,6 +863,12 @@ if (typeof document !== 'undefined'){
     }
     $('warn-deficit').textContent = warn.join(' ');
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
+    const sm = shakerMac(pr);
+    $('calc-shaker').textContent = 'Tous les jours, juste après la séance (l’après-midi les jours de repos). Une dose à l’eau' + NB + ': ' +
+      pr.shakerKcal + NB + 'kcal, ' + Math.round(sm.p) + NB + 'g de protéines, environ ' + Math.round(sm.c) + NB + 'g de glucides et ' + Math.round(sm.f) + NB + 'g de lipides.';
+    $('warn-shaker').textContent = pr.shakerProt > sm.p
+      ? 'Avec ' + pr.shakerKcal + NB + 'kcal, une dose ne peut pas dépasser ' + Math.round(sm.p) + NB + 'g de protéines' + NB + ': le calcul en compte ' + Math.round(sm.p) + NB + 'g.'
+      : '';
   };
   const render = function(){
     const scrolls = {};

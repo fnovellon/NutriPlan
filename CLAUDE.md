@@ -39,11 +39,11 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Déficit : un % (0 à 25, 15 par défaut) de la dépense moyenne de la semaine type (`DEFAULT_PLAN`), retiré de la même façon chaque jour. Les séances restent donc entièrement couvertes et la disponibilité énergétique reste la même tous les jours.
 - Objectif du jour = dépense du jour − déficit, arrondi à 10 kcal. Perte estimée = déficit × 7 / 7 700 kg par semaine.
 - Alertes : déficit au-delà de 20 % ; en automatique, si la masse grasse est connue, disponibilité énergétique `(dépense de repos − déficit) / masse maigre` sous 30 kcal/kg.
-- Profil par défaut tant que rien n'est saisi : homme, 35 ans, 178 cm, 72 kg, assis, déficit 15 %, ravito 60 g/h. La page demande de compléter âge, taille et poids.
+- Profil par défaut tant que rien n'est saisi : homme, 35 ans, 178 cm, 72 kg, assis, déficit 15 %, ravito 60 g/h, shaker 120 kcal et 24 g de protéines. La page demande de compléter âge, taille et poids.
 
 ## Règles de calcul (à respecter)
 
-- Féculents : ils complètent la journée jusqu'à l'objectif. Énergie à répartir = objectif − tout le reste (petit-déjeuner, collation, protéines, matières grasses, légumes, ravito, skyr du soir).
+- Féculents : ils complètent la journée jusqu'à l'objectif. Énergie à répartir = objectif − tout le reste (petit-déjeuner, collation, shaker, protéines, matières grasses, légumes, ravito, skyr du soir).
 - Répartition déjeuner / dîner (`SPLIT`) : repos 45 / 30, muscu 55 / 45, course 55 / 85, muscu + course 55 / 85, sortie longue 85 / 60.
 - Dosage en calories, pas en glucides : changer de féculent ne change pas le total de la journée (plus d'exception pour les lentilles ou le quinoa). Quantité arrondie au pas (5 g pour les grains, 10 g pour tubercules et gnocchis). Poids cru affiché avec l'équivalent cuit.
 - Chaque féculent reste entre 90 et 550 kcal par repas (20 à 120 g de glucides sous forme de riz). Si l'un atteint une limite, l'autre compense. Si les deux sont au plafond, du pain complet s'ajoute à la collation (ou au goûter) « pour couvrir ta séance ». Si les deux sont au plancher, l'apport dépasse l'objectif et la page le dit.
@@ -51,8 +51,9 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Collation : 2 œufs marinés, + banane (muscu, course), + compote (course, muscu + course). Goûter de sortie longue : 150 g de skyr + pomme + 15 g d'amandes.
 - Timing : séance le soir → collation 1h30 avant, dîner après. Séance le matin → petit-déjeuner 1h30 avant, collation juste après. Sortie longue toujours le matin, ravito à 60 g de glucides par heure par défaut, réglable de 30 à 90 g/h (repère : 30-60 g/h jusqu'à 2h30, jusqu'à 90 g/h au-delà).
 - Natation à midi : banane avant, compote au déjeuner.
+- Shaker de protéines tous les jours, une dose à l'eau, repas libre compris. Composition du profil : `shakerKcal` (100 à 160, défaut 120) et `shakerProt` (10 à 40 g, défaut 24) ; protéines limitées à kcal / 4, le reste des kcal partagé à parts égales entre glucides et lipides (`shakerMac`). Placement : section « Shaker » juste après la séance du soir ou la sortie longue ; dans la collation après une séance du matin ; dans la collation de l'après-midi les jours de repos.
 - Repas libre : remplace le dîner, budget = kcal du dîner normal + 300, arrondi à 50. Le total affiché l'inclut (« dont X kcal de repas libre »), les macros sont hors repas libre.
-- « Soir : 150 g de skyr » ajouté automatiquement les jours muscu + course, ou si les protéines passent sous 140 g (jamais les jours de repas libre).
+- « Soir : 150 g de skyr » ajouté seulement si les protéines passent sous 140 g (jamais les jours de repas libre). Le shaker couvre la récupération, y compris les jours muscu + course.
 - Garde-fous vérifiés par les tests, pour toutes les combinaisons avec le profil par défaut (hors repas libre) : apport à ±3 % de l'objectif, protéines ≥ 140 g, lipides entre 55 et 95 g, féculents entre leurs limites. Avec 0 et 25 % de déficit : protéines ≥ 140 g, lipides ≥ 55 g, jamais plus de 3 % sous l'objectif, au-dessus seulement si les féculents sont au plancher. Formules vérifiées sur des valeurs calculées à la main.
 
 ## Stockage
@@ -60,7 +61,7 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - `localStorage`, clé `repas-du-jour:v1` : `{ plans: { 'AAAA-MM-JJ': plan }, choices: { getDay: choix } }`. L'activité est mémorisée par date, les choix de protéines et féculents par jour de la semaine. Plans purgés après 21 jours.
 - Toujours en try/catch : l'appli doit fonctionner sans stockage ou avec un stockage corrompu (JSON invalide, valeur qui n'est pas un objet). Les identifiants relus (activité, protéine, féculent) sont validés avec `has()` (propriété propre), jamais avec `OBJ[clé]` qui laisserait passer `constructor` ou `__proto__`.
 - Navigation : semaine en cours, précédente et suivante (flèches). Le titre et la date sont relatifs (hier, aujourd'hui, demain, « lundi prochain »). Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
-- Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ mode, sexe, age, taille, poids, gras, neat, repos, deficit, ravito }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme.
+- Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ mode, sexe, age, taille, poids, gras, neat, repos, deficit, ravito, shakerKcal, shakerProt }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme.
 - Migration du profil (1.3.0, champ `mode` ajouté) : un profil sans `mode` est lu en `'manuel'` s'il contient une dépense valide, sinon en `'auto'` (`cleanProfile`), et le mode déduit est fixé au chargement.
 - Si le format change, passer à une nouvelle clé (v2) ou migrer, sans casser les données existantes.
 

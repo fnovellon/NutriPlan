@@ -142,7 +142,36 @@ for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) for (co
   for (const s of r.secs) for (const i of s.items) assert(i.m && isFinite(i.m.kcal), `${activity} : ${i.name} sans macros`);
 }
 
-// 10. Version : la même partout, notée en tête des nouveautés
+// 10. Shaker de protéines : tous les jours, juste après la séance, composition du profil
+const where = r => r.secs.filter(s => s.items.some(i => i.key === 'shk')).map(s => s.id);
+for (const activity of ['repos', 'muscu', 'course', 'double', 'longue']) for (const moment of ['matin', 'soir']) for (const libre of [false, true]) {
+  const r = buildDay(day(activity, { moment, libre }), DEFAULT_CHOICES[3]);
+  const combo = `${activity}/${moment}/${libre ? 'libre' : '-'}`;
+  assert.strictEqual(r.secs.flatMap(s => s.items).filter(i => i.key === 'shk').length, 1, `${combo} : un shaker par jour`);
+  const training = activity !== 'repos' && activity !== 'longue';
+  const expected = activity === 'longue' || (training && moment === 'soir') ? 'shk' : 'co';
+  assert.strictEqual(where(r).join(), expected, `${combo} : shaker dans ${where(r)}`);
+  if (expected === 'shk') {
+    const i = r.secs.findIndex(s => s.id === 'shk');
+    assert(r.secs[i - 1].band, `${combo} : le shaker ne suit pas la séance`);
+  }
+}
+const shk = x => buildDay(day('repos'), DEFAULT_CHOICES[3], x).secs.flatMap(s => s.items).find(i => i.key === 'shk').m;
+const s0 = shk({});
+assert(s0.kcal === 120 && s0.p === 24 && s0.c === 3 && Math.abs(s0.f - 4 / 3) < 1e-9, 'shaker par défaut');
+const s1 = shk({ shakerKcal: 160, shakerProt: 30 });
+near(4 * s1.p + 4 * s1.c + 9 * s1.f, 160, 1e-9, 'kcal du shaker réglé');
+assert(s1.p === 30 && s1.c === 5, 'macros du shaker réglé');
+const s2 = shk({ shakerKcal: 100, shakerProt: 30 });
+assert(s2.p === 25 && s2.c === 0 && s2.f === 0, 'protéines limitées à kcal / 4');
+assert.strictEqual(cleanProfile({ shakerKcal: 200, shakerProt: 5 }).shakerKcal, 120, 'shaker hors bornes ignoré');
+// Skyr du soir : plus systématique les jours muscu + course, seulement si les protéines passent sous 140 g
+const dbl = buildDay(day('double'), DEFAULT_CHOICES[3]);
+assert(dbl.tot.p >= 140 && !dbl.secs.some(s => s.id === 'soir'), 'skyr du soir un jour muscu + course');
+const plus = buildDay(day('repos'), DEFAULT_CHOICES[3], { shakerKcal: 160 }).tot.kcal - buildDay(day('repos'), DEFAULT_CHOICES[3]).tot.kcal;
+assert(Math.abs(plus) <= 30, `un shaker plus calorique ne change pas le total (${Math.round(plus)} kcal)`);
+
+// 11. Version : la même partout, notée en tête des nouveautés
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
