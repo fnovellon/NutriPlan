@@ -3,6 +3,9 @@
 ## 3.0.0, 27 septembre 2026
 
 - Plus de calendrier : l'appli montre toujours ta journée d'aujourd'hui. Tes séances et tes choix de repas restent enregistrés, la règle « un repas libre par semaine » aussi.
+- Les portions suivent ton poids : le menu est prévu pour 72 kg, il s'adapte de 47 à 101 kg (viande, poisson, œufs, skyr, avoine, huile…), comme tes minimums de protéines et de lipides. Autour de 72 kg, rien ne change.
+- Shaker au choix : Oui ou Non dans « Tes besoins ». Sans shaker, un skyr s'ajoute le soir si tes protéines passent sous ton minimum.
+- Si tes minimums dépassent ton objectif, la page te propose de baisser la marge cuisine ou de te passer du shaker.
 
 ## 2.1.0, 27 septembre 2026
 

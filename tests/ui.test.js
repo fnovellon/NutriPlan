@@ -266,6 +266,14 @@ type('shakerKcal', 100);
 assert(/25\sg/.test(p.$('#warn-shaker').textContent), 'protéines au-delà de kcal / 4 non signalées');
 type('shakerProt', 20);
 assert(!p.$('#warn-shaker').textContent, 'alerte du shaker non effacée');
+// Shaker optionnel : Non retire la section et la ligne, masque la dose, garde la composition
+const shakerShown = () => [...pw.document.querySelectorAll('#day li')].some(li => /shaker de protéines/.test(li.textContent));
+p.click('[data-action="prof"][data-key="shaker"][data-value="non"]');
+assert.strictEqual(prof().shaker, 'non', 'shaker désactivé non enregistré');
+assert(!shakerShown() && !p.$('#day [aria-labelledby="h-shk"]'), 'shaker encore affiché');
+assert(!shown('shakerKcal') && /skyr/.test(p.$('#calc-shaker').textContent), 'dose du shaker visible sans shaker');
+p.click('[data-action="prof"][data-key="shaker"][data-value="oui"]');
+assert(shakerShown() && shown('shakerKcal') && prof().shakerKcal === 100, 'shaker réactivé');
 
 // Calories des séances : placeholder d'après le poids, valeur saisie reprise
 assert.strictEqual(field('kcalMoyenne').placeholder, String(Math.round(6.3 * 70 / 10) * 10), 'calories par défaut d’une moyenne');
@@ -304,6 +312,11 @@ const lm = legacy({ age: 30, taille: 168, poids: 71, repos: 2500 });
 assert(/saisie/.test(lm.$('#needs-sum').textContent) && lm.$('[data-action="prof"][data-value="manuel"]').getAttribute('aria-pressed') === 'true', 'ancien profil manuel');
 const la = legacy({ age: 30, taille: 168, poids: 71, repos: 1000, deficit: 0 });
 assert(/automatique/.test(la.$('#needs-sum').textContent) && /2\s260/.test(la.$('#needs-sum').textContent), 'ancien profil à 1 000 kcal : ' + la.$('#needs-sum').textContent);
+// Petite corpulence : portions réduites, conseil si les minimums dépassent l'objectif
+const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 20 });
+const skyrPd = [...light.d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].find(li => /skyr/.test(li.textContent));
+assert(/^180\sg/.test(skyrPd.querySelector('.qty').textContent), '52 kg : skyr du petit-déjeuner ' + skyrPd.querySelector('.qty').textContent);
+assert(/dépassent l’objectif/.test(light.$('#sum-note').textContent) && /baisse la marge cuisine ou passe-toi du shaker/.test(light.$('#sum-note').textContent), '52 kg : ' + light.$('#sum-note').textContent);
 for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);

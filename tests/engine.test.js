@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -251,7 +251,61 @@ for (const set of [[], [moyenne('soir')], [longue(2)]]) {
 }
 assert.strictEqual(cleanProfile({ marge: 400 }).marge, 100, 'marge hors bornes ignorée');
 
-// 16. Version : la même partout, notée en tête des nouveautés
+// 16. Portions mises à l'échelle du poids (référence 72 kg, k borné à 0,65-1,4)
+assert(scaleOf(cleanProfile({})) === 1 && scaleOf(cleanProfile({ poids: 36 })) === 0.65 && scaleOf(cleanProfile({ poids: 150 })) === 1.4, 'bornes de k');
+const qtyOf = (x, sec, key, choices) => buildDay(day([]), choices || DEFAULT_CHOICES[3], x).secs.find(s => s.id === sec).items.find(i => i.key === key).qty;
+const oeufsJambon = { pdBase: 'pain', dej: { prot: 'oeufs', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'riz' } };
+for (const poids of [71, 72, 73]) {
+  const x = { poids };
+  assert(qtyOf(x, 'dej', 'p1') === '180 g' && qtyOf(x, 'pd', 'skyr') === '250 g' && qtyOf(x, 'dej', 'oil') === '10 g' && qtyOf(x, 'pd', 'am') === '15 g', `${poids} kg : portions de référence`);
+  assert(qtyOf(x, 'dej', 'p1', oeufsJambon) === '3' && qtyOf(x, 'dej', 'p2', oeufsJambon) === '90 g' && qtyOf(x, 'pd', 'base', oeufsJambon) === '80 g', `${poids} kg : œufs, jambon, pain`);
+}
+const small = { sexe: 'f', age: 28, taille: 160, poids: 52 };
+assert(qtyOf(small, 'dej', 'p1') === '130 g' && qtyOf(small, 'pd', 'skyr') === '180 g' && qtyOf(small, 'dej', 'p1', oeufsJambon) === '2', '52 kg : poulet 130 g, skyr 180 g, 2 œufs');
+assert.strictEqual(buildDay(day([]), oeufsJambon, {}).secs.find(s => s.id === 'pd').items.find(i => i.key === 'base').note, '2 tranches', 'tranches de pain');
+assert.strictEqual(buildDay(day([longue(2)]), oeufsJambon, {}).secs.find(s => s.id === 'pd').items.find(i => i.key === 'base').note, 'environ 3 tranches', 'tranches de pain, sortie longue');
+assert.strictEqual(qtyOf({ poids: 100 }, 'dej', 'p1'), '250 g', '100 kg : poulet 250 g');
+// Garde-fous pour d'autres corpulences : toutes les journées types × toutes les protéines (féculents variés)
+const FRIENDS = {
+  '52 kg, 20 %': { sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 20 },
+  '58 kg': { sexe: 'f', age: 30, taille: 165, poids: 58 },
+  '58 kg sans shaker ni marge': { sexe: 'f', age: 30, taille: 165, poids: 58, shaker: 'non', marge: 0 },
+  '85 kg': { age: 32, taille: 185, poids: 85 },
+  '100 kg, 10 %': { age: 40, taille: 190, poids: 100, deficit: 10 }
+};
+let nf = 0;
+for (const [who, prof] of Object.entries(FRIENDS)) {
+  const k = scaleOf(cleanProfile(prof));
+  for (const [name, set] of Object.entries(SETS)) for (const pdBase of ['avoine', 'pain']) {
+    for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']]) {
+      const combo = `${who}/${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
+      const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, prof);
+      assert(r.tot.p >= PROT_MIN * k - 0.5, `${combo} : ${Math.round(r.tot.p)} g de protéines pour un plancher de ${Math.round(PROT_MIN * k)}`);
+      assert(r.tot.f >= FAT_MIN * k - 0.5 && r.tot.f <= FAT_MAX * k, `${combo} : ${r.tot.f.toFixed(1)} g de lipides (${Math.round(FAT_MIN * k)} à ${Math.round(FAT_MAX * k)})`);
+      assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
+      if (r.ecart > r.energy.target * 0.03) {
+        for (const kc of starchKcal(r)) assert(kc <= STARCH_MIN * k + 20, `${combo} : au-dessus de l'objectif sans être au plancher`);
+      }
+      for (const kc of starchKcal(r)) assert(kc >= STARCH_MIN * k - 20 && kc <= STARCH_MAX * k + 20, `${combo} : ${Math.round(kc)} kcal de féculent`);
+      nf++;
+    }
+  }
+}
+
+// 17. Shaker optionnel : sans shaker, ni section ni ligne ; le skyr du soir compense si besoin
+assert.strictEqual(cleanProfile({}).shaker, 'oui', 'shaker par défaut');
+assert.strictEqual(cleanProfile({ shaker: 'peut-être' }).shaker, 'oui', 'valeur de shaker invalide ignorée');
+for (const [name, set] of Object.entries(SETS)) {
+  const r = buildDay(day(set), DEFAULT_CHOICES[3], { shaker: 'non' });
+  assert(!r.secs.some(s => s.id === 'shk') && !r.secs.flatMap(s => s.items).some(i => i.key === 'shk'), `${name} : shaker affiché alors qu'il est désactivé`);
+  assert(r.tot.p >= PROT_MIN, `${name} : ${Math.round(r.tot.p)} g de protéines sans shaker`);
+}
+const saumon = { pdBase: 'avoine', dej: { prot: 'saumon', starch: 'patate' }, diner: { prot: 'saumon', starch: 'patate' } };
+assert(!buildDay(day([]), saumon, {}).secs.some(s => s.id === 'soir'), 'saumon deux fois avec shaker : pas de skyr du soir');
+const lean = buildDay(day([]), saumon, { shaker: 'non' });
+assert(lean.secs.some(s => s.id === 'soir') && lean.tot.p >= PROT_MIN, 'skyr du soir de secours sans shaker');
+
+// 18. Version : la même partout, notée en tête des nouveautés
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
@@ -260,4 +314,4 @@ assert.strictEqual(pkg.version, APP_VERSION, 'version de package.json');
 assert.strictEqual(lock.version, APP_VERSION, 'version de package-lock.json');
 assert.strictEqual((changelog.match(/^## (\d+\.\d+\.\d+)/m) || [])[1], APP_VERSION, 'dernière version de CHANGELOG.md');
 
-console.log(`moteur OK (${n} combinaisons vérifiées)`);
+console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences)`);
