@@ -230,7 +230,28 @@ assert.strictEqual(cleanProfile({ shakerKcal: 200, shakerProt: 5 }).shakerKcal, 
 const plus = buildDay(day([]), DEFAULT_CHOICES[3], { shakerKcal: 160 }).tot.kcal - buildDay(day([]), DEFAULT_CHOICES[3]).tot.kcal;
 assert(Math.abs(plus) <= 30, `un shaker plus calorique ne change pas le total (${Math.round(plus)} kcal)`);
 
-// 15. Version : la même partout, notée en tête des nouveautés
+// 15. Marge cuisine : moitié au déjeuner, moitié au dîner, prise sur les féculents
+const margeOf = (x, set) => {
+  const r = buildDay(day(set || []), DEFAULT_CHOICES[3], x);
+  return { r, dej: (r.secs.find(s => s.id === 'dej').items.find(i => i.key === 'marge') || {}).m, diner: (r.secs.find(s => s.id === 'diner').items.find(i => i.key === 'marge') || {}).m };
+};
+const mg = margeOf({});
+assert(mg.dej.kcal === 50 && mg.diner.kcal === 50 && mg.dej.p === 0 && mg.dej.f === 0, 'marge par défaut : 50 + 50 kcal, sans macros');
+const m0 = margeOf({ marge: 0 });
+assert(!m0.dej && !m0.diner, 'marge nulle : aucune ligne');
+const m3 = margeOf({ marge: 300 });
+assert(m3.dej.kcal === 150 && m3.diner.kcal === 150, 'marge de 300 kcal');
+const m25 = margeOf({ marge: 25 });
+assert.strictEqual(m25.dej.kcal + m25.diner.kcal, 25, 'marge répartie sans arrondi perdu');
+for (const set of [[], [moyenne('soir')], [longue(2)]]) {
+  const a = margeOf({ marge: 0 }, set).r, b = margeOf({}, set).r;
+  const lost = starchKcal(a).reduce((x, y) => x + y) - starchKcal(b).reduce((x, y) => x + y);
+  near(lost, 100, 25, 'féculents diminués de la marge');
+  near(b.tot.kcal, a.tot.kcal, 30, 'total du jour inchangé par la marge');
+}
+assert.strictEqual(cleanProfile({ marge: 400 }).marge, 100, 'marge hors bornes ignorée');
+
+// 16. Version : la même partout, notée en tête des nouveautés
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');

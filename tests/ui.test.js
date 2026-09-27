@@ -112,11 +112,18 @@ click('[data-action="starch"][data-slot="dej"][data-value="pdt"]');
 const pdtCk = ck(dejLi('pommes de terre'));
 assert(pdtCk.length === 3 && pdtCk[0] === 'crues' && /à l’eau$/.test(pdtCk[1]) && /au four$/.test(pdtCk[2]), 'cuissons des pommes de terre : ' + pdtCk.join(' | '));
 click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
+const isMarge = li => /pour la cuisine/.test(li.textContent);
+for (const id of ['dej', 'diner']) {
+  const li = [...d.querySelectorAll(`[aria-labelledby="h-${id}"] .items li`)].find(isMarge);
+  assert(li && /≈\s50/.test(li.querySelector('.qty').textContent) && !li.querySelector('.mac'), 'marge cuisine au ' + id);
+}
 for (const li of d.querySelectorAll('#day .items li')) {
+  if (isMarge(li)) continue;
   assert(/kcal\s*P\s\d+\sg\s*G\s\d+\sg\s*L\s\d+\sg/.test(li.querySelector('.mac').textContent), 'macros absentes : ' + li.textContent);
 }
 for (const meal of d.querySelectorAll('#day .meal')) {
-  const shown = [...meal.querySelectorAll('.mac > span:first-child')].reduce((a, e) => a + Number(e.textContent.replace(/\D/g, '')), 0);
+  const shown = [...meal.querySelectorAll('.mac > span:first-child')].reduce((a, e) => a + Number(e.textContent.replace(/\D/g, '')), 0) +
+    [...meal.querySelectorAll('.items li')].filter(isMarge).reduce((a, li) => a + Number(li.querySelector('.qty').textContent.replace(/\D/g, '')), 0);
   const head = Number(meal.querySelector('.kcal').textContent.replace(/\D/g, ''));
   assert(Math.abs(shown - head) <= 10, `kcal des aliments (${shown}) et du repas (${head})`);
 }
@@ -294,6 +301,13 @@ const beforeMoy = needMoy();
 type('kcalMoyenne', 700);
 assert(prof().kcalMoyenne === 700 && needMoy() > beforeMoy, 'calories de la moyenne non prises en compte');
 p.rm(0);
+
+// Marge cuisine : curseur enregistré, lignes reprises
+type('marge', 200);
+assert(prof().marge === 200 && /200\skcal/.test(p.$('#out-marge').textContent), 'marge non enregistrée');
+assert(/≈\s100/.test([...p.d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].find(li => /pour la cuisine/.test(li.textContent)).textContent), 'marge du déjeuner non reprise');
+type('marge', 0);
+assert(![...p.d.querySelectorAll('#day li')].some(li => /pour la cuisine/.test(li.textContent)), 'marge nulle encore affichée');
 
 p.add('longue');
 type('ravito', 45);

@@ -273,6 +273,11 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
         <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
       </div>
       <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
+      <div class="range">
+        <div class="range-h"><label for="in-marge">Marge cuisine</label><output id="out-marge" for="in-marge"></output></div>
+        <input type="range" id="in-marge" data-key="marge" min="0" max="300" step="25">
+      </div>
+      <p class="calc">Réservée chaque jour pour ce que tu ajoutes en cuisinant (filet d’huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner. Les féculents s’ajustent&nbsp;: ton total ne bouge pas. L’huile des recettes est déjà comptée à part.</p>
       <p class="blk">Tes séances</p>
       <div class="fields">
         <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
@@ -306,7 +311,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -453,8 +458,8 @@ const DEFAULT_CHOICES = {
 };
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200]};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:100};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
 const KCAL_PER_KG = 7700;
@@ -596,6 +601,11 @@ function buildDay(plan, ch, profile){
   const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej), idea:ideaFor(ch.dej)};
   const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:mainItems('diner', ch.diner), idea:ideaFor(ch.diner)};
   let co = null, nb = 0;
+  /* Marge cuisine : kcal réservées pour les ajouts en cuisinant, moitié au déjeuner, moitié au dîner (macros inconnues) */
+  const margeDej = Math.round(pr.marge / 2 / 5) * 5;
+  [[lunch, margeDej], [dinner, pr.marge - margeDej]].forEach(function(x){
+    if (x[1] > 0) x[0].items.push(it('marge', '≈' + NB + x[1], 'kcal pour la cuisine', 'filet d’huile, sauce, fromage râpé… (les épices ne comptent pas)', {kcal:x[1], p:0, c:0, f:0}));
+  });
 
   /* Un bandeau par séance, à son moment */
   const bands = function(list){
@@ -778,7 +788,7 @@ if (typeof document !== 'undefined'){
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
     return '<li>' + q + '<span class="name">' + i.name + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
-      (i.m && i.key !== 'lib' ? macHTML(i.m) : '') + '</span></li>';
+      (i.m && i.key !== 'lib' && i.key !== 'marge' ? macHTML(i.m) : '') + '</span></li>';
   };
   const mealHTML = function(s, next){
     let picks = '';
@@ -887,6 +897,7 @@ if (typeof document !== 'undefined'){
     }
     $('warn-deficit').textContent = warn.join(' ');
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
+    $('out-marge').textContent = pr.marge + NB + 'kcal';
     [['kcalPetite', {taille:'petite'}], ['kcalMoyenne', {taille:'moyenne'}], ['kcalLongueH', {taille:'longue', duree:1}]].forEach(function(x){
       $('besoins').querySelector('[data-key="' + x[0] + '"]').placeholder = String(Math.round(seanceCost(x[1], Object.assign({}, pr, {kcalPetite:null, kcalMoyenne:null, kcalLongueH:null})) / 10) * 10);
     });

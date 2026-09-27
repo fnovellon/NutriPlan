@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 2.1.0, 27 septembre 2026
+
+- Marge cuisine : 100 kcal réservées chaque jour pour ce que tu ajoutes en cuisinant (filet d'huile, sauce, fromage râpé…), une ligne au déjeuner et une au dîner. Les féculents s'ajustent, ton total ne bouge pas.
+- Réglable de 0 à 300 kcal dans « Tes besoins ».
+
 ## 2.0.0, 26 septembre 2026
 
 - Fini les activités par sport : chaque jour, tu ajoutes tes séances par taille, **petite** (muscu, footing ou vélo court), **moyenne** (sortie normale, ≈ 7 km) ou **longue** (1h30 et plus), et tu choisis quand (matin, midi, soir). Jusqu'à 4 séances par jour.
