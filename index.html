@@ -175,14 +175,119 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .version a{color:inherit;text-underline-offset:3px;}
 .reset{margin-top:8px;padding:8px 15px;border:1px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:600;font-size:14px;}
 
+.intro{margin:0 0 16px;padding:10px 14px;border-left:5px solid var(--beet);border-radius:0 12px 12px 0;background:var(--beet-wash);font-size:16px;line-height:1.4;}
+.intro:empty{display:none;}
+[tabindex="-1"]:focus{outline:none;}
+
+.acc [hidden]{display:none;}
+.acc-top{display:flex;align-items:center;gap:18px;margin:0 0 26px;}
+.acc-bar{flex:1;display:flex;gap:6px;}
+.acc-bar span{flex:1;height:5px;border-radius:3px;background:var(--line);transition:background .25s ease;}
+.acc-bar span.on{background:var(--beet);}
+.skip{padding:8px 0;border:0;background:none;font-family:var(--sans);font-weight:600;font-size:15px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;}
+.acc-p{margin:0 0 22px;font-size:18px;line-height:1.45;}
+.acc .lbl{min-width:5.2em;}
+.acc .blk{margin:4px 0 8px;}
+.acc .blk ~ .blk{margin-top:22px;}
+.goals{display:flex;flex-direction:column;gap:8px;margin:4px 0 18px;}
+.goal{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline;padding:13px 16px 14px;text-align:left;border:1.5px solid var(--line);border-radius:14px;background:transparent;}
+.goal[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.g-t{font-family:var(--sans);font-weight:700;font-stretch:108%;font-size:18px;line-height:1.2;}
+.g-p{font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.g-s{grid-column:1/-1;font-size:15px;line-height:1.35;opacity:.75;}
+.acc-prev{margin:0 0 14px;font-size:18px;line-height:1.45;}
+.acc-prev strong{font-family:var(--sans);font-weight:800;font-stretch:112%;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.acc .warn.acc-err{margin:18px 0 0;}
+.acc-nav{display:flex;gap:10px;margin-top:22px;}
+.btn{min-height:52px;padding:0 22px;border:1.5px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:700;font-size:17px;}
+.btn.main{flex:1;background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+
 @media (min-width:640px){.app{padding-top:36px;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
 </style>
 </head>
 <body>
-<main class="app">
+<main class="app acc" id="accueil" hidden>
+  <div class="acc-top">
+    <div class="acc-bar" id="acc-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-label="Étape 1 sur 3"><span></span><span></span><span></span></div>
+    <button type="button" class="skip" data-action="acc-skip">Passer</button>
+  </div>
+
+  <section data-step="1" aria-labelledby="acc-h1">
+    <h1 id="acc-h1" tabindex="-1">Bienvenue</h1>
+    <p class="acc-p">L’appli calcule tes repas de la journée, avec les quantités, d’après ton profil et tes séances. Tes réponses restent sur ton téléphone.</p>
+    <div class="opt-row">
+      <span class="lbl" id="acc-l-sexe">Tu es</span>
+      <div class="seg" role="group" aria-labelledby="acc-l-sexe">
+        <button type="button" data-action="acc" data-key="sexe" data-value="h">un homme</button>
+        <button type="button" data-action="acc" data-key="sexe" data-value="f">une femme</button>
+      </div>
+    </div>
+    <div class="fields">
+      <label class="field"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-acc="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
+      <label class="field"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-acc="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
+      <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-acc="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
+    </div>
+    <div class="opt-row">
+      <span class="lbl" id="acc-l-neat">Hors sport</span>
+      <div class="seg" role="group" aria-labelledby="acc-l-neat">
+        <button type="button" data-action="acc" data-key="neat" data-value="assis">Assis</button>
+        <button type="button" data-action="acc" data-key="neat" data-value="mixte">Mixte</button>
+        <button type="button" data-action="acc" data-key="neat" data-value="debout">Debout</button>
+      </div>
+    </div>
+    <p class="calc">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique.</p>
+  </section>
+
+  <section data-step="2" aria-labelledby="acc-h2" hidden>
+    <h1 id="acc-h2" tabindex="-1">Ton objectif</h1>
+    <div class="goals" role="group" aria-labelledby="acc-h2">
+      <button type="button" class="goal" data-action="acc" data-key="deficit" data-value="0"><span class="g-t">Maintenir</span><span class="g-p">0&nbsp;%</span><span class="g-s">Garder ton poids et bien récupérer.</span></button>
+      <button type="button" class="goal" data-action="acc" data-key="deficit" data-value="10"><span class="g-t">Perdre doucement</span><span class="g-p">−10&nbsp;%</span><span class="g-s">Facile à tenir sur la durée.</span></button>
+      <button type="button" class="goal" data-action="acc" data-key="deficit" data-value="15"><span class="g-t">Sèche</span><span class="g-p">−15&nbsp;%</span><span class="g-s">Le bon compromis pour perdre sans fondre.</span></button>
+      <button type="button" class="goal" data-action="acc" data-key="deficit" data-value="20"><span class="g-t">Perdre plus vite</span><span class="g-p">−20&nbsp;%</span><span class="g-s">Sur quelques semaines seulement.</span></button>
+    </div>
+    <p class="acc-prev" id="acc-prev" aria-live="polite"></p>
+    <p class="calc">Le pourcentage est pris sur ce que tu dépenses un jour sans sport. Tu pourras l’ajuster au pourcent près dans «&nbsp;Tes besoins&nbsp;».</p>
+  </section>
+
+  <section data-step="3" aria-labelledby="acc-h3" hidden>
+    <h1 id="acc-h3" tabindex="-1">Tes habitudes</h1>
+    <p class="blk" id="acc-l-shaker">Un shaker de protéines par jour&nbsp;?</p>
+    <div class="opt-row">
+      <div class="seg" role="group" aria-labelledby="acc-l-shaker">
+        <button type="button" data-action="acc" data-key="shaker" data-value="oui">Oui</button>
+        <button type="button" data-action="acc" data-key="shaker" data-value="non">Non</button>
+      </div>
+    </div>
+    <div class="fields" id="acc-dose">
+      <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-acc="shakerKcal" min="100" max="160" step="1" placeholder="120"><span class="unit">kcal</span></span></label>
+      <label class="field"><span>Protéines par dose</span><span class="inp"><input type="number" inputmode="decimal" data-acc="shakerProt" min="10" max="40" step="0.5" placeholder="24"><span class="unit">g</span></span></label>
+    </div>
+    <p class="calc" id="acc-shaker-t"></p>
+    <p class="blk" id="acc-l-marge">Une marge pour la cuisine&nbsp;?</p>
+    <div class="opt-row">
+      <div class="seg" role="group" aria-labelledby="acc-l-marge">
+        <button type="button" data-action="acc" data-key="marge" data-value="0">Aucune</button>
+        <button type="button" data-action="acc" data-key="marge" data-value="100">100&nbsp;kcal</button>
+        <button type="button" data-action="acc" data-key="marge" data-value="200">200&nbsp;kcal</button>
+      </div>
+    </div>
+    <p class="calc">Pour ce que tu ajoutes en cuisinant&nbsp;: filet d’huile, sauce, fromage râpé. Les féculents s’ajustent, ton total ne bouge pas.</p>
+    <p class="calc">Tu pourras tout changer dans «&nbsp;Tes besoins&nbsp;», en bas de la page.</p>
+  </section>
+
+  <p class="warn acc-err" id="acc-err" role="alert"></p>
+  <div class="acc-nav">
+    <button type="button" class="btn" data-action="acc-back" id="acc-back">Retour</button>
+    <button type="button" class="btn main" data-action="acc-next" id="acc-next">Continuer</button>
+  </div>
+</main>
+
+<main class="app" id="page">
   <p class="date" id="date"></p>
-  <h1 id="title">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
+  <h1 id="title" tabindex="-1">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
+  <p class="intro" id="intro" role="status"></p>
   <div class="sess" id="sess"></div>
   <div class="acts" id="acts" role="group" aria-label="Ajouter une séance">
     <button type="button" data-action="add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
@@ -284,6 +389,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <p class="calc" id="calc-shaker"></p>
       <p class="warn" id="warn-shaker"></p>
       <p class="calc">Ton profil reste sur cet appareil.</p>
+      <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
     </div>
   </details>
 
@@ -946,13 +1052,127 @@ if (typeof document !== 'undefined'){
     recenter = false;
   };
 
+  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis « Tes besoins ». Les réponses restent
+     dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
+  let acc = null;
+  const ACC_UNITS = {age:'ans', taille:'cm', poids:'kg', shakerKcal:'kcal', shakerProt:'g'};
+  const ACC_NAMES = {age:'ton âge', taille:'ta taille', poids:'ton poids', shakerKcal:'les calories par dose', shakerProt:'les protéines par dose'};
+  const listFr = function(a){ return a.length > 1 ? a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1] : a[0]; };
+  const accInputs = function(step){ return $('accueil').querySelectorAll('[data-step="' + step + '"] input[data-acc]'); };
+  const openAcc = function(draft){
+    acc = {step:1, draft:draft};
+    $('accueil').querySelectorAll('input[data-acc]').forEach(function(el){
+      const k = el.dataset.acc;
+      el.value = has(draft, k) ? String(draft[k]) : '';
+      el.removeAttribute('aria-invalid');
+    });
+    $('acc-err').textContent = '';
+    renderAcc();
+  };
+  const renderAcc = function(){
+    $('accueil').hidden = !acc;
+    $('page').hidden = !!acc;
+    if (!acc) return;
+    const d = acc.draft, pr = cleanProfile(d);
+    $('accueil').querySelectorAll('[data-step]').forEach(function(el){ el.hidden = +el.dataset.step !== acc.step; });
+    $('acc-bar').querySelectorAll('span').forEach(function(s, i){ s.classList.toggle('on', i < acc.step); });
+    $('acc-bar').setAttribute('aria-valuenow', String(acc.step));
+    $('acc-bar').setAttribute('aria-label', 'Étape ' + acc.step + ' sur 3');
+    $('accueil').querySelectorAll('[data-action="acc"]').forEach(function(b){
+      const k = b.dataset.key, v = k === 'sexe' ? d.sexe : pr[k];
+      b.setAttribute('aria-pressed', String(String(v) === b.dataset.value));
+    });
+    $('acc-back').hidden = acc.step === 1;
+    $('acc-next').textContent = acc.step === 3 ? 'Voir mes repas' : 'Continuer';
+    const en = energy(emptyPlan(todayJs), pr);
+    $('acc-prev').innerHTML = 'Un jour sans sport, tu dépenses environ ' + r10(en.rest) + NB + 'kcal. ' + (pr.deficit > 0
+      ? 'Tu viseras environ <strong>' + fmtInt(en.target) + NB + 'kcal</strong>, soit ≈' + NB + '−' +
+        en.kgWeek.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}) + NB + 'kg par semaine.'
+      : 'Tu viseras autant, <strong>' + r10(en.rest) + NB + 'kcal</strong>, pour garder ton poids.') +
+      ' Les jours de séance, ce qu’elles coûtent s’ajoute.';
+    $('acc-dose').hidden = pr.shaker !== 'oui';
+    $('acc-shaker-t').textContent = pr.shaker === 'oui'
+      ? 'Juste après ta dernière séance, ou l’après-midi les jours de repos. Sans réglage, une dose de 120' + NB + 'kcal et 24' + NB + 'g de protéines.'
+      : 'Sans shaker, un skyr s’ajoute le soir quand il te manque des protéines.';
+  };
+  /* Étape valide ? Sinon, message et champs en erreur */
+  const accCheck = function(){
+    const d = acc.draft, parts = [], bad = [], missing = [];
+    let first = null;
+    accInputs(acc.step).forEach(function(el){
+      const k = el.dataset.acc;
+      if (has(d, k)) return;
+      if (el.value.trim() !== ''){ bad.push(ACC_NAMES[k] + ' (' + PROFILE_RANGES[k][0] + ' à ' + PROFILE_RANGES[k][1] + NB + ACC_UNITS[k] + ')'); }
+      else if (acc.step === 1) missing.push(ACC_NAMES[k]);
+      else return;
+      el.setAttribute('aria-invalid', 'true');
+      first = first || el;
+    });
+    if (acc.step === 1 && !has(d, 'sexe')) parts.push('dis-nous si tu es un homme ou une femme');
+    if (missing.length) parts.push('indique ' + listFr(missing));
+    if (bad.length) parts.push('vérifie ' + listFr(bad));
+    const msg = parts.length ? listFr(parts) + '.' : '';
+    $('acc-err').textContent = msg ? msg.charAt(0).toUpperCase() + msg.slice(1) : '';
+    if (first) first.focus();
+    return !msg;
+  };
+  const finishAcc = function(){
+    const d = profileFields(acc.draft);
+    Object.keys(d).forEach(function(k){ prof[k] = d[k]; });
+    if (!has(prof, 'mode')) prof.mode = cleanProfile(prof).mode;
+    saveProf();
+    acc = null;
+    fillNeeds();
+    $('intro').textContent = 'C’est prêt. Ajoute tes séances du jour, tes repas s’adaptent. Sans séance, c’est une journée de repos.';
+    recenter = true; prevQty = new Map();
+    renderAcc();
+    render();
+    $('title').focus();
+  };
+  const accStep = function(step){
+    acc.step = step;
+    $('acc-err').textContent = '';
+    renderAcc();
+    $('acc-h' + step).focus();
+  };
+  $('accueil').addEventListener('input', function(e){
+    const el = e.target, k = el.dataset && el.dataset.acc;
+    if (!k || !acc) return;
+    const raw = el.value.trim().replace(',', '.'), o = {};
+    o[k] = Number(raw);
+    if (raw !== '' && has(profileFields(o), k)){ acc.draft[k] = o[k]; el.removeAttribute('aria-invalid'); }
+    else delete acc.draft[k];
+    $('acc-err').textContent = '';
+    renderAcc();
+  });
+  $('accueil').addEventListener('change', function(e){
+    const el = e.target, k = el.dataset && el.dataset.acc;
+    if (k && acc && el.value.trim() !== '' && !has(acc.draft, k)) el.setAttribute('aria-invalid', 'true');
+  });
+
   document.addEventListener('click', function(e){
     const b = e.target.closest('[data-action]');
     if (!b) return;
     const v = b.dataset.value;
     let msg = '';
     switch (b.dataset.action){
+      case 'acc': {
+        const k = b.dataset.key, o = {};
+        o[k] = k === 'deficit' || k === 'marge' ? Number(v) : v;
+        if (has(profileFields(o), k)) acc.draft[k] = o[k];
+        $('acc-err').textContent = '';
+        renderAcc();
+        return;
+      }
+      case 'acc-back': accStep(acc.step - 1); return;
+      case 'acc-next':
+        if (!accCheck()) return;
+        if (acc.step < 3) accStep(acc.step + 1); else finishAcc();
+        return;
+      case 'acc-skip': finishAcc(); return;
+      case 'accueil': openAcc(profileFields(prof)); $('acc-h1').focus(); return;
       case 'add':
+        $('intro').textContent = '';
         plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
         plan = cleanPlan(plan, sel); savePlan();
         break;
@@ -988,14 +1208,18 @@ if (typeof document !== 'undefined'){
   });
 
   /* Champs du profil : enregistrés à chaque saisie valide, vidés = valeur par défaut */
-  document.querySelectorAll('#besoins input[data-key]').forEach(function(el){
-    const k = el.dataset.key;
-    if (el.type === 'range') el.value = String(cleanProfile(prof)[k]);
-    else {
-      if (has(prof, k)) el.value = String(prof[k]);
-      if (PROFILE_DEFAULT[k] !== null) el.placeholder = String(PROFILE_DEFAULT[k]);
-    }
-  });
+  const fillNeeds = function(){
+    document.querySelectorAll('#besoins input[data-key]').forEach(function(el){
+      const k = el.dataset.key;
+      if (el.type === 'range') el.value = String(cleanProfile(prof)[k]);
+      else {
+        el.value = has(prof, k) ? String(prof[k]) : '';
+        el.removeAttribute('aria-invalid');
+        if (PROFILE_DEFAULT[k] !== null) el.placeholder = String(PROFILE_DEFAULT[k]);
+      }
+    });
+  };
+  fillNeeds();
   /* Quitter un champ resté invalide : il reprend la valeur réellement utilisée */
   document.addEventListener('change', function(e){
     const el = e.target;
@@ -1046,6 +1270,10 @@ if (typeof document !== 'undefined'){
   $('app-version').textContent = APP_VERSION;
   loadSel();
   render();
+  /* Premier lancement : aucun profil enregistré (sans stockage, on n'insiste pas) */
+  let firstRun = false;
+  try { firstRun = localStorage.getItem(PKEY) === null; } catch (e) {}
+  if (firstRun) openAcc({});
 }
 </script>
 </body>

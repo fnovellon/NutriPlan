@@ -1,6 +1,6 @@
 # Repas du jour
 
-Appli web perso, une seule page : on choisit l'activité du jour et elle affiche tous les repas de la journée avec les quantités, pendant une sèche. Utilisée surtout sur téléphone. Interface en français, tutoiement.
+Appli web d'une seule page, pensée pour une sèche et partagée avec des amis : au premier lancement, un accueil demande le profil et l'objectif ; ensuite on indique les séances du jour et elle affiche tous les repas de la journée avec les quantités. Utilisée surtout sur téléphone. Interface en français, tutoiement.
 
 ## Objectifs nutritionnels (la source de vérité pour les calculs)
 
@@ -72,6 +72,16 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Exemples : 52 kg (k ≈ 0,72) → poulet 130 g, skyr 180 g, 2 œufs ; 100 kg → poulet 250 g.
 - Garde-fous vérifiés par les tests, pour 12 journées types de 0 à 4 séances × toutes les combinaisons de repas avec le profil par défaut (hors repas libre) : apport à ±3 % de l'objectif, protéines ≥ 140 g, lipides entre 55 et 95 g, féculents entre leurs limites. Avec 0 et 25 % de déficit : protéines ≥ 140 g, lipides ≥ 55 g, jamais plus de 3 % sous l'objectif, au-dessus seulement si les féculents sont au plancher. Pour 52 kg (20 %), 58 kg (avec et sans shaker ni marge), 85 kg et 100 kg (10 %), sur les 12 journées types × toutes les protéines : planchers et plafonds × k, jamais plus de 3 % sous l'objectif, au-dessus seulement si les féculents sont au plancher. Sans shaker : protéines ≥ 140 g. Formules vérifiées sur des valeurs calculées à la main.
 
+## Accueil (premier lancement)
+
+- Affiché quand aucun profil n'est enregistré (clé `repas-du-jour:profil:v1` absente ; lecture en try/catch, sans stockage pas d'accueil). Aussi depuis « Refaire l'accueil » en bas de « Tes besoins », prérempli avec le profil.
+- `<main id="accueil">` remplace `<main id="page">` (attribut `hidden` sur l'un ou l'autre). Barre de progression en 3 segments, « Passer » en haut, « Retour » et « Continuer » en bas (« Voir mes repas » à la dernière étape). Le focus va sur le titre de chaque étape.
+  1. **Bienvenue** : deux lignes de présentation, puis sexe (« Tu es un homme / une femme », sans présélection), âge, taille, poids (obligatoires, bornes de `PROFILE_RANGES`), activité hors sport (assis présélectionné).
+  2. **Ton objectif** : Maintenir 0 %, Perdre doucement −10 %, Sèche −15 % (présélectionnée), Perdre plus vite −20 %, avec l'aperçu en direct `energy(emptyPlan(jour), cleanProfile(brouillon))` : dépense d'un jour sans sport, objectif, perte par semaine.
+  3. **Tes habitudes** : shaker Oui / Non (dose réglable si Oui, 120 kcal et 24 g par défaut), marge cuisine Aucune / 100 / 200 kcal.
+- Les réponses vont dans un brouillon validé par `profileFields` ; rien n'est enregistré avant la fin. Une étape incomplète affiche un message (« Dis-nous si tu es un homme ou une femme et indique ton âge… », « Vérifie ton poids (35 à 250 kg) ») et met les champs en erreur ; il s'efface dès qu'on corrige.
+- À la fin (ou avec « Passer ») : les champs valides du brouillon sont fusionnés dans le profil et enregistrés (avec « Passer », le reste garde les valeurs par défaut et la page demande de compléter le profil). La page du jour s'affiche avec « C'est prêt. Ajoute tes séances du jour… », effacé à la première séance ajoutée. Les séances et choix déjà enregistrés ne sont pas touchés.
+
 ## Stockage
 
 - `localStorage`, clé `repas-du-jour:v2` : `{ plans: { 'AAAA-MM-JJ': { seances, libre } }, choices: { getDay: choix } }`. Les séances sont mémorisées par date, les choix de protéines et féculents par jour de la semaine. Plans purgés après 21 jours.
@@ -97,10 +107,11 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - Ligne d'un aliment : à gauche le poids cru en gros et, s'il existe, « cru » puis une ligne par cuisson en petit dessous (« ≈ 135 g cuit », ou « ≈ 340 g à l'eau » et « ≈ 260 g au four ») ; à droite le nom, la note, puis les calories et les macros en petit (« 198 kcal  P 41 g  G 0 g  L 3 g », petits carrés aux couleurs de la légende, lettres P, G, L expliquées en pied de page). Pas de ligne de macros pour le repas libre ni pour la marge cuisine, qui ne sont que des budgets.
 - À éviter : labels en capitales, surtitres, séparateurs à point médian, cartes identiques avec ombre.
 - Mobile d'abord : `viewport-fit=cover` et marges safe-area, jamais de défilement horizontal de la page (les rangées de boutons défilent dans leur conteneur), focus visible, `prefers-reduced-motion` respecté.
+- Accueil : titres au style du `h1`, objectifs en grandes lignes à bordure (titre, % à droite, phrase en dessous ; choisi = fond encre), segments de la barre de progression en betterave, bouton principal plein encre, « Retour » en contour. Le message « C'est prêt » de la page du jour reprend le style du bandeau de séance (bordure betterave).
 - Typographie française : espace insécable avant `: ? %` et entre un nombre et son unité.
 
 ## Commandes
 
 - Voir l'appli : ouvrir `index.html` dans un navigateur.
 - Tests : `npm install` puis `npm test` (moteur de calcul + simulation de l'interface avec jsdom). Les lancer après chaque modification.
-- Le test d'interface tourne à date fixe (mercredi 7 octobre 2026, horloge simulée) : il ne doit jamais dépendre du jour réel.
+- Le test d'interface tourne à date fixe (mercredi 7 octobre 2026, horloge simulée) : il ne doit jamais dépendre du jour réel. `open(seed, fresh)` enregistre un profil vide avant le chargement (pas d'accueil), sauf avec `fresh` pour tester le premier lancement.

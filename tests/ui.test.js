@@ -5,7 +5,7 @@ const assert = require('assert');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1';
+const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1', PKEY = 'repas-du-jour:profil:v1';
 const errors = [];
 const vc = new VirtualConsole();
 vc.on('jsdomError', e => errors.push((e && e.message) || String(e)));
@@ -20,9 +20,10 @@ const withClock = win => {
   }
   win.Date = D;
 };
-const open = seed => new JSDOM(html, {
+// Un profil (vide) est enregistré, sauf pour un premier lancement (fresh) : l'accueil ne s'affiche pas
+const open = (seed, fresh) => new JSDOM(html, {
   runScripts: 'dangerously', url: 'https://example.org/', virtualConsole: vc,
-  beforeParse: win => { withClock(win); if (seed) seed(win.localStorage); }
+  beforeParse: win => { withClock(win); if (!fresh) win.localStorage.setItem(PKEY, '{}'); if (seed) seed(win.localStorage); }
 });
 const tools = dom => {
   const d = dom.window.document;
@@ -51,6 +52,7 @@ assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
 assert(/aujourd’hui/.test($('#title').textContent), 'titre du jour');
 assert(!$('[data-action="day"]') && !$('[data-action="week"]'), 'le calendrier est encore affiché');
 assert.deepStrictEqual(sess(), [], 'le jour part sans séance');
+assert($('#accueil').hidden && !$('#page').hidden, 'accueil affiché alors qu’un profil existe');
 assert(/Repos/.test($('#sess').textContent), 'repos non affiché');
 
 // Séances du jour : ajout, moment, retrait (choix fixés pour que le skyr du soir ne s'ajoute pas)
@@ -186,7 +188,6 @@ for (const bad of ['{pas du json', '5', 'null', '[1,2]', JSON.stringify({
 }
 
 // Profil et déficit : clé séparée, la clé v1 n'est pas touchée
-const PKEY = 'repas-du-jour:profil:v1';
 const v1 = JSON.stringify({ plans: { '2026-10-07': { seances: [], libre: false } }, choices: {} });
 const pdom = open(ls => ls.setItem(KEY, v1));
 const p = tools(pdom);
@@ -321,6 +322,75 @@ for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);
 }
+
+// Accueil au premier lancement : rien n'est enregistré avant la fin
+const fdom = open(null, true), f = tools(fdom), fw = fdom.window;
+const fprof = () => JSON.parse(fw.localStorage.getItem(PKEY));
+const step = t => [...t.d.querySelectorAll('#accueil [data-step]')].filter(x => !x.hidden).map(x => x.dataset.step).join();
+const accType = (t, w, k, v) => { const el = t.$(`#accueil input[data-acc="${k}"]`); el.value = String(v); el.dispatchEvent(new w.Event('input', { bubbles: true })); };
+const accPressed = (t, k) => (t.$(`#accueil [data-key="${k}"][aria-pressed="true"]`) || {}).dataset;
+assert(!f.$('#accueil').hidden && f.$('#page').hidden && step(f) === '1', 'accueil non affiché au premier lancement');
+assert(f.$('#acc-back').hidden && f.$('#acc-next').textContent === 'Continuer' && f.$('#acc-bar').getAttribute('aria-valuenow') === '1', 'étape 1');
+assert(!accPressed(f, 'sexe') && accPressed(f, 'neat').value === 'assis', 'sexe à choisir, assis par défaut');
+f.click('#acc-next');
+assert(step(f) === '1' && /homme ou une femme/.test(f.$('#acc-err').textContent) && /ton âge, ta taille et ton poids/.test(f.$('#acc-err').textContent), 'champs obligatoires : ' + f.$('#acc-err').textContent);
+assert.strictEqual(f.$('#accueil input[data-acc="age"]').getAttribute('aria-invalid'), 'true', 'âge manquant non signalé');
+f.click('#accueil [data-key="sexe"][data-value="f"]');
+assert(!f.$('#acc-err').textContent && accPressed(f, 'sexe').value === 'f', 'sexe choisi');
+accType(f, fw, 'age', 30); accType(f, fw, 'taille', 165); accType(f, fw, 'poids', 5);
+assert(!f.$('#accueil input[data-acc="age"]').hasAttribute('aria-invalid'), 'âge corrigé encore en erreur');
+f.click('#acc-next');
+assert(step(f) === '1' && /Vérifie ton poids \(35 à 250\skg\)/.test(f.$('#acc-err').textContent), 'poids hors bornes : ' + f.$('#acc-err').textContent);
+accType(f, fw, 'poids', 58.5);
+f.click('#acc-next');
+assert(step(f) === '2' && !f.$('#acc-back').hidden && !f.$('#acc-err').textContent, 'étape 2');
+assert.strictEqual(fw.localStorage.getItem(PKEY), null, 'profil enregistré avant la fin');
+// Objectif : sèche présélectionnée, aperçu en direct (femme, 30 ans, 165 cm, 58,5 kg, assise : 1 305 × 1,4 = 1 827 kcal, −15 % → 1 550 kcal)
+assert.strictEqual(accPressed(f, 'deficit').value, '15', 'sèche présélectionnée');
+assert(/1\s830\skcal/.test(f.$('#acc-prev').textContent) && /1\s550\skcal/.test(f.$('#acc-prev').textContent) && /par semaine/.test(f.$('#acc-prev').textContent), 'aperçu : ' + f.$('#acc-prev').textContent);
+f.click('#accueil [data-key="deficit"][data-value="0"]');
+assert(/garder ton poids/.test(f.$('#acc-prev').textContent) && /1\s830\skcal\./.test(f.$('#acc-prev').textContent), 'aperçu sans déficit : ' + f.$('#acc-prev').textContent);
+f.click('#accueil [data-key="deficit"][data-value="20"]');
+f.click('#acc-next');
+assert(step(f) === '3' && f.$('#acc-next').textContent === 'Voir mes repas', 'étape 3');
+f.click('#acc-back');
+assert(step(f) === '2' && accPressed(f, 'deficit').value === '20', 'retour à l’étape 2');
+f.click('#acc-next');
+// Habitudes : shaker oui par défaut (dose visible), marge 100
+assert(accPressed(f, 'shaker').value === 'oui' && !f.$('#acc-dose').hidden && accPressed(f, 'marge').value === '100', 'habitudes par défaut');
+f.click('#accueil [data-key="shaker"][data-value="non"]');
+assert(f.$('#acc-dose').hidden && /skyr/.test(f.$('#acc-shaker-t').textContent), 'dose visible sans shaker');
+f.click('#accueil [data-key="marge"][data-value="200"]');
+f.click('#acc-next');
+assert.deepStrictEqual(fprof(), { mode: 'auto', sexe: 'f', age: 30, taille: 165, poids: 58.5, deficit: 20, shaker: 'non', marge: 200 }, 'profil de l’accueil');
+assert(f.$('#accueil').hidden && !f.$('#page').hidden && /Ajoute tes séances/.test(f.$('#intro').textContent), 'page du jour après l’accueil');
+assert(!/Complète/.test(f.$('#sum-note').textContent) && /1\s830/.test(f.$('#sum-note').textContent), 'profil de l’accueil non utilisé : ' + f.$('#sum-note').textContent);
+assert(![...f.d.querySelectorAll('#day li')].some(li => /shaker de protéines/.test(li.textContent)), 'shaker affiché après l’avoir refusé');
+assert(f.$('#besoins input[data-key="age"]').value === '30' && f.$('#besoins input[data-key="deficit"]').value === '20', 'besoins non remplis après l’accueil');
+assert.strictEqual(fdom.window.document.activeElement, f.$('#title'), 'focus sur le titre après l’accueil');
+f.add('petite');
+assert(!f.$('#intro').textContent && f.sess().length === 1, 'message d’accueil resté affiché');
+// Refaire l'accueil : prérempli, les changements sont enregistrés à la fin
+f.click('[data-action="accueil"]');
+assert(!f.$('#accueil').hidden && step(f) === '1' && accPressed(f, 'sexe').value === 'f' && f.$('#accueil input[data-acc="poids"]').value === '58.5', 'accueil non prérempli');
+f.click('#acc-next');
+assert(step(f) === '2' && accPressed(f, 'deficit').value === '20', 'objectif non prérempli');
+f.click('#accueil [data-key="deficit"][data-value="10"]');
+f.click('#acc-next');
+f.click('#accueil [data-key="shaker"][data-value="oui"]');
+accType(f, fw, 'shakerKcal', 300);
+f.click('#acc-next');
+assert(step(f) === '3' && /Vérifie les calories par dose \(100 à 160\skcal\)/.test(f.$('#acc-err').textContent), 'dose hors bornes : ' + f.$('#acc-err').textContent);
+accType(f, fw, 'shakerKcal', 130);
+f.click('#acc-next');
+assert(fprof().deficit === 10 && fprof().shaker === 'oui' && fprof().shakerKcal === 130 && fprof().marge === 200 && f.$('#accueil').hidden, 'accueil refait : ' + JSON.stringify(fprof()));
+assert.deepStrictEqual(f.sess(), ['Petite séance'], 'séances perdues en refaisant l’accueil');
+// Passer : garde ce qui est déjà saisi, le reste prend les valeurs par défaut
+const sk = tools(open(null, true));
+accType(sk, sk.d.defaultView, 'age', 25);
+sk.click('[data-action="acc-skip"]');
+assert.deepStrictEqual(JSON.parse(sk.d.defaultView.localStorage.getItem(PKEY)), { mode: 'auto', age: 25 }, 'profil après Passer');
+assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil/.test(sk.$('#sum-note').textContent), 'page après Passer');
 
 assert.deepStrictEqual(errors, [], 'erreurs JavaScript : ' + errors.join(' | '));
 console.log('interface OK');

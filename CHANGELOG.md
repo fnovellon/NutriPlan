@@ -2,6 +2,7 @@
 
 ## 3.0.0, 27 septembre 2026
 
+- Accueil au premier lancement, en trois étapes : ton profil (sexe, âge, taille, poids, activité hors sport), ton objectif (maintenir, perdre doucement, sèche, perdre plus vite, avec tes calories en direct) et tes habitudes (shaker, marge cuisine). Tu peux le refaire depuis « Tes besoins ».
 - Plus de calendrier : l'appli montre toujours ta journée d'aujourd'hui. Tes séances et tes choix de repas restent enregistrés, la règle « un repas libre par semaine » aussi.
 - Les portions suivent ton poids : le menu est prévu pour 72 kg, il s'adapte de 47 à 101 kg (viande, poisson, œufs, skyr, avoine, huile…), comme tes minimums de protéines et de lipides. Autour de 72 kg, rien ne change.
 - Shaker au choix : Oui ou Non dans « Tes besoins ». Sans shaker, un skyr s'ajoute le soir si tes protéines passent sous ton minimum.
