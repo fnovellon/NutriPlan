@@ -49,6 +49,7 @@ const { d, $, click, stored, sections, setSwitch, starchLine, pressed, sess, add
 assert(/kcal/.test($('#sum-text').textContent), 'résumé absent au chargement');
 assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
 assert(/aujourd’hui/.test($('#title').textContent), 'titre du jour');
+assert(!$('[data-action="day"]') && !$('[data-action="week"]'), 'le calendrier est encore affiché');
 assert.deepStrictEqual(sess(), [], 'le jour part sans séance');
 assert(/Repos/.test($('#sess').textContent), 'repos non affiché');
 
@@ -88,11 +89,8 @@ setSwitch('libre', true);
 assert(sections().includes('Repas libre') && /repas libre/.test($('#sum-text').textContent), 'repas libre');
 assert(/samedi/.test($('#hint').textContent), 'message du repas libre déplacé');
 assert.strictEqual(stored().plans['2026-10-10'].libre, false, 'repas libre du samedi non retiré');
-click('[data-action="day"][data-value="6"]');
-assert.strictEqual($('#sw-lib').getAttribute('aria-checked'), 'false', 'samedi garde son repas libre');
-assert.strictEqual($('#hint').textContent, '', 'message non effacé');
-click('[data-action="day"][data-value="3"]');
 setSwitch('libre', false);
+assert.strictEqual($('#hint').textContent, '', 'message non effacé');
 
 // Changer de féculent change la quantité et la met en évidence
 click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
@@ -138,43 +136,19 @@ let st = stored();
 assert.deepStrictEqual(Object.keys(st.plans).sort(), ['2026-10-07', '2026-10-10'], 'plans enregistrés');
 assert.deepStrictEqual(Object.keys(st.choices), ['3'], 'choix enregistrés');
 
-// Demain, puis retour : l'activité choisie est gardée
-click('[data-action="day"][data-value="4"]');
-assert.strictEqual($('#date').textContent, 'Demain, jeudi 8 octobre');
-assert(/demain/.test($('#title').textContent), 'titre de demain');
-click('[data-action="day"][data-value="1"]');
-assert(/as fait lundi/.test($('#title').textContent), 'titre d’un jour passé');
-click('[data-action="day"][data-value="3"]');
-assert.deepStrictEqual(sess(), ['Séance moyenne'], 'séances du jour perdues');
-
-// Semaine suivante : dates, titre, bornes, enregistrement à la bonne date
-assert($('#wk-prev').disabled === false && $('#wk-next').disabled === false, 'flèches de semaine');
-click('#wk-next');
-assert.strictEqual($('#date').textContent, 'Mercredi 14 octobre, semaine prochaine');
-assert(/mercredi prochain/.test($('#title').textContent), 'titre de la semaine prochaine');
-assert($('#wk-next').disabled, 'pas plus loin que la semaine prochaine');
-assert(!d.querySelector('#week .is-today'), 'aujourd’hui marqué dans une autre semaine');
-assert.deepStrictEqual(sess(), [], 'jour sans séance la semaine prochaine');
-add('petite');
-assert.strictEqual(stored().plans['2026-10-14'].seances[0].taille, 'petite', 'plan de la semaine prochaine');
-click('#wk-prev');
-click('#wk-prev');
-assert(/semaine dernière/.test($('#date').textContent) && $('#wk-prev').disabled, 'semaine dernière');
-click('#wk-next');
-assert.deepStrictEqual(sess(), ['Séance moyenne'], 'retour sur la semaine en cours');
-
 // Revenir au plan de base efface le jour (le samedi garde sa modification)
 click('[data-action="reset"]');
 st = stored();
-assert.deepStrictEqual(Object.keys(st.plans).sort(), ['2026-10-10', '2026-10-14']);
+assert.deepStrictEqual(Object.keys(st.plans).sort(), ['2026-10-10']);
 assert.deepStrictEqual(st.choices, {});
+assert.deepStrictEqual(sess(), [], 'séances non effacées');
+add('moyenne');
 
-// Page ouverte d'un jour à l'autre : elle revient sur le nouveau jour
-click('[data-action="day"][data-value="1"]');
+// Page ouverte d'un jour à l'autre : elle revient sur le nouveau jour (jeudi, sans séance enregistrée)
 now = new Date(2026, 9, 8, 7, 30, 0).getTime();
 dom.window.dispatchEvent(new dom.window.Event('focus'));
 assert.strictEqual($('#date').textContent, 'Aujourd’hui, jeudi 8 octobre', 'date non mise à jour');
-assert.strictEqual(pressed('day'), '4', 'jour sélectionné non mis à jour');
+assert.deepStrictEqual(sess(), [], 'plan de la veille affiché le lendemain');
 now = new Date(2026, 9, 7, 9, 0, 0).getTime();
 
 // Données v1 (activité par sport) : converties en séances, v1 laissée intacte, anciennes dates purgées

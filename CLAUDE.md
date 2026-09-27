@@ -66,7 +66,7 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 - `localStorage`, clé `repas-du-jour:v2` : `{ plans: { 'AAAA-MM-JJ': { seances, libre } }, choices: { getDay: choix } }`. Les séances sont mémorisées par date, les choix de protéines et féculents par jour de la semaine. Plans purgés après 21 jours.
 - Migration 2.0.0 : si `v2` n'existe pas, `repas-du-jour:v1` (`{ activity, moment, duree, natation, libre }` par date) est convertie avec `migratePlan` (repos → aucune séance ; muscu → petite ; course → moyenne ; muscu + course → petite + moyenne, au moment enregistré ; sortie longue → longue ; natation → + petite à midi), les choix sont repris, `v2` est écrite et `v1` laissée intacte.
 - Toujours en try/catch : l'appli doit fonctionner sans stockage ou avec un stockage corrompu (JSON invalide, valeur qui n'est pas un objet). Les identifiants relus (taille, moment, protéine, féculent) sont validés avec `has()` (propriété propre), jamais avec `OBJ[clé]` qui laisserait passer `constructor` ou `__proto__`.
-- Navigation : semaine en cours, précédente et suivante (flèches). Le titre et la date sont relatifs (hier, aujourd'hui, demain, « lundi prochain »). Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
+- Pas de calendrier (retiré en 3.0.0, récupérable depuis le commit `eb38a17`) : la page montre toujours aujourd'hui (« Aujourd'hui, samedi 27 septembre »). Les dates de la semaine en cours servent seulement à la règle du repas libre. Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
 - Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ mode, sexe, age, taille, poids, gras, neat, repos, deficit, ravito, shakerKcal, shakerProt, kcalPetite, kcalMoyenne, kcalLongueH, marge }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme.
 - Migration du profil (1.3.0, champ `mode` ajouté) : un profil sans `mode` est lu en `'manuel'` s'il contient une dépense valide, sinon en `'auto'` (`cleanProfile`), et le mode déduit est fixé au chargement.
 - Si le format change, passer à une nouvelle clé (v2) ou migrer, sans casser les données existantes.
@@ -79,7 +79,7 @@ Appli web perso, une seule page : on choisit l'activité du jour et elle affiche
 
 ## Design
 
-- Palette : papier `#EEF1EB`, encre `#1A2620`, betterave `#8A2657` (bandeau de séance, jour actuel, focus), protéines `#2E5C8A`, glucides `#B37E17`, lipides `#667624`. Mode sombre via `prefers-color-scheme` et l'attribut `data-theme`.
+- Palette : papier `#EEF1EB`, encre `#1A2620`, betterave `#8A2657` (bandeau de séance, focus, alertes), protéines `#2E5C8A`, glucides `#B37E17`, lipides `#667624`. Mode sombre via `prefers-color-scheme` et l'attribut `data-theme`.
 - Typographie : Archivo pour les titres et les grammes (chiffres larges et gras, c'est l'élément signature), Newsreader pour les noms d'aliments.
 - Timeline verticale des repas, bandeau betterave pour chaque séance (« Petite séance », « Séance moyenne », « Sortie longue »).
 - Séances du jour : une ligne par séance (nom, bouton pour la retirer, moment Matin / Midi / Soir ou durée pour la longue), puis trois boutons « + Petite », « + Moyenne », « + Longue » (désactivés à 4 séances, « + Longue » s'il y en a déjà une). « Repos, pas de séance. » quand la liste est vide.

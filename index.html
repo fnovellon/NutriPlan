@@ -47,15 +47,7 @@ button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 button:focus-visible{outline:2px solid var(--beet);outline-offset:2px;}
 .app{max-width:36rem;margin:0 auto;padding:20px 18px 48px;}
 
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;}
-.date{margin:0;font-style:italic;color:var(--muted);font-size:16px;}
-.wk{display:flex;flex:none;gap:6px;}
-.wk button{width:40px;height:40px;padding:0 0 2px;border:1px solid var(--line);border-radius:50%;background:transparent;font-family:var(--sans);font-weight:700;font-size:22px;line-height:1;}
-.wk button:disabled{opacity:.35;cursor:default;}
-.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:0 0 26px;}
-.week button{position:relative;height:42px;padding:0;border:1px solid var(--line);border-radius:10px;background:transparent;font-family:var(--sans);font-weight:600;font-size:15px;}
-.week button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
-.week button.is-today::after{content:"";position:absolute;left:50%;bottom:5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--beet);}
+.date{margin:0 0 10px;font-style:italic;color:var(--muted);font-size:16px;}
 
 h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:clamp(26px,7.4vw,34px);line-height:1.06;letter-spacing:-0.015em;}
 .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
@@ -189,15 +181,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 </head>
 <body>
 <main class="app">
-  <div class="top">
-    <p class="date" id="date"></p>
-    <div class="wk" role="group" aria-label="Changer de semaine">
-      <button type="button" data-action="week" data-value="-1" id="wk-prev" aria-label="Semaine précédente">‹</button>
-      <button type="button" data-action="week" data-value="1" id="wk-next" aria-label="Semaine suivante">›</button>
-    </div>
-  </div>
-  <div class="week" id="week" role="group" aria-label="Jour de la semaine"></div>
-
+  <p class="date" id="date"></p>
   <h1 id="title">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
   <div class="sess" id="sess"></div>
   <div class="acts" id="acts" role="group" aria-label="Ajouter une séance">
@@ -311,7 +295,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '3.0.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -413,9 +397,9 @@ const MOMENT_RANK = {matin:0, midi:1, soir:2};
 const MAX_SEANCES = 4;
 const DUREES = [[1.5,'1h30'],[2,'2' + NB + 'h'],[2.5,'2h30'],[3,'3' + NB + 'h et +']];
 const DAYS = [
-  {js:1, short:'L', long:'lundi'}, {js:2, short:'M', long:'mardi'}, {js:3, short:'M', long:'mercredi'},
-  {js:4, short:'J', long:'jeudi'}, {js:5, short:'V', long:'vendredi'}, {js:6, short:'S', long:'samedi'},
-  {js:0, short:'D', long:'dimanche'}
+  {js:1, long:'lundi'}, {js:2, long:'mardi'}, {js:3, long:'mercredi'},
+  {js:4, long:'jeudi'}, {js:5, long:'vendredi'}, {js:6, long:'samedi'},
+  {js:0, long:'dimanche'}
 ];
 /* Chaque jour part sans séance ; seul le repas libre du samedi est prévu par défaut */
 function emptyPlan(js){ return {seances:[], libre:js === 6}; }
@@ -715,7 +699,7 @@ if (typeof document !== 'undefined'){
   const saveProf = function(){ try { localStorage.setItem(PKEY, JSON.stringify(prof)); } catch (e) {} };
 
   const noon = function(){ const d = new Date(); d.setHours(12, 0, 0, 0); return d; };
-  let today = noon(), todayJs = today.getDay(), weekOffset = 0;
+  let today = noon(), todayJs = today.getDay();
   const purge = function(){
     Object.keys(store.plans).forEach(function(k){
       const d = new Date(k + 'T12:00:00');
@@ -726,15 +710,15 @@ if (typeof document !== 'undefined'){
   if (migrated) persist();
 
   const $ = function(id){ return document.getElementById(id); };
-  const cap = function(s){ return s.charAt(0).toUpperCase() + s.slice(1); };
   const isoDate = function(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  /* Date d'un jour de la semaine en cours (lundi → dimanche) : sert à la règle du repas libre */
   const dateForJsDay = function(js){
     const d = new Date(today);
-    d.setDate(today.getDate() - ((todayJs + 6) % 7) + ((js + 6) % 7) + 7 * weekOffset);
+    d.setDate(today.getDate() - ((todayJs + 6) % 7) + ((js + 6) % 7));
     return d;
   };
-  const dayDiff = function(js){ return Math.round((dateForJsDay(js) - today) / 864e5); };
 
+  /* Pas de calendrier : la page montre toujours aujourd'hui (sel = jour de la semaine d'aujourd'hui) */
   let sel = todayJs, plan = null, ch = null, recenter = true, prevQty = new Map();
 
   const cleanCh = function(c, js){
@@ -810,25 +794,7 @@ if (typeof document !== 'undefined'){
   };
 
   const renderControls = function(){
-    const d = dateForJsDay(sel), diff = dayDiff(sel);
-    const lab = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
-    const dayName = DAYS.find(function(x){ return x.js === sel; }).long;
-    const rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
-    $('date').textContent = rel ? rel + ', ' + lab : cap(lab) + (weekOffset > 0 ? ', semaine prochaine' : weekOffset < 0 ? ', semaine dernière' : '');
-    let q;
-    if (diff === 0) q = 'Qu’est-ce que tu fais aujourd’hui';
-    else if (diff === 1) q = 'Qu’est-ce que tu fais demain';
-    else if (diff === -1) q = 'Qu’est-ce que tu as fait hier';
-    else if (diff < 0) q = 'Qu’est-ce que tu as fait ' + dayName + (weekOffset < 0 ? ' dernier' : '');
-    else q = 'Qu’est-ce que tu fais ' + dayName + (weekOffset > 0 ? ' prochain' : '');
-    $('title').textContent = q + NB + '?';
-    $('wk-prev').disabled = weekOffset <= -1;
-    $('wk-next').disabled = weekOffset >= 1;
-    $('week').innerHTML = DAYS.map(function(x){
-      const isToday = weekOffset === 0 && x.js === todayJs;
-      return '<button type="button" data-action="day" data-value="' + x.js + '" aria-pressed="' + (x.js === sel) + '" aria-label="' + cap(x.long) +
-        (isToday ? ', aujourd’hui' : '') + '"' + (isToday ? ' class="is-today"' : '') + '>' + x.short + '</button>';
-    }).join('');
+    $('date').textContent = 'Aujourd’hui, ' + today.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
     const segBtn = function(action, i, value, label, on){
       return '<button type="button" data-action="' + action + '" data-index="' + i + '" data-value="' + value + '" aria-pressed="' + on + '">' + label + '</button>';
     };
@@ -936,11 +902,6 @@ if (typeof document !== 'undefined'){
     const v = b.dataset.value;
     let msg = '';
     switch (b.dataset.action){
-      case 'day': sel = parseInt(v, 10); loadSel(); recenter = true; prevQty = new Map(); break;
-      case 'week':
-        weekOffset = Math.max(-1, Math.min(1, weekOffset + parseInt(v, 10)));
-        loadSel(); recenter = true; prevQty = new Map();
-        break;
       case 'add':
         plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
         plan = cleanPlan(plan, sel); savePlan();
@@ -1023,7 +984,7 @@ if (typeof document !== 'undefined'){
   const refreshToday = function(){
     const n = noon();
     if (isoDate(n) === isoDate(today)) return;
-    today = n; todayJs = n.getDay(); weekOffset = 0; sel = todayJs;
+    today = n; todayJs = n.getDay(); sel = todayJs;
     purge(); loadSel(); recenter = true; prevQty = new Map();
     $('hint').textContent = '';
     render();

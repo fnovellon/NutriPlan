@@ -1,5 +1,9 @@
 # Nouveautés
 
+## 3.0.0, 27 septembre 2026
+
+- Plus de calendrier : l'appli montre toujours ta journée d'aujourd'hui. Tes séances et tes choix de repas restent enregistrés, la règle « un repas libre par semaine » aussi.
+
 ## 2.1.0, 27 septembre 2026
 
 - Marge cuisine : 100 kcal réservées chaque jour pour ce que tu ajoutes en cuisinant (filet d'huile, sauce, fromage râpé…), une ligne au déjeuner et une au dîner. Les féculents s'ajustent, ton total ne bouge pas.
