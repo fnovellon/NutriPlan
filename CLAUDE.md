@@ -76,10 +76,16 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 - Exemples : 52 kg (k ≈ 0,72) → poulet 130 g, skyr 180 g, 2 œufs ; 100 kg → poulet 250 g.
 - Garde-fous vérifiés par les tests, pour 12 journées types de 0 à 4 séances × toutes les combinaisons de repas avec le profil par défaut (hors repas libre) : apport à ±3 % de l'objectif, protéines ≥ 140 g, lipides ≥ 55 g et sous leur plafond (95 g, ou 35 % de l'objectif les grosses journées), féculents entre leurs limites. Avec 0 et 25 % de déficit : protéines ≥ 140 g, lipides ≥ 55 g, jamais plus de 3 % sous l'objectif, au-dessus seulement si les féculents sont au plancher. Pour 52 kg (20 %), 58 kg (avec et sans shaker ni marge), 85 kg et 100 kg (10 %), sur les 12 journées types × toutes les protéines : planchers et plafonds × k, jamais plus de 3 % sous l'objectif, au-dessus seulement si les féculents sont au plancher. Sans shaker : protéines ≥ 140 g. Avec desserts (12 journées types × 16 couples de desserts × protéines variées) : mêmes garde-fous, le plafond des lipides augmenté des 8,4 g de chaque chocolat. Formules vérifiées sur des valeurs calculées à la main.
 
+## Écrans
+
+- Trois `<main>`, un seul visible (`setView`, attribut `hidden`) : `#accueil`, `#page` (la journée) et `#reglages`.
+- Réglages : roue dentée (`#gear`, `aria-label` « Réglages ») en haut à droite de la page, à côté de la date ; le lien « Régler » de la note du total y mène aussi. L'écran porte une flèche retour en haut, le titre « Réglages », la carte « Tes besoins » (`#besoins`, même contenu qu'avant, « Refaire l'accueil » en bas) et un bouton « Voir ma journée ».
+- Ouvrir les réglages ajoute une entrée d'historique (`pushState`) : le bouton retour du téléphone les ferme (`popstate`). La position dans la page est gardée et rétablie à la fermeture (`history.scrollRestoration = 'manual'`) ; le focus va sur le titre à l'ouverture, sur la roue dentée à la fermeture.
+
 ## Accueil (premier lancement)
 
-- Affiché quand aucun profil n'est enregistré (clé `repas-du-jour:profil:v1` absente ; lecture en try/catch, sans stockage pas d'accueil). Aussi depuis « Refaire l'accueil » en bas de « Tes besoins », prérempli avec le profil.
-- `<main id="accueil">` remplace `<main id="page">` (attribut `hidden` sur l'un ou l'autre). Barre de progression en 3 segments, « Passer » en haut, « Retour » et « Continuer » en bas (« Voir mes repas » à la dernière étape). Le focus va sur le titre de chaque étape.
+- Affiché quand aucun profil n'est enregistré (clé `repas-du-jour:profil:v1` absente ; lecture en try/catch, sans stockage pas d'accueil). Aussi depuis « Refaire l'accueil » en bas des réglages, prérempli avec le profil.
+- `<main id="accueil">` remplace `<main id="page">` (voir « Écrans »). Barre de progression en 3 segments, « Passer » en haut, « Retour » et « Continuer » en bas (« Voir mes repas » à la dernière étape). Le focus va sur le titre de chaque étape.
   1. **Bienvenue** : deux lignes de présentation, puis sexe (« Tu es un homme / une femme », sans présélection), âge, taille, poids (obligatoires, bornes de `PROFILE_RANGES`), activité hors sport (assis présélectionné).
   2. **Ton objectif** : Maintenir 0 %, Perdre doucement −10 %, Sèche −15 % (présélectionnée), Perdre plus vite −20 %, avec l'aperçu en direct `energy(emptyPlan(jour), cleanProfile(brouillon))` : dépense d'un jour sans sport, objectif, perte par semaine.
   3. **Tes habitudes** : shaker Oui / Non (dose réglable si Oui, 120 kcal et 24 g par défaut), marge cuisine Aucune / 150 / 250 kcal.
@@ -104,6 +110,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Design
 
+- Icône : `link rel="icon"` en SVG (données en ligne) : assiette, fourchette et couteau couleur papier sur un carré betterave arrondi. `apple-touch-icon` en PNG 180 px (base64, carré plein, iOS arrondit lui-même) pour l'écran d'accueil du téléphone. `theme-color` papier en clair, `#121915` en sombre.
 - Palette : papier `#EEF1EB`, encre `#1A2620`, betterave `#8A2657` (bandeau de séance, focus, alertes), protéines `#2E5C8A`, glucides `#B37E17`, lipides `#667624`. Mode sombre via `prefers-color-scheme` et l'attribut `data-theme`.
 - Typographie : Archivo pour les titres et les grammes (chiffres larges et gras, c'est l'élément signature), Newsreader pour les noms d'aliments.
 - Timeline verticale des repas, bandeau betterave pour chaque séance (« Petite séance », « Séance moyenne », « Sortie longue »).

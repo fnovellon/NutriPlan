@@ -220,8 +220,8 @@ assert(/Complète ton profil/.test(note()) && p.$('#needs-hint').textContent, 'p
 assert(/déficit de 15\s%/.test(p.$('#needs-sum').textContent), 'résumé des besoins');
 assert(/Dépense estimée\s:\s2\s330\skcal, moins 350\skcal de déficit/.test(note()), 'dépense du jour sans séance : ' + note());
 assert(Math.abs(kcal() - 1980) <= 30, 'objectif du jour sans séance : ' + kcal());
-p.click('[data-action="needs"]');
-assert(p.$('#besoins').open, 'le lien Régler n’ouvre pas les besoins');
+p.click('#sum-note [data-action="needs"]');
+assert(!p.$('#reglages').hidden && p.$('#page').hidden && pw.document.activeElement === p.$('#regl-h'), 'le lien Régler n’ouvre pas les réglages');
 
 type('age', 40); type('taille', 180); type('poids', 70);
 assert.deepStrictEqual(prof(), { mode: 'auto', age: 40, taille: 180, poids: 70 }, 'profil enregistré');
@@ -315,6 +315,18 @@ type('ravito', 45);
 assert(/^90\sg/.test(p.$('#day .band .qty').textContent), 'ravito réglé non appliqué : ' + p.$('#day .band .qty').textContent);
 assert.deepStrictEqual(JSON.parse(pw.localStorage.getItem(KEY)).choices, {}, 'la clé v1 a changé de forme');
 assert.strictEqual(JSON.parse(pw.localStorage.getItem(KEY)).plans['2026-10-07'].seances[0].taille, 'longue', 'plan non enregistré');
+
+// Réglages dans un écran à part : roue dentée en haut de la page, retour par la flèche, le bouton du bas ou le bouton retour du téléphone
+p.click('[data-action="fermer"]');
+assert(p.$('#reglages').hidden && !p.$('#page').hidden && pw.document.activeElement === p.$('#gear'), 'réglages non fermés par la flèche');
+assert(p.$('#gear').getAttribute('aria-label') === 'Réglages' && p.$('#gear svg'), 'roue dentée absente');
+p.click('#gear');
+assert(!p.$('#reglages').hidden && pw.history.state && pw.history.state.reglages, 'la roue dentée n’ouvre pas les réglages');
+pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
+assert(p.$('#reglages').hidden && !p.$('#page').hidden, 'le bouton retour ne ferme pas les réglages');
+p.click('#gear');
+p.click('#reglages .btn.wide');
+assert(p.$('#reglages').hidden && !p.$('#page').hidden, 'réglages non fermés par « Voir ma journée »');
 
 // Version affichée en bas de page
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version;

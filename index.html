@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Repas du jour</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%238A2657'/%3E%3Ccircle cx='32' cy='33' r='15' fill='none' stroke='%23EEF1EB' stroke-width='5'/%3E%3Ccircle cx='32' cy='33' r='6' fill='%23EEF1EB'/%3E%3Cpath d='M9 14v12a3 3 0 0 0 3 3v22M15 14v12a3 3 0 0 1-3 3M12 14v12' fill='none' stroke='%23EEF1EB' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M53 51V14c-3 2-4.5 7-4.5 13 0 3 1.5 4 4.5 4' fill='none' stroke='%23EEF1EB' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="theme-color" content="#EEF1EB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121915" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
@@ -138,15 +142,17 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .sum p.sum-note{margin:14px 0 0;font-size:15px;line-height:1.45;color:var(--muted);}
 .link{padding:0;border:0;background:none;color:var(--beet);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;}
 
-.needs{margin:10px 0 0;border-top:1px solid var(--line);}
-.needs summary{position:relative;display:flex;flex-direction:column;gap:2px;padding:16px 32px 16px 0;cursor:pointer;list-style:none;}
-.needs summary::-webkit-details-marker{display:none;}
-.needs summary::after{content:"";position:absolute;right:8px;top:24px;width:9px;height:9px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg);transition:transform .2s ease;}
-.needs[open] summary::after{top:28px;transform:rotate(-135deg);}
-.needs summary:focus-visible{outline:2px solid var(--beet);outline-offset:2px;border-radius:6px;}
-.needs-t{font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
-.needs-s{font-size:15px;color:var(--muted);}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;}
+.top .date{margin:0;}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;margin:-10px -10px -10px 0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);}
+.icon-btn svg{width:24px;height:24px;}
+.regl-top{margin:0 0 8px;}
+.icon-btn.back{margin:0 0 0 -12px;}
+.needs{margin:6px 0 0;padding-top:18px;border-top:1px solid var(--line);}
+.needs-t{margin:0;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
+.needs-s{margin:2px 0 16px;font-size:15px;color:var(--muted);}
 .needs-body{padding:2px 0 22px;}
+.btn.wide{width:100%;}
 .needs [hidden]{display:none;}
 .fields{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:12px;margin:0 0 16px;}
 .field{display:flex;flex-direction:column;gap:4px;font-size:15px;color:var(--muted);}
@@ -248,7 +254,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <button type="button" class="goal" data-action="acc" data-key="deficit" data-value="20"><span class="g-t">Perdre plus vite</span><span class="g-p">−20&nbsp;%</span><span class="g-s">Sur quelques semaines seulement.</span></button>
     </div>
     <p class="acc-prev" id="acc-prev" aria-live="polite"></p>
-    <p class="calc">Le pourcentage est pris sur ce que tu dépenses un jour sans sport. Tu pourras l’ajuster au pourcent près dans «&nbsp;Tes besoins&nbsp;».</p>
+    <p class="calc">Le pourcentage est pris sur ce que tu dépenses un jour sans sport. Tu pourras l’ajuster au pourcent près dans les réglages.</p>
   </section>
 
   <section data-step="3" aria-labelledby="acc-h3" hidden>
@@ -274,7 +280,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       </div>
     </div>
     <p class="calc">Pour ta matière grasse de cuisson et ce que tu ajoutes&nbsp;: huile, sauce, fromage râpé. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent, ton total ne bouge pas.</p>
-    <p class="calc">Tu pourras tout changer dans «&nbsp;Tes besoins&nbsp;», en bas de la page.</p>
+    <p class="calc">Tu pourras tout changer dans les réglages, avec la roue dentée en haut de la page.</p>
   </section>
 
   <p class="warn acc-err" id="acc-err" role="alert"></p>
@@ -285,7 +291,10 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 </main>
 
 <main class="app" id="page">
-  <p class="date" id="date"></p>
+  <div class="top">
+    <p class="date" id="date"></p>
+    <button type="button" class="icon-btn" id="gear" data-action="needs" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
   <h1 id="title" tabindex="-1">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
   <p class="intro" id="intro" role="status"></p>
   <div class="sess" id="sess"></div>
@@ -311,8 +320,23 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 
   <div class="day" id="day"></div>
 
-  <details class="needs" id="besoins">
-    <summary><span class="needs-t">Tes besoins</span><span class="needs-s" id="needs-sum"></span></summary>
+  <footer class="notes">
+    <p>Le poids en gros est celui à peser cru. Le poids cuit, en dessous, est une estimation&nbsp;: il dépend de la cuisson.</p>
+    <p>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</p>
+    <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
+    <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
+    <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
+    <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
+    <p class="version"><span>Version <span id="app-version"></span></span><a href="https://github.com/fnovellon/NutriPlan/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Nouveautés</a></p>
+  </footer>
+</main>
+
+<main class="app regl" id="reglages" hidden>
+  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+  <h1 id="regl-h" tabindex="-1">Réglages</h1>
+  <section class="needs" id="besoins" aria-labelledby="needs-t">
+    <h2 class="needs-t" id="needs-t">Tes besoins</h2>
+    <p class="needs-s" id="needs-sum"></p>
     <div class="needs-body">
       <div class="opt-row">
         <span class="lbl" id="lbl-mode">Besoin</span>
@@ -391,17 +415,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <p class="calc">Ton profil reste sur cet appareil.</p>
       <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
     </div>
-  </details>
-
-  <footer class="notes">
-    <p>Le poids en gros est celui à peser cru. Le poids cuit, en dessous, est une estimation&nbsp;: il dépend de la cuisson.</p>
-    <p>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</p>
-    <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
-    <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
-    <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
-    <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
-    <p class="version"><span>Version <span id="app-version"></span></span><a href="https://github.com/fnovellon/NutriPlan/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Nouveautés</a></p>
-  </footer>
+  </section>
+  <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
 <script>
@@ -1082,7 +1097,31 @@ if (typeof document !== 'undefined'){
     recenter = false;
   };
 
-  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis « Tes besoins ». Les réponses restent
+  /* Trois écrans, un seul visible : accueil, page du jour, réglages (roue dentée en haut de la page) */
+  let regl = false, pageScroll = 0;
+  const scroller = function(){ return document.scrollingElement || document.documentElement; };
+  const setView = function(v){ ['accueil', 'page', 'reglages'].forEach(function(id){ $(id).hidden = id !== v; }); };
+  const openRegl = function(){
+    if (regl) return;
+    pageScroll = scroller().scrollTop;
+    regl = true;
+    /* Le bouton retour du téléphone ferme les réglages ; la position dans la page est rétablie par closeRegl */
+    try { history.scrollRestoration = 'manual'; history.pushState({reglages:true}, ''); } catch (e) {}
+    setView('reglages');
+    scroller().scrollTop = 0;
+    $('regl-h').focus({preventScroll:true});
+  };
+  const closeRegl = function(fromHistory){
+    if (!regl) return;
+    regl = false;
+    setView('page');
+    scroller().scrollTop = pageScroll;
+    if (!fromHistory){ try { if (history.state && history.state.reglages) history.back(); } catch (e) {} }
+    $('gear').focus({preventScroll:true});
+  };
+  window.addEventListener('popstate', function(){ if (regl && !acc) closeRegl(true); });
+
+  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Les réponses restent
      dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
   let acc = null;
   const ACC_UNITS = {age:'ans', taille:'cm', poids:'kg', shakerKcal:'kcal', shakerProt:'g'};
@@ -1100,8 +1139,7 @@ if (typeof document !== 'undefined'){
     renderAcc();
   };
   const renderAcc = function(){
-    $('accueil').hidden = !acc;
-    $('page').hidden = !!acc;
+    setView(acc ? 'accueil' : regl ? 'reglages' : 'page');
     if (!acc) return;
     const d = acc.draft, pr = cleanProfile(d);
     $('accueil').querySelectorAll('[data-step]').forEach(function(el){ el.hidden = +el.dataset.step !== acc.step; });
@@ -1152,6 +1190,7 @@ if (typeof document !== 'undefined'){
     if (!has(prof, 'mode')) prof.mode = cleanProfile(prof).mode;
     saveProf();
     acc = null;
+    if (regl){ regl = false; try { if (history.state && history.state.reglages) history.back(); } catch (e) {} }
     fillNeeds();
     $('intro').textContent = 'C’est prêt. Ajoute tes séances du jour, tes repas s’adaptent. Sans séance, c’est une journée de repos.';
     recenter = true; prevQty = new Map();
@@ -1221,7 +1260,8 @@ if (typeof document !== 'undefined'){
         if (has(profileFields(o), b.dataset.key)){ prof[b.dataset.key] = v; saveProf(); }
         break;
       }
-      case 'needs': $('besoins').open = true; $('besoins').querySelector('summary').focus(); break;
+      case 'needs': openRegl(); return;
+      case 'fermer': closeRegl(false); return;
       case 'prot': ch[b.dataset.slot].prot = v; saveCh(); break;
       case 'starch': ch[b.dataset.slot].starch = v; saveCh(); break;
       case 'dessert': if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } break;
