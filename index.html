@@ -416,7 +416,8 @@ const FOOD = {
   fruitsRouges:[45,1,8,0.3], amandes:[600,21,8,51], miel:[320,0.3,80,0],
   legumes:[30,2,4,0.3], huile:[900,0,0,100], avocat:[160,2,1.8,15], parmesan:[400,33,0,28],
   poulet:[110,23,0,1.4], boeuf:[125,21,0,5], poisson:[82,18,0,0.7], saumon:[208,20.4,0,13.4],
-  crevettes:[95,21,0,1], halloumi:[320,22,2,25], jambon:[110,21,1,3.3], thon:[112,25,0,1]
+  crevettes:[95,21,0,1], halloumi:[320,22,2,25], jambon:[110,21,1,3.3], thon:[112,25,0,1],
+  chocolat:[580,8,33,42]
 };
 /* Valeurs par pièce */
 const UNIT = {
@@ -435,6 +436,14 @@ const STARCH = {
   gnocchis:{label:'Gnocchis', f:[155,4,33,0.6], step:10, name:'gnocchis frais'}
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','gnocchis'];
+/* Desserts du déjeuner et du dîner : quantités fixes (pas mises à l'échelle du poids), calories prises sur le féculent du même repas */
+const DESSERT = {
+  aucun:{label:'Aucun'},
+  fruit:{label:'Fruit', item:function(){ return it('des', '1', 'fruit', 'pomme, poire, orange, 2 kiwis…', unitMac('pomme', 1)); }},
+  compote:{label:'Compote', item:function(){ return it('des', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)); }},
+  chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
+};
+const DESSERT_ORDER = ['aucun','fruit','compote','chocolat'];
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -683,14 +692,18 @@ function starchItem(id, kcal){
     S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null);
 }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond.
+   off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).
    rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
-function splitStarch(budget, share, k){
+function splitStarch(budget, share, k, off){
+  const o = off || {dej:0, diner:0};
   const clamp = function(x){ return Math.min(STARCH_MAX * k, Math.max(STARCH_MIN * k, x)); };
-  let ka = clamp(budget * share);
-  const kb = clamp(budget - ka);
-  ka = clamp(budget - kb);
-  return {dej:ka, diner:kb, rest:budget - ka - kb};
+  const avail = budget - o.dej - o.diner;
+  let ka = clamp(budget * share - o.dej);
+  const kb = clamp(avail - ka);
+  ka = clamp(avail - kb);
+  return {dej:ka, diner:kb, rest:avail - ka - kb};
 }
+function dessertOf(choice){ return choice && has(DESSERT, choice.dessert) ? choice.dessert : 'aucun'; }
 function mainItems(slot, choice, k){
   const P = PROT[choice.prot];
   return P.base(k).concat([it('st', '', '', null, null), it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], P[slot](k));
@@ -729,6 +742,11 @@ function buildDay(plan, ch, profile){
   [[lunch, margeDej], [dinner, pr.marge - margeDej]].forEach(function(x){
     if (x[1] > 0) x[0].items.push(it('marge', '≈' + NB + x[1], 'kcal pour la cuisine', 'huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas)', {kcal:x[1], p:0, c:0, f:x[1] / 9}));
   });
+  /* Dessert choisi, en fin de repas */
+  [[lunch, ch.dej], [dinner, ch.diner]].forEach(function(x){
+    const d = dessertOf(x[1]);
+    if (d !== 'aucun') x[0].items.push(DESSERT[d].item());
+  });
 
   /* Un bandeau par séance, à son moment */
   const bands = function(list){
@@ -756,7 +774,7 @@ function buildDay(plan, ch, profile){
     bands(midi);
     if (last === 'midi') shakerSec('juste après la séance');
     lunch.when = 'après la séance';
-    lunch.items.push(it('comp', '1', 'compote', 'sans sucre ajouté, en dessert', unitMac('compote', 1)));
+    if (dessertOf(ch.dej) === 'aucun') lunch.items.push(it('comp', '1', 'compote', 'sans sucre ajouté, en dessert', unitMac('compote', 1)));
   } else if (long){
     lunch.when = 'après la sortie';
   }
@@ -782,8 +800,9 @@ function buildDay(plan, ch, profile){
   const wDej = 45 + 0.05 * before, wDiner = 30 + 0.02 * before + 0.07 * after;
   const fill = function(){
     co.items = co.items.filter(function(i){ return i.key !== 'xtra'; });
-    const fixed = total(allItems(secs).filter(function(i){ return i.key !== 'st'; })).kcal;
-    const sp = splitStarch(en.target - fixed, wDej / (wDej + wDiner), k);
+    const fixed = total(allItems(secs).filter(function(i){ return i.key !== 'st' && i.key !== 'des'; })).kcal;
+    const des = function(sec){ return total(sec.items.filter(function(i){ return i.key === 'des'; })).kcal; };
+    const sp = splitStarch(en.target - fixed, wDej / (wDej + wDiner), k, {dej:des(lunch), diner:des(dinner)});
     setStarch(lunch, starchItem(ch.dej.starch, sp.dej));
     setStarch(dinner, starchItem(ch.diner.starch, sp.diner));
     if (sp.rest >= 50){
@@ -885,6 +904,7 @@ if (typeof document !== 'undefined'){
         if (c[s] && typeof c[s] === 'object'){
           if (has(PROT, c[s].prot)) out[s].prot = c[s].prot;
           if (has(STARCH, c[s].starch)) out[s].starch = c[s].starch;
+          if (has(DESSERT, c[s].dessert)) out[s].dessert = c[s].dessert;
         }
       });
     }
@@ -935,7 +955,8 @@ if (typeof document !== 'undefined'){
       picks = pickRow('pd', null, [['avoine', 'Flocons d’avoine'], ['pain', 'Pain complet']], ch.pdBase, 'pd');
     } else if (s.pick === 'dej' || s.pick === 'diner'){
       picks = pickRow('prot-' + s.pick, 'Protéine', PROT_ORDER.map(function(id){ return [id, PROT[id].label]; }), ch[s.pick].prot, 'prot', s.pick) +
-        pickRow('starch-' + s.pick, 'Féculent', STARCH_ORDER.map(function(id){ return [id, STARCH[id].label]; }), ch[s.pick].starch, 'starch', s.pick);
+        pickRow('starch-' + s.pick, 'Féculent', STARCH_ORDER.map(function(id){ return [id, STARCH[id].label]; }), ch[s.pick].starch, 'starch', s.pick) +
+        pickRow('dessert-' + s.pick, 'Dessert', DESSERT_ORDER.map(function(id){ return [id, DESSERT[id].label]; }), dessertOf(ch[s.pick]), 'dessert', s.pick);
     }
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
     return '<section class="meal" aria-labelledby="h-' + s.id + '"><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
@@ -980,8 +1001,9 @@ if (typeof document !== 'undefined'){
       const pr = cleanProfile(prof), tips = [];
       if (pr.marge > 0) tips.push('baisse la marge cuisine');
       if (pr.shaker === 'oui') tips.push('passe-toi du shaker');
+      if (dessertOf(ch.dej) !== 'aucun' || dessertOf(ch.diner) !== 'aucun') tips.push('retire un dessert');
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
-        (tips.length ? NB + ': pour t’en rapprocher, ' + tips.join(' ou ') + '.' : '.');
+        (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
     if (incomplete()) note += ' Complète ton profil pour un calcul juste.';
     $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs">Régler</button>';
@@ -1202,6 +1224,7 @@ if (typeof document !== 'undefined'){
       case 'needs': $('besoins').open = true; $('besoins').querySelector('summary').focus(); break;
       case 'prot': ch[b.dataset.slot].prot = v; saveCh(); break;
       case 'starch': ch[b.dataset.slot].starch = v; saveCh(); break;
+      case 'dessert': if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } break;
       case 'reset':
         delete store.plans[isoDate(dateForJsDay(sel))];
         delete store.choices[sel];

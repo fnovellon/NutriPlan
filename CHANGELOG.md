@@ -2,6 +2,8 @@
 
 ## 3.1.0, 28 septembre 2026
 
+- Dessert au déjeuner et au dîner : aucun, un fruit, une compote ou deux carrés de chocolat noir. Ses calories sont prises sur le féculent du même repas, ton total ne bouge pas. Tes choix sont mémorisés pour chaque jour de la semaine.
+- Après une séance à midi, le dessert que tu choisis remplace la compote du déjeuner.
 - Plus de lignes « huile d'olive » dans les recettes : ta marge cuisine couvre maintenant ta matière grasse de cuisson. Elle passe à 150 kcal par défaut (environ une cuillère à soupe rase d'huile par repas) et compte comme des lipides. Si tu avais réglé ta marge toi-même, pense à la remonter.
 - Les jours où tes lipides ou tes protéines restent trop bas, l'huile ou le skyr de secours s'ajustent jusqu'à atteindre ton minimum.
 

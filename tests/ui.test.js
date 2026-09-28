@@ -128,6 +128,23 @@ for (const meal of d.querySelectorAll('#day .meal')) {
   assert(Math.abs(shown - head) <= 10, `kcal des aliments (${shown}) et du repas (${head})`);
 }
 
+// Dessert : rangée au déjeuner et au dîner, Aucun par défaut, ligne en fin de repas, choix enregistré
+const desPressed = slot => $(`[data-action="dessert"][data-slot="${slot}"][aria-pressed="true"]`).dataset.value;
+const lastLine = slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].slice(-1)[0].textContent;
+assert.strictEqual(d.querySelectorAll('[data-action="dessert"][data-slot="dej"]').length, 4, 'rangée Dessert au déjeuner');
+assert(desPressed('dej') === 'aucun' && desPressed('diner') === 'aucun', 'aucun dessert par défaut');
+const dejKcal = () => Number($('[aria-labelledby="h-dej"] .kcal').textContent.replace(/\D/g, ''));
+const totalBefore = $('#sum-text strong').textContent, dejBefore = dejKcal();
+click('[data-action="dessert"][data-slot="dej"][data-value="chocolat"]');
+assert(/chocolat noir/.test(lastLine('dej')) && /20\sg/.test(lastLine('dej')) && desPressed('dej') === 'chocolat', 'dessert du déjeuner : ' + lastLine('dej'));
+assert.strictEqual(stored().choices[3].dej.dessert, 'chocolat', 'dessert non enregistré');
+assert(Math.abs(dejKcal() - dejBefore) <= 20 && Math.abs(Number($('#sum-text strong').textContent.replace(/\D/g, '')) - Number(totalBefore.replace(/\D/g, ''))) <= 20, 'le dessert change le total : ' + totalBefore + ' → ' + $('#sum-text strong').textContent);
+click('[data-action="dessert"][data-slot="diner"][data-value="fruit"]');
+assert(/fruit/.test(lastLine('diner')) && /pomme, poire/.test(lastLine('diner')), 'dessert du dîner : ' + lastLine('diner'));
+click('[data-action="dessert"][data-slot="dej"][data-value="aucun"]');
+click('[data-action="dessert"][data-slot="diner"][data-value="aucun"]');
+assert(!/chocolat|fruit/.test(lastLine('dej') + lastLine('diner')) && stored().choices[3].dej.dessert === 'aucun', 'dessert non retiré');
+
 // L'idée de plat suit les choix
 click('[data-action="prot"][data-slot="diner"][data-value="boeuf"]');
 click('[data-action="starch"][data-slot="diner"][data-value="pates"]');
@@ -169,6 +186,7 @@ assert.deepStrictEqual(s2.sess(), ['Séance moyenne'], 'course v1 non convertie'
 assert.strictEqual(s2.pressed('smoment'), 'matin', 'moment v1 perdu');
 assert.strictEqual(s2.$('[data-action="prot"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'thon', 'choix v1 perdus');
 assert.strictEqual(s2.$('[data-action="pd"][aria-pressed="true"]').dataset.value, 'pain', 'petit-déjeuner v1 perdu');
+assert.strictEqual(s2.$('[data-action="dessert"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'aucun', 'choix sans dessert : Aucun');
 const conv = s2.stored();
 assert.deepStrictEqual(Object.keys(conv.plans).sort(), ['2026-09-30', '2026-10-06', '2026-10-07'], 'purge des plans de plus de 21 jours');
 assert.deepStrictEqual(conv.plans['2026-10-06'].seances, [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'soir' }, { taille: 'petite', moment: 'midi' }], 'muscu + course + natation');
@@ -313,6 +331,14 @@ const lm = legacy({ age: 30, taille: 168, poids: 71, repos: 2500 });
 assert(/saisie/.test(lm.$('#needs-sum').textContent) && lm.$('[data-action="prof"][data-value="manuel"]').getAttribute('aria-pressed') === 'true', 'ancien profil manuel');
 const la = legacy({ age: 30, taille: 168, poids: 71, repos: 1000, deficit: 0 });
 assert(/automatique/.test(la.$('#needs-sum').textContent) && /2\s260/.test(la.$('#needs-sum').textContent), 'ancien profil à 1 000 kcal : ' + la.$('#needs-sum').textContent);
+// Séance à midi : le dessert choisi remplace la compote automatique du déjeuner
+const mid = tools(open());
+mid.add('petite'); mid.at(0, 'midi');
+const dejLines = () => [...mid.d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].map(li => li.textContent);
+assert.strictEqual(dejLines().filter(t => /compote/.test(t)).length, 1, 'compote de midi absente');
+mid.click('[data-action="dessert"][data-slot="dej"][data-value="fruit"]');
+assert(!dejLines().some(t => /compote/.test(t)) && dejLines().some(t => /pomme, poire/.test(t)), 'deux desserts au déjeuner : ' + dejLines().join(' | '));
+
 // Petite corpulence : portions réduites, conseil si les minimums dépassent l'objectif
 const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 25 });
 const skyrPd = [...light.d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].find(li => /skyr/.test(li.textContent));

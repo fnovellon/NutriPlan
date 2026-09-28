@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX, DESSERT_ORDER};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX, DESSERT_ORDER } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -311,7 +311,56 @@ assert(!buildDay(day([]), saumon, {}).secs.some(s => s.id === 'soir'), 'saumon d
 const lean = buildDay(day([]), saumon, { shaker: 'non' });
 assert(lean.secs.some(s => s.id === 'soir') && lean.tot.p >= PROT_MIN, 'skyr du soir de secours sans shaker');
 
-// 18. Version : la même partout, notée en tête des nouveautés
+// 18. Desserts : pris sur le féculent du même repas, total du jour inchangé
+const withDes = (dej, diner, base) => {
+  const b = base || DEFAULT_CHOICES[3];
+  return { pdBase: b.pdBase, dej: Object.assign({}, b.dej, { dessert: dej }), diner: Object.assign({}, b.diner, { dessert: diner }) };
+};
+const desOf = (r, id) => (r.secs.find(s => s.id === id) || { items: [] }).items.filter(i => i.key === 'des');
+const DES_KCAL = { fruit: 80, compote: 65, chocolat: 116 };
+const moySoir = day([moyenne('soir')]);
+const sansDes = buildDay(moySoir, DEFAULT_CHOICES[3]);
+assert.strictEqual(DESSERT_ORDER.join(), 'aucun,fruit,compote,chocolat', 'liste des desserts');
+for (const d of ['fruit', 'compote', 'chocolat']) {
+  const r = buildDay(moySoir, withDes(d, 'aucun'));
+  const l = desOf(r, 'dej');
+  assert(l.length === 1 && Math.round(l[0].m.kcal) === DES_KCAL[d] && !desOf(r, 'diner').length, `${d} : ligne du dessert au déjeuner`);
+  assert.strictEqual(r.secs.find(s => s.id === 'dej').items.slice(-1)[0].key, 'des', `${d} : le dessert termine le repas`);
+  near(r.tot.kcal, sansDes.tot.kcal, 30, `${d} : total du jour inchangé`);
+  const [a0, b0] = starchKcal(sansDes), [a1, b1] = starchKcal(r);
+  near(a0 - a1, DES_KCAL[d], 20, `${d} : féculent du déjeuner diminué du dessert`);
+  near(b1, b0, 20, `${d} : féculent du dîner inchangé`);
+  const rd = buildDay(moySoir, withDes('aucun', d));
+  near(starchKcal(sansDes)[1] - starchKcal(rd)[1], DES_KCAL[d], 20, `${d} : féculent du dîner diminué du dessert`);
+}
+assert.strictEqual(desOf(buildDay(moySoir, withDes('chocolat', 'fruit')), 'diner')[0].name, 'fruit', 'dessert du dîner');
+assert(!buildDay(moySoir, withDes('constructor', '__proto__')).secs.some(s => s.items.some(i => i.key === 'des')), 'dessert invalide ignoré');
+assert(!buildDay(moySoir, DEFAULT_CHOICES[3]).secs.some(s => s.items.some(i => i.key === 'des')), 'sans dessert enregistré : aucun');
+// Séance à midi : le dessert choisi remplace la compote automatique du déjeuner
+const midiDay = day([petite('midi')]);
+const midiKeys = ch => buildDay(midiDay, ch).secs.find(s => s.id === 'dej').items.map(i => i.key).filter(k => k === 'comp' || k === 'des').join();
+assert.strictEqual(midiKeys(withDes('aucun', 'aucun')), 'comp', 'séance à midi sans dessert : compote');
+assert.strictEqual(midiKeys(withDes('fruit', 'aucun')), 'des', 'séance à midi : le dessert remplace la compote');
+assert.strictEqual(midiKeys(withDes('aucun', 'chocolat')), 'comp', 'le dessert du dîner ne touche pas la compote de midi');
+// Repas libre : pas de dessert au dîner
+assert(!desOf(buildDay(day([], { libre: true }), withDes('aucun', 'chocolat')), 'diner').length, 'dessert affiché avec le repas libre');
+// Garde-fous : 12 journées types × 16 couples de desserts × protéines (féculents variés)
+let nd = 0;
+for (const [name, set] of Object.entries(SETS)) for (const d1 of DESSERT_ORDER) for (const d2 of DESSERT_ORDER) {
+  for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']]) {
+    const combo = `${name}/${d1}+${d2}/${p1}+${s1}/${p2}+${s2}`;
+    const r = buildDay(day(set), { pdBase: 'avoine', dej: { prot: p1, starch: s1, dessert: d1 }, diner: { prot: p2, starch: s2, dessert: d2 } });
+    const choco = [d1, d2].filter(d => d === 'chocolat').length * 8.4;
+    assert(r.tot.p >= PROT_MIN, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
+    assert(r.tot.f >= FAT_MIN && r.tot.f <= fatCap(r, 1) + choco, `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
+    assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
+    if (r.ecart > r.energy.target * 0.03) for (const kc of starchKcal(r)) assert(kc <= STARCH_MIN + 20, `${combo} : au-dessus de l'objectif sans être au plancher`);
+    for (const kc of starchKcal(r)) assert(kc >= STARCH_MIN - 20 && kc <= STARCH_MAX + 20, `${combo} : ${Math.round(kc)} kcal de féculent`);
+    nd++;
+  }
+}
+
+// 19. Version : la même partout, notée en tête des nouveautés
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
@@ -320,4 +369,4 @@ assert.strictEqual(pkg.version, APP_VERSION, 'version de package.json');
 assert.strictEqual(lock.version, APP_VERSION, 'version de package-lock.json');
 assert.strictEqual((changelog.match(/^## (\d+\.\d+\.\d+)/m) || [])[1], APP_VERSION, 'dernière version de CHANGELOG.md');
 
-console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences)`);
+console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts)`);
