@@ -1,5 +1,17 @@
 # Nouveautés
 
+## 3.3.1, 28 septembre 2026
+
+- Valeurs des aliments vérifiées une à une avec la table Ciqual de l'Anses, la référence française. La plupart étaient justes ; celles qui s'en écartaient (souvent des valeurs américaines) sont corrigées :
+  - avocat 195 kcal et 20,6 g de lipides pour 100 g (au lieu de 160 et 15) ;
+  - gnocchis 171 kcal (au lieu de 155) ;
+  - pain complet 240 kcal, 8,5 g de protéines, 1,5 g de lipides (au lieu de 250, 10 et 3,5) ;
+  - fruits rouges 38 kcal (au lieu de 45) ; amandes 590 kcal et 23 g de protéines ;
+  - parmesan, bœuf haché 5 %, saumon, crevettes, jambon, chocolat noir : quelques kcal ou grammes d'écart ;
+  - riz basmati, quinoa, semoule, boulgour, lentilles, pommes de terre : quelques kcal d'écart ;
+  - banane 24 g de glucides et pomme 17,5 g (fibres retirées, comme dans Ciqual) ; compote 60 kcal.
+- La page « Comment ça marche » cite la source des valeurs.
+
 ## 3.3.0, 28 septembre 2026
 
 - Vérification de toutes les valeurs : les valeurs nutritionnelles des aliments, les poids cuits, les formules de dépense et les totaux de la journée étaient justes. Ce qui clochait, c'était certaines portions (jusqu'à 710 g de pommes de terre, 165 g de lentilles ou 230 g de pain en plus dans un repas, 90 g de poulet). Corrigé :

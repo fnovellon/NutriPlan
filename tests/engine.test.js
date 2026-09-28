@@ -362,7 +362,7 @@ const withDes = (dej, diner, base) => {
   return { pdBase: b.pdBase, dej: Object.assign({}, b.dej, { dessert: dej }), diner: Object.assign({}, b.diner, { dessert: diner }) };
 };
 const desOf = (r, id) => (r.secs.find(s => s.id === id) || { items: [] }).items.filter(i => i.key === 'des');
-const DES_KCAL = { fruit: 80, compote: 65, chocolat: 116 };
+const DES_KCAL = { fruit: 80, compote: 60, chocolat: 114 };
 const desDay = day([]);
 const sansDes = buildDay(desDay, RIZ_PATES);
 assert.strictEqual(DESSERT_ORDER.join(), 'aucun,fruit,compote,chocolat', 'liste des desserts');

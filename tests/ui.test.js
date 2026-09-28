@@ -390,7 +390,7 @@ const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
 assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 33, 'table des aliments : ' + refRows.length + ' lignes');
 const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
 assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
-assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['355', '8', '78', '0,7'], 'valeurs du riz (cru)');
+assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['352', '8,4', '77', '1'], 'valeurs du riz (cru)');
 p.click('#aide [data-action="fermer"]');
 assert(view() === 'page' && pw.document.activeElement === p.$('#help'), 'retour de l’aide vers la page');
 p.click('#gear'); p.click('#help-regl');
