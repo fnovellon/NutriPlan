@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 3.1.0, 28 septembre 2026
+
+- Plus de lignes « huile d'olive » dans les recettes : ta marge cuisine couvre maintenant ta matière grasse de cuisson. Elle passe à 150 kcal par défaut (environ une cuillère à soupe rase d'huile par repas) et compte comme des lipides. Si tu avais réglé ta marge toi-même, pense à la remonter.
+- Les jours où tes lipides ou tes protéines restent trop bas, l'huile ou le skyr de secours s'ajustent jusqu'à atteindre ton minimum.
+
 ## 3.0.0, 27 septembre 2026
 
 - Accueil au premier lancement, en trois étapes : ton profil (sexe, âge, taille, poids, activité hors sport), ton objectif (maintenir, perdre doucement, sèche, perdre plus vite, avec tes calories en direct) et tes habitudes (shaker, marge cuisine). Tu peux le refaire depuis « Tes besoins ».

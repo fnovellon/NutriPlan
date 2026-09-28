@@ -269,11 +269,11 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <div class="opt-row">
       <div class="seg" role="group" aria-labelledby="acc-l-marge">
         <button type="button" data-action="acc" data-key="marge" data-value="0">Aucune</button>
-        <button type="button" data-action="acc" data-key="marge" data-value="100">100&nbsp;kcal</button>
-        <button type="button" data-action="acc" data-key="marge" data-value="200">200&nbsp;kcal</button>
+        <button type="button" data-action="acc" data-key="marge" data-value="150">150&nbsp;kcal</button>
+        <button type="button" data-action="acc" data-key="marge" data-value="250">250&nbsp;kcal</button>
       </div>
     </div>
-    <p class="calc">Pour ce que tu ajoutes en cuisinant&nbsp;: filet d’huile, sauce, fromage râpé. Les féculents s’ajustent, ton total ne bouge pas.</p>
+    <p class="calc">Pour ta matière grasse de cuisson et ce que tu ajoutes&nbsp;: huile, sauce, fromage râpé. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent, ton total ne bouge pas.</p>
     <p class="calc">Tu pourras tout changer dans «&nbsp;Tes besoins&nbsp;», en bas de la page.</p>
   </section>
 
@@ -366,7 +366,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
         <div class="range-h"><label for="in-marge">Marge cuisine</label><output id="out-marge" for="in-marge"></output></div>
         <input type="range" id="in-marge" data-key="marge" min="0" max="300" step="25">
       </div>
-      <p class="calc">Réservée chaque jour pour ce que tu ajoutes en cuisinant (filet d’huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner. Les féculents s’ajustent&nbsp;: ton total ne bouge pas. L’huile des recettes est déjà comptée à part.</p>
+      <p class="calc">Réservée chaque jour pour ta matière grasse de cuisson et ce que tu ajoutes (huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner, comptée en lipides. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent&nbsp;: ton total ne bouge pas.</p>
       <p class="blk">Tes séances</p>
       <div class="fields">
         <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
@@ -408,7 +408,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '3.1.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -459,7 +459,6 @@ function slices(g, per){
 function meat(g, name, note, food){
   return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', ways:[{g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'}]});
 }
-function oil(g, k){ const q = sc(g, 5, k); return it('oil', grams(q), 'huile d’olive', null, mac('huile', q)); }
 function total(items){
   const t = {kcal:0, p:0, c:0, f:0};
   items.forEach(function(i){ if (i.m){ t.kcal += i.m.kcal; t.p += i.m.p; t.c += i.m.c; t.f += i.m.f; } });
@@ -473,16 +472,16 @@ function avocat(k){ return it('av', '½', 'avocat', 'ou ' + sc(15, 5, k) + NB + 
 const PROT = {
   poulet:{label:'Poulet / dinde',
     base:function(k){ return [meat(sc(180, 10, k), 'poulet ou dinde', null, 'poulet')]; },
-    dej:function(k){ return [oil(10, k)]; },
-    diner:function(k){ return [oil(10, k), avocat(k)]; }},
+    dej:function(){ return []; },
+    diner:function(k){ return [avocat(k)]; }},
   boeuf:{label:'Bœuf 5' + NB + '%',
     base:function(k){ return [meat(sc(150, 10, k), 'bœuf haché 5' + NB + '%', null, 'boeuf')]; },
-    dej:function(k){ return [oil(5, k)]; },
-    diner:function(k){ const g = sc(15, 5, k); return [oil(10, k), it('pm', grams(g), 'parmesan', null, mac('parmesan', g))]; }},
+    dej:function(){ return []; },
+    diner:function(k){ const g = sc(15, 5, k); return [it('pm', grams(g), 'parmesan', null, mac('parmesan', g))]; }},
   poisson:{label:'Poisson blanc',
     base:function(k){ return [meat(sc(200, 10, k), 'poisson blanc', 'cabillaud, colin…', 'poisson')]; },
-    dej:function(k){ return [oil(10, k)]; },
-    diner:function(k){ return [oil(10, k), avocat(k)]; }},
+    dej:function(){ return []; },
+    diner:function(k){ return [avocat(k)]; }},
   saumon:{label:'Saumon',
     base:function(k){ return [meat(sc(160, 10, k), 'saumon', 'cuisson sans matière grasse', 'saumon')]; },
     dej:function(){ return []; },
@@ -492,19 +491,19 @@ const PROT = {
       const c = sc(120, 10, k), h = sc(60, 5, k);
       return [it('p1', grams(c), 'crevettes cuites', null, mac('crevettes', c)), it('p2', grams(h), 'halloumi', 'grillé à sec', mac('halloumi', h))];
     },
-    dej:function(k){ return [oil(5, k)]; },
-    diner:function(k){ return [oil(5, k)]; }},
+    dej:function(){ return []; },
+    diner:function(){ return []; }},
   oeufs:{label:'Œufs + jambon',
     base:function(k){
       const n = pieces(3, k), j = sc(90, 5, k);
       return [it('p1', String(n), 'œufs', null, unitMac('oeuf', n)), it('p2', grams(j), 'jambon blanc', slices(j, 45), mac('jambon', j))];
     },
-    dej:function(k){ return [oil(5, k)]; },
-    diner:function(k){ return [oil(5, k)]; }},
+    dej:function(){ return []; },
+    diner:function(){ return []; }},
   thon:{label:'Thon',
     base:function(k){ return [it('p1', '1', 'boîte de thon au naturel', 'environ 110' + NB + 'g égoutté', mac('thon', 110)), it('p2', '1', 'œuf dur', 'ou ' + sc(15, 5, k) + NB + 'g de parmesan', unitMac('oeuf', 1))]; },
-    dej:function(k){ return [oil(10, k)]; },
-    diner:function(k){ return [oil(15, k)]; }}
+    dej:function(){ return []; },
+    diner:function(){ return []; }}
 };
 const PROT_ORDER = ['poulet','boeuf','poisson','saumon','crevettes','oeufs','thon'];
 
@@ -574,7 +573,7 @@ const DEFAULT_CHOICES = {
 };
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:100};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150};
 const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
@@ -724,10 +723,11 @@ function buildDay(plan, ch, profile){
   const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej, k), idea:ideaFor(ch.dej)};
   const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:mainItems('diner', ch.diner, k), idea:ideaFor(ch.diner)};
   let co = null, nb = 0;
-  /* Marge cuisine : kcal réservées pour les ajouts en cuisinant, moitié au déjeuner, moitié au dîner (macros inconnues) */
+  /* Marge cuisine : kcal réservées pour la matière grasse de cuisson et les ajouts, moitié au déjeuner, moitié au dîner,
+     comptées en lipides (l'huile de cuisson en est l'essentiel) */
   const margeDej = Math.round(pr.marge / 2 / 5) * 5;
   [[lunch, margeDej], [dinner, pr.marge - margeDej]].forEach(function(x){
-    if (x[1] > 0) x[0].items.push(it('marge', '≈' + NB + x[1], 'kcal pour la cuisine', 'filet d’huile, sauce, fromage râpé… (les épices ne comptent pas)', {kcal:x[1], p:0, c:0, f:0}));
+    if (x[1] > 0) x[0].items.push(it('marge', '≈' + NB + x[1], 'kcal pour la cuisine', 'huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas)', {kcal:x[1], p:0, c:0, f:x[1] / 9}));
   });
 
   /* Un bandeau par séance, à son moment */
@@ -793,17 +793,25 @@ function buildDay(plan, ch, profile){
   };
   fill();
   let tot = total(allItems(secs));
-  if (!plan.libre && tot.p < PROT_MIN * k){
-    const sk = sc(150, 10, k);
-    secs.push({id:'soir', title:'Soir', when:'pour compléter tes protéines',
-      items:[it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))]});
-    fill();
-    tot = total(allItems(secs));
-  }
-  /* Lipides sous le plancher (petites portions arrondies) : un peu d'huile en plus au dîner */
-  if (!plan.libre && tot.f < FAT_MIN * k){
-    const g = Math.ceil((FAT_MIN * k - tot.f + 0.5) / 5) * 5;
-    dinner.items.push(it('gras', grams(g), 'huile d’olive', 'en plus, pour tes lipides', mac('huile', g)));
+  /* Planchers, revérifiés ensemble car chaque ajout réajuste les féculents (qui portent un peu de protéines et de lipides) :
+     - protéines : skyr le soir, 150 g × k, un peu plus si besoin (jusqu'au double) ;
+     - lipides (peu ou pas de marge cuisine, petites portions) : de l'huile en plus au dîner. */
+  let skyr = 0, gras = 0, soirSec = null;
+  const skyrMax = sc(300, 10, k);
+  for (let pass = 0; pass < 8 && !plan.libre; pass++){
+    const lowP = tot.p < PROT_MIN * k && skyr < skyrMax, lowF = tot.f < FAT_MIN * k && gras < 60;
+    if (!lowP && !lowF) break;
+    if (lowP){
+      skyr = skyr ? Math.min(skyrMax, skyr + Math.max(10, Math.ceil((PROT_MIN * k - tot.p) / 0.105 / 10) * 10)) : sc(150, 10, k);
+      const item = it('skyr', grams(skyr), 'skyr nature', null, mac('skyr', skyr));
+      if (soirSec) soirSec.items = [item];
+      else { soirSec = {id:'soir', title:'Soir', when:'pour compléter tes protéines', items:[item]}; secs.push(soirSec); }
+    }
+    if (lowF){
+      gras += Math.ceil((FAT_MIN * k - tot.f + 0.5) / 5) * 5;
+      dinner.items = dinner.items.filter(function(i){ return i.key !== 'gras'; });
+      dinner.items.push(it('gras', grams(gras), 'huile d’olive', 'en plus, pour tes lipides', mac('huile', gras)));
+    }
     fill();
     tot = total(allItems(secs));
   }

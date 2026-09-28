@@ -34,6 +34,8 @@ const SETS = {
 };
 const starchKcal = r => ['dej', 'diner'].map(id => r.secs.find(s => s.id === id).items.find(i => i.key === 'st').m.kcal);
 const ids = r => r.secs.map(s => s.id).join(' ');
+// Plafond des lipides : 95 g × k, ou 35 % de l'objectif les grosses journées (il est alors plus haut)
+const fatCap = (r, k) => Math.max(FAT_MAX * k, 0.35 * r.energy.target / 9);
 
 // 1. Formules de dépense (valeurs calculées à la main)
 const P = cleanProfile({});
@@ -112,7 +114,7 @@ for (const [name, set] of Object.entries(SETS)) for (const pdBase of ['avoine', 
     const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
     assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : ${Math.round(r.tot.kcal)} kcal pour un objectif de ${r.energy.target}`);
     assert(r.tot.p >= 140, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
-    assert(r.tot.f >= 55 && r.tot.f <= 95, `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
+    assert(r.tot.f >= 55 && r.tot.f <= fatCap(r, 1), `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
     for (const k of starchKcal(r)) assert(k >= STARCH_MIN - 20 && k <= STARCH_MAX + 20, `${combo} : ${Math.round(k)} kcal de féculent dans un repas`);
     n++;
   }
@@ -230,13 +232,14 @@ assert.strictEqual(cleanProfile({ shakerKcal: 200, shakerProt: 5 }).shakerKcal, 
 const plus = buildDay(day([]), DEFAULT_CHOICES[3], { shakerKcal: 160 }).tot.kcal - buildDay(day([]), DEFAULT_CHOICES[3]).tot.kcal;
 assert(Math.abs(plus) <= 30, `un shaker plus calorique ne change pas le total (${Math.round(plus)} kcal)`);
 
-// 15. Marge cuisine : moitié au déjeuner, moitié au dîner, prise sur les féculents
+// 15. Marge cuisine (matière grasse de cuisson comprise) : moitié au déjeuner, moitié au dîner, en lipides, prise sur les féculents
 const margeOf = (x, set) => {
   const r = buildDay(day(set || []), DEFAULT_CHOICES[3], x);
   return { r, dej: (r.secs.find(s => s.id === 'dej').items.find(i => i.key === 'marge') || {}).m, diner: (r.secs.find(s => s.id === 'diner').items.find(i => i.key === 'marge') || {}).m };
 };
 const mg = margeOf({});
-assert(mg.dej.kcal === 50 && mg.diner.kcal === 50 && mg.dej.p === 0 && mg.dej.f === 0, 'marge par défaut : 50 + 50 kcal, sans macros');
+assert(mg.dej.kcal === 75 && mg.diner.kcal === 75 && mg.dej.p === 0 && mg.dej.c === 0 && Math.abs(mg.dej.f - 75 / 9) < 1e-9, 'marge par défaut : 75 + 75 kcal, en lipides');
+assert(!mg.r.secs.flatMap(s => s.items).some(i => /huile/.test(i.name)), 'huile encore listée avec la marge par défaut');
 const m0 = margeOf({ marge: 0 });
 assert(!m0.dej && !m0.diner, 'marge nulle : aucune ligne');
 const m3 = margeOf({ marge: 300 });
@@ -244,12 +247,15 @@ assert(m3.dej.kcal === 150 && m3.diner.kcal === 150, 'marge de 300 kcal');
 const m25 = margeOf({ marge: 25 });
 assert.strictEqual(m25.dej.kcal + m25.diner.kcal, 25, 'marge répartie sans arrondi perdu');
 for (const set of [[], [moyenne('soir')], [longue(2)]]) {
-  const a = margeOf({ marge: 0 }, set).r, b = margeOf({}, set).r;
+  const a = margeOf({}, set).r, b = margeOf({ marge: 300 }, set).r;
   const lost = starchKcal(a).reduce((x, y) => x + y) - starchKcal(b).reduce((x, y) => x + y);
-  near(lost, 100, 25, 'féculents diminués de la marge');
+  near(lost, 150, 25, 'féculents diminués de la marge');
   near(b.tot.kcal, a.tot.kcal, 30, 'total du jour inchangé par la marge');
 }
-assert.strictEqual(cleanProfile({ marge: 400 }).marge, 100, 'marge hors bornes ignorée');
+assert.strictEqual(cleanProfile({ marge: 400 }).marge, 150, 'marge hors bornes ignorée');
+// Sans marge (cuisson sans matière grasse), l'huile de secours complète les lipides les jours maigres
+const sansMarge = margeOf({ marge: 0 }).r, secours = sansMarge.secs.find(s => s.id === 'diner').items.find(i => i.key === 'gras');
+assert(secours && /pour tes lipides/.test(secours.note) && sansMarge.tot.f >= 55, 'sans marge : huile de secours au dîner');
 
 // 16. Portions mises à l'échelle du poids (référence 72 kg, k borné à 0,65-1,4)
 assert(scaleOf(cleanProfile({})) === 1 && scaleOf(cleanProfile({ poids: 36 })) === 0.65 && scaleOf(cleanProfile({ poids: 150 })) === 1.4, 'bornes de k');
@@ -257,7 +263,7 @@ const qtyOf = (x, sec, key, choices) => buildDay(day([]), choices || DEFAULT_CHO
 const oeufsJambon = { pdBase: 'pain', dej: { prot: 'oeufs', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'riz' } };
 for (const poids of [71, 72, 73]) {
   const x = { poids };
-  assert(qtyOf(x, 'dej', 'p1') === '180 g' && qtyOf(x, 'pd', 'skyr') === '250 g' && qtyOf(x, 'dej', 'oil') === '10 g' && qtyOf(x, 'pd', 'am') === '15 g', `${poids} kg : portions de référence`);
+  assert(qtyOf(x, 'dej', 'p1') === '180 g' && qtyOf(x, 'pd', 'skyr') === '250 g' && qtyOf(x, 'pd', 'am') === '15 g', `${poids} kg : portions de référence`);
   assert(qtyOf(x, 'dej', 'p1', oeufsJambon) === '3' && qtyOf(x, 'dej', 'p2', oeufsJambon) === '90 g' && qtyOf(x, 'pd', 'base', oeufsJambon) === '80 g', `${poids} kg : œufs, jambon, pain`);
 }
 const small = { sexe: 'f', age: 28, taille: 160, poids: 52 };
@@ -281,7 +287,7 @@ for (const [who, prof] of Object.entries(FRIENDS)) {
       const combo = `${who}/${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
       const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, prof);
       assert(r.tot.p >= PROT_MIN * k - 0.5, `${combo} : ${Math.round(r.tot.p)} g de protéines pour un plancher de ${Math.round(PROT_MIN * k)}`);
-      assert(r.tot.f >= FAT_MIN * k - 0.5 && r.tot.f <= FAT_MAX * k, `${combo} : ${r.tot.f.toFixed(1)} g de lipides (${Math.round(FAT_MIN * k)} à ${Math.round(FAT_MAX * k)})`);
+      assert(r.tot.f >= FAT_MIN * k - 0.5 && r.tot.f <= fatCap(r, k), `${combo} : ${r.tot.f.toFixed(1)} g de lipides (${Math.round(FAT_MIN * k)} à ${Math.round(fatCap(r, k))})`);
       assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
       if (r.ecart > r.energy.target * 0.03) {
         for (const kc of starchKcal(r)) assert(kc <= STARCH_MIN * k + 20, `${combo} : au-dessus de l'objectif sans être au plancher`);

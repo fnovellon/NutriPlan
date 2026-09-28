@@ -115,7 +115,7 @@ click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
 const isMarge = li => /pour la cuisine/.test(li.textContent);
 for (const id of ['dej', 'diner']) {
   const li = [...d.querySelectorAll(`[aria-labelledby="h-${id}"] .items li`)].find(isMarge);
-  assert(li && /≈\s50/.test(li.querySelector('.qty').textContent) && !li.querySelector('.mac'), 'marge cuisine au ' + id);
+  assert(li && /≈\s75/.test(li.querySelector('.qty').textContent) && !li.querySelector('.mac'), 'marge cuisine au ' + id);
 }
 for (const li of d.querySelectorAll('#day .items li')) {
   if (isMarge(li)) continue;
@@ -314,7 +314,7 @@ assert(/saisie/.test(lm.$('#needs-sum').textContent) && lm.$('[data-action="prof
 const la = legacy({ age: 30, taille: 168, poids: 71, repos: 1000, deficit: 0 });
 assert(/automatique/.test(la.$('#needs-sum').textContent) && /2\s260/.test(la.$('#needs-sum').textContent), 'ancien profil à 1 000 kcal : ' + la.$('#needs-sum').textContent);
 // Petite corpulence : portions réduites, conseil si les minimums dépassent l'objectif
-const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 20 });
+const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 25 });
 const skyrPd = [...light.d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].find(li => /skyr/.test(li.textContent));
 assert(/^180\sg/.test(skyrPd.querySelector('.qty').textContent), '52 kg : skyr du petit-déjeuner ' + skyrPd.querySelector('.qty').textContent);
 assert(/dépassent l’objectif/.test(light.$('#sum-note').textContent) && /baisse la marge cuisine ou passe-toi du shaker/.test(light.$('#sum-note').textContent), '52 kg : ' + light.$('#sum-note').textContent);
@@ -356,13 +356,13 @@ assert(step(f) === '3' && f.$('#acc-next').textContent === 'Voir mes repas', 'é
 f.click('#acc-back');
 assert(step(f) === '2' && accPressed(f, 'deficit').value === '20', 'retour à l’étape 2');
 f.click('#acc-next');
-// Habitudes : shaker oui par défaut (dose visible), marge 100
-assert(accPressed(f, 'shaker').value === 'oui' && !f.$('#acc-dose').hidden && accPressed(f, 'marge').value === '100', 'habitudes par défaut');
+// Habitudes : shaker oui par défaut (dose visible), marge 150
+assert(accPressed(f, 'shaker').value === 'oui' && !f.$('#acc-dose').hidden && accPressed(f, 'marge').value === '150', 'habitudes par défaut');
 f.click('#accueil [data-key="shaker"][data-value="non"]');
 assert(f.$('#acc-dose').hidden && /skyr/.test(f.$('#acc-shaker-t').textContent), 'dose visible sans shaker');
-f.click('#accueil [data-key="marge"][data-value="200"]');
+f.click('#accueil [data-key="marge"][data-value="250"]');
 f.click('#acc-next');
-assert.deepStrictEqual(fprof(), { mode: 'auto', sexe: 'f', age: 30, taille: 165, poids: 58.5, deficit: 20, shaker: 'non', marge: 200 }, 'profil de l’accueil');
+assert.deepStrictEqual(fprof(), { mode: 'auto', sexe: 'f', age: 30, taille: 165, poids: 58.5, deficit: 20, shaker: 'non', marge: 250 }, 'profil de l’accueil');
 assert(f.$('#accueil').hidden && !f.$('#page').hidden && /Ajoute tes séances/.test(f.$('#intro').textContent), 'page du jour après l’accueil');
 assert(!/Complète/.test(f.$('#sum-note').textContent) && /1\s830/.test(f.$('#sum-note').textContent), 'profil de l’accueil non utilisé : ' + f.$('#sum-note').textContent);
 assert(![...f.d.querySelectorAll('#day li')].some(li => /shaker de protéines/.test(li.textContent)), 'shaker affiché après l’avoir refusé');
@@ -383,7 +383,7 @@ f.click('#acc-next');
 assert(step(f) === '3' && /Vérifie les calories par dose \(100 à 160\skcal\)/.test(f.$('#acc-err').textContent), 'dose hors bornes : ' + f.$('#acc-err').textContent);
 accType(f, fw, 'shakerKcal', 130);
 f.click('#acc-next');
-assert(fprof().deficit === 10 && fprof().shaker === 'oui' && fprof().shakerKcal === 130 && fprof().marge === 200 && f.$('#accueil').hidden, 'accueil refait : ' + JSON.stringify(fprof()));
+assert(fprof().deficit === 10 && fprof().shaker === 'oui' && fprof().shakerKcal === 130 && fprof().marge === 250 && f.$('#accueil').hidden, 'accueil refait : ' + JSON.stringify(fprof()));
 assert.deepStrictEqual(f.sess(), ['Petite séance'], 'séances perdues en refaisant l’accueil');
 // Passer : garde ce qui est déjà saisi, le reste prend les valeurs par défaut
 const sk = tools(open(null, true));
