@@ -105,7 +105,8 @@ assert($('[aria-labelledby="h-dej"] .qty.bump'), 'changement non mis en évidenc
 click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
 const dejLi = t => [...d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].find(li => li.querySelector('.name').textContent.startsWith(t));
 const ck = li => [...li.querySelectorAll('.q .ck')].map(e => e.textContent);
-assert.deepStrictEqual(ck(dejLi('poulet')), ['cru', '≈\u00A0135\u00A0g cuit'], 'poids cuit du poulet');
+const pouletCru = parseInt(dejLi('poulet').querySelector('.qty').textContent, 10);
+assert.deepStrictEqual(ck(dejLi('poulet')), ['cru', '≈\u00A0' + Math.round(pouletCru * 0.75 / 5) * 5 + '\u00A0g cuit'], 'poids cuit du poulet');
 assert(ck(dejLi('riz')).length === 2 && /cuit$/.test(ck(dejLi('riz'))[1]), 'poids cuit du riz');
 assert.deepStrictEqual(ck(dejLi('légumes')), [], 'poids cuit des légumes');
 click('[data-action="starch"][data-slot="dej"][data-value="pdt"]');
@@ -273,6 +274,15 @@ assert(/20\s%/.test(p.$('#warn-deficit').textContent), 'pas d’alerte au-delà 
 p.click('[data-action="prof"][data-key="neat"][data-value="debout"]');
 assert.strictEqual(prof().neat, 'debout', 'activité hors sport');
 
+// Objectif de protéines en g/kg : curseur, grammes du jour, portions ajustées
+const pouletQty = () => parseInt([...p.d.querySelectorAll('#day li')].find(li => /poulet ou dinde/.test(li.textContent)).querySelector('.qty').textContent, 10);
+assert(/2,0\sg\/kg/.test(p.$('#out-prot').textContent) && /Environ 140\sg par jour \(2,0 × 70,0\skg\)/.test(p.$('#calc-prot').textContent), 'objectif de protéines par défaut : ' + p.$('#calc-prot').textContent);
+const poulet20 = pouletQty();
+type('prot', 2.4);
+assert(prof().prot === 2.4 && /2,4\sg\/kg/.test(p.$('#out-prot').textContent) && /Environ 168\sg/.test(p.$('#calc-prot').textContent), 'objectif de protéines non enregistré');
+assert(pouletQty() > poulet20 && /Aujourd’hui\s:\s\d+\sg/.test(p.$('#calc-prot').textContent), 'portions non ajustées à l’objectif de protéines');
+type('prot', 2);
+
 // Shaker : composition réglable, reprise dans la journée
 type('shakerKcal', 150); type('shakerProt', 30);
 assert(prof().shakerKcal === 150 && prof().shakerProt === 30, 'shaker non enregistré');
@@ -351,11 +361,11 @@ assert.strictEqual(dejLines().filter(t => /compote/.test(t)).length, 1, 'compote
 mid.click('[data-action="dessert"][data-slot="dej"][data-value="fruit"]');
 assert(!dejLines().some(t => /compote/.test(t)) && dejLines().some(t => /pomme, poire/.test(t)), 'deux desserts au déjeuner : ' + dejLines().join(' | '));
 
-// Petite corpulence : portions réduites, conseil si les minimums dépassent l'objectif
-const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 25 });
+// Petite corpulence : portions réduites ; objectif de protéines élevé : conseil si les minimums dépassent l'objectif
+const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 25, prot: 2.6 });
 const skyrPd = [...light.d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].find(li => /skyr/.test(li.textContent));
-assert(/^180\sg/.test(skyrPd.querySelector('.qty').textContent), '52 kg : skyr du petit-déjeuner ' + skyrPd.querySelector('.qty').textContent);
-assert(/dépassent l’objectif/.test(light.$('#sum-note').textContent) && /baisse la marge cuisine ou passe-toi du shaker/.test(light.$('#sum-note').textContent), '52 kg : ' + light.$('#sum-note').textContent);
+assert(parseInt(skyrPd.querySelector('.qty').textContent, 10) < 250, '52 kg : skyr du petit-déjeuner ' + skyrPd.querySelector('.qty').textContent);
+assert(/dépassent l’objectif/.test(light.$('#sum-note').textContent) && /baisse la marge cuisine, passe-toi du shaker ou baisse ton objectif de protéines/.test(light.$('#sum-note').textContent), '52 kg : ' + light.$('#sum-note').textContent);
 for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);

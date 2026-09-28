@@ -382,6 +382,11 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <p class="calc" id="calc-deficit"></p>
       <p class="warn" id="warn-deficit"></p>
       <div class="range">
+        <div class="range-h"><label for="in-prot">Protéines</label><output id="out-prot" for="in-prot"></output></div>
+        <input type="range" id="in-prot" data-key="prot" min="1.6" max="3" step="0.1">
+      </div>
+      <p class="calc" id="calc-prot"></p>
+      <div class="range">
         <div class="range-h"><label for="in-ravito">Ravito des sorties longues</label><output id="out-ravito" for="in-ravito"></output></div>
         <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
       </div>
@@ -423,7 +428,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '3.2.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -524,7 +529,7 @@ const PROT = {
     },
     dej:function(){ return []; },
     diner:function(){ return []; }},
-  thon:{label:'Thon',
+  thon:{label:'Thon', fixe:true,
     base:function(k){ return [it('p1', '1', 'boîte de thon au naturel', 'environ 110' + NB + 'g égoutté', mac('thon', 110)), it('p2', '1', 'œuf dur', 'ou ' + sc(15, 5, k) + NB + 'g de parmesan', unitMac('oeuf', 1))]; },
     dej:function(){ return []; },
     diner:function(){ return []; }}
@@ -597,8 +602,8 @@ const DEFAULT_CHOICES = {
 };
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300]};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,3]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
 const KCAL_PER_KG = 7700;
@@ -649,7 +654,7 @@ function energy(plan, p){
 function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }
 
 /* Petit-déjeuner : menu de sortie longue si longue ; banane dès qu'il y a une séance moyenne ou longue */
-function breakfast(long, banane, base, k){
+function breakfast(long, banane, base, k, kp){
   const items = [];
   if (base === 'pain'){
     const g = sc(long ? 110 : 80, 10, k);
@@ -658,8 +663,8 @@ function breakfast(long, banane, base, k){
     const g = sc(long ? 80 : 60, 5, k);
     items.push(it('base', grams(g), 'flocons d’avoine', null, mac('avoine', g)));
   }
-  const sk = sc(long ? 150 : 250, 10, k);
-  items.push(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk)));
+  const sk = sc(long ? 150 : 250, 10, kp);
+  items.push(adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))));
   if (long || banane){
     items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
   } else {
@@ -685,10 +690,10 @@ function shakerMac(p){
   return {kcal:p.shakerKcal, p:prot, c:rest / 8, f:rest / 18};
 }
 function shakerItem(p){ return it('shk', '1', 'shaker de protéines', 'une dose, à l’eau', shakerMac(p)); }
-function gouterItems(k){
-  const sk = sc(150, 10, k), am = sc(15, 5, k);
+function gouterItems(k, kp){
+  const sk = sc(150, 10, kp), am = sc(15, 5, k);
   return [
-    it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk)),
+    adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))),
     it('pom', '1', 'pomme', null, unitMac('pomme', 1)),
     it('am', grams(am), 'amandes', null, mac('amandes', am))
   ];
@@ -696,8 +701,14 @@ function gouterItems(k){
 /* Énergie du féculent de chaque repas à 72 kg : plancher et plafond, soit 20 et 120 g de glucides sous forme de riz
    (le plafond en calories évite les assiettes démesurées de lentilles ou de quinoa, moins riches en glucides) ; × k */
 const STARCH_MIN = 90, STARCH_MAX = 550;
-/* Planchers à 72 kg, mis à l'échelle k : protéines 140 g (≈ 1,95 g/kg), lipides 55 g (≈ 0,76 g/kg) ; plafond lipides 95 g */
-const PROT_MIN = 140, FAT_MIN = 55, FAT_MAX = 95;
+/* Lipides à 72 kg, mis à l'échelle k : plancher 55 g (≈ 0,76 g/kg), plafond 95 g */
+const FAT_MIN = 55, FAT_MAX = 95;
+/* Protéines : objectif = g/kg du profil × poids (borné comme les portions, 47 à 101 kg), plancher à 97 % de l'objectif.
+   Les portions de viande, poisson, œufs (déjeuner, dîner) et le skyr (petit-déjeuner, goûter) sont multipliées par un
+   facteur pf, borné à 0,5-1,5, cherché pour tomber sur l'objectif. */
+const PROT_FLOOR = 0.97, PF_MIN = 0.5, PF_MAX = 1.5;
+function protTarget(p){ return p.prot * REF_KG * scaleOf(p); }
+function adj(item){ item.adj = true; return item; }
 /* Féculent dosé en calories : changer de féculent ne change pas le total de la journée */
 function starchItem(id, kcal){
   const S = STARCH[id];
@@ -719,9 +730,9 @@ function splitStarch(budget, share, k, off){
   return {dej:ka, diner:kb, rest:avail - ka - kb};
 }
 function dessertOf(choice){ return choice && has(DESSERT, choice.dessert) ? choice.dessert : 'aucun'; }
-function mainItems(slot, choice, k){
+function mainItems(slot, choice, k, kp){
   const P = PROT[choice.prot];
-  return P.base(k).concat([it('st', '', '', null, null), it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], P[slot](k));
+  return P.base(P.fixe ? k : kp).map(function(i){ return P.fixe ? i : adj(i); }).concat([it('st', '', '', null, null), it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], P[slot](k));
 }
 function setStarch(sec, item){ sec.items = sec.items.map(function(i){ return i.key === 'st' ? item : i; }); }
 function allItems(secs){ return secs.reduce(function(a, s){ return a.concat(s.items); }, []); }
@@ -731,8 +742,8 @@ function fuel(d, rate){
   return it('fuel', grams(g), 'glucides pendant l’effort', rate + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0});
 }
 
-function buildDay(plan, ch, profile){
-  const pr = cleanProfile(profile);
+/* Construit la journée pour un facteur de protéines pf donné (voir buildDay) */
+function composeDay(plan, ch, pr, pf){
   const en = energy(plan, pr);
   const S = plan.seances.slice().sort(function(a, b){ return MOMENT_RANK[a.moment] - MOMENT_RANK[b.moment]; });
   const at = function(m){ return S.filter(function(x){ return x.moment === m; }); };
@@ -740,16 +751,16 @@ function buildDay(plan, ch, profile){
   const long = S.some(function(x){ return x.taille === 'longue'; });
   const grosse = S.some(function(x){ return x.taille !== 'petite'; });
   const last = S.length ? S[S.length - 1].moment : null;
-  const k = scaleOf(pr), shaker = pr.shaker === 'oui';
+  const k = scaleOf(pr), kp = k * pf, shaker = pr.shaker === 'oui', protFloor = PROT_FLOOR * protTarget(pr);
   const secs = [];
 
-  const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(long, grosse, ch.pdBase, k)};
+  const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(long, grosse, ch.pdBase, k, kp)};
   if (long) pd.when = '1h30 à 2' + NB + 'h avant la sortie';
   else if (matin.length) pd.when = '1h30 avant la séance';
   secs.push(pd);
 
-  const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej, k), idea:ideaFor(ch.dej)};
-  const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:mainItems('diner', ch.diner, k), idea:ideaFor(ch.diner)};
+  const lunch = {id:'dej', title:'Déjeuner', when:null, pick:'dej', items:mainItems('dej', ch.dej, k, kp), idea:ideaFor(ch.dej)};
+  const dinner = {id:'diner', title:'Dîner', when:null, pick:'diner', items:mainItems('diner', ch.diner, k, kp), idea:ideaFor(ch.diner)};
   let co = null, nb = 0;
   /* Marge cuisine : kcal réservées pour la matière grasse de cuisson et les ajouts, moitié au déjeuner, moitié au dîner,
      comptées en lipides (l'huile de cuisson en est l'essentiel) */
@@ -795,7 +806,7 @@ function buildDay(plan, ch, profile){
   }
   secs.push(lunch);
   if (!co){
-    if (long) co = {id:'co', title:'Goûter', when:null, items:gouterItems(k)};
+    if (long) co = {id:'co', title:'Goûter', when:null, items:gouterItems(k, kp)};
     else if (soir.length) co = {id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(true, grosse, k)};
     else co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems(S.length > 0, grosse, k)};
     if (!S.length && shaker) co.items.push(shakerItem(pr));
@@ -828,15 +839,15 @@ function buildDay(plan, ch, profile){
   fill();
   let tot = total(allItems(secs));
   /* Planchers, revérifiés ensemble car chaque ajout réajuste les féculents (qui portent un peu de protéines et de lipides) :
-     - protéines : skyr le soir, 150 g × k, un peu plus si besoin (jusqu'au double) ;
+     - protéines (objectif hors d'atteinte des portions, thon deux fois…) : skyr le soir, 150 g × k, un peu plus si besoin (jusqu'au double) ;
      - lipides (peu ou pas de marge cuisine, petites portions) : de l'huile en plus au dîner. */
   let skyr = 0, gras = 0, soirSec = null;
   const skyrMax = sc(300, 10, k);
   for (let pass = 0; pass < 8 && !plan.libre; pass++){
-    const lowP = tot.p < PROT_MIN * k && skyr < skyrMax, lowF = tot.f < FAT_MIN * k && gras < 60;
+    const lowP = tot.p < protFloor && skyr < skyrMax, lowF = tot.f < FAT_MIN * k && gras < 60;
     if (!lowP && !lowF) break;
     if (lowP){
-      skyr = skyr ? Math.min(skyrMax, skyr + Math.max(10, Math.ceil((PROT_MIN * k - tot.p) / 0.105 / 10) * 10)) : sc(150, 10, k);
+      skyr = skyr ? Math.min(skyrMax, skyr + Math.max(10, Math.ceil((protFloor - tot.p) / 0.105 / 10) * 10)) : sc(150, 10, k);
       const item = it('skyr', grams(skyr), 'skyr nature', null, mac('skyr', skyr));
       if (soirSec) soirSec.items = [item];
       else { soirSec = {id:'soir', title:'Soir', when:'pour compléter tes protéines', items:[item]}; secs.push(soirSec); }
@@ -858,7 +869,29 @@ function buildDay(plan, ch, profile){
       items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0})]};
     tot = total(allItems(secs));
   }
-  return {secs:secs, tot:tot, libre:libre, energy:en, ecart:ecart, scale:k};
+  const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !plan.libre ? total(soirSec.items).p : 0;
+  return {secs:secs, tot:tot, libre:libre, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
+}
+/* Journée complète. Le facteur de protéines pf est cherché sur la même journée sans séance ni repas libre, puis appliqué
+   tel quel : les portions de viande, poisson, œufs et skyr ne dépendent que de l'objectif et des choix, pas des séances
+   (les jours de séance, les féculents en plus apportent quelques protéines de plus). Quelques passes, car les féculents
+   réajustés portent aussi des protéines. */
+function buildDay(plan, ch, profile){
+  const pr = cleanProfile(profile), T = protTarget(pr);
+  const repos = {seances:[], libre:false};
+  let pf = 1, r = composeDay(repos, ch, pr, pf);
+  for (let pass = 0; pass < 4; pass++){
+    const adj1 = r.adjP / pf;
+    if (adj1 <= 0) break;
+    const next = Math.min(PF_MAX, Math.max(PF_MIN, (T - (r.tot.p - r.adjP - r.soirP)) / adj1));
+    if (Math.abs(next - pf) < 0.02) break;
+    pf = next;
+    r = composeDay(repos, ch, pr, pf);
+  }
+  if (plan.seances.length || plan.libre) r = composeDay(plan, ch, pr, pf);
+  r.prot = {target:T, floor:PROT_FLOOR * T, factor:pf};
+  delete r.adjP; delete r.soirP;
+  return r;
 }
 
 if (typeof document !== 'undefined'){
@@ -1017,6 +1050,7 @@ if (typeof document !== 'undefined'){
       if (pr.marge > 0) tips.push('baisse la marge cuisine');
       if (pr.shaker === 'oui') tips.push('passe-toi du shaker');
       if (dessertOf(ch.dej) !== 'aucun' || dessertOf(ch.diner) !== 'aucun') tips.push('retire un dessert');
+      if (res.prot.factor > PF_MIN + 0.02) tips.push('baisse ton objectif de protéines');
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
         (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
@@ -1060,6 +1094,12 @@ if (typeof document !== 'undefined'){
       if (ea < 30) warn.push('Il te reste environ ' + Math.round(ea) + NB + 'kcal par kilo de masse maigre une fois tes séances payées, sous le seuil de 30' + NB + ': baisse le déficit.');
     }
     $('warn-deficit').textContent = warn.join(' ');
+    const dec = function(n){ return n.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}); };
+    $('out-prot').textContent = dec(pr.prot) + NB + 'g/kg';
+    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(res.prot.target / pr.prot) + NB + 'kg). ' +
+      'Viande, poisson, œufs et skyr s’ajustent pour y arriver un jour sans séance ; les jours de séance, les féculents en plus en apportent un peu plus. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g.' +
+      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.target * 1.07 ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
+      ' Repère en sèche' + NB + ': 1,6 à 2,4' + NB + 'g/kg.';
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
     $('out-marge').textContent = pr.marge + NB + 'kcal';
     [['kcalPetite', {taille:'petite'}], ['kcalMoyenne', {taille:'moyenne'}], ['kcalLongueH', {taille:'longue', duree:1}]].forEach(function(x){
@@ -1073,7 +1113,7 @@ if (typeof document !== 'undefined'){
     $('calc-shaker').textContent = withShaker
       ? 'Tous les jours, juste après ta dernière séance (l’après-midi les jours de repos). Une dose à l’eau' + NB + ': ' +
         pr.shakerKcal + NB + 'kcal, ' + Math.round(sm.p) + NB + 'g de protéines, environ ' + Math.round(sm.c) + NB + 'g de glucides et ' + Math.round(sm.f) + NB + 'g de lipides.'
-      : 'Pas de shaker' + NB + ': si tes protéines passent sous ' + Math.round(PROT_MIN * res.scale) + NB + 'g, un skyr s’ajoute le soir.';
+      : 'Pas de shaker' + NB + ': si tes protéines passent sous ' + Math.round(res.prot.floor) + NB + 'g, un skyr s’ajoute le soir.';
     $('warn-shaker').textContent = withShaker && pr.shakerProt > sm.p
       ? 'Avec ' + pr.shakerKcal + NB + 'kcal, une dose ne peut pas dépasser ' + Math.round(sm.p) + NB + 'g de protéines' + NB + ': le calcul en compte ' + Math.round(sm.p) + NB + 'g.'
       : '';

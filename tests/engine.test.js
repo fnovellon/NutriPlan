@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX, DESSERT_ORDER};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, PROT_MIN, FAT_MIN, FAT_MAX, DESSERT_ORDER } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, STARCH_MAX, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -113,7 +113,7 @@ for (const [name, set] of Object.entries(SETS)) for (const pdBase of ['avoine', 
     const combo = `${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
     assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : ${Math.round(r.tot.kcal)} kcal pour un objectif de ${r.energy.target}`);
-    assert(r.tot.p >= 140, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
+    assert(r.tot.p >= r.prot.floor - 0.5, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
     assert(r.tot.f >= 55 && r.tot.f <= fatCap(r, 1), `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
     for (const k of starchKcal(r)) assert(k >= STARCH_MIN - 20 && k <= STARCH_MAX + 20, `${combo} : ${Math.round(k)} kcal de féculent dans un repas`);
     n++;
@@ -123,7 +123,8 @@ for (const [name, set] of Object.entries(SETS)) for (const pdBase of ['avoine', 
 // 7. Changer de féculent ne change pas le total de la journée (dosage en calories)
 for (const [name, set] of Object.entries(SETS)) {
   const totals = STARCH_ORDER.map(s => buildDay(day(set), { pdBase: 'avoine', dej: { prot: 'poulet', starch: s }, diner: { prot: 'poisson', starch: s } }).tot.kcal);
-  assert(Math.max(...totals) - Math.min(...totals) <= 40, `${name} : le total varie de ${Math.round(Math.max(...totals) - Math.min(...totals))} kcal selon le féculent`);
+  // Tolérance : arrondis des portions (les protéines suivent aussi le féculent : lentilles et quinoa en apportent plus)
+  assert(Math.max(...totals) - Math.min(...totals) <= Math.max(40, 0.015 * buildDay(day(set), DEFAULT_CHOICES[3]).energy.target), `${name} : le total varie de ${Math.round(Math.max(...totals) - Math.min(...totals))} kcal selon le féculent`);
 }
 
 // 8. Déficits extrêmes : planchers toujours tenus, jamais nettement sous l'objectif
@@ -131,7 +132,7 @@ for (const deficit of [0, 25]) for (const [name, set] of Object.entries(SETS)) {
   for (const p1 of PROT_ORDER) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const s2 of STARCH_ORDER) {
     const combo = `${deficit} %/${name}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase: 'avoine', dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, { deficit });
-    assert(r.tot.p >= 140 && r.tot.f >= 55, `${combo} : P ${Math.round(r.tot.p)} g, L ${r.tot.f.toFixed(1)} g`);
+    assert(r.tot.p >= r.prot.floor - 0.5 && r.tot.f >= 55, `${combo} : P ${Math.round(r.tot.p)} g, L ${r.tot.f.toFixed(1)} g`);
     assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
     if (r.ecart > r.energy.target * 0.03) {
       for (const k of starchKcal(r)) assert(k <= STARCH_MIN + 20, `${combo} : au-dessus de l'objectif sans être au plancher`);
@@ -198,8 +199,8 @@ assert(fuelOf(1.5) < fuelOf(2) && fuelOf(2) < fuelOf(2.5) && fuelOf(2.5) < fuelO
 assert.strictEqual(fuelOf(3), 180, 'ravito de 60 g/h par défaut');
 assert.strictEqual(fuelOf(3, 45), 135, 'ravito réglé à 45 g/h');
 
-// 13. Poids cuit et macros de chaque aliment
-const wed = buildDay(emptyPlan(3), DEFAULT_CHOICES[3]);
+// 13. Poids cuit et macros de chaque aliment (portions de référence : facteur de protéines 1)
+const wed = composeDay(emptyPlan(3), DEFAULT_CHOICES[3], cleanProfile({}), 1);
 const itemOf = (r, sec, key) => r.secs.find(s => s.id === sec).items.find(i => i.key === key);
 assert.deepStrictEqual(plain(itemOf(wed, 'dej', 'p1').cook), { raw: 'cru', ways: [{ g: 135, adj: 'cuit' }] }, 'poulet 180 g cru');
 const riz = itemOf(wed, 'dej', 'st');
@@ -247,9 +248,11 @@ assert(m3.dej.kcal === 150 && m3.diner.kcal === 150, 'marge de 300 kcal');
 const m25 = margeOf({ marge: 25 });
 assert.strictEqual(m25.dej.kcal + m25.diner.kcal, 25, 'marge répartie sans arrondi perdu');
 for (const set of [[], [moyenne('soir')], [longue(2)]]) {
-  const a = margeOf({}, set).r, b = margeOf({ marge: 300 }, set).r;
-  const lost = starchKcal(a).reduce((x, y) => x + y) - starchKcal(b).reduce((x, y) => x + y);
+  // À portions de protéines fixes, les féculents perdent exactement la marge en plus
+  const a0 = composeDay(day(set), DEFAULT_CHOICES[3], cleanProfile({}), 1), b0 = composeDay(day(set), DEFAULT_CHOICES[3], cleanProfile({ marge: 300 }), 1);
+  const lost = starchKcal(a0).reduce((x, y) => x + y) - starchKcal(b0).reduce((x, y) => x + y);
   near(lost, 150, 25, 'féculents diminués de la marge');
+  const a = margeOf({}, set).r, b = margeOf({ marge: 300 }, set).r;
   near(b.tot.kcal, a.tot.kcal, 30, 'total du jour inchangé par la marge');
 }
 assert.strictEqual(cleanProfile({ marge: 400 }).marge, 150, 'marge hors bornes ignorée');
@@ -257,9 +260,9 @@ assert.strictEqual(cleanProfile({ marge: 400 }).marge, 150, 'marge hors bornes i
 const sansMarge = margeOf({ marge: 0 }).r, secours = sansMarge.secs.find(s => s.id === 'diner').items.find(i => i.key === 'gras');
 assert(secours && /pour tes lipides/.test(secours.note) && sansMarge.tot.f >= 55, 'sans marge : huile de secours au dîner');
 
-// 16. Portions mises à l'échelle du poids (référence 72 kg, k borné à 0,65-1,4)
+// 16. Portions mises à l'échelle du poids (référence 72 kg, k borné à 0,65-1,4), facteur de protéines fixé à 1
 assert(scaleOf(cleanProfile({})) === 1 && scaleOf(cleanProfile({ poids: 36 })) === 0.65 && scaleOf(cleanProfile({ poids: 150 })) === 1.4, 'bornes de k');
-const qtyOf = (x, sec, key, choices) => buildDay(day([]), choices || DEFAULT_CHOICES[3], x).secs.find(s => s.id === sec).items.find(i => i.key === key).qty;
+const qtyOf = (x, sec, key, choices) => composeDay(day([]), choices || DEFAULT_CHOICES[3], cleanProfile(x), 1).secs.find(s => s.id === sec).items.find(i => i.key === key).qty;
 const oeufsJambon = { pdBase: 'pain', dej: { prot: 'oeufs', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'riz' } };
 for (const poids of [71, 72, 73]) {
   const x = { poids };
@@ -286,7 +289,7 @@ for (const [who, prof] of Object.entries(FRIENDS)) {
     for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']]) {
       const combo = `${who}/${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
       const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, prof);
-      assert(r.tot.p >= PROT_MIN * k - 0.5, `${combo} : ${Math.round(r.tot.p)} g de protéines pour un plancher de ${Math.round(PROT_MIN * k)}`);
+      assert(r.tot.p >= r.prot.floor - 0.5, `${combo} : ${Math.round(r.tot.p)} g de protéines pour un plancher de ${Math.round(r.prot.floor)}`);
       assert(r.tot.f >= FAT_MIN * k - 0.5 && r.tot.f <= fatCap(r, k), `${combo} : ${r.tot.f.toFixed(1)} g de lipides (${Math.round(FAT_MIN * k)} à ${Math.round(fatCap(r, k))})`);
       assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
       if (r.ecart > r.energy.target * 0.03) {
@@ -304,14 +307,47 @@ assert.strictEqual(cleanProfile({ shaker: 'peut-être' }).shaker, 'oui', 'valeur
 for (const [name, set] of Object.entries(SETS)) {
   const r = buildDay(day(set), DEFAULT_CHOICES[3], { shaker: 'non' });
   assert(!r.secs.some(s => s.id === 'shk') && !r.secs.flatMap(s => s.items).some(i => i.key === 'shk'), `${name} : shaker affiché alors qu'il est désactivé`);
-  assert(r.tot.p >= PROT_MIN, `${name} : ${Math.round(r.tot.p)} g de protéines sans shaker`);
+  assert(r.tot.p >= r.prot.floor - 0.5, `${name} : ${Math.round(r.tot.p)} g de protéines sans shaker`);
 }
-const saumon = { pdBase: 'avoine', dej: { prot: 'saumon', starch: 'patate' }, diner: { prot: 'saumon', starch: 'patate' } };
-assert(!buildDay(day([]), saumon, {}).secs.some(s => s.id === 'soir'), 'saumon deux fois avec shaker : pas de skyr du soir');
-const lean = buildDay(day([]), saumon, { shaker: 'non' });
-assert(lean.secs.some(s => s.id === 'soir') && lean.tot.p >= PROT_MIN, 'skyr du soir de secours sans shaker');
+// Thon deux fois (boîte fixe) sans shaker et objectif élevé : les portions sont au maximum, le skyr du soir complète
+const thonThon = { pdBase: 'pain', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'riz' } };
+assert(!buildDay(day([]), thonThon, {}).secs.some(s => s.id === 'soir'), 'thon deux fois avec shaker : pas de skyr du soir');
+const lean = buildDay(day([]), thonThon, { shaker: 'non', prot: 2.4 });
+assert(lean.secs.some(s => s.id === 'soir') && lean.prot.factor === PF_MAX && lean.tot.p >= lean.prot.floor - 0.5, 'skyr du soir de secours sans shaker');
 
-// 18. Desserts : pris sur le féculent du même repas, total du jour inchangé
+// 18. Objectif de protéines en g/kg : portions de viande, poisson, œufs et skyr ajustées sur la journée sans séance
+assert(cleanProfile({}).prot === 2 && cleanProfile({ prot: 2.4 }).prot === 2.4 && cleanProfile({ prot: 5 }).prot === 2 && cleanProfile({ prot: 1 }).prot === 2, 'bornes de l’objectif de protéines');
+near(protTarget(cleanProfile({})), 144, 1e-9, 'objectif par défaut : 2 × 72 kg');
+near(protTarget(cleanProfile({ poids: 150, prot: 2 })), 2 * 72 * 1.4, 1e-9, 'objectif sur le poids borné');
+const pday = (set, ch, x) => buildDay(day(set), ch || DEFAULT_CHOICES[1], x);
+const pq = (r, sec, key) => r.secs.find(s => s.id === sec).items.find(i => i.key === key).qty;
+// Un jour sans séance : l'objectif est atteint (− 5 % à + 7 %, les œufs s'arrondissent à l'unité), sauf si les portions sont en butée (thon, féculents riches en protéines)
+let npt = 0;
+for (const prot of [2, 2.2, 2.6]) for (const pdBase of ['avoine', 'pain']) for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['pates', 'gnocchis'], ['lentilles', 'quinoa']]) {
+  const r = pday([], { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, { prot });
+  const combo = `${prot} g/kg/${pdBase}/${p1}+${s1}/${p2}+${s2}`, T = r.prot.target;
+  assert(r.tot.p >= r.prot.floor - 0.5, `${combo} : ${Math.round(r.tot.p)} g sous le plancher`);
+  assert(r.tot.p <= T * 1.07 || r.prot.factor <= PF_MIN + 0.02, `${combo} : ${Math.round(r.tot.p)} g pour un objectif de ${Math.round(T)} (facteur ${r.prot.factor.toFixed(2)})`);
+  assert(r.tot.p >= T * 0.95 || r.prot.factor >= PF_MAX - 0.02 || r.secs.some(s => s.id === 'soir'), `${combo} : ${Math.round(r.tot.p)} g pour un objectif de ${Math.round(T)}`);
+  npt++;
+}
+// Mêmes portions les jours de séance (les féculents en plus apportent quelques protéines de plus), et le jour du repas libre
+const ref = pday([]);
+for (const set of [[petite('soir')], [moyenne('matin'), moyenne('soir')], [longue(2)]]) {
+  const r = pday(set);
+  assert(pq(r, 'dej', 'p1') === pq(ref, 'dej', 'p1') && pq(r, 'diner', 'p1') === pq(ref, 'diner', 'p1') && r.prot.factor === ref.prot.factor, 'portions de protéines changées par les séances');
+  assert(r.tot.p >= ref.tot.p - 5, `jour de séance : ${Math.round(r.tot.p)} g contre ${Math.round(ref.tot.p)} g au repos`);
+}
+assert.strictEqual(pq(pday([], DEFAULT_CHOICES[1]), 'dej', 'p1'), pq(buildDay(day([], { libre: true }), DEFAULT_CHOICES[1]), 'dej', 'p1'), 'portions changées par le repas libre');
+// Plus d'objectif, plus de viande et moins de féculents ; le total du jour ne bouge pas
+const p20 = pday([], undefined, { prot: 2 }), p26 = pday([], undefined, { prot: 2.6 });
+assert(parseInt(pq(p26, 'dej', 'p1')) > parseInt(pq(p20, 'dej', 'p1')) && parseInt(pq(p26, 'pd', 'skyr')) > parseInt(pq(p20, 'pd', 'skyr')), 'objectif plus haut, portions plus grandes');
+assert(starchKcal(p26)[0] < starchKcal(p20)[0], 'objectif plus haut, moins de féculents');
+near(p26.tot.kcal, p20.tot.kcal, 30, 'total du jour indépendant de l’objectif de protéines');
+// Valeurs de référence (lundi : poulet + riz, crevettes + quinoa ; 72 kg, 2 g/kg) : poulet 110 g, skyr 160 g
+assert(pq(p20, 'dej', 'p1') === '110\u00a0g' && pq(p20, 'pd', 'skyr') === '160\u00a0g', `2 g/kg : poulet ${pq(p20, 'dej', 'p1')}, skyr ${pq(p20, 'pd', 'skyr')}`);
+
+// 19. Desserts : pris sur le féculent du même repas, total du jour inchangé
 const withDes = (dej, diner, base) => {
   const b = base || DEFAULT_CHOICES[3];
   return { pdBase: b.pdBase, dej: Object.assign({}, b.dej, { dessert: dej }), diner: Object.assign({}, b.diner, { dessert: diner }) };
@@ -351,7 +387,7 @@ for (const [name, set] of Object.entries(SETS)) for (const d1 of DESSERT_ORDER) 
     const combo = `${name}/${d1}+${d2}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase: 'avoine', dej: { prot: p1, starch: s1, dessert: d1 }, diner: { prot: p2, starch: s2, dessert: d2 } });
     const choco = [d1, d2].filter(d => d === 'chocolat').length * 8.4;
-    assert(r.tot.p >= PROT_MIN, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
+    assert(r.tot.p >= r.prot.floor - 0.5, `${combo} : ${Math.round(r.tot.p)} g de protéines`);
     assert(r.tot.f >= FAT_MIN && r.tot.f <= fatCap(r, 1) + choco, `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
     assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
     if (r.ecart > r.energy.target * 0.03) for (const kc of starchKcal(r)) assert(kc <= STARCH_MIN + 20, `${combo} : au-dessus de l'objectif sans être au plancher`);
@@ -360,7 +396,7 @@ for (const [name, set] of Object.entries(SETS)) for (const d1 of DESSERT_ORDER) 
   }
 }
 
-// 19. Version : la même partout, notée en tête des nouveautés
+// 20. Version : la même partout, notée en tête des nouveautés
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
@@ -369,4 +405,4 @@ assert.strictEqual(pkg.version, APP_VERSION, 'version de package.json');
 assert.strictEqual(lock.version, APP_VERSION, 'version de package-lock.json');
 assert.strictEqual((changelog.match(/^## (\d+\.\d+\.\d+)/m) || [])[1], APP_VERSION, 'dernière version de CHANGELOG.md');
 
-console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts)`);
+console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines)`);
