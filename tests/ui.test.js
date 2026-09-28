@@ -126,13 +126,15 @@ for (const id of ['dej', 'diner']) {
   const li = [...d.querySelectorAll(`[aria-labelledby="h-${id}"] .items li`)].find(isMarge);
   assert(li && /≈\s75/.test(li.querySelector('.qty').textContent) && !li.querySelector('.mac'), 'marge cuisine au ' + id);
 }
+// Budgets (marge cuisine, encas) : une quantité en kcal, pas de ligne de macros
+const isBudget = li => isMarge(li) || /kcal d’encas/.test(li.textContent);
 for (const li of d.querySelectorAll('#day .items li')) {
-  if (isMarge(li)) continue;
+  if (isBudget(li)) { assert(!li.querySelector('.mac') && /^≈/.test(li.querySelector('.qty').textContent), 'budget avec des macros : ' + li.textContent); continue; }
   assert(/kcal\s*P\s\d+\sg\s*G\s\d+\sg\s*L\s\d+\sg/.test(li.querySelector('.mac').textContent), 'macros absentes : ' + li.textContent);
 }
 for (const meal of d.querySelectorAll('#day .meal')) {
   const shown = [...meal.querySelectorAll('.mac > span:first-child')].reduce((a, e) => a + Number(e.textContent.replace(/\D/g, '')), 0) +
-    [...meal.querySelectorAll('.items li')].filter(isMarge).reduce((a, li) => a + Number(li.querySelector('.qty').textContent.replace(/\D/g, '')), 0);
+    [...meal.querySelectorAll('.items li')].filter(isBudget).reduce((a, li) => a + Number(li.querySelector('.qty').textContent.replace(/\D/g, '')), 0);
   const head = Number(meal.querySelector('.kcal').textContent.replace(/\D/g, ''));
   assert(Math.abs(shown - head) <= 10, `kcal des aliments (${shown}) et du repas (${head})`);
 }
@@ -172,12 +174,15 @@ click('[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]');
 assert.strictEqual(d.querySelectorAll('#sheet [data-action="dessert"][data-slot="dej"]').length, 4, 'choix de dessert au déjeuner');
 click('#sheet .scrim');
 assert(desPressed('dej') === 'aucun' && desPressed('diner') === 'aucun', 'aucun dessert par défaut');
-const dejKcal = () => Number($('[aria-labelledby="h-dej"] .kcal').textContent.replace(/\D/g, ''));
-const totalBefore = $('#sum-text strong').textContent, dejBefore = dejKcal();
+// Le dessert est pris sur le féculent du même repas, ou sur l'encas si ce féculent est déjà à son plafond
+const dejStarch = () => parseInt(starchLine('dej').match(/^\d+/)[0], 10);
+const encasKcal = () => { const li = [...d.querySelectorAll('#day li')].find(l => /kcal d’encas/.test(l.textContent)); return li ? Number(li.querySelector('.qty').textContent.replace(/\D/g, '')) : 0; };
+const totalBefore = $('#sum-text strong').textContent, starchBefore = dejStarch(), encasBefore = encasKcal();
 choose('dessert', 'dej', 'chocolat');
 assert(/chocolat noir/.test(lastLine('dej')) && /20\sg/.test(lastLine('dej')) && desPressed('dej') === 'chocolat', 'dessert du déjeuner : ' + lastLine('dej'));
 assert.strictEqual(stored().choices[3].dej.dessert, 'chocolat', 'dessert non enregistré');
-assert(Math.abs(dejKcal() - dejBefore) <= 20 && Math.abs(Number($('#sum-text strong').textContent.replace(/\D/g, '')) - Number(totalBefore.replace(/\D/g, ''))) <= 20, 'le dessert change le total : ' + totalBefore + ' → ' + $('#sum-text strong').textContent);
+assert(Math.abs(Number($('#sum-text strong').textContent.replace(/\D/g, '')) - Number(totalBefore.replace(/\D/g, ''))) <= 20, 'le dessert change le total : ' + totalBefore + ' → ' + $('#sum-text strong').textContent);
+assert(dejStarch() < starchBefore || encasKcal() < encasBefore, 'le dessert n’est pris ni sur le féculent ni sur l’encas');
 choose('dessert', 'diner', 'fruit');
 assert(/fruit/.test(lastLine('diner')) && /pomme, poire/.test(lastLine('diner')), 'dessert du dîner : ' + lastLine('diner'));
 choose('dessert', 'dej', 'aucun');

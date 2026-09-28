@@ -484,8 +484,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <h2>Comment tes repas sont construits</h2>
     <ul>
       <li>Le petit-déjeuner, la collation et le shaker suivent ton profil et tes séances.</li>
-      <li>Viande, poisson, œufs et skyr sont dosés pour ton objectif de protéines (en grammes par kilo).</li>
-      <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance. Changer de féculent garde les mêmes calories.</li>
+      <li>Viande, poisson, œufs et skyr restent au plus près du menu de base, ajustés juste ce qu’il faut pour tenir ton objectif de protéines (en grammes par kilo) à 10&nbsp;% près.</li>
+      <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance, sans dépasser une portion sportive (à 72&nbsp;kg&nbsp;: 120&nbsp;g de riz ou de pâtes crus, 100&nbsp;g de lentilles, 400&nbsp;g de pommes de terre). Au-delà, les grosses journées, un encas s’ajoute. Changer de féculent garde les mêmes calories.</li>
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large.</li>
@@ -519,7 +519,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.3.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides */
 const FOOD = {
@@ -536,15 +536,15 @@ const UNIT = {
   oeuf:[72,6.3,0.4,4.8], oeufMarine:[80,6.5,1.5,4.8]
 };
 const STARCH = {
-  riz:{label:'Riz', f:[355,8,78,0.7], step:5, raw:'cru', cook:[[3, 'cuit']], name:'riz basmati'},
-  pates:{label:'Pâtes', f:[355,12.5,71,1.5], step:5, raw:'crues', cook:[[2.3, 'cuites']], name:'pâtes'},
-  pdt:{label:'Pommes de terre', f:[77,2,17,0.1], step:10, raw:'crues', cook:[[1, 'à l’eau'], [0.75, 'au four']], name:'pommes de terre'},
-  patate:{label:'Patate douce', f:[86,1.6,20,0.1], step:10, raw:'crue', cook:[[1, 'à l’eau'], [0.75, 'au four']], name:'patate douce'},
-  quinoa:{label:'Quinoa', f:[368,14,60,6], step:5, raw:'cru', cook:[[2.7, 'cuit']], name:'quinoa'},
-  semoule:{label:'Semoule', f:[360,12.5,72,1.5], step:5, raw:'crue', cook:[[2.3, 'cuite']], name:'semoule'},
-  boulgour:{label:'Boulgour', f:[345,12,69,1.5], step:5, raw:'cru', cook:[[2.5, 'cuit']], name:'boulgour'},
-  lentilles:{label:'Lentilles', f:[330,24,48,1.5], step:5, raw:'crues', cook:[[2.5, 'cuites']], name:'lentilles'},
-  gnocchis:{label:'Gnocchis', f:[155,4,33,0.6], step:10, name:'gnocchis frais'}
+  riz:{cap:120, label:'Riz', f:[355,8,78,0.7], step:5, raw:'cru', cook:[[3, 'cuit']], name:'riz basmati'},
+  pates:{cap:120, label:'Pâtes', f:[355,12.5,71,1.5], step:5, raw:'crues', cook:[[2.3, 'cuites']], name:'pâtes'},
+  pdt:{cap:400, label:'Pommes de terre', f:[77,2,17,0.1], step:10, raw:'crues', cook:[[1, 'à l’eau'], [0.75, 'au four']], name:'pommes de terre'},
+  patate:{cap:400, label:'Patate douce', f:[86,1.6,20,0.1], step:10, raw:'crue', cook:[[1, 'à l’eau'], [0.75, 'au four']], name:'patate douce'},
+  quinoa:{cap:120, label:'Quinoa', f:[368,14,60,6], step:5, raw:'cru', cook:[[2.7, 'cuit']], name:'quinoa'},
+  semoule:{cap:120, label:'Semoule', f:[360,12.5,72,1.5], step:5, raw:'crue', cook:[[2.3, 'cuite']], name:'semoule'},
+  boulgour:{cap:120, label:'Boulgour', f:[345,12,69,1.5], step:5, raw:'cru', cook:[[2.5, 'cuit']], name:'boulgour'},
+  lentilles:{cap:100, label:'Lentilles', f:[330,24,48,1.5], step:5, raw:'crues', cook:[[2.5, 'cuites']], name:'lentilles'},
+  gnocchis:{cap:300, label:'Gnocchis', f:[155,4,33,0.6], step:10, name:'gnocchis frais'}
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','gnocchis'];
 /* Desserts du déjeuner et du dîner : quantités fixes (pas mises à l'échelle du poids), calories prises sur le féculent du même repas */
@@ -770,7 +770,7 @@ function breakfast(long, banane, base, k, kp){
     const g = sc(long ? 80 : 60, 5, k);
     items.push(it('base', grams(g), 'flocons d’avoine', null, mac('avoine', g)));
   }
-  const sk = sc(long ? 150 : 250, 10, kp);
+  const sk = Math.max(SKYR_MIN, sc(long ? 150 : 250, 10, kp));
   items.push(adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))));
   if (long || banane){
     items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
@@ -798,22 +798,27 @@ function shakerMac(p){
 }
 function shakerItem(p){ return it('shk', '1', 'shaker de protéines', 'une dose, à l’eau', shakerMac(p)); }
 function gouterItems(k, kp){
-  const sk = sc(150, 10, kp), am = sc(15, 5, k);
+  const sk = Math.max(SKYR_MIN, sc(150, 10, kp)), am = sc(15, 5, k);
   return [
     adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))),
     it('pom', '1', 'pomme', null, unitMac('pomme', 1)),
     it('am', grams(am), 'amandes', null, mac('amandes', am))
   ];
 }
-/* Énergie du féculent de chaque repas à 72 kg : plancher et plafond, soit 20 et 120 g de glucides sous forme de riz
-   (le plafond en calories évite les assiettes démesurées de lentilles ou de quinoa, moins riches en glucides) ; × k */
-const STARCH_MIN = 90, STARCH_MAX = 550;
+/* Féculent de chaque repas : plancher en énergie (90 kcal à 72 kg, ≈ 20 g de glucides) et plafond en grammes, une
+   portion sportive (cap de STARCH, à 72 kg : 120 g de grains crus, 100 g de lentilles, 400 g de pommes de terre ou de
+   patate douce, 300 g de gnocchis) ; les deux × k. Au-delà, un budget d'encas (voir composeDay). */
+const STARCH_MIN = 90;
+function starchCap(id, k){ const S = STARCH[id]; return S.cap * k * S.f[0] / 100; }
 /* Lipides à 72 kg, mis à l'échelle k : plancher 55 g (≈ 0,76 g/kg), plafond 95 g */
 const FAT_MIN = 55, FAT_MAX = 95;
-/* Protéines : objectif = g/kg du profil × poids (borné comme les portions, 47 à 101 kg), plancher à 97 % de l'objectif.
+/* Protéines : objectif = g/kg du profil × poids (borné comme les portions, 47 à 101 kg), à ±10 % sur la journée.
    Les portions de viande, poisson, œufs (déjeuner, dîner) et le skyr (petit-déjeuner, goûter) sont multipliées par un
-   facteur pf, borné à 0,5-1,5, cherché pour tomber sur l'objectif. */
-const PROT_FLOOR = 0.97, PF_MIN = 0.5, PF_MAX = 1.5;
+   facteur pf, borné à 0,5-1,5, qui reste le plus près possible de 1 (le menu de référence) : il ne bouge que si la
+   journée sort de la fourchette, et juste assez pour y rentrer. */
+const PROT_BAND = 0.1, PF_MIN = 0.5, PF_MAX = 1.5;
+/* Skyr du petit-déjeuner et du goûter : jamais moins d'un petit pot */
+const SKYR_MIN = 100;
 function protTarget(p){ return p.prot * REF_KG * scaleOf(p); }
 function adj(item){ item.adj = true; return item; }
 /* Féculent dosé en calories : changer de féculent ne change pas le total de la journée */
@@ -824,16 +829,18 @@ function starchItem(id, kcal){
   return it('st', grams(q), S.name, null, {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k},
     S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null);
 }
-/* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond.
+/* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond (caps : kcal du plafond de chaque repas).
    off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).
    rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
-function splitStarch(budget, share, k, off){
+function splitStarch(budget, share, k, off, caps){
   const o = off || {dej:0, diner:0};
-  const clamp = function(x){ return Math.min(STARCH_MAX * k, Math.max(STARCH_MIN * k, x)); };
+  const lo = STARCH_MIN * k;
+  const clampA = function(x){ return Math.min(Math.max(lo, caps.dej), Math.max(lo, x)); };
+  const clampB = function(x){ return Math.min(Math.max(lo, caps.diner), Math.max(lo, x)); };
   const avail = budget - o.dej - o.diner;
-  let ka = clamp(budget * share - o.dej);
-  const kb = clamp(avail - ka);
-  ka = clamp(avail - kb);
+  let ka = clampA(budget * share - o.dej);
+  const kb = clampB(avail - ka);
+  ka = clampA(avail - kb);
   return {dej:ka, diner:kb, rest:avail - ka - kb};
 }
 function dessertOf(choice){ return choice && has(DESSERT, choice.dessert) ? choice.dessert : 'aucun'; }
@@ -858,7 +865,7 @@ function composeDay(plan, ch, pr, pf){
   const long = S.some(function(x){ return x.taille === 'longue'; });
   const grosse = S.some(function(x){ return x.taille !== 'petite'; });
   const last = S.length ? S[S.length - 1].moment : null;
-  const k = scaleOf(pr), kp = k * pf, shaker = pr.shaker === 'oui', protFloor = PROT_FLOOR * protTarget(pr);
+  const k = scaleOf(pr), kp = k * pf, shaker = pr.shaker === 'oui', protFloor = (1 - PROT_BAND) * protTarget(pr);
   const secs = [];
 
   const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(long, grosse, ch.pdBase, k, kp)};
@@ -927,20 +934,22 @@ function composeDay(plan, ch, pr, pf){
   secs.push(dinner);
 
   /* Les féculents complètent jusqu'à l'objectif, répartis selon les séances qui précèdent chaque repas.
-     Au-delà de leur plafond, du pain complet s'ajoute à la collation. */
+     Au-delà de leur plafond (une portion sportive), le reste devient un budget d'encas dans la collation (ou le goûter),
+     compté en glucides. */
   const before = matin.concat(midi).reduce(function(a, x){ return a + seanceCost(x, pr); }, 0);
   const after = soir.reduce(function(a, x){ return a + seanceCost(x, pr); }, 0);
   const wDej = 45 + 0.05 * before, wDiner = 30 + 0.02 * before + 0.07 * after;
   const fill = function(){
-    co.items = co.items.filter(function(i){ return i.key !== 'xtra'; });
+    co.items = co.items.filter(function(i){ return i.key !== 'encas'; });
     const fixed = total(allItems(secs).filter(function(i){ return i.key !== 'st' && i.key !== 'des'; })).kcal;
     const des = function(sec){ return total(sec.items.filter(function(i){ return i.key === 'des'; })).kcal; };
-    const sp = splitStarch(en.target - fixed, wDej / (wDej + wDiner), k, {dej:des(lunch), diner:des(dinner)});
+    const sp = splitStarch(en.target - fixed, wDej / (wDej + wDiner), k, {dej:des(lunch), diner:des(dinner)},
+      {dej:starchCap(ch.dej.starch, k), diner:starchCap(ch.diner.starch, k)});
     setStarch(lunch, starchItem(ch.dej.starch, sp.dej));
     setStarch(dinner, starchItem(ch.diner.starch, sp.diner));
-    if (sp.rest >= 50){
-      const g = Math.round(sp.rest / 25) * 10;
-      co.items.push(it('xtra', grams(g), 'pain complet', 'en plus, pour couvrir ta séance', mac('pain', g)));
+    if (sp.rest >= 30){
+      const kc = Math.round(sp.rest / 10) * 10;
+      co.items.push(it('encas', '≈' + NB + fmtInt(kc), 'kcal d’encas', 'pour tes séances, à répartir autour d’elles si c’est beaucoup' + NB + ': pain complet et miel, fruits secs, riz au lait, barre de céréales', {kcal:kc, p:0, c:kc / 4, f:0}));
     }
   };
   fill();
@@ -979,24 +988,25 @@ function composeDay(plan, ch, pr, pf){
   const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !plan.libre ? total(soirSec.items).p : 0;
   return {secs:secs, tot:tot, libre:libre, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
 }
-/* Journée complète. Le facteur de protéines pf est cherché sur la même journée sans séance ni repas libre, puis appliqué
-   tel quel : les portions de viande, poisson, œufs et skyr ne dépendent que de l'objectif et des choix, pas des séances
-   (les jours de séance, les féculents en plus apportent quelques protéines de plus). Quelques passes, car les féculents
-   réajustés portent aussi des protéines. */
+/* Journée complète. Le facteur de protéines pf part de 1 (menu de référence) et ne bouge que si les protéines de la journée
+   sortent de la fourchette objectif ± 10 % : il vise alors juste à l'intérieur (à 2 % du bord, pour absorber les arrondis).
+   Quelques passes, car les féculents réajustés portent aussi des protéines. Le jour du repas libre, pf est cherché sur
+   la même journée sans repas libre (le repas libre n'a pas de macros connues). */
 function buildDay(plan, ch, profile){
-  const pr = cleanProfile(profile), T = protTarget(pr);
-  const repos = {seances:[], libre:false};
-  let pf = 1, r = composeDay(repos, ch, pr, pf);
-  for (let pass = 0; pass < 4; pass++){
-    const adj1 = r.adjP / pf;
-    if (adj1 <= 0) break;
-    const next = Math.min(PF_MAX, Math.max(PF_MIN, (T - (r.tot.p - r.adjP - r.soirP)) / adj1));
-    if (Math.abs(next - pf) < 0.02) break;
+  const pr = cleanProfile(profile), T = protTarget(pr), lo = (1 - PROT_BAND) * T, hi = (1 + PROT_BAND) * T;
+  const base = plan.libre ? Object.assign({}, plan, {libre:false}) : plan;
+  let pf = 1, r = composeDay(base, ch, pr, pf);
+  for (let pass = 0; pass < 5; pass++){
+    const P = r.tot.p - r.soirP, adj1 = r.adjP / pf;
+    if (adj1 <= 0 || (P >= lo && P <= hi)) break;
+    const aim = P > hi ? hi - 0.02 * T : lo + 0.02 * T;
+    const next = Math.min(PF_MAX, Math.max(PF_MIN, (aim - (P - r.adjP)) / adj1));
+    if (Math.abs(next - pf) < 0.01) break;
     pf = next;
-    r = composeDay(repos, ch, pr, pf);
+    r = composeDay(base, ch, pr, pf);
   }
-  if (plan.seances.length || plan.libre) r = composeDay(plan, ch, pr, pf);
-  r.prot = {target:T, floor:PROT_FLOOR * T, factor:pf};
+  if (plan.libre) r = composeDay(plan, ch, pr, pf);
+  r.prot = {target:T, low:lo, high:hi, floor:lo, factor:pf};
   delete r.adjP; delete r.soirP;
   return r;
 }
@@ -1110,7 +1120,7 @@ if (typeof document !== 'undefined'){
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
     return '<li>' + q + '<span class="name">' + i.name + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
-      (i.m && i.key !== 'lib' && i.key !== 'marge' ? macHTML(i.m) : '') + '</span></li>';
+      (i.m && i.key !== 'lib' && i.key !== 'marge' && i.key !== 'encas' ? macHTML(i.m) : '') + '</span></li>';
   };
   const mealHTML = function(s, next){
     let picks = '';
@@ -1206,9 +1216,9 @@ if (typeof document !== 'undefined'){
     $('warn-deficit').textContent = warn.join(' ');
     const dec = function(n){ return n.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}); };
     $('out-prot').textContent = dec(pr.prot) + NB + 'g/kg';
-    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(res.prot.target / pr.prot) + NB + 'kg). ' +
-      'Viande, poisson, œufs et skyr s’ajustent pour y arriver un jour sans séance ; les jours de séance, les féculents en plus en apportent un peu plus. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g.' +
-      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.target * 1.07 ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
+    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(res.prot.target / pr.prot) + NB + 'kg), à 10' + NB + '% près' + NB + ': de ' +
+      Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g. Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g.' +
+      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
       ' Repère en sèche' + NB + ': 1,6 à 2,4' + NB + 'g/kg.';
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
     $('out-marge').textContent = pr.marge + NB + 'kcal';

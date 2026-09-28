@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 3.3.0, 28 septembre 2026
+
+- Vérification de toutes les valeurs : les valeurs nutritionnelles des aliments, les poids cuits, les formules de dépense et les totaux de la journée étaient justes. Ce qui clochait, c'était certaines portions (jusqu'à 710 g de pommes de terre, 165 g de lentilles ou 230 g de pain en plus dans un repas, 90 g de poulet). Corrigé :
+- Les féculents ne dépassent plus une portion sportive par repas (à 72 kg : 120 g de riz, pâtes, semoule, boulgour ou quinoa crus, 100 g de lentilles, 400 g de pommes de terre ou de patate douce, 300 g de gnocchis ; ça suit ton poids).
+- Les grosses journées, le reste devient un budget d'encas (« ≈ 420 kcal d'encas ») à prendre autour de tes séances : pain complet et miel, fruits secs, riz au lait, barre de céréales. Il remplace le pain en plus.
+- Tes protéines tiennent ton objectif à 10 % près chaque jour, et la viande, le poisson, les œufs et le skyr restent au plus près du menu de base : ils ne bougent que ce qu'il faut pour entrer dans la fourchette (à 72 kg et 2,0 g/kg, le plus souvent 110 à 140 g de poulet au lieu de 90 à 120 g).
+- Le skyr ne descend plus sous 100 g.
+
 ## 3.2.0, 28 septembre 2026
 
 - Nouveau réglage : tes protéines en grammes par kilo (2,0 g/kg par défaut, soit environ 144 g à 72 kg). La viande, le poisson, les œufs et le skyr s'ajustent pour y arriver un jour sans séance ; les calories libérées vont aux féculents, ton total ne bouge pas. Jusqu'ici, le menu en donnait 2,2 à 2,8 g/kg : tes portions de viande baissent (poulet ≈ 110 à 120 g au lieu de 180 g). Pour retrouver à peu près l'ancien menu, règle 2,4 g/kg.
