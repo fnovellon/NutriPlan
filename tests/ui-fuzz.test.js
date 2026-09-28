@@ -1,0 +1,246 @@
+// Tests de fond de l'interface (jsdom) : chaque écran relu (textes, typographie, accessibilité), changements d'heure,
+// puis des centaines d'actions au hasard avec des vérifications après chacune (totaux affichés, stockage, rechargement).
+// Reproductible : graine fixe. Plus fort : FUZZ=10 npm test, ou npm run test:deep.
+process.env.TZ = 'Europe/Paris';   // avant toute date : les changements d'heure testés sont ceux de la France
+const { openPage, rng, settings, checker } = require('./lib');
+
+const { factor, seed } = settings(7102026);
+const R = rng(seed);
+const C = checker('fond de l’interface');
+const PKEY = 'repas-du-jour:profil:v1', KEY = 'repas-du-jour:v2';
+const errors = [];
+const clock = { now: new Date(2026, 9, 7, 9).getTime() };
+const open = storage => openPage({ clock, storage, errors });
+const num = s => Number(String(s).replace(/[^\d,-]/g, '').replace(',', '.'));
+const click = (dom, s) => { const e = dom.window.document.querySelector(s); if (!e) throw new Error('introuvable : ' + s); e.click(); };
+const type = (dom, s, v, change) => {
+  const w = dom.window, e = w.document.querySelector(s);
+  e.value = String(v);
+  e.dispatchEvent(new w.Event('input', { bubbles: true }));
+  if (change) e.dispatchEvent(new w.Event('change', { bubbles: true }));
+};
+
+// --- 1. Chaque écran relu : textes, typographie française, accessibilité -------------------------------------------
+function scan(dom, label){
+  const w = dom.window, d = w.document;
+  const visible = el => !el.closest('[hidden]');
+  const walker = d.createTreeWalker(d.body, w.NodeFilter.SHOW_TEXT), texts = [];
+  let n;
+  while ((n = walker.nextNode())) if (!n.parentElement.closest('script,style')) texts.push(n.textContent);
+  const attrs = [...d.querySelectorAll('[aria-label],[title],[placeholder]')].flatMap(e => ['aria-label', 'title', 'placeholder'].map(a => e.getAttribute(a)).filter(Boolean));
+  texts.concat(attrs, [d.title]).forEach(t => {
+    const s = t.replace(/https?:\/\/\S+/g, '');
+    C.ok(!/NaN|undefined|null|Infinity|\[object/.test(s), 'texte cassé', () => label + ' : ' + s.trim().slice(0, 140));
+    C.ok(!/\d (g|kcal|km|kg|cm|%|ans|h)\b/.test(s), 'espace normale entre un nombre et son unité', () => label + ' : ' + s.trim().slice(0, 160));
+    C.ok(!/ [:;?!%]/.test(s), 'espace normale avant : ; ? ! %', () => label + ' : ' + s.trim().slice(0, 160));
+    C.ok(!/[^\s\u00a0\u202f\d][:;?!]/.test(s.replace(/\d:\d/g, '')), 'pas d’espace avant : ; ? !', () => label + ' : ' + s.trim().slice(0, 160));
+    C.ok(!/'/.test(s), 'apostrophe droite', () => label + ' : ' + s.trim().slice(0, 140));
+    C.ok(!/(^|[^\d,\u202f\u00a0 ])1[ \u00a0](œufs|bananes|pommes|compotes|tranches|séances|boîtes|fruits)\b/.test(s), 'pluriel après 1', () => label + ' : ' + s.trim().slice(0, 140));
+  });
+  const ids = [...d.querySelectorAll('[id]')].map(e => e.id);
+  C.ok(ids.length === new Set(ids).size, 'identifiant en double', () => label + ' : ' + ids.filter((x, i) => ids.indexOf(x) !== i).join(', '));
+  d.querySelectorAll('[aria-labelledby]').forEach(e => e.getAttribute('aria-labelledby').split(/\s+/).forEach(id => C.ok(d.getElementById(id), 'aria-labelledby vers un élément absent', () => label + ' : ' + id)));
+  d.querySelectorAll('label[for]').forEach(e => C.ok(d.getElementById(e.getAttribute('for')), 'label for vers un élément absent', () => label + ' : ' + e.getAttribute('for')));
+  d.querySelectorAll('button').forEach(b => {
+    if (!visible(b)) return;
+    C.ok((b.getAttribute('aria-label') || b.textContent || '').trim(), 'bouton sans nom', () => label + ' : ' + b.outerHTML.slice(0, 120));
+    C.ok(b.getAttribute('type') === 'button', 'bouton sans type="button"', () => label + ' : ' + b.outerHTML.slice(0, 120));
+  });
+  d.querySelectorAll('input').forEach(i => C.ok(i.closest('label') || (i.id && d.querySelector('label[for="' + i.id + '"]')) || i.getAttribute('aria-label') || i.getAttribute('aria-labelledby'), 'champ sans libellé', () => label + ' : ' + i.outerHTML.slice(0, 120)));
+  C.ok([...d.querySelectorAll('main')].filter(m => !m.hidden).length === 1, 'un seul écran visible', label);
+  C.ok([...d.querySelectorAll('h1')].filter(visible).length === 1, 'un seul titre h1 visible', label);
+}
+{
+  // Premier lancement : les trois étapes de l'accueil, avec et sans erreur
+  const dom = open({});
+  scan(dom, 'accueil, étape 1'); click(dom, '#acc-next'); scan(dom, 'accueil, étape 1 incomplète');
+  click(dom, '#accueil [data-key="sexe"][data-value="f"]');
+  type(dom, '#accueil input[data-acc="age"]', 30); type(dom, '#accueil input[data-acc="taille"]', 165); type(dom, '#accueil input[data-acc="poids"]', 52);
+  click(dom, '#acc-next'); scan(dom, 'accueil, étape 2');
+  click(dom, '#accueil [data-key="deficit"][data-value="0"]'); scan(dom, 'accueil, étape 2, maintenir');
+  click(dom, '#acc-next'); scan(dom, 'accueil, étape 3');
+  click(dom, '#accueil [data-key="shaker"][data-value="non"]'); scan(dom, 'accueil, étape 3, sans shaker');
+  click(dom, '#acc-next'); scan(dom, 'page après l’accueil');
+}
+{
+  // Page chargée : séances, repas libre, desserts, panneau de choix, réglages dans tous leurs états, aide
+  const dom = open({ [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) });
+  ['petite', 'moyenne', 'longue'].forEach(a => click(dom, '[data-action="add"][data-value="' + a + '"]'));
+  scan(dom, 'page, trois séances');
+  C.ok(dom.window.document.querySelector('#acts [data-value="longue"]').disabled, '« + Longue » actif avec une sortie longue', '');
+  click(dom, '[data-action="add"][data-value="petite"]'); scan(dom, 'page, quatre séances');
+  C.ok([...dom.window.document.querySelectorAll('#acts button')].every(b => b.disabled), 'bouton d’ajout actif à 4 séances', '');
+  click(dom, '[data-action="toggle"][data-key="libre"]'); scan(dom, 'page, repas libre');
+  click(dom, '[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]'); scan(dom, 'panneau de choix'); click(dom, '#sheet [data-value="chocolat"]');
+  click(dom, '#gear'); scan(dom, 'réglages');
+  click(dom, '[data-action="prof"][data-key="mode"][data-value="manuel"]'); scan(dom, 'réglages, manuel');
+  type(dom, '#besoins input[data-key="repos"]', 900); scan(dom, 'réglages, dépense hors bornes'); type(dom, '#besoins input[data-key="repos"]', 2500);
+  click(dom, '[data-action="prof"][data-key="shaker"][data-value="non"]'); scan(dom, 'réglages, sans shaker');
+  type(dom, '#besoins input[data-key="deficit"]', 25); scan(dom, 'réglages, déficit 25 %');
+  type(dom, '#besoins input[data-key="gras"]', 30); click(dom, '[data-action="prof"][data-key="mode"][data-value="auto"]'); scan(dom, 'réglages, masse grasse');
+  click(dom, '#help-regl'); scan(dom, 'aide');
+}
+[
+  ['petite corpulence au-dessus de l’objectif', { sexe: 'f', age: 28, taille: 160, poids: 45, deficit: 25, prot: 2.6 }],
+  ['objectif de protéines bas', { age: 35, taille: 178, poids: 71, prot: 1.6 }],
+  ['130 kg', { age: 35, taille: 190, poids: 130 }],
+  ['protéines sous la fourchette', { age: 35, taille: 178, poids: 71, prot: 3, shaker: 'non' }]
+].forEach(([label, prof]) => {
+  const dom = open({ [PKEY]: JSON.stringify(prof), [KEY]: JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'pain', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }) });
+  scan(dom, label); click(dom, '#gear'); scan(dom, label + ', réglages');
+});
+
+// --- 2. Dates : changements d'heure, nouvel an, « 1er », semaine du repas libre -----------------------------------
+[
+  // heure locale (Paris), titre attendu, samedi de la même semaine (lundi → dimanche)
+  ['2026-10-25T00:30', 'dimanche 25 octobre', '2026-10-24'],
+  ['2026-10-25T02:30', 'dimanche 25 octobre', '2026-10-24'],
+  ['2026-10-25T23:30', 'dimanche 25 octobre', '2026-10-24'],
+  ['2026-10-26T00:10', 'lundi 26 octobre', '2026-10-31'],
+  ['2027-03-28T01:30', 'dimanche 28 mars', '2027-03-27'],
+  ['2027-03-28T03:30', 'dimanche 28 mars', '2027-03-27'],
+  ['2026-12-31T23:59', 'jeudi 31 décembre', '2027-01-02'],
+  ['2027-01-01T00:01', 'vendredi 1er janvier', '2027-01-02'],
+  ['2026-11-01T12:00', 'dimanche 1er novembre', '2026-10-31']
+].forEach(([iso, title, sat]) => {
+  clock.now = new Date(iso).getTime();
+  const dom = open({ [PKEY]: '{}' }), d = dom.window.document;
+  const today = iso.slice(0, 10);
+  C.ok(d.getElementById('date').textContent === 'Aujourd’hui, ' + title, 'date du jour', () => iso + ' : ' + d.getElementById('date').textContent);
+  click(dom, '#sw-lib');   // repas libre aujourd'hui : celui du samedi de la même semaine est retiré
+  const st = JSON.parse(dom.window.localStorage.getItem(KEY));
+  C.ok(st.plans[today] && st.plans[today].libre === true, 'repas libre enregistré à la bonne date', () => iso + ' : ' + JSON.stringify(st.plans));
+  if (sat !== today) C.ok(st.plans[sat] && st.plans[sat].libre === false && /samedi/.test(d.getElementById('hint').textContent), 'repas libre du samedi de la même semaine retiré', () => iso + ' : ' + JSON.stringify(st.plans));
+  C.ok(Object.keys(st.plans).every(k => k === today || k === sat), 'date enregistrée inattendue', () => iso + ' : ' + Object.keys(st.plans).join(' '));
+});
+{
+  // Page ouverte d'un jour à l'autre : au retour sur l'onglet, elle passe au nouveau jour
+  clock.now = new Date('2026-10-31T23:58').getTime();
+  const dom = open({ [PKEY]: '{}' }), d = dom.window.document;
+  C.ok(/samedi 31 octobre/.test(d.getElementById('date').textContent), 'veille de changement de mois', () => d.getElementById('date').textContent);
+  clock.now = new Date('2026-11-01T00:03').getTime();
+  dom.window.dispatchEvent(new dom.window.Event('focus'));
+  C.ok(/dimanche 1er novembre/.test(d.getElementById('date').textContent), 'passage au jour suivant', () => d.getElementById('date').textContent);
+}
+
+// --- 3. Actions au hasard, vérifiées après chacune --------------------------------------------------------------
+const snapshot = w => { const o = {}; for (let i = 0; i < w.localStorage.length; i++){ const k = w.localStorage.key(i); o[k] = w.localStorage.getItem(k); } return o; };
+const lineKcal = li => { const mac = li.querySelector('.mac > span:first-child'); return mac ? num(mac.textContent) : num(li.querySelector('.qty').textContent); };
+function check(dom, log){
+  const w = dom.window, d = w.document, $ = s => d.querySelector(s);
+  const where = () => log.slice(-5).join(' › ');
+  C.ok([...d.querySelectorAll('main')].filter(m => !m.hidden).length === 1, 'un seul écran visible', where);
+  // Stockage toujours lisible et valide
+  try {
+    const s = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{},"choices":{}}');
+    C.ok(s && typeof s === 'object' && s.plans && s.choices, 'stockage invalide', where);
+    Object.entries(s.plans).forEach(([date, p]) => {
+      C.ok(/^\d{4}-\d\d-\d\d$/.test(date), 'date enregistrée invalide', () => date);
+      C.ok(Array.isArray(p.seances) && p.seances.length <= 4 && typeof p.libre === 'boolean', 'plan enregistré invalide', () => JSON.stringify(p));
+    });
+    const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
+    Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
+  } catch (e){ C.ok(false, 'stockage illisible', () => e.message + ' ' + where()); }
+  if ($('#page').hidden) return;
+  // Total affiché = somme des lignes (arrondies), chaque repas aussi
+  const lis = [...d.querySelectorAll('#day li')];
+  const total = num($('#sum-text strong').textContent), sum = lis.reduce((a, li) => a + lineKcal(li), 0);
+  C.ok(Math.abs(sum - total) <= 10 + lis.length * 0.5, 'total affiché ≠ somme des aliments', () => total + ' / ' + sum + ' : ' + where());
+  d.querySelectorAll('#day .meal').forEach(meal => {
+    const head = meal.querySelector('.kcal'); if (!head) return;
+    const items = [...meal.querySelectorAll('li')], s = items.reduce((a, li) => a + lineKcal(li), 0);
+    C.ok(Math.abs(s - num(head.textContent)) <= 5 + items.length * 0.5, 'total du repas ≠ somme de ses aliments', () => num(head.textContent) + ' / ' + s + ' : ' + where());
+  });
+  const leg = [...d.querySelectorAll('#legend b')].map(b => num(b.textContent));
+  C.ok(leg.length === 3 && leg.every(x => x >= 0), 'légende des macros', () => leg.join() + ' : ' + where());
+  // Boutons d'ajout : désactivés à 4 séances, « + Longue » s'il y en a déjà une
+  const n = d.querySelectorAll('#sess .srow').length, hasLong = [...d.querySelectorAll('#sess .s-t')].some(e => /Sortie longue/.test(e.textContent));
+  d.querySelectorAll('#acts button').forEach(b => C.ok(b.disabled === (n >= 4 || (b.dataset.value === 'longue' && hasLong)), 'bouton d’ajout', () => b.dataset.value + ' ' + b.disabled + ' : ' + where()));
+  C.ok(d.querySelectorAll('#day .band').length === n, 'un bandeau par séance', where);
+  C.ok(n > 0 || $('#sess .rest-t'), '« Repos, pas de séance » sans séance', where);
+  const libre = $('#sw-lib').getAttribute('aria-checked') === 'true';
+  C.ok(libre === /Repas libre/.test(($('#h-diner') || { textContent: '' }).textContent), 'interrupteur du repas libre ≠ page', where);
+  C.ok($('#sheet').hidden || /^choose-open/.test(log[log.length - 1]), 'panneau de choix resté ouvert', where);
+  // Chaque bulle de choix montre une valeur qui existe
+  d.querySelectorAll('#day .sel').forEach(b => C.ok(b.dataset.value && b.textContent.trim(), 'bulle de choix vide', () => b.outerHTML.slice(0, 120)));
+}
+const ACTIONS = {
+  add: dom => { const b = R.pick([...dom.window.document.querySelectorAll('#acts button')]); b.click(); return 'ajoute ' + b.dataset.value; },
+  moment: dom => { const b = R.pick([...dom.window.document.querySelectorAll('[data-action="smoment"],[data-action="sduree"]')]); if (!b) return 'moment -'; b.click(); return 'moment ' + b.dataset.value; },
+  rm: dom => { const b = R.pick([...dom.window.document.querySelectorAll('[data-action="rm"]')]); if (!b) return 'retire -'; b.click(); return 'retire'; },
+  libre: dom => { dom.window.document.querySelector('#sw-lib').click(); return 'repas libre'; },
+  choose: dom => {
+    const d = dom.window.document, b = R.pick([...d.querySelectorAll('#day .sel')]);
+    if (!b) return 'choix -';
+    b.click();
+    if (d.querySelector('#sheet').hidden) throw new Error('panneau non ouvert');
+    const o = R.pick([...d.querySelectorAll('#sheet .opt')]); o.click();
+    if (b.dataset.kind && d.querySelector('[data-action="open-pick"][data-kind="' + b.dataset.kind + '"]' + (b.dataset.slot ? '[data-slot="' + b.dataset.slot + '"]' : '')).dataset.value !== o.dataset.value) throw new Error('choix non appliqué');
+    return 'choix ' + b.dataset.kind + '=' + o.dataset.value;
+  },
+  cancel: dom => {
+    const d = dom.window.document, w = dom.window, b = R.pick([...d.querySelectorAll('#day .sel')]);
+    if (!b) return 'annule -';
+    const before = b.dataset.value, kind = b.dataset.kind, slot = b.dataset.slot;
+    b.click();
+    const how = R.pick(['fond', 'croix', 'échap', 'retour']);
+    if (how === 'fond') d.querySelector('#sheet .scrim').click();
+    else if (how === 'croix') d.querySelector('#sheet .sheet-x').click();
+    else if (how === 'échap') d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    else w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
+    const now = d.querySelector('[data-action="open-pick"][data-kind="' + kind + '"]' + (slot ? '[data-slot="' + slot + '"]' : ''));
+    if (now && now.dataset.value !== before) throw new Error('fermer le panneau a changé le choix');
+    return 'annule ' + how;
+  },
+  reset: dom => { dom.window.document.querySelector('[data-action="reset"]').click(); return 'plan de base'; },
+  screens: dom => {
+    const d = dom.window.document, w = dom.window;
+    const seq = R.pick([['#gear', '#reglages [data-action="fermer"]'], ['#help', '#aide [data-action="fermer"]'], ['#gear', '#help-regl', '#aide .btn.wide', '#reglages .btn.wide'], ['#gear', 'retour'], ['#help', 'retour']]);
+    seq.forEach(s => { if (s === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null })); else { const e = d.querySelector(s); if (e && !e.closest('[hidden]')) e.click(); } });
+    return 'écrans ' + seq.join(' ');
+  },
+  prof: dom => { const b = R.pick([...dom.window.document.querySelectorAll('#besoins [data-action="prof"]')]); b.click(); return 'réglage ' + b.dataset.key + '=' + b.dataset.value; },
+  field: dom => {
+    const e = R.pick([...dom.window.document.querySelectorAll('#besoins input[data-key]')]);
+    const lo = Number(e.min || 0), hi = Number(e.max || 100);
+    const v = R.pick(['', '0', '-5', '1e9', 'abc', '72', '2,5', String(Math.round(lo + R.next() * (hi - lo)))]);
+    type(dom, '#besoins input[data-key="' + e.dataset.key + '"]', v, R.chance(.5));
+    return 'champ ' + e.dataset.key + '=' + v;
+  },
+  day: dom => { clock.now += 864e5 * R.pick([1, 1, 2, 7]); dom.window.dispatchEvent(new dom.window.Event('focus')); return 'jour suivant'; },
+  accueil: dom => {
+    const d = dom.window.document;
+    d.querySelector('[data-action="accueil"]').click();
+    for (let i = R.int(0, 2); i > 0; i--) d.querySelector('#acc-next').click();
+    d.querySelector(R.pick(['[data-action="acc-skip"]', '#acc-next'])).click();
+    if (!d.querySelector('#accueil').hidden) d.querySelector('[data-action="acc-skip"]').click();
+    return 'accueil';
+  }
+};
+const RUNS = 4, STEPS = Math.round(60 * factor);
+let actions = 0;
+for (let run = 0; run < RUNS; run++){
+  clock.now = new Date(2026, 9, 7, 9).getTime();
+  const prof = [{}, { age: 35, taille: 178, poids: 71 }, { sexe: 'f', age: 26, taille: 160, poids: 50, shaker: 'non', marge: 0 }, { poids: 110, prot: 2.4 }][run];
+  let dom = open({ [PKEY]: JSON.stringify(prof) });
+  const log = [];
+  for (let step = 0; step < STEPS; step++){
+    const a = R.pick(Object.keys(ACTIONS));
+    try { log.push(ACTIONS[a](dom)); } catch (e){ C.ok(false, 'action en erreur : ' + a, () => e.message + ' après ' + log.slice(-4).join(' › ')); log.push(a + ' ✗'); }
+    actions++;
+    check(dom, log);
+    // Rechargement : même page (séances, choix, profil relus du stockage)
+    if (step % 30 === 29){
+      const was = dom.window.document;
+      const before = was.querySelector('#day').innerHTML.replace(/ bump/g, ''), sumText = was.querySelector('#sum-text').textContent;
+      const onPage = !was.querySelector('#page').hidden;
+      dom = open(snapshot(dom.window));
+      const d2 = dom.window.document;
+      if (onPage && !d2.querySelector('#page').hidden)
+        C.ok(d2.querySelector('#day').innerHTML.replace(/ bump/g, '') === before && d2.querySelector('#sum-text').textContent === sumText, 'rechargement : page différente', () => log.slice(-5).join(' › '));
+      log.push('rechargement');
+    }
+  }
+}
+C.ok(errors.length === 0, 'erreur JavaScript dans la page', () => errors.slice(0, 3).join(' | '));
+C.done(actions + ' actions au hasard, 9 dates, ' + C.checks + ' vérifications, graine ' + seed);

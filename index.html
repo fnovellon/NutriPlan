@@ -519,7 +519,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.3.1';
+const APP_VERSION = '3.3.2';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -593,7 +593,7 @@ function pieces(n, k){ return Math.max(1, Math.round(n * k)); }
 /* Nombre de tranches (pain 40 g, jambon 45 g la tranche), à la demi-tranche près */
 function slices(g, per){
   const t = Math.round(g / per * 2) / 2;
-  return (t === g / per ? '' : 'environ ') + t.toLocaleString('fr-FR') + ' tranche' + (t >= 2 ? 's' : '');
+  return (t === g / per ? '' : 'environ ') + (t === 0.5 ? 'une demi-tranche' : t.toLocaleString('fr-FR') + ' tranche' + (t >= 2 ? 's' : ''));
 }
 function meat(g, name, note, food){
   return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', ways:[{g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'}]});
@@ -607,12 +607,14 @@ function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
 
 /* Protéines du déjeuner et du dîner, avec leur matière grasse : portions de référence (72 kg) mises à l'échelle k.
    Restent fixes : le demi-avocat et la boîte de thon (on ne coupe pas une boîte). */
-function avocat(k){ return it('av', '½', 'avocat', 'ou ' + sc(15, 5, k) + NB + 'g d’amandes', mac('avocat', 70)); }
+/* Remplacement proposé en note : même énergie, arrondie à 5 g (quantité fixe, comme ce qu'il remplace) */
+function swapGrams(kcal, food){ return Math.max(5, Math.round(kcal / FOOD[food][0] * 100 / 5) * 5); }
+function avocat(){ const m = mac('avocat', 70); return it('av', '½', 'avocat', 'ou ' + swapGrams(m.kcal, 'amandes') + NB + 'g d’amandes', m); }
 const PROT = {
   poulet:{label:'Poulet / dinde',
     base:function(k){ return [meat(sc(180, 10, k), 'poulet ou dinde', null, 'poulet')]; },
     dej:function(){ return []; },
-    diner:function(k){ return [avocat(k)]; }},
+    diner:function(){ return [avocat()]; }},
   boeuf:{label:'Bœuf 5' + NB + '%',
     base:function(k){ return [meat(sc(150, 10, k), 'bœuf haché 5' + NB + '%', null, 'boeuf')]; },
     dej:function(){ return []; },
@@ -620,7 +622,7 @@ const PROT = {
   poisson:{label:'Poisson blanc',
     base:function(k){ return [meat(sc(200, 10, k), 'poisson blanc', 'cabillaud, colin…', 'poisson')]; },
     dej:function(){ return []; },
-    diner:function(k){ return [avocat(k)]; }},
+    diner:function(){ return [avocat()]; }},
   saumon:{label:'Saumon',
     base:function(k){ return [meat(sc(160, 10, k), 'saumon', 'cuisson sans matière grasse', 'saumon')]; },
     dej:function(){ return []; },
@@ -635,12 +637,12 @@ const PROT = {
   oeufs:{label:'Œufs + jambon',
     base:function(k){
       const n = pieces(3, k), j = sc(90, 5, k);
-      return [it('p1', String(n), 'œufs', null, unitMac('oeuf', n)), it('p2', grams(j), 'jambon blanc', slices(j, 45), mac('jambon', j))];
+      return [it('p1', String(n), n > 1 ? 'œufs' : 'œuf', null, unitMac('oeuf', n)), it('p2', grams(j), 'jambon blanc', slices(j, 45), mac('jambon', j))];
     },
     dej:function(){ return []; },
     diner:function(){ return []; }},
   thon:{label:'Thon', fixe:true,
-    base:function(k){ return [it('p1', '1', 'boîte de thon au naturel', 'environ 110' + NB + 'g égoutté', mac('thon', 110)), it('p2', '1', 'œuf dur', 'ou ' + sc(15, 5, k) + NB + 'g de parmesan', unitMac('oeuf', 1))]; },
+    base:function(){ return [it('p1', '1', 'boîte de thon au naturel', 'environ 110' + NB + 'g égoutté', mac('thon', 110)), it('p2', '1', 'œuf dur', 'ou ' + swapGrams(UNIT.oeuf[0], 'parmesan') + NB + 'g de parmesan', unitMac('oeuf', 1))]; },
     dej:function(){ return []; },
     diner:function(){ return []; }}
 };
@@ -788,7 +790,7 @@ function breakfast(long, banane, base, k, kp){
 /* Collation : œufs marinés, + banane s'il y a une séance, + compote s'il y a une moyenne ou une longue */
 function snackItems(seance, grosse, k){
   const n = pieces(2, k);
-  const items = [it('oe', String(n), 'œufs marinés', null, unitMac('oeufMarine', n))];
+  const items = [it('oe', String(n), n > 1 ? 'œufs marinés' : 'œuf mariné', null, unitMac('oeufMarine', n))];
   if (seance) items.push(it('ban', '1', 'banane', null, unitMac('banane', 1)));
   if (grosse) items.push(it('comp', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)));
   return items;
@@ -957,12 +959,13 @@ function composeDay(plan, ch, pr, pf){
   };
   fill();
   let tot = total(allItems(secs));
-  /* Planchers, revérifiés ensemble car chaque ajout réajuste les féculents (qui portent un peu de protéines et de lipides) :
+  /* Planchers, revérifiés ensemble car chaque ajout réajuste les féculents (qui portent un peu de protéines et de lipides).
+     Aussi le jour du repas libre : la journée est d'abord celle d'un jour normal, puis seul le dîner est remplacé.
      - protéines (objectif hors d'atteinte des portions, thon deux fois…) : skyr le soir, 150 g × k, un peu plus si besoin (jusqu'au double) ;
      - lipides (peu ou pas de marge cuisine, petites portions) : de l'huile en plus au dîner. */
   let skyr = 0, gras = 0, soirSec = null;
   const skyrMax = sc(300, 10, k);
-  for (let pass = 0; pass < 8 && !plan.libre; pass++){
+  for (let pass = 0; pass < 8; pass++){
     const lowP = tot.p < protFloor && skyr < skyrMax, lowF = tot.f < FAT_MIN * k && gras < 60;
     if (!lowP && !lowF) break;
     if (lowP){
@@ -981,9 +984,12 @@ function composeDay(plan, ch, pr, pf){
   }
   const ecart = tot.kcal - en.target;
 
+  /* Repas libre : remplace le dîner du jour normal et son skyr du soir s'il y en a un (budget = les deux + 300 × k) */
   let libre = null;
   if (plan.libre){
-    libre = Math.round((total(dinner.items).kcal + 300 * k) / 50) * 50;
+    const soirKcal = soirSec ? total(soirSec.items).kcal : 0;
+    if (soirSec) secs.splice(secs.indexOf(soirSec), 1);
+    libre = Math.round((total(dinner.items).kcal + soirKcal + 300 * k) / 50) * 50;
     secs[secs.indexOf(dinner)] = {id:'diner', title:'Repas libre', when:(dinner.when ? dinner.when + ', ' : '') + 'resto ou entre amis', libre:true,
       items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0})]};
     tot = total(allItems(secs));
@@ -1141,7 +1147,9 @@ if (typeof document !== 'undefined'){
   };
 
   const renderControls = function(){
-    $('date').textContent = 'Aujourd’hui, ' + today.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+    /* « 1er octobre », pas « 1 octobre » */
+    $('date').textContent = 'Aujourd’hui, ' + today.toLocaleDateString('fr-FR', {weekday:'long'}) + ' ' +
+      (today.getDate() === 1 ? '1er' : today.getDate()) + ' ' + today.toLocaleDateString('fr-FR', {month:'long'});
     const segBtn = function(action, i, value, label, on){
       return '<button type="button" data-action="' + action + '" data-index="' + i + '" data-value="' + value + '" aria-pressed="' + on + '">' + label + '</button>';
     };
@@ -1176,6 +1184,15 @@ if (typeof document !== 'undefined'){
       if (res.prot.factor > PF_MIN + 0.02) tips.push('baisse ton objectif de protéines');
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
         (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
+    }
+    /* Protéines sous la fourchette malgré les portions au maximum et le skyr du soir (thon deux fois, objectif haut, sans shaker) */
+    if (!res.libre && t.p < res.prot.low - 0.5){
+      const pr = cleanProfile(prof), tips = [];
+      if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
+      if (pr.shaker === 'non') tips.push('reprends un shaker');
+      tips.push('baisse ton objectif de protéines');
+      note += ' Tes protéines restent sous ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g)' + NB +
+        ': ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.';
     }
     if (incomplete()) note += ' Complète ton profil pour un calcul juste.';
     $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs">Régler</button>';
@@ -1219,8 +1236,14 @@ if (typeof document !== 'undefined'){
     $('warn-deficit').textContent = warn.join(' ');
     const dec = function(n){ return n.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}); };
     $('out-prot').textContent = dec(pr.prot) + NB + 'g/kg';
-    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(res.prot.target / pr.prot) + NB + 'kg), à 10' + NB + '% près' + NB + ': de ' +
-      Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g. Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g.' +
+    /* Poids de calcul borné comme les portions (47 à 101 kg environ) */
+    const protKg = res.prot.target / pr.prot;
+    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(protKg) + NB + 'kg), à 10' + NB + '% près' + NB + ': de ' +
+      Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g.' +
+      (pr.poids > protKg + 0.05 ? ' Au-delà de ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
+      (pr.poids < protKg - 0.05 ? ' Sous ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
+      ' Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g' +
+      (res.libre ? ' hors repas libre.' : '.') +
       (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
       ' Repère en sèche' + NB + ': 1,6 à 2,4' + NB + 'g/kg.';
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';

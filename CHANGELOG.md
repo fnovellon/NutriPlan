@@ -1,5 +1,16 @@
 # Nouveautés
 
+## 3.3.2, 28 septembre 2026
+
+- Grande vérification automatique : des milliers de journées tirées au hasard (tous les profils, séances et choix de repas) recalculées et contrôlées règle par règle, et des centaines de manipulations de l'appli simulées. Ce qu'elle a trouvé est corrigé :
+  - le jour du repas libre, les autres repas pouvaient différer un peu d'un jour normal et le budget du repas libre ne tombait pas toujours juste (quand l'huile ou le skyr de secours entraient en jeu). Maintenant, la journée est exactement celle d'un jour normal : seul le dîner (avec le skyr du soir s'il y en avait un) devient ton repas libre, avec 300 kcal de plus ;
+  - « ½ avocat, ou 15 g d'amandes » : 15 g d'amandes font 89 kcal, le demi-avocat 137. C'est maintenant « ou 25 g d'amandes », et « ou 20 g de parmesan » pour l'œuf dur, quel que soit ton poids ;
+  - petites portions : « 1 œuf mariné » au lieu de « 1 œufs marinés », « 1 œuf », « environ une demi-tranche » ;
+  - le premier du mois s'écrit « 1er octobre » ;
+  - si tes protéines restent sous ton objectif malgré les portions au maximum (thon aux deux repas, objectif haut, sans shaker), la page te le dit et te propose quoi changer ;
+  - dans « Tes besoins », les protéines d'un jour de repas libre sont indiquées « hors repas libre », et au-delà de 101 kg (ou sous 47 kg) la page explique que ton objectif et tes portions ne suivent plus ton poids.
+- Ces vérifications font maintenant partie des tests, lancés à chaque modification de l'appli.
+
 ## 3.3.1, 28 septembre 2026
 
 - Valeurs des aliments vérifiées une à une avec la table Ciqual de l'Anses, la référence française. La plupart étaient justes ; celles qui s'en écartaient (souvent des valeurs américaines) sont corrigées :

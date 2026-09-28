@@ -431,6 +431,27 @@ const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52,
 const skyrPd = [...light.d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].find(li => /skyr/.test(li.textContent));
 assert(parseInt(skyrPd.querySelector('.qty').textContent, 10) < 250, '52 kg : skyr du petit-déjeuner ' + skyrPd.querySelector('.qty').textContent);
 assert(/dépassent l’objectif/.test(light.$('#sum-note').textContent) && /baisse la marge cuisine, passe-toi du shaker ou baisse ton objectif de protéines/.test(light.$('#sum-note').textContent), '52 kg : ' + light.$('#sum-note').textContent);
+// Protéines sous la fourchette malgré les portions au maximum (thon deux fois, 3,0 g/kg, sans shaker) : la page le dit
+const thon2 = tools(open(ls => {
+  ls.setItem(PKEY, JSON.stringify({ mode: 'auto', age: 35, taille: 178, poids: 71, prot: 3, shaker: 'non' }));
+  ls.setItem(KEY, JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }));
+}));
+assert(/Tes protéines restent sous ton objectif \(\d+\sg, pour 192 à 234\sg\)\s: remplace le thon, reprends un shaker ou baisse ton objectif de protéines\./.test(thon2.$('#sum-note').textContent), 'protéines sous la fourchette : ' + thon2.$('#sum-note').textContent);
+assert(!/restent sous ton objectif/.test(p.$('#sum-note').textContent), 'alerte protéines sans raison');
+// Au-delà de 101 kg (ou sous 47 kg), le calcul des protéines s'arrête à la borne des portions, et la page l'explique
+for (const [poids, re] of [[130, /2,0 × 100,8\skg\)[^]*Au-delà de 100,8\skg, ton objectif et tes portions ne suivent plus ton poids\./], [40, /2,0 × 46,8\skg\)[^]*Sous 46,8\skg, ton objectif et tes portions ne suivent plus ton poids\./]]) {
+  const x = legacy({ mode: 'auto', age: 35, taille: 178, poids });
+  assert(re.test(x.$('#calc-prot').textContent), poids + ' kg : ' + x.$('#calc-prot').textContent);
+}
+assert(!/ne suivent plus/.test(p.$('#calc-prot').textContent), 'explication de la borne sans raison');
+// Le jour du repas libre, les protéines du jour sont comptées hors repas libre
+const lib = legacy({ mode: 'auto', age: 35, taille: 178, poids: 71 });
+lib.setSwitch('libre', true);
+assert(/Aujourd’hui\s:\s\d+\sg hors repas libre\./.test(lib.$('#calc-prot').textContent), 'protéines du jour libre : ' + lib.$('#calc-prot').textContent);
+// Le 1er du mois : « 1er octobre »
+now = new Date(2026, 9, 1, 9, 0, 0).getTime();
+assert.strictEqual(tools(open()).$('#date').textContent, 'Aujourd’hui, jeudi 1er octobre', 'premier du mois');
+now = new Date(2026, 9, 7, 9, 0, 0).getTime();
 for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
   assert(/kcal/.test(b.$('#sum-text').textContent), 'page bloquée par le profil : ' + bad);

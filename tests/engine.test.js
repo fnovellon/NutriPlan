@@ -204,6 +204,23 @@ for (const [name, set] of Object.entries(SETS)) {
   assert(r.secs.some(s => s.title === 'Repas libre') && !r.secs.some(s => s.id === 'soir'), `${name} : sections du repas libre`);
   assert(r.tot.kcal > normal.tot.kcal, `${name} : repas libre non compté`);
 }
+// Le jour du repas libre est d'abord un jour normal (planchers de secours compris) : seuls le dîner et le skyr du soir
+// sont remplacés, par leur énergie + 300 × k (corrigé en 3.3.2 : les autres repas changeaient les jours à huile ou skyr de secours)
+const sameDay = (label, set, ch, prof) => {
+  const normal = buildDay(day(set), ch, prof), r = buildDay(day(set, { libre: true }), ch, prof);
+  const qty = (x, id) => x.secs.find(s => s.id === id).items.map(i => i.qty + ' ' + i.name).join(', ');
+  normal.secs.filter(s => s.id !== 'diner' && s.id !== 'soir').forEach(s => assert.strictEqual(qty(r, s.id), qty(normal, s.id), `${label} : ${s.title} changé par le repas libre`));
+  const evening = normal.secs.filter(s => s.id === 'diner' || s.id === 'soir').reduce((a, s) => a + s.items.reduce((b, i) => b + i.m.kcal, 0), 0);
+  assert.strictEqual(r.libre, Math.round((evening + 300 * r.scale) / 50) * 50, `${label} : budget du repas libre`);
+  assert.strictEqual(r.ecart, normal.ecart, `${label} : écart du jour libre`);
+  assert(!r.secs.some(s => s.id === 'soir'), `${label} : skyr du soir le jour du repas libre`);
+  return normal;
+};
+const oil = sameDay('58 kg sans marge', [petite('matin')], DEFAULT_CHOICES[2], { poids: 58, sexe: 'f', shaker: 'non', marge: 0 });
+assert(oil.secs.find(s => s.id === 'diner').items.some(i => i.key === 'gras'), 'cas sans huile de secours : le test ne vérifie plus rien');
+const soir = sameDay('thon deux fois, 2,6 g/kg, sans shaker', [], { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'quinoa' } }, { prot: 2.6, shaker: 'non' });
+assert(soir.secs.some(s => s.id === 'soir'), 'cas sans skyr du soir : le test ne vérifie plus rien');
+for (const [name, set] of Object.entries(SETS)) sameDay(name, set, DEFAULT_CHOICES[6]);
 
 // 12. Ravito : suit la durée et le réglage
 const fuelOf = (d, ravito) => buildDay(day([longue(d)]), DEFAULT_CHOICES[6], ravito ? { ravito } : {}).secs.find(s => s.band).items[0].m.c;
@@ -286,6 +303,21 @@ assert(qtyOf(small, 'dej', 'p1') === '130 g' && qtyOf(small, 'pd', 'skyr') === 
 assert.strictEqual(buildDay(day([]), oeufsJambon, {}).secs.find(s => s.id === 'pd').items.find(i => i.key === 'base').note, '2 tranches', 'tranches de pain');
 assert.strictEqual(buildDay(day([longue(2)]), oeufsJambon, {}).secs.find(s => s.id === 'pd').items.find(i => i.key === 'base').note, 'environ 3 tranches', 'tranches de pain, sortie longue');
 assert.strictEqual(qtyOf({ poids: 100 }, 'dej', 'p1'), '250 g', '100 kg : poulet 250 g');
+// Remplacements en note : même énergie que la ligne (½ avocat, œuf dur), quel que soit le poids (corrigé en 3.3.2)
+const thonPoulet = { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'poulet', starch: 'riz' } };
+for (const poids of [45, 72, 110]) {
+  const r = composeDay(day([]), thonPoulet, cleanProfile({ poids }), 1);
+  const av = r.secs.find(s => s.id === 'diner').items.find(i => i.key === 'av'), oeuf = r.secs.find(s => s.id === 'dej').items.find(i => i.key === 'p2');
+  assert.strictEqual(av.note, 'ou 25 g d’amandes', `${poids} kg : amandes pour ½ avocat`);
+  assert.strictEqual(oeuf.note, 'ou 20 g de parmesan', `${poids} kg : parmesan pour un œuf dur`);
+  near(FOOD.amandes[0] * 0.25, av.m.kcal, 0.15 * av.m.kcal, 'amandes ≈ ½ avocat');
+  near(FOOD.parmesan[0] * 0.2, oeuf.m.kcal, 0.15 * oeuf.m.kcal, 'parmesan ≈ œuf dur');
+}
+// Accords : « 1 œuf mariné », « 1 œuf », « une demi-tranche » aux plus petites portions (corrigé en 3.3.2)
+const tiny = composeDay(day([]), oeufsJambon, cleanProfile({ poids: 45 }), 0.5);
+assert.deepStrictEqual([itemOf(tiny, 'co', 'oe').qty, itemOf(tiny, 'co', 'oe').name], ['1', 'œuf mariné'], 'un œuf mariné');
+assert.deepStrictEqual([itemOf(tiny, 'dej', 'p1').qty, itemOf(tiny, 'dej', 'p1').name], ['1', 'œuf'], 'un œuf');
+assert.strictEqual(itemOf(tiny, 'dej', 'p2').note, 'environ une demi-tranche', 'demi-tranche de jambon');
 // Garde-fous pour d'autres corpulences : toutes les journées types × toutes les protéines (féculents variés)
 const FRIENDS = {
   '52 kg, 20 %': { sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 20 },
