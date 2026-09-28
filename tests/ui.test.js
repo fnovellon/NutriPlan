@@ -37,6 +37,14 @@ const tools = dom => {
     starchLine: slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].map(li => li.textContent)
       .find(t => /riz basmati|pâtes|pommes de terre|patate douce|quinoa|semoule|boulgour|lentilles|gnocchis/.test(t)),
     pressed: action => $(`[data-action="${action}"][aria-pressed="true"]`).dataset.value,
+    // Choix d'un plat : toucher la bulle ouvre le panneau, toucher un choix le valide et le ferme
+    choose: (kind, slot, value) => {
+      click(`[data-action="open-pick"][data-kind="${kind}"]` + (slot ? `[data-slot="${slot}"]` : ''));
+      assert(!$('#sheet').hidden, 'panneau de choix non ouvert : ' + kind);
+      click(`#sheet [data-value="${value}"]`);
+      assert($('#sheet').hidden, 'panneau de choix resté ouvert : ' + kind);
+    },
+    chosen: (kind, slot) => $(`[data-action="open-pick"][data-kind="${kind}"]` + (slot ? `[data-slot="${slot}"]` : '')).dataset.value,
     sess: () => [...d.querySelectorAll('#sess .srow .s-t')].map(e => e.childNodes[0].textContent),
     add: size => click(`[data-action="add"][data-value="${size}"]`),
     at: (i, m) => click(`[data-action="smoment"][data-index="${i}"][data-value="${m}"]`),
@@ -45,7 +53,7 @@ const tools = dom => {
 };
 
 const dom = open();
-const { d, $, click, stored, sections, setSwitch, starchLine, pressed, sess, add, at, rm } = tools(dom);
+const { d, $, click, stored, sections, setSwitch, starchLine, pressed, choose, chosen, sess, add, at, rm } = tools(dom);
 
 assert(/kcal/.test($('#sum-text').textContent), 'résumé absent au chargement');
 assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
@@ -56,10 +64,10 @@ assert($('#accueil').hidden && !$('#page').hidden, 'accueil affiché alors qu’
 assert(/Repos/.test($('#sess').textContent), 'repos non affiché');
 
 // Séances du jour : ajout, moment, retrait (choix fixés pour que le skyr du soir ne s'ajoute pas)
-click('[data-action="prot"][data-slot="dej"][data-value="poulet"]');
-click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
-click('[data-action="prot"][data-slot="diner"][data-value="poisson"]');
-click('[data-action="starch"][data-slot="diner"][data-value="pdt"]');
+choose('prot', 'dej', 'poulet');
+choose('starch', 'dej', 'riz');
+choose('prot', 'diner', 'poisson');
+choose('starch', 'diner', 'pdt');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner']);
 assert(/shaker de protéines/.test(d.querySelector('[aria-labelledby="h-co"]').textContent), 'shaker dans la collation un jour sans séance');
 add('petite');
@@ -95,24 +103,24 @@ setSwitch('libre', false);
 assert.strictEqual($('#hint').textContent, '', 'message non effacé');
 
 // Changer de féculent change la quantité et la met en évidence
-click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
+choose('starch', 'dej', 'riz');
 const riz = starchLine('dej');
-click('[data-action="starch"][data-slot="dej"][data-value="pdt"]');
+choose('starch', 'dej', 'pdt');
 assert.notStrictEqual(starchLine('dej'), riz, 'la quantité de féculent ne change pas');
 assert($('[aria-labelledby="h-dej"] .qty.bump'), 'changement non mis en évidence');
 
 // Poids cru et cuit sous la quantité, calories et macros sous chaque aliment
-click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
+choose('starch', 'dej', 'riz');
 const dejLi = t => [...d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].find(li => li.querySelector('.name').textContent.startsWith(t));
 const ck = li => [...li.querySelectorAll('.q .ck')].map(e => e.textContent);
 const pouletCru = parseInt(dejLi('poulet').querySelector('.qty').textContent, 10);
 assert.deepStrictEqual(ck(dejLi('poulet')), ['cru', '≈\u00A0' + Math.round(pouletCru * 0.75 / 5) * 5 + '\u00A0g cuit'], 'poids cuit du poulet');
 assert(ck(dejLi('riz')).length === 2 && /cuit$/.test(ck(dejLi('riz'))[1]), 'poids cuit du riz');
 assert.deepStrictEqual(ck(dejLi('légumes')), [], 'poids cuit des légumes');
-click('[data-action="starch"][data-slot="dej"][data-value="pdt"]');
+choose('starch', 'dej', 'pdt');
 const pdtCk = ck(dejLi('pommes de terre'));
 assert(pdtCk.length === 3 && pdtCk[0] === 'crues' && /à l’eau$/.test(pdtCk[1]) && /au four$/.test(pdtCk[2]), 'cuissons des pommes de terre : ' + pdtCk.join(' | '));
-click('[data-action="starch"][data-slot="dej"][data-value="riz"]');
+choose('starch', 'dej', 'riz');
 const isMarge = li => /pour la cuisine/.test(li.textContent);
 for (const id of ['dej', 'diner']) {
   const li = [...d.querySelectorAll(`[aria-labelledby="h-${id}"] .items li`)].find(isMarge);
@@ -129,26 +137,56 @@ for (const meal of d.querySelectorAll('#day .meal')) {
   assert(Math.abs(shown - head) <= 10, `kcal des aliments (${shown}) et du repas (${head})`);
 }
 
+// Choix des plats : une seule bulle par rangée ; la toucher grise l'écran et ouvre le panneau des choix
+const win = dom.window;
+assert.strictEqual(d.querySelectorAll('#day .sel').length, 7, 'une bulle par choix (base, 3 au déjeuner, 3 au dîner)');
+assert(!d.querySelector('#day [data-action="prot"], #day [data-action="starch"], #day [data-action="dessert"], #day [data-action="pd"]'), 'les autres choix sont affichés dans la page');
+const trig = $('[data-action="open-pick"][data-kind="prot"][data-slot="dej"]');
+assert(/Poulet/.test(trig.textContent) && trig.getAttribute('aria-haspopup') === 'dialog', 'bulle de la protéine du déjeuner');
+const openSheet = () => { click('[data-action="open-pick"][data-kind="prot"][data-slot="dej"]'); assert(!$('#sheet').hidden, 'panneau non ouvert'); };
+openSheet();
+assert($('#sheet-t').textContent === 'Protéine du déjeuner' && d.querySelectorAll('#sheet .opt').length === 7, 'titre et choix du panneau');
+assert($('#page').hasAttribute('inert') && win.history.state && win.history.state.pick, 'page non inerte sous le panneau');
+assert.strictEqual(d.activeElement, $('#sheet .opt[aria-pressed="true"]'), 'focus sur le choix actuel');
+assert.strictEqual(d.activeElement.dataset.value, 'poulet', 'choix actuel du panneau');
+d.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+assert($('#sheet').hidden && !$('#page').hasAttribute('inert') && d.activeElement === $('#sel-prot-dej'), 'Échap ne ferme pas le panneau');
+openSheet(); click('#sheet .scrim');
+assert($('#sheet').hidden && chosen('prot', 'dej') === 'poulet', 'le fond grisé ne ferme pas le panneau sans rien changer');
+openSheet(); click('#sheet .sheet-x');
+assert($('#sheet').hidden, 'le bouton × ne ferme pas le panneau');
+openSheet(); win.dispatchEvent(new win.PopStateEvent('popstate', { state: null }));
+assert($('#sheet').hidden, 'le bouton retour ne ferme pas le panneau');
+choose('prot', 'dej', 'boeuf');
+assert(chosen('prot', 'dej') === 'boeuf' && /Bœuf/.test($('#sel-prot-dej').textContent) && stored().choices[3].dej.prot === 'boeuf', 'choix non validé');
+assert.strictEqual(d.activeElement, $('#sel-prot-dej'), 'focus non rendu à la bulle');
+choose('prot', 'dej', 'poulet');
+choose('pd', null, 'pain');
+assert(chosen('pd') === 'pain' && /Pain complet/.test($('#sel-pd').textContent), 'base du petit-déjeuner');
+choose('pd', null, 'avoine');
+
 // Dessert : rangée au déjeuner et au dîner, Aucun par défaut, ligne en fin de repas, choix enregistré
-const desPressed = slot => $(`[data-action="dessert"][data-slot="${slot}"][aria-pressed="true"]`).dataset.value;
+const desPressed = slot => chosen('dessert', slot);
 const lastLine = slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].slice(-1)[0].textContent;
-assert.strictEqual(d.querySelectorAll('[data-action="dessert"][data-slot="dej"]').length, 4, 'rangée Dessert au déjeuner');
+click('[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]');
+assert.strictEqual(d.querySelectorAll('#sheet [data-action="dessert"][data-slot="dej"]').length, 4, 'choix de dessert au déjeuner');
+click('#sheet .scrim');
 assert(desPressed('dej') === 'aucun' && desPressed('diner') === 'aucun', 'aucun dessert par défaut');
 const dejKcal = () => Number($('[aria-labelledby="h-dej"] .kcal').textContent.replace(/\D/g, ''));
 const totalBefore = $('#sum-text strong').textContent, dejBefore = dejKcal();
-click('[data-action="dessert"][data-slot="dej"][data-value="chocolat"]');
+choose('dessert', 'dej', 'chocolat');
 assert(/chocolat noir/.test(lastLine('dej')) && /20\sg/.test(lastLine('dej')) && desPressed('dej') === 'chocolat', 'dessert du déjeuner : ' + lastLine('dej'));
 assert.strictEqual(stored().choices[3].dej.dessert, 'chocolat', 'dessert non enregistré');
 assert(Math.abs(dejKcal() - dejBefore) <= 20 && Math.abs(Number($('#sum-text strong').textContent.replace(/\D/g, '')) - Number(totalBefore.replace(/\D/g, ''))) <= 20, 'le dessert change le total : ' + totalBefore + ' → ' + $('#sum-text strong').textContent);
-click('[data-action="dessert"][data-slot="diner"][data-value="fruit"]');
+choose('dessert', 'diner', 'fruit');
 assert(/fruit/.test(lastLine('diner')) && /pomme, poire/.test(lastLine('diner')), 'dessert du dîner : ' + lastLine('diner'));
-click('[data-action="dessert"][data-slot="dej"][data-value="aucun"]');
-click('[data-action="dessert"][data-slot="diner"][data-value="aucun"]');
+choose('dessert', 'dej', 'aucun');
+choose('dessert', 'diner', 'aucun');
 assert(!/chocolat|fruit/.test(lastLine('dej') + lastLine('diner')) && stored().choices[3].dej.dessert === 'aucun', 'dessert non retiré');
 
 // L'idée de plat suit les choix
-click('[data-action="prot"][data-slot="diner"][data-value="boeuf"]');
-click('[data-action="starch"][data-slot="diner"][data-value="pates"]');
+choose('prot', 'diner', 'boeuf');
+choose('starch', 'diner', 'pates');
 assert(/bolognaise/.test($('[aria-labelledby="h-diner"] .idea').textContent), 'idée de plat');
 
 // Stockage : l'activité par date, les choix par jour de la semaine
@@ -185,9 +223,9 @@ const seeded = open(ls => ls.setItem(OLD_KEY, oldData));
 const s2 = tools(seeded);
 assert.deepStrictEqual(s2.sess(), ['Séance moyenne'], 'course v1 non convertie');
 assert.strictEqual(s2.pressed('smoment'), 'matin', 'moment v1 perdu');
-assert.strictEqual(s2.$('[data-action="prot"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'thon', 'choix v1 perdus');
-assert.strictEqual(s2.$('[data-action="pd"][aria-pressed="true"]').dataset.value, 'pain', 'petit-déjeuner v1 perdu');
-assert.strictEqual(s2.$('[data-action="dessert"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'aucun', 'choix sans dessert : Aucun');
+assert.strictEqual(s2.chosen('prot', 'dej'), 'thon', 'choix v1 perdus');
+assert.strictEqual(s2.chosen('pd'), 'pain', 'petit-déjeuner v1 perdu');
+assert.strictEqual(s2.chosen('dessert', 'dej'), 'aucun', 'choix sans dessert : Aucun');
 const conv = s2.stored();
 assert.deepStrictEqual(Object.keys(conv.plans).sort(), ['2026-09-30', '2026-10-06', '2026-10-07'], 'purge des plans de plus de 21 jours');
 assert.deepStrictEqual(conv.plans['2026-10-06'].seances, [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'soir' }, { taille: 'petite', moment: 'midi' }], 'muscu + course + natation');
@@ -358,7 +396,7 @@ const mid = tools(open());
 mid.add('petite'); mid.at(0, 'midi');
 const dejLines = () => [...mid.d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].map(li => li.textContent);
 assert.strictEqual(dejLines().filter(t => /compote/.test(t)).length, 1, 'compote de midi absente');
-mid.click('[data-action="dessert"][data-slot="dej"][data-value="fruit"]');
+mid.choose('dessert', 'dej', 'fruit');
 assert(!dejLines().some(t => /compote/.test(t)) && dejLines().some(t => /pomme, poire/.test(t)), 'deux desserts au déjeuner : ' + dejLines().join(' | '));
 
 // Petite corpulence : portions réduites ; objectif de protéines élevé : conseil si les minimums dépassent l'objectif
