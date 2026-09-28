@@ -23,6 +23,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
   - `PROT` : 7 protéines, chacune avec ses ajouts gras au déjeuner (`dej`) et au dîner (`diner`) : avocat, parmesan. Plus d'huile dans les recettes depuis la 3.1.0 : la marge cuisine couvre la matière grasse de cuisson. `PROT_ORDER`.
   - `IDEAS` : une idée de plat par couple protéine × féculent.
   - `DESSERT` (`aucun`, `fruit`, `compote`, `chocolat` : libellé et `item()`, clé `des`) et `DESSERT_ORDER` ; `dessertOf(choix)` renvoie `'aucun'` si le dessert est absent ou invalide.
+  - `REF_GROUPS` et `refTable()` : table de référence des aliments pour l'écran d'aide, groupes (protéines, féculents crus, petit-déjeuner et douceurs, légumes et matières grasses, à la pièce) avec libellés ; les valeurs viennent de `FOOD`, `UNIT` et `STARCH`. Tout aliment ajouté doit y figurer (vérifié par les tests).
   - `SIZES` (petite, moyenne, longue : titre du bandeau et coût net par kg), `MOMENTS`, `MAX_SEANCES` (4), `DUREES` (longue).
   - Plan d'un jour : `{ seances: [{ taille, moment, duree? }], libre }`. `emptyPlan(js)` (aucune séance, repas libre le samedi), `cleanPlan(p, js)` (validation), `migratePlan(p)` (plan d'avant la 2.0.0 → séances).
   - `DEFAULT_CHOICES` : choix de repas par défaut par jour, indexés par `Date.getDay()` (0 = dimanche).
@@ -79,9 +80,11 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Écrans
 
-- Trois `<main>`, un seul visible (`setView`, attribut `hidden`) : `#accueil`, `#page` (la journée) et `#reglages`.
-- Réglages : roue dentée (`#gear`, `aria-label` « Réglages ») en haut à droite de la page, à côté de la date ; le lien « Régler » de la note du total y mène aussi. L'écran porte une flèche retour en haut, le titre « Réglages », la carte « Tes besoins » (`#besoins`, même contenu qu'avant, « Refaire l'accueil » en bas) et un bouton « Voir ma journée ».
-- Ouvrir les réglages ajoute une entrée d'historique (`pushState`) : le bouton retour du téléphone les ferme (`popstate` ; le gestionnaire ferme la couche ouverte, panneau de choix ou réglages, dont on quitte l'entrée). La position dans la page est gardée et rétablie à la fermeture (`history.scrollRestoration = 'manual'`) ; le focus va sur le titre à l'ouverture, sur la roue dentée à la fermeture.
+- Quatre `<main>`, un seul visible (`setView`, attribut `hidden`) : `#accueil`, `#page` (la journée), `#reglages` et `#aide`.
+- En haut à droite de la page, à côté de la date : « ? » (`#help`, « Comment ça marche ») et la roue dentée (`#gear`, « Réglages »). Le lien « Régler » de la note du total mène aussi aux réglages.
+- Réglages : flèche retour, titre « Réglages », carte « Tes besoins » (`#besoins`), liens « Comment ça marche » et « Refaire l'accueil » en bas, bouton « Voir ma journée ».
+- Aide (« Comment ça marche ») : ta journée en trois temps (séances, dépense, déficit), comment les repas sont construits, lire les quantités, ajuster avec la moyenne de poids ; puis « Valeurs des aliments » : une table par groupe de `refTable()` (aliment, kcal, P, G, L ; colonnes de largeur fixe pour que les tables s'alignent), rendue une fois au chargement.
+- Réglages et aide s'empilent au-dessus de la page (`stack`, `openScreen`, `closeScreen`) : chacun ajoute une entrée d'historique (`pushState({ screen })`), la flèche et le bouton du bas reviennent d'un cran (aide ouverte depuis les réglages → réglages), le bouton retour du téléphone aussi (`popstate` : ferme d'abord le panneau de choix, puis dépile jusqu'à l'écran de l'entrée atteinte). La position dans la page est gardée et rétablie au retour (`history.scrollRestoration = 'manual'`) ; le focus va sur le titre de l'écran ouvert, puis sur le bouton qui l'a ouvert au retour sur la page.
 
 ## Accueil (premier lancement)
 
@@ -128,4 +131,5 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 - Voir l'appli : ouvrir `index.html` dans un navigateur.
 - Tests : `npm install` puis `npm test` (moteur de calcul + simulation de l'interface avec jsdom). Les lancer après chaque modification.
+- Le test du moteur prend une vingtaine de secondes (plus de 140 000 journées, chacune construite en quelques passes pour l'objectif de protéines).
 - Le test d'interface tourne à date fixe (mercredi 7 octobre 2026, horloge simulée) : il ne doit jamais dépendre du jour réel. `open(seed, fresh)` enregistre un profil vide avant le chargement (pas d'accueil), sauf avec `fresh` pour tester le premier lancement.

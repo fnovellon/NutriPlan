@@ -5,6 +5,7 @@
 - Nouveau réglage : tes protéines en grammes par kilo (2,0 g/kg par défaut, soit environ 144 g à 72 kg). La viande, le poisson, les œufs et le skyr s'ajustent pour y arriver un jour sans séance ; les calories libérées vont aux féculents, ton total ne bouge pas. Jusqu'ici, le menu en donnait 2,2 à 2,8 g/kg : tes portions de viande baissent (poulet ≈ 110 à 120 g au lieu de 180 g). Pour retrouver à peu près l'ancien menu, règle 2,4 g/kg.
 - Les jours de séance, tes portions de viande restent les mêmes : ce sont les féculents qui augmentent.
 - Choix des plats plus simples : chaque repas n'affiche que ta sélection (protéine, féculent, dessert). Touche-la : l'écran se grise et tous les choix apparaissent ; touche celui que tu veux pour le valider.
+- Nouvelle page « Comment ça marche », avec le « ? » en haut à droite (ou depuis les réglages) : le fonctionnement de l'appli expliqué simplement, et les valeurs (calories, protéines, glucides, lipides) de tous les aliments utilisés.
 
 ## 3.1.0, 28 septembre 2026
 

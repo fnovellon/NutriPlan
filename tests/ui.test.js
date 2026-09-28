@@ -369,12 +369,34 @@ p.click('[data-action="fermer"]');
 assert(p.$('#reglages').hidden && !p.$('#page').hidden && pw.document.activeElement === p.$('#gear'), 'réglages non fermés par la flèche');
 assert(p.$('#gear').getAttribute('aria-label') === 'Réglages' && p.$('#gear svg'), 'roue dentée absente');
 p.click('#gear');
-assert(!p.$('#reglages').hidden && pw.history.state && pw.history.state.reglages, 'la roue dentée n’ouvre pas les réglages');
+assert(!p.$('#reglages').hidden && pw.history.state && pw.history.state.screen === 'reglages', 'la roue dentée n’ouvre pas les réglages');
 pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
 assert(p.$('#reglages').hidden && !p.$('#page').hidden, 'le bouton retour ne ferme pas les réglages');
 p.click('#gear');
 p.click('#reglages .btn.wide');
 assert(p.$('#reglages').hidden && !p.$('#page').hidden, 'réglages non fermés par « Voir ma journée »');
+
+// Aide : « ? » en haut de la page ou lien des réglages ; retour d'un cran (flèche, bouton, historique)
+const view = () => ['accueil', 'page', 'reglages', 'aide'].filter(id => !p.$('#' + id).hidden).join();
+p.click('#help');
+assert(view() === 'aide' && pw.document.activeElement === p.$('#aide-h') && pw.history.state.screen === 'aide', 'le « ? » n’ouvre pas l’aide');
+assert(/Ta journée en trois temps/.test(p.$('#aide').textContent) && /cru/.test(p.$('#aide').textContent), 'explications absentes');
+const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
+assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 33, 'table des aliments : ' + refRows.length + ' lignes');
+const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
+assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
+assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['355', '8', '78', '0,7'], 'valeurs du riz (cru)');
+p.click('#aide [data-action="fermer"]');
+assert(view() === 'page' && pw.document.activeElement === p.$('#help'), 'retour de l’aide vers la page');
+p.click('#gear'); p.click('#help-regl');
+assert(view() === 'aide', 'l’aide ne s’ouvre pas depuis les réglages');
+p.click('#aide .btn.wide');
+assert(view() === 'reglages', 'retour de l’aide vers les réglages');
+p.click('#help-regl');
+pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: { screen: 'reglages' } }));
+assert(view() === 'reglages', 'bouton retour depuis l’aide');
+pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
+assert(view() === 'page', 'bouton retour depuis les réglages');
 
 // Version affichée en bas de page
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version;

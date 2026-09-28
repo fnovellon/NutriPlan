@@ -160,7 +160,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;}
 .top .date{margin:0;}
-.icon-btn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;margin:-10px -10px -10px 0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);}
 .icon-btn svg{width:24px;height:24px;}
 .regl-top{margin:0 0 8px;}
 .icon-btn.back{margin:0 0 0 -12px;}
@@ -223,6 +223,31 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .acc-nav{display:flex;gap:10px;margin-top:22px;}
 .btn{min-height:52px;padding:0 22px;border:1.5px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:700;font-size:17px;}
 .btn.main{flex:1;background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+
+.top-btns{display:flex;align-items:center;gap:4px;margin:-10px -10px -10px 0;}
+.top-btns .icon-btn{margin:0;}
+.regl-links{display:flex;flex-wrap:wrap;gap:8px;}
+.aide h2{margin:26px 0 10px;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:19px;line-height:1.25;}
+.guide ol,.guide ul{margin:0;padding-left:1.25em;}
+.guide li{margin:0 0 8px;padding-left:2px;}
+.guide p{margin:0 0 10px;}
+.guide strong{font-weight:600;}
+.ref{margin-bottom:22px;}
+.ref-t{width:100%;margin:0 0 14px;border-collapse:collapse;table-layout:fixed;font-size:15.5px;}
+.ref-t col.k{width:3.4em;}
+.ref-t col.n{width:3.2em;}
+.ref-t caption{padding:12px 0 6px;text-align:left;font-family:var(--sans);font-weight:700;font-size:16px;}
+.ref-t caption span{margin-left:6px;font-family:var(--serif);font-weight:400;font-style:italic;font-size:14px;color:var(--muted);}
+.ref-t th,.ref-t td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:baseline;}
+.ref-t thead th{font-family:var(--sans);font-weight:700;font-size:13px;color:var(--muted);text-align:right;white-space:nowrap;}
+.ref-t thead th:first-child{text-align:left;}
+.ref-t thead abbr{text-decoration:none;}
+.ref-t thead .p::before,.ref-t thead .c::before,.ref-t thead .f::before{content:"";display:inline-block;width:7px;height:7px;margin-right:3px;border-radius:2px;vertical-align:1px;}
+.ref-t thead .p::before{background:var(--prot);}
+.ref-t thead .c::before{background:var(--gluc);}
+.ref-t thead .f::before{background:var(--lip);}
+.ref-t tbody th{padding-right:8px;text-align:left;font-weight:400;line-height:1.3;}
+.ref-t td{padding-left:10px;text-align:right;font-family:var(--sans);font-weight:600;font-stretch:92%;font-variant-numeric:tabular-nums;white-space:nowrap;}
 
 @media (min-width:640px){.app{padding-top:36px;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
@@ -309,7 +334,10 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 <main class="app" id="page">
   <div class="top">
     <p class="date" id="date"></p>
-    <button type="button" class="icon-btn" id="gear" data-action="needs" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <div class="top-btns">
+      <button type="button" class="icon-btn" id="help" data-action="aide" aria-label="Comment ça marche"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
+      <button type="button" class="icon-btn" id="gear" data-action="needs" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
   </div>
   <h1 id="title" tabindex="-1">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
   <p class="intro" id="intro" role="status"></p>
@@ -434,10 +462,49 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <p class="calc" id="calc-shaker"></p>
       <p class="warn" id="warn-shaker"></p>
       <p class="calc">Ton profil reste sur cet appareil.</p>
-      <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
+      <div class="regl-links">
+        <button type="button" class="reset" data-action="aide" id="help-regl">Comment ça marche</button>
+        <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
+      </div>
     </div>
   </section>
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
+</main>
+
+<main class="app aide" id="aide" hidden>
+  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+  <h1 id="aide-h" tabindex="-1">Comment ça marche</h1>
+  <section class="guide" aria-labelledby="g1">
+    <h2 id="g1">Ta journée en trois temps</h2>
+    <ol>
+      <li><strong>Tu ajoutes tes séances</strong> du jour&nbsp;: petite (muscu, footing court), moyenne (sortie d’environ 7&nbsp;km) ou longue (1h30 et plus), et quand tu les fais.</li>
+      <li><strong>L’appli calcule ta dépense</strong>&nbsp;: ce que tu dépenses un jour sans sport, d’après ton profil, plus le coût de chaque séance.</li>
+      <li><strong>Elle retire ton déficit</strong> (15&nbsp;% par défaut, pris sur un jour sans sport)&nbsp;: c’est ton objectif du jour. Tes séances restent toujours couvertes.</li>
+    </ol>
+    <h2>Comment tes repas sont construits</h2>
+    <ul>
+      <li>Le petit-déjeuner, la collation et le shaker suivent ton profil et tes séances.</li>
+      <li>Viande, poisson, œufs et skyr sont dosés pour ton objectif de protéines (en grammes par kilo).</li>
+      <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance. Changer de féculent garde les mêmes calories.</li>
+      <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
+      <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
+      <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large.</li>
+    </ul>
+    <h2>Lire les quantités</h2>
+    <ul>
+      <li>Le poids en gros est celui à peser <strong>cru</strong>. Le poids cuit, en dessous, est une estimation.</li>
+      <li>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</li>
+      <li>Les portions suivent ton poids&nbsp;: le menu est écrit pour 72&nbsp;kg.</li>
+    </ul>
+    <h2>Ajuster</h2>
+    <p>Les calories sont des estimations. Pèse-toi plusieurs fois par semaine et regarde ta moyenne sur deux semaines&nbsp;: si elle ne bouge pas, augmente un peu le déficit&nbsp;; si elle baisse de plus de 0,7&nbsp;% par semaine, baisse-le. Tout se règle avec la roue dentée.</p>
+  </section>
+  <section class="ref" aria-labelledby="ref-h">
+    <h2 id="ref-h">Valeurs des aliments</h2>
+    <p class="calc">Valeurs moyennes arrondies, celles qu’utilise l’appli pour tous ses calculs. Ta marque peut varier un peu.</p>
+    <div id="ref-tables"></div>
+  </section>
+  <button type="button" class="btn main wide" data-action="fermer">Revenir</button>
 </main>
 
 <div class="sheet" id="sheet" hidden>
@@ -488,6 +555,22 @@ const DESSERT = {
   chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
 };
 const DESSERT_ORDER = ['aucun','fruit','compote','chocolat'];
+/* Table de référence des aliments (écran « Comment ça marche ») : chaque valeur de FOOD, UNIT et STARCH y figure une fois */
+const REF_GROUPS = [
+  {title:'Viandes, poissons, laitages', per:'pour 100' + NB + 'g', src:'food', rows:[['poulet','Poulet ou dinde'],['boeuf','Bœuf haché 5' + NB + '%'],['poisson','Poisson blanc'],['saumon','Saumon'],['crevettes','Crevettes cuites'],['thon','Thon au naturel, égoutté'],['jambon','Jambon blanc'],['halloumi','Halloumi'],['parmesan','Parmesan'],['skyr','Skyr nature']]},
+  {title:'Féculents', per:'pour 100' + NB + 'g crus', src:'starch', rows:STARCH_ORDER.map(function(id){ return [id, STARCH[id].name.charAt(0).toUpperCase() + STARCH[id].name.slice(1)]; })},
+  {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['chocolat','Chocolat noir 70' + NB + '%']]},
+  {title:'Légumes et matières grasses', per:'pour 100' + NB + 'g', src:'food', rows:[['legumes','Légumes (moyenne)'],['avocat','Avocat'],['huile','Huile d’olive']]},
+  {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf'],['oeufMarine','Œuf mariné'],['banane','Banane'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté']]}
+];
+function refTable(){
+  return REF_GROUPS.map(function(g){
+    return {title:g.title, per:g.per, rows:g.rows.map(function(r){
+      const v = g.src === 'starch' ? STARCH[r[0]].f : g.src === 'unit' ? UNIT[r[0]] : FOOD[r[0]];
+      return {src:g.src, key:r[0], label:r[1], v:v};
+    })};
+  });
+}
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1155,28 +1238,36 @@ if (typeof document !== 'undefined'){
     prevQty = next;
   };
 
-  /* Trois écrans, un seul visible : accueil, page du jour, réglages (roue dentée en haut de la page) */
-  let regl = false, pageScroll = 0;
+  /* Écrans, un seul visible : accueil, page du jour, réglages (roue dentée) et aide (point d'interrogation).
+     Réglages et aide s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du
+     téléphone revient d'un cran) et la position dans la page est rétablie au retour. */
+  let stack = [], pageScroll = 0;
+  const HEAD = {reglages:'regl-h', aide:'aide-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const setView = function(v){ ['accueil', 'page', 'reglages'].forEach(function(id){ $(id).hidden = id !== v; }); };
-  const openRegl = function(){
-    if (regl) return;
-    pageScroll = scroller().scrollTop;
-    regl = true;
-    /* Le bouton retour du téléphone ferme les réglages ; la position dans la page est rétablie par closeRegl */
-    try { history.scrollRestoration = 'manual'; history.pushState({reglages:true}, ''); } catch (e) {}
-    setView('reglages');
-    scroller().scrollTop = 0;
-    $('regl-h').focus({preventScroll:true});
-  };
-  const closeRegl = function(fromHistory){
-    if (!regl) return;
-    regl = false;
+  const setView = function(v){ ['accueil', 'page', 'reglages', 'aide'].forEach(function(id){ $(id).hidden = id !== v; }); };
+  const topScreen = function(){ return stack.length ? stack[stack.length - 1].name : null; };
+  const showTop = function(){
+    const top = stack.length ? stack[stack.length - 1] : null;
+    if (top){ setView(top.name); scroller().scrollTop = 0; $(HEAD[top.name]).focus({preventScroll:true}); return; }
     setView('page');
     scroller().scrollTop = pageScroll;
-    if (!fromHistory){ try { if (history.state && history.state.reglages) history.back(); } catch (e) {} }
-    $('gear').focus({preventScroll:true});
   };
+  const openScreen = function(name, opener){
+    if (topScreen() === name) return;
+    if (!stack.length) pageScroll = scroller().scrollTop;
+    stack.push({name:name, opener:opener && opener.id ? opener.id : 'gear'});
+    try { history.scrollRestoration = 'manual'; history.pushState({screen:name}, ''); } catch (e) {}
+    showTop();
+  };
+  /* Retour d'un cran (flèche, « Voir ma journée ») ; fromHistory : l'entrée d'historique est déjà quittée */
+  const closeScreen = function(fromHistory){
+    if (!stack.length) return;
+    const left = stack.pop();
+    showTop();
+    if (!stack.length) $(document.getElementById(left.opener) ? left.opener : 'gear').focus({preventScroll:true});
+    if (!fromHistory){ try { if (history.state && history.state.screen) history.back(); } catch (e) {} }
+  };
+  const closeAllScreens = function(){ while (stack.length) closeScreen(false); };
   /* Panneau de choix d'un plat : fond grisé, page inerte ; se ferme par un choix, le fond, Échap ou le bouton retour */
   let pick = null;
   const openPick = function(kind, slot){
@@ -1209,8 +1300,10 @@ if (typeof document !== 'undefined'){
   /* Bouton retour : ferme la couche ouverte (panneau de choix ou réglages) dont on quitte l'entrée d'historique */
   window.addEventListener('popstate', function(e){
     const st = e.state || {};
-    if (pick && !st.pick) closePick(true);
-    else if (regl && !acc && !st.reglages) closeRegl(true);
+    if (pick && !st.pick){ closePick(true); return; }
+    if (acc) return;
+    const want = st.screen || null;
+    while (stack.length && topScreen() !== want) closeScreen(true);
   });
 
   /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Les réponses restent
@@ -1231,7 +1324,7 @@ if (typeof document !== 'undefined'){
     renderAcc();
   };
   const renderAcc = function(){
-    setView(acc ? 'accueil' : regl ? 'reglages' : 'page');
+    if (acc) setView('accueil'); else showTop();
     if (!acc) return;
     const d = acc.draft, pr = cleanProfile(d);
     $('accueil').querySelectorAll('[data-step]').forEach(function(el){ el.hidden = +el.dataset.step !== acc.step; });
@@ -1282,7 +1375,7 @@ if (typeof document !== 'undefined'){
     if (!has(prof, 'mode')) prof.mode = cleanProfile(prof).mode;
     saveProf();
     acc = null;
-    if (regl){ regl = false; try { if (history.state && history.state.reglages) history.back(); } catch (e) {} }
+    closeAllScreens();
     fillNeeds();
     $('intro').textContent = 'C’est prêt. Ajoute tes séances du jour, tes repas s’adaptent. Sans séance, c’est une journée de repos.';
     prevQty = new Map();
@@ -1354,8 +1447,9 @@ if (typeof document !== 'undefined'){
       }
       case 'open-pick': openPick(b.dataset.kind, b.dataset.slot || null); return;
       case 'close-pick': closePick(false); return;
-      case 'needs': openRegl(); return;
-      case 'fermer': closeRegl(false); return;
+      case 'needs': openScreen('reglages', b); return;
+      case 'aide': openScreen('aide', b); return;
+      case 'fermer': closeScreen(false); return;
       case 'prot': if (has(PROT, v)){ ch[b.dataset.slot].prot = v; saveCh(); } break;
       case 'starch': if (has(STARCH, v)){ ch[b.dataset.slot].starch = v; saveCh(); } break;
       case 'dessert': if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } break;
@@ -1434,6 +1528,17 @@ if (typeof document !== 'undefined'){
   window.addEventListener('focus', refreshToday);
   window.addEventListener('pageshow', refreshToday);
 
+  /* Table des valeurs des aliments (écran d'aide), une fois pour toutes */
+  const num = function(n, d){ return n.toLocaleString('fr-FR', {maximumFractionDigits:d}); };
+  $('ref-tables').innerHTML = refTable().map(function(g){
+    return '<table class="ref-t"><caption>' + g.title + '<span>' + g.per + '</span></caption>' +
+      '<colgroup><col><col class="k"><col class="n"><col class="n"><col class="n"></colgroup>' +
+      '<thead><tr><th scope="col">Aliment</th><th scope="col">kcal</th><th scope="col" class="p"><abbr title="protéines">P</abbr></th>' +
+      '<th scope="col" class="c"><abbr title="glucides">G</abbr></th><th scope="col" class="f"><abbr title="lipides">L</abbr></th></tr></thead><tbody>' +
+      g.rows.map(function(r){
+        return '<tr data-key="' + r.key + '"><th scope="row">' + r.label + '</th><td>' + num(r.v[0], 0) + '</td><td>' + num(r.v[1], 1) + '</td><td>' + num(r.v[2], 1) + '</td><td>' + num(r.v[3], 1) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }).join('');
   $('app-version').textContent = APP_VERSION;
   loadSel();
   render();
