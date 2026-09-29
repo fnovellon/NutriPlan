@@ -7,10 +7,12 @@ const { openPage, rng, settings, checker } = require('./lib');
 const { factor, seed } = settings(7102026);
 const R = rng(seed);
 const C = checker('fond de l’interface');
-const PKEY = 'repas-du-jour:profil:v1', KEY = 'repas-du-jour:v2';
+const PKEY = 'repas-du-jour:profil:v1', KEY = 'repas-du-jour:v2', RKEY = 'repas-du-jour:repas:v1';
 const errors = [];
 const clock = { now: new Date(2026, 9, 7, 9).getTime() };
 const open = storage => openPage({ clock, storage, errors });
+// Formulaire des repas déjà vu aujourd'hui : il ne s'ouvre pas tout seul
+const seen = () => { const x = new Date(clock.now); return { [RKEY]: x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0') }; };
 const num = s => Number(String(s).replace(/[^\d,-]/g, '').replace(',', '.'));
 const click = (dom, s) => { const e = dom.window.document.querySelector(s); if (!e) throw new Error('introuvable : ' + s); e.click(); };
 const type = (dom, s, v, change) => {
@@ -60,11 +62,12 @@ function scan(dom, label){
   click(dom, '#accueil [data-key="deficit"][data-value="0"]'); scan(dom, 'accueil, étape 2, maintenir');
   click(dom, '#acc-next'); scan(dom, 'accueil, étape 3');
   click(dom, '#accueil [data-key="shaker"][data-value="non"]'); scan(dom, 'accueil, étape 3, sans shaker');
-  click(dom, '#acc-next'); scan(dom, 'page après l’accueil');
+  click(dom, '#acc-next'); scan(dom, 'formulaire des repas après l’accueil');
+  click(dom, '[data-action="repas-ok"]'); scan(dom, 'page après l’accueil');
 }
 {
   // Page chargée : séances, repas libre, desserts, panneau de choix, réglages dans tous leurs états, aide
-  const dom = open({ [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) });
+  const dom = open(Object.assign(seen(), { [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) }));
   ['petite', 'moyenne', 'longue'].forEach(a => click(dom, '[data-action="add"][data-value="' + a + '"]'));
   scan(dom, 'page, trois séances');
   C.ok(dom.window.document.querySelector('#acts [data-value="longue"]').disabled, '« + Longue » actif avec une sortie longue', '');
@@ -72,6 +75,8 @@ function scan(dom, label){
   C.ok([...dom.window.document.querySelectorAll('#acts button')].every(b => b.disabled), 'bouton d’ajout actif à 4 séances', '');
   click(dom, '[data-action="toggle"][data-key="libre"]'); scan(dom, 'page, repas libre');
   click(dom, '[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]'); scan(dom, 'panneau de choix'); click(dom, '#sheet [data-value="chocolat"]');
+  click(dom, '#open-repas'); scan(dom, 'formulaire des repas, repas libre');
+  click(dom, '#repas-form [data-kind="prot"][data-slot="dej"][data-value="thon"]'); click(dom, '[data-action="repas-ok"]');
   click(dom, '#gear'); scan(dom, 'réglages');
   click(dom, '[data-action="prof"][data-key="mode"][data-value="manuel"]'); scan(dom, 'réglages, manuel');
   type(dom, '#besoins input[data-key="repos"]', 900); scan(dom, 'réglages, dépense hors bornes'); type(dom, '#besoins input[data-key="repos"]', 2500);
@@ -86,7 +91,7 @@ function scan(dom, label){
   ['130 kg', { age: 35, taille: 190, poids: 130 }],
   ['protéines sous la fourchette', { age: 35, taille: 178, poids: 71, prot: 3, shaker: 'non' }]
 ].forEach(([label, prof]) => {
-  const dom = open({ [PKEY]: JSON.stringify(prof), [KEY]: JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'pain', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }) });
+  const dom = open({ [RKEY]: seen()[RKEY], [PKEY]: JSON.stringify(prof), [KEY]: JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'pain', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }) });
   scan(dom, label); click(dom, '#gear'); scan(dom, label + ', réglages');
 });
 
@@ -141,6 +146,8 @@ function check(dom, log){
     const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
     Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
   } catch (e){ C.ok(false, 'stockage illisible', () => e.message + ' ' + where()); }
+  // Formulaire des repas : un seul choix par rangée
+  if (!$('#repas').hidden) $('#repas-form').querySelectorAll('[role="group"]').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'formulaire : un choix par rangée', where));
   if ($('#page').hidden) return;
   // Total affiché = somme des lignes (arrondies), chaque repas aussi
   const lis = [...d.querySelectorAll('#day li')];
@@ -206,6 +213,32 @@ const ACTIONS = {
     const v = R.pick(['', '0', '-5', '1e9', 'abc', '72', '2,5', String(Math.round(lo + R.next() * (hi - lo)))]);
     type(dom, '#besoins input[data-key="' + e.dataset.key + '"]', v, R.chance(.5));
     return 'champ ' + e.dataset.key + '=' + v;
+  },
+  // Formulaire des repas : ouvert (ou déjà ouvert tout seul), quelques choix, puis valider, tirer au hasard ou fermer
+  repas: dom => {
+    const d = dom.window.document, w = dom.window;
+    const bubbles = () => [...d.querySelectorAll('#day .sel')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
+    if (d.querySelector('#repas').hidden){
+      if (d.querySelector('#page').hidden) return 'repas -';
+      d.querySelector('#open-repas').click();
+    }
+    const before = bubbles();
+    for (let i = R.int(0, 4); i > 0; i--) R.pick([...d.querySelectorAll('#repas-form .opt')]).click();
+    d.querySelectorAll('#repas-form [role="group"]').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'formulaire : un choix par rangée', () => g.getAttribute('aria-labelledby')));
+    const want = [...d.querySelectorAll('#repas-form [aria-pressed="true"]')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
+    const how = R.pick(['valide', 'hasard', 'flèche', 'retour']);
+    if (how === 'valide') d.querySelector('[data-action="repas-ok"]').click();
+    else if (how === 'hasard') d.querySelector('[data-action="repas-hasard"]').click();
+    else if (how === 'flèche') d.querySelector('#repas [data-action="fermer"]').click();
+    else w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
+    C.ok(d.querySelector('#repas').hidden, 'formulaire resté ouvert', how);
+    const after = bubbles();
+    if (how === 'valide') C.ok(after.every(x => want.includes(x)), 'formulaire validé : choix non appliqués', () => want.join(' ') + ' // ' + after.join(' '));
+    else if (how === 'hasard'){
+      const prot = slot => (after.find(x => x.startsWith('prot' + slot + '=')) || '').split('=')[1];
+      C.ok(!prot('diner') || prot('dej') !== prot('diner'), 'hasard : même protéine midi et soir', () => after.join(' '));
+    } else C.ok(after.join() === before.join(), 'formulaire fermé sans valider : choix changés', () => before.join(' ') + ' // ' + after.join(' '));
+    return 'repas ' + how;
   },
   day: dom => { clock.now += 864e5 * R.pick([1, 1, 2, 7]); dom.window.dispatchEvent(new dom.window.Event('focus')); return 'jour suivant'; },
   accueil: dom => {

@@ -361,6 +361,26 @@ for (let i = 0; i < N * 2; i++){
 }
 C.ok(({}).polluted === undefined && !('taille' in {}) && !('seances' in {}), 'Object.prototype pollué', '');
 
+// --- « Décide pour moi » : tirages toujours valides, jamais la même protéine midi et soir, tous les choix possibles ---
+{
+  const seenOpt = new Set();
+  for (let i = 0; i < N; i++){
+    const c = A.randomChoices(R.next), show = () => JSON.stringify(c);
+    C.ok(['avoine', 'pain'].includes(c.pdBase), 'tirage : base invalide', show);
+    ['dej', 'diner'].forEach(slot => {
+      C.ok(has(A.PROT, c[slot].prot) && has(A.STARCH, c[slot].starch) && has(A.DESSERT, c[slot].dessert), 'tirage : choix invalide', show);
+      seenOpt.add(slot + ':' + c[slot].prot).add(slot + ':' + c[slot].starch).add(slot + ':' + c[slot].dessert);
+    });
+    seenOpt.add(c.pdBase);
+    C.ok(c.dej.prot !== c.diner.prot, 'tirage : même protéine midi et soir', show);
+    const r = A.buildDay(A.emptyPlan(R.int(0, 6)), c, {});
+    C.ok(fin(r.tot.kcal), 'tirage : journée invalide', show);
+  }
+  // Valeurs extrêmes du hasard (0 et presque 1) : toujours dans les listes
+  [() => 0, () => 0.9999999999].forEach(f => { const c = A.randomChoices(f); C.ok(c.dej.prot !== c.diner.prot && has(A.STARCH, c.diner.starch) && has(A.DESSERT, c.diner.dessert), 'tirage aux bornes', () => JSON.stringify(c)); });
+  C.ok(seenOpt.size === 2 + 2 * (A.PROT_ORDER.length + A.STARCH_ORDER.length + A.DESSERT_ORDER.length), 'tirage : des choix jamais tirés', () => seenOpt.size + ' choix tirés');
+}
+
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------
 A.PROT_ORDER.forEach(p => A.STARCH_ORDER.forEach(s => C.ok(A.IDEAS[p] && typeof A.IDEAS[p][s] === 'string', 'idée de plat manquante', p + ' × ' + s)));
 C.ok(Object.keys(A.PROT).sort().join() === A.PROT_ORDER.slice().sort().join(), 'PROT_ORDER ≠ PROT', '');

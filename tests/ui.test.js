@@ -5,7 +5,7 @@ const assert = require('assert');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1', PKEY = 'repas-du-jour:profil:v1';
+const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1', PKEY = 'repas-du-jour:profil:v1', RKEY = 'repas-du-jour:repas:v1';
 const errors = [];
 const vc = new VirtualConsole();
 vc.on('jsdomError', e => errors.push((e && e.message) || String(e)));
@@ -20,10 +20,17 @@ const withClock = win => {
   }
   win.Date = D;
 };
-// Un profil (vide) est enregistré, sauf pour un premier lancement (fresh) : l'accueil ne s'affiche pas
-const open = (seed, fresh) => new JSDOM(html, {
+const isoOf = t => { const x = new Date(t); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+// Un profil (vide) est enregistré, sauf pour un premier lancement (fresh) : l'accueil ne s'affiche pas.
+// Le formulaire des repas est noté comme déjà vu aujourd'hui (il ne s'ouvre pas tout seul), sauf avec fresh ou repas.
+const open = (seed, fresh, repas) => new JSDOM(html, {
   runScripts: 'dangerously', url: 'https://example.org/', virtualConsole: vc,
-  beforeParse: win => { withClock(win); if (!fresh) win.localStorage.setItem(PKEY, '{}'); if (seed) seed(win.localStorage); }
+  beforeParse: win => {
+    withClock(win);
+    if (!fresh) win.localStorage.setItem(PKEY, '{}');
+    if (!fresh && !repas) win.localStorage.setItem(RKEY, isoOf(now));
+    if (seed) seed(win.localStorage);
+  }
 });
 const tools = dom => {
   const d = dom.window.document;
@@ -189,6 +196,69 @@ choose('dessert', 'dej', 'aucun');
 choose('dessert', 'diner', 'aucun');
 assert(!/chocolat|fruit/.test(lastLine('dej') + lastLine('diner')) && stored().choices[3].dej.dessert === 'aucun', 'dessert non retiré');
 
+// Formulaire des repas du jour : s'ouvre tout seul à la première ouverture de la journée, une seule fois
+const rdom = open(null, false, true), r = tools(rdom), rw = rdom.window;
+assert(!r.$('#repas').hidden && r.$('#page').hidden, 'formulaire des repas non ouvert au premier passage du jour');
+assert.strictEqual(rw.document.activeElement, r.$('#repas-h'), 'focus sur le titre du formulaire');
+assert.strictEqual(rw.localStorage.getItem(RKEY), '2026-10-07', 'formulaire non noté comme vu');
+// Tous les choix visibles, un seul choisi par rangée : ceux du jour (mercredi : avoine, poulet + riz, poisson + lentilles, sans dessert)
+const rows = () => [...r.d.querySelectorAll('#repas-form [role="group"]')].map(g => [...g.querySelectorAll('[aria-pressed="true"]')].map(b => b.dataset.value).join('+'));
+assert.deepStrictEqual(rows(), ['avoine', 'poulet', 'riz', 'aucun', 'poisson', 'lentilles', 'aucun'], 'choix du jour présélectionnés');
+assert.strictEqual(r.d.querySelectorAll('#repas-form .opt').length, 2 + 2 * (7 + 9 + 4), 'tous les choix affichés');
+assert.deepStrictEqual([...r.d.querySelectorAll('#repas-form h2')].map(h => h.textContent), ['Petit-déjeuner', 'Déjeuner', 'Dîner'], 'repas du formulaire');
+// Choisir ne change rien avant de valider
+const rf = (kind, slot, v) => r.click(`#repas-form [data-kind="${kind}"]` + (slot ? `[data-slot="${slot}"]` : '') + `[data-value="${v}"]`);
+rf('pd', null, 'pain'); rf('prot', 'dej', 'boeuf'); rf('starch', 'dej', 'pates'); rf('dessert', 'dej', 'chocolat'); rf('dessert', 'diner', 'fruit');
+assert.deepStrictEqual(rows(), ['pain', 'boeuf', 'pates', 'chocolat', 'poisson', 'lentilles', 'fruit'], 'sélection dans le formulaire');
+assert.strictEqual(rw.localStorage.getItem(KEY), null, 'choix enregistrés avant de valider');
+// « Voir ma journée » : enregistre et affiche le récap
+r.click('[data-action="repas-ok"]');
+assert(r.$('#repas').hidden && !r.$('#page').hidden && rw.document.activeElement === r.$('#title'), 'récap non affiché après validation');
+assert.deepStrictEqual(['pd', 'prot', 'starch', 'dessert'].map(k => r.chosen(k, k === 'pd' ? null : 'dej')).concat([r.chosen('dessert', 'diner')]), ['pain', 'boeuf', 'pates', 'chocolat', 'fruit'], 'choix du formulaire dans le récap');
+assert.deepStrictEqual(r.stored().choices[3], { pdBase: 'pain', dej: { prot: 'boeuf', starch: 'pates', dessert: 'chocolat' }, diner: { prot: 'poisson', starch: 'lentilles', dessert: 'fruit' } }, 'choix du formulaire enregistrés');
+assert([...r.d.querySelectorAll('[aria-labelledby="h-dej"] li')].some(li => /chocolat noir/.test(li.textContent)), 'dessert absent du récap');
+// La sélection reste possible depuis le récap
+r.choose('starch', 'dej', 'riz');
+assert.strictEqual(r.stored().choices[3].dej.starch, 'riz', 'choix depuis le récap');
+// Rechargée le même jour : pas de formulaire
+const snapOf = w => { const o = {}; for (let i = 0; i < w.localStorage.length; i++) { const k = w.localStorage.key(i); o[k] = w.localStorage.getItem(k); } return o; };
+const rsnap = snapOf(rw);
+const reload = tools(open(ls => Object.entries(rsnap).forEach(([k, v]) => ls.setItem(k, v)), false, true));
+assert(reload.$('#repas').hidden && !reload.$('#page').hidden, 'formulaire rouvert le même jour');
+// « Choisir mes repas » : rouvre le formulaire sur les choix du jour ; la flèche et le bouton retour ferment sans rien changer
+r.click('#open-repas');
+assert(!r.$('#repas').hidden && rows()[2] === 'riz', 'formulaire rouvert sur les choix du jour');
+rf('prot', 'diner', 'thon');
+r.click('#repas [data-action="fermer"]');
+assert(!r.$('#page').hidden && r.chosen('prot', 'diner') === 'poisson' && r.stored().choices[3].diner.prot === 'poisson', 'formulaire fermé sans valider : choix changé');
+assert.strictEqual(rw.document.activeElement, r.$('#open-repas'), 'focus rendu au bouton');
+r.click('#open-repas');
+rf('prot', 'diner', 'thon');
+rw.dispatchEvent(new rw.PopStateEvent('popstate', { state: null }));
+assert(!r.$('#page').hidden && r.$('#repas').hidden && r.chosen('prot', 'diner') === 'poisson', 'bouton retour : formulaire non fermé ou choix changé');
+// « Décide pour moi » : tout au hasard (hasard simulé), jamais la même protéine midi et soir, enregistré, récap
+const everything = () => [r.chosen('pd'), r.chosen('prot', 'dej'), r.chosen('starch', 'dej'), r.chosen('dessert', 'dej'), r.chosen('prot', 'diner'), r.chosen('starch', 'diner'), r.chosen('dessert', 'diner')];
+r.click('#open-repas');
+rw.Math.random = () => 0.999;
+r.click('[data-action="repas-hasard"]');
+assert(!r.$('#page').hidden && r.$('#repas').hidden, 'récap non affiché après le tirage');
+assert.deepStrictEqual(everything(), ['pain', 'thon', 'gnocchis', 'chocolat', 'oeufs', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
+assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'oeufs', starch: 'gnocchis', dessert: 'chocolat' }, 'tirage non enregistré');
+assert(/tirés au hasard/.test(r.$('#hint').textContent), 'message du tirage : ' + r.$('#hint').textContent);
+r.click('#open-repas');
+rw.Math.random = () => 0;
+r.click('[data-action="repas-hasard"]');
+assert.deepStrictEqual(everything(), ['avoine', 'poulet', 'riz', 'aucun', 'boeuf', 'riz', 'aucun'], 'tirage (premier choix de chaque liste, protéine du dîner différente)');
+// Jour de repas libre : le formulaire le rappelle au dîner
+r.setSwitch('libre', true);
+r.click('#open-repas');
+assert(/Ce soir, c’est ton repas libre\s: ce dîner est gardé pour les prochains mercredis\./.test(r.$('[aria-labelledby="rf-h-diner"]').textContent), 'repas libre dans le formulaire');
+r.click('[data-action="repas-ok"]');
+// Sans stockage : le formulaire ne s'ouvre jamais tout seul
+const nostore = tools(new JSDOM(html, { runScripts: 'dangerously', url: 'https://example.org/', virtualConsole: vc,
+  beforeParse: win => { withClock(win); Object.defineProperty(win, 'localStorage', { get(){ throw new Error('stockage bloqué'); } }); } }));
+assert(nostore.$('#repas').hidden && !nostore.$('#page').hidden && nostore.$('#accueil').hidden, 'sans stockage : ' + ['accueil', 'page', 'repas'].filter(id => !nostore.$('#' + id).hidden));
+
 // L'idée de plat suit les choix
 choose('prot', 'diner', 'boeuf');
 choose('starch', 'diner', 'pates');
@@ -212,6 +282,11 @@ now = new Date(2026, 9, 8, 7, 30, 0).getTime();
 dom.window.dispatchEvent(new dom.window.Event('focus'));
 assert.strictEqual($('#date').textContent, 'Aujourd’hui, jeudi 8 octobre', 'date non mise à jour');
 assert.deepStrictEqual(sess(), [], 'plan de la veille affiché le lendemain');
+// Nouveau jour : le formulaire des repas s'ouvre, avec les choix du jeudi
+assert(!$('#repas').hidden && $('#page').hidden && dom.window.localStorage.getItem(RKEY) === '2026-10-08', 'formulaire des repas non ouvert le lendemain');
+assert.strictEqual($('#repas-form [data-kind="prot"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'boeuf', 'choix du jeudi dans le formulaire');
+click('#repas [data-action="fermer"]');
+assert(!$('#page').hidden && $('#repas').hidden, 'formulaire non fermé');
 now = new Date(2026, 9, 7, 9, 0, 0).getTime();
 
 // Données v1 (activité par sport) : converties en séances, v1 laissée intacte, anciennes dates purgées
@@ -497,7 +572,10 @@ assert(f.$('#acc-dose').hidden && /skyr/.test(f.$('#acc-shaker-t').textContent),
 f.click('#accueil [data-key="marge"][data-value="250"]');
 f.click('#acc-next');
 assert.deepStrictEqual(fprof(), { mode: 'auto', sexe: 'f', age: 30, taille: 165, poids: 58.5, deficit: 20, shaker: 'non', marge: 250 }, 'profil de l’accueil');
-assert(f.$('#accueil').hidden && !f.$('#page').hidden && /Ajoute tes séances/.test(f.$('#intro').textContent), 'page du jour après l’accueil');
+// Puis le formulaire des repas du jour, puis la page
+assert(f.$('#accueil').hidden && !f.$('#repas').hidden && fdom.window.document.activeElement === f.$('#repas-h'), 'formulaire des repas après l’accueil');
+f.click('[data-action="repas-ok"]');
+assert(f.$('#accueil').hidden && f.$('#repas').hidden && !f.$('#page').hidden && /Ajoute tes séances/.test(f.$('#intro').textContent), 'page du jour après l’accueil');
 assert(!/Complète/.test(f.$('#sum-note').textContent) && /1\s830/.test(f.$('#sum-note').textContent), 'profil de l’accueil non utilisé : ' + f.$('#sum-note').textContent);
 assert(![...f.d.querySelectorAll('#day li')].some(li => /shaker de protéines/.test(li.textContent)), 'shaker affiché après l’avoir refusé');
 assert(f.$('#besoins input[data-key="age"]').value === '30' && f.$('#besoins input[data-key="deficit"]').value === '20', 'besoins non remplis après l’accueil');
@@ -518,12 +596,15 @@ assert(step(f) === '3' && /Vérifie les calories par dose \(100 à 160\skcal\)/.
 accType(f, fw, 'shakerKcal', 130);
 f.click('#acc-next');
 assert(fprof().deficit === 10 && fprof().shaker === 'oui' && fprof().shakerKcal === 130 && fprof().marge === 250 && f.$('#accueil').hidden, 'accueil refait : ' + JSON.stringify(fprof()));
+assert(f.$('#repas').hidden && !f.$('#page').hidden, 'formulaire des repas rouvert le même jour');
 assert.deepStrictEqual(f.sess(), ['Petite séance'], 'séances perdues en refaisant l’accueil');
 // Passer : garde ce qui est déjà saisi, le reste prend les valeurs par défaut
 const sk = tools(open(null, true));
 accType(sk, sk.d.defaultView, 'age', 25);
 sk.click('[data-action="acc-skip"]');
 assert.deepStrictEqual(JSON.parse(sk.d.defaultView.localStorage.getItem(PKEY)), { mode: 'auto', age: 25 }, 'profil après Passer');
+assert(!sk.$('#repas').hidden, 'formulaire des repas après Passer');
+sk.click('[data-action="repas-hasard"]');
 assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil/.test(sk.$('#sum-note').textContent), 'page après Passer');
 
 assert.deepStrictEqual(errors, [], 'erreurs JavaScript : ' + errors.join(' | '));

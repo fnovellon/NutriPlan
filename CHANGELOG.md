@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 3.4.0, 29 septembre 2026
+
+- Nouveau formulaire « Tes repas du jour » : chaque jour, à la première ouverture, tous les plats s'affichent d'un coup (base du petit-déjeuner, protéine, féculent et dessert du déjeuner et du dîner). Touche ce que tu veux manger, puis « Voir ma journée » pour arriver sur ton récap avec les quantités.
+- La flemme ? « Décide pour moi » tire tout au hasard (jamais la même protéine midi et soir) et t'emmène directement sur ton récap.
+- Tu peux toujours changer un plat depuis le récap, comme avant, ou rouvrir le formulaire avec « Choisir mes repas », juste au-dessus de tes repas.
+- Tes choix restent mémorisés pour chaque jour de la semaine.
+
 ## 3.3.2, 28 septembre 2026
 
 - Grande vérification automatique : des milliers de journées tirées au hasard (tous les profils, séances et choix de repas) recalculées et contrôlées règle par règle, et des centaines de manipulations de l'appli simulées. Ce qu'elle a trouvé est corrigé :

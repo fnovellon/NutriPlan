@@ -249,6 +249,17 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .ref-t tbody th{padding-right:8px;text-align:left;font-weight:400;line-height:1.3;}
 .ref-t td{padding-left:10px;text-align:right;font-family:var(--sans);font-weight:600;font-stretch:92%;font-variant-numeric:tabular-nums;white-space:nowrap;}
 
+/* Formulaire des repas du jour : tous les choix visibles, un par rangée */
+.day-top{margin:-4px 0 18px;}
+.day-top .reset{margin:0;}
+.repas-p{margin:0 0 14px;font-size:18px;line-height:1.45;}
+.btn.hasard{margin:0 0 6px;}
+.rf{margin:18px 0 0;padding-top:16px;border-top:1px solid var(--line);}
+.rf h2{margin:0;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
+.rf .calc{margin:4px 0 0;}
+.rf-l{margin:14px 0 8px;font-size:15px;color:var(--muted);}
+.repas .btn.main.wide{margin-top:26px;}
+
 @media (min-width:640px){.app{padding-top:36px;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
 </style>
@@ -362,6 +373,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <p class="sum-note" id="sum-note"></p>
   </section>
 
+  <div class="day-top"><button type="button" class="reset" id="open-repas" data-action="repas">Choisir mes repas</button></div>
   <div class="day" id="day"></div>
 
   <footer class="notes">
@@ -483,6 +495,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     </ol>
     <h2>Comment tes repas sont construits</h2>
     <ul>
+      <li>Chaque jour, à la première ouverture, tu choisis tes plats (ou tu laisses l’appli décider au hasard). Tu peux toujours changer un plat depuis ta journée&nbsp;; tes choix sont gardés pour ce jour de la semaine.</li>
       <li>Le petit-déjeuner, la collation et le shaker suivent ton profil et tes séances.</li>
       <li>Viande, poisson, œufs et skyr restent au plus près du menu de base, ajustés juste ce qu’il faut pour tenir ton objectif de protéines (en grammes par kilo) à 10&nbsp;% près.</li>
       <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance, sans dépasser une portion sportive (à 72&nbsp;kg&nbsp;: 120&nbsp;g de riz ou de pâtes crus, 100&nbsp;g de lentilles, 400&nbsp;g de pommes de terre). Au-delà, les grosses journées, un encas s’ajoute. Changer de féculent garde les mêmes calories.</li>
@@ -507,6 +520,15 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
   <button type="button" class="btn main wide" data-action="fermer">Revenir</button>
 </main>
 
+<main class="app repas" id="repas" hidden>
+  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée, sans rien changer"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+  <h1 id="repas-h" tabindex="-1">Tes repas du jour</h1>
+  <p class="repas-p">Choisis pour chaque repas, ou laisse l’appli décider. Tu pourras toujours changer un plat depuis ta journée.</p>
+  <button type="button" class="btn hasard" data-action="repas-hasard">Décide pour moi</button>
+  <div id="repas-form"></div>
+  <button type="button" class="btn main wide" data-action="repas-ok">Voir ma journée</button>
+</main>
+
 <div class="sheet" id="sheet" hidden>
   <div class="scrim" data-action="close-pick"></div>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheet-t">
@@ -519,7 +541,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.3.2';
+const APP_VERSION = '3.4.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -712,6 +734,16 @@ const DEFAULT_CHOICES = {
   5:{pdBase:'avoine', dej:{prot:'boeuf', starch:'riz'}, diner:{prot:'poulet', starch:'patate'}},
   6:{pdBase:'avoine', dej:{prot:'thon', starch:'pates'}, diner:{prot:'saumon', starch:'pdt'}}
 };
+/* « Décide pour moi » : chaque choix tiré au hasard (rand : nombres dans [0, 1[, Math.random par défaut),
+   jamais la même protéine au déjeuner et au dîner */
+function randomChoices(rand){
+  const r = rand || Math.random;
+  const pick = function(a){ return a[Math.min(a.length - 1, Math.floor(r() * a.length))]; };
+  const dej = pick(PROT_ORDER), diner = pick(PROT_ORDER.filter(function(p){ return p !== dej; }));
+  return {pdBase:pick(['avoine', 'pain']),
+    dej:{prot:dej, starch:pick(STARCH_ORDER), dessert:pick(DESSERT_ORDER)},
+    diner:{prot:diner, starch:pick(STARCH_ORDER), dessert:pick(DESSERT_ORDER)}};
+}
 
 /* Profil et dépense énergétique */
 const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2};
@@ -1102,11 +1134,13 @@ if (typeof document !== 'undefined'){
 
   /* Choix des plats : seule la sélection est affichée, dans une bulle ; la toucher ouvre le panneau des choix */
   const REPAS = {dej:'du déjeuner', diner:'du dîner'};
-  const pickDef = function(kind, slot){
-    if (kind === 'pd') return {label:'Base', title:'Base du petit-déjeuner', action:'pd', current:ch.pdBase, opts:[['avoine', 'Flocons d’avoine'], ['pain', 'Pain complet']]};
-    if (kind === 'prot') return {label:'Protéine', title:'Protéine ' + REPAS[slot], action:'prot', current:ch[slot].prot, opts:PROT_ORDER.map(function(id){ return [id, PROT[id].label]; })};
-    if (kind === 'starch') return {label:'Féculent', title:'Féculent ' + REPAS[slot], action:'starch', current:ch[slot].starch, opts:STARCH_ORDER.map(function(id){ return [id, STARCH[id].label]; })};
-    return {label:'Dessert', title:'Dessert ' + REPAS[slot], action:'dessert', current:dessertOf(ch[slot]), opts:DESSERT_ORDER.map(function(id){ return [id, DESSERT[id].label]; })};
+  /* Choix possibles d'une rangée ; src : les choix affichés (ceux du jour, ou le brouillon du formulaire des repas) */
+  const pickDef = function(kind, slot, src){
+    const c = src || ch;
+    if (kind === 'pd') return {label:'Base', title:'Base du petit-déjeuner', action:'pd', current:c.pdBase, opts:[['avoine', 'Flocons d’avoine'], ['pain', 'Pain complet']]};
+    if (kind === 'prot') return {label:'Protéine', title:'Protéine ' + REPAS[slot], action:'prot', current:c[slot].prot, opts:PROT_ORDER.map(function(id){ return [id, PROT[id].label]; })};
+    if (kind === 'starch') return {label:'Féculent', title:'Féculent ' + REPAS[slot], action:'starch', current:c[slot].starch, opts:STARCH_ORDER.map(function(id){ return [id, STARCH[id].label]; })};
+    return {label:'Dessert', title:'Dessert ' + REPAS[slot], action:'dessert', current:dessertOf(c[slot]), opts:DESSERT_ORDER.map(function(id){ return [id, DESSERT[id].label]; })};
   };
   const CHEVRON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
   const pickRow = function(kind, slot){
@@ -1278,9 +1312,9 @@ if (typeof document !== 'undefined'){
      Réglages et aide s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du
      téléphone revient d'un cran) et la position dans la page est rétablie au retour. */
   let stack = [], pageScroll = 0;
-  const HEAD = {reglages:'regl-h', aide:'aide-h'};
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const setView = function(v){ ['accueil', 'page', 'reglages', 'aide'].forEach(function(id){ $(id).hidden = id !== v; }); };
+  const setView = function(v){ ['accueil', 'page', 'reglages', 'aide', 'repas'].forEach(function(id){ $(id).hidden = id !== v; }); };
   const topScreen = function(){ return stack.length ? stack[stack.length - 1].name : null; };
   const showTop = function(){
     const top = stack.length ? stack[stack.length - 1] : null;
@@ -1304,6 +1338,51 @@ if (typeof document !== 'undefined'){
     if (!fromHistory){ try { if (history.state && history.state.screen) history.back(); } catch (e) {} }
   };
   const closeAllScreens = function(){ while (stack.length) closeScreen(false); };
+
+  /* Formulaire des repas du jour : tous les choix visibles, sur un brouillon ; « Voir ma journée » l'enregistre,
+     « Décide pour moi » tire tout au hasard ; la flèche ou le bouton retour ferment sans rien changer.
+     S'ouvre tout seul à la première ouverture de chaque jour (date gardée dans RKEY ; sans stockage, jamais tout seul). */
+  const RKEY = 'repas-du-jour:repas:v1';
+  let draft = null, repasVu = null, canStore = true;
+  try { repasVu = localStorage.getItem(RKEY); } catch (e) { canStore = false; }
+  const renderRepas = function(){
+    const row = function(kind, slot){
+      const P = pickDef(kind, slot, draft), id = 'rf-' + kind + (slot ? '-' + slot : '');
+      return '<p class="rf-l" id="' + id + '">' + P.label + '</p><div class="opts-list" role="group" aria-labelledby="' + id + '">' +
+        P.opts.map(function(o){
+          return '<button type="button" class="opt" data-action="rf" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +
+            ' data-value="' + o[0] + '" aria-pressed="' + (o[0] === P.current) + '">' + o[1] + '</button>';
+        }).join('') + '</div>';
+    };
+    const meal = function(id, title, rows, note){
+      return '<section class="rf" aria-labelledby="rf-h-' + id + '"><h2 id="rf-h-' + id + '">' + title + '</h2>' + (note ? '<p class="calc">' + note + '</p>' : '') + rows + '</section>';
+    };
+    const day = DAYS.find(function(x){ return x.js === sel; }).long;
+    $('repas-form').innerHTML = meal('pd', 'Petit-déjeuner', row('pd', null)) +
+      meal('dej', 'Déjeuner', row('prot', 'dej') + row('starch', 'dej') + row('dessert', 'dej')) +
+      meal('diner', 'Dîner', row('prot', 'diner') + row('starch', 'diner') + row('dessert', 'diner'),
+        plan.libre ? 'Ce soir, c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
+  };
+  /* Brouillon : les choix actuels du jour */
+  const startDraft = function(){
+    draft = {pdBase:ch.pdBase, dej:{prot:ch.dej.prot, starch:ch.dej.starch, dessert:dessertOf(ch.dej)}, diner:{prot:ch.diner.prot, starch:ch.diner.starch, dessert:dessertOf(ch.diner)}};
+    renderRepas();
+  };
+  const openRepas = function(opener){ startDraft(); openScreen('repas', opener); };
+  /* Enregistre les choix du formulaire (ou du hasard) pour ce jour de la semaine, puis revient sur la journée */
+  const applyRepas = function(c){
+    const next = cleanCh(c, sel);
+    if (JSON.stringify(next) !== JSON.stringify(cleanCh(ch, sel))){ ch = next; saveCh(); }
+    draft = null;
+    closeScreen(false);
+  };
+  const maybeOpenRepas = function(){
+    const iso = isoDate(today);
+    if (!canStore || acc || pick || repasVu === iso) return;
+    repasVu = iso;
+    try { localStorage.setItem(RKEY, iso); } catch (e) {}
+    if (topScreen() === 'repas') startDraft(); else openRepas({id:'title'});
+  };
   /* Panneau de choix d'un plat : fond grisé, page inerte ; se ferme par un choix, le fond, Échap ou le bouton retour */
   let pick = null;
   const openPick = function(kind, slot){
@@ -1418,6 +1497,7 @@ if (typeof document !== 'undefined'){
     renderAcc();
     render();
     $('title').focus();
+    maybeOpenRepas();
   };
   const accStep = function(step){
     acc.step = step;
@@ -1482,6 +1562,24 @@ if (typeof document !== 'undefined'){
         break;
       }
       case 'open-pick': openPick(b.dataset.kind, b.dataset.slot || null); return;
+      case 'repas': openRepas(b); return;
+      case 'rf': {
+        const slot = b.dataset.slot, kind = b.dataset.kind;
+        if (!draft) return;
+        if (kind === 'pd' && (v === 'avoine' || v === 'pain')) draft.pdBase = v;
+        else if (kind === 'prot' && has(PROT, v)) draft[slot].prot = v;
+        else if (kind === 'starch' && has(STARCH, v)) draft[slot].starch = v;
+        else if (kind === 'dessert' && has(DESSERT, v)) draft[slot].dessert = v;
+        else return;
+        b.parentNode.querySelectorAll('.opt').forEach(function(o){ o.setAttribute('aria-pressed', String(o === b)); });
+        return;
+      }
+      case 'repas-ok': if (!draft) return; applyRepas(draft); break;
+      case 'repas-hasard':
+        if (!draft) return;
+        applyRepas(randomChoices());
+        msg = 'Repas tirés au hasard' + NB + ': touche un plat pour le changer.';
+        break;
       case 'close-pick': closePick(false); return;
       case 'needs': openScreen('reglages', b); return;
       case 'aide': openScreen('aide', b); return;
@@ -1558,7 +1656,9 @@ if (typeof document !== 'undefined'){
     today = n; todayJs = n.getDay(); sel = todayJs;
     purge(); loadSel(); prevQty = new Map();
     $('hint').textContent = '';
+    if (topScreen() === 'repas') startDraft();
     render();
+    maybeOpenRepas();
   };
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') refreshToday(); });
   window.addEventListener('focus', refreshToday);
@@ -1582,6 +1682,7 @@ if (typeof document !== 'undefined'){
   let firstRun = false;
   try { firstRun = localStorage.getItem(PKEY) === null; } catch (e) {}
   if (firstRun) openAcc({});
+  else maybeOpenRepas();
 }
 </script>
 </body>

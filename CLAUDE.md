@@ -26,7 +26,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
   - `REF_GROUPS` et `refTable()` : table de référence des aliments pour l'écran d'aide, groupes (protéines, féculents crus, petit-déjeuner et douceurs, légumes et matières grasses, à la pièce) avec libellés ; les valeurs viennent de `FOOD`, `UNIT` et `STARCH`. Tout aliment ajouté doit y figurer (vérifié par les tests).
   - `SIZES` (petite, moyenne, longue : titre du bandeau et coût net par kg), `MOMENTS`, `MAX_SEANCES` (4), `DUREES` (longue).
   - Plan d'un jour : `{ seances: [{ taille, moment, duree? }], libre }`. `emptyPlan(js)` (aucune séance, repas libre le samedi), `cleanPlan(p, js)` (validation), `migratePlan(p)` (plan d'avant la 2.0.0 → séances).
-  - `DEFAULT_CHOICES` : choix de repas par défaut par jour, indexés par `Date.getDay()` (0 = dimanche).
+  - `DEFAULT_CHOICES` : choix de repas par défaut par jour, indexés par `Date.getDay()` (0 = dimanche). `randomChoices(rand)` : « Décide pour moi », chaque choix tiré au hasard (`rand` dans [0, 1[, `Math.random` par défaut), jamais la même protéine au déjeuner et au dîner.
   - `PROFILE_DEFAULT`, `PROFILE_RANGES`, `NEAT` : profil par défaut, bornes des champs, activité hors sport.
 - `seanceCost(séance, profil)`, `dayCost(plan, profil)`. `energy(plan, profil)` renvoie `{ bmr, rest, restSource, cost, need, deficit, target, kgWeek }` (`mode` : `'auto'` ou `'manuel'` ; `restSource` : `'calcul'` ou `'saisie'`).
 - `splitStarch(budget, part, k, off, caps)` : `off = { dej, diner }`, kcal des desserts, prises sur le féculent du même repas ; `caps = { dej, diner }`, plafonds en kcal de chaque repas.
@@ -80,11 +80,18 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Écrans
 
-- Quatre `<main>`, un seul visible (`setView`, attribut `hidden`) : `#accueil`, `#page` (la journée), `#reglages` et `#aide`.
+- Cinq `<main>`, un seul visible (`setView`, attribut `hidden`) : `#accueil`, `#page` (la journée, aussi appelée récap), `#reglages`, `#aide` et `#repas` (formulaire des repas du jour).
 - En haut à droite de la page, à côté de la date : « ? » (`#help`, « Comment ça marche ») et la roue dentée (`#gear`, « Réglages »). Le lien « Régler » de la note du total mène aussi aux réglages.
 - Réglages : flèche retour, titre « Réglages », carte « Tes besoins » (`#besoins`), liens « Comment ça marche » et « Refaire l'accueil » en bas, bouton « Voir ma journée ».
 - Aide (« Comment ça marche ») : ta journée en trois temps (séances, dépense, déficit), comment les repas sont construits, lire les quantités, ajuster avec la moyenne de poids ; puis « Valeurs des aliments » : une table par groupe de `refTable()` (aliment, kcal, P, G, L ; colonnes de largeur fixe pour que les tables s'alignent), rendue une fois au chargement.
-- Réglages et aide s'empilent au-dessus de la page (`stack`, `openScreen`, `closeScreen`) : chacun ajoute une entrée d'historique (`pushState({ screen })`), la flèche et le bouton du bas reviennent d'un cran (aide ouverte depuis les réglages → réglages), le bouton retour du téléphone aussi (`popstate` : ferme d'abord le panneau de choix, puis dépile jusqu'à l'écran de l'entrée atteinte). La position dans la page est gardée et rétablie au retour (`history.scrollRestoration = 'manual'`) ; le focus va sur le titre de l'écran ouvert, puis sur le bouton qui l'a ouvert au retour sur la page.
+- Formulaire « Tes repas du jour » (`#repas`) :
+  - s'ouvre tout seul à la première ouverture de chaque jour : au chargement, après l'accueil, ou au retour sur l'onglet un autre jour ; jamais sans stockage ;
+  - se rouvre avec le bouton « Choisir mes repas » (`#open-repas`), juste au-dessus des repas de la page ;
+  - titre, une phrase, bouton « Décide pour moi », puis trois blocs : Petit-déjeuner (Base), Déjeuner et Dîner (Protéine, Féculent, Dessert). Tous les choix y sont visibles en bulles (`.opt`, `data-action="rf"`, un seul `aria-pressed` par rangée), présélectionnés avec les choix du jour ;
+  - les choix vont dans un brouillon ; « Voir ma journée » (`repas-ok`) l'enregistre (comme les bulles de la page, par jour de la semaine) et revient sur la page. « Décide pour moi » (`repas-hasard`) enregistre `randomChoices()`, revient sur la page et le dit (« Repas tirés au hasard : touche un plat pour le changer. »). La flèche et le bouton retour du téléphone ferment sans rien changer ;
+  - un jour de repas libre, le dîner rappelle « Ce soir, c'est ton repas libre : ce dîner est gardé pour les prochains mercredis. » ;
+  - les bulles de la page restent le moyen de changer un plat après coup.
+- Réglages, aide et formulaire des repas s'empilent au-dessus de la page (`stack`, `openScreen`, `closeScreen`) : chacun ajoute une entrée d'historique (`pushState({ screen })`), la flèche et le bouton du bas reviennent d'un cran (aide ouverte depuis les réglages → réglages), le bouton retour du téléphone aussi (`popstate` : ferme d'abord le panneau de choix, puis dépile jusqu'à l'écran de l'entrée atteinte). La position dans la page est gardée et rétablie au retour (`history.scrollRestoration = 'manual'`) ; le focus va sur le titre de l'écran ouvert, puis sur le bouton qui l'a ouvert au retour sur la page.
 
 ## Accueil (premier lancement)
 
@@ -94,7 +101,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
   2. **Ton objectif** : Maintenir 0 %, Perdre doucement −10 %, Sèche −15 % (présélectionnée), Perdre plus vite −20 %, avec l'aperçu en direct `energy(emptyPlan(jour), cleanProfile(brouillon))` : dépense d'un jour sans sport, objectif, perte par semaine.
   3. **Tes habitudes** : shaker Oui / Non (dose réglable si Oui, 120 kcal et 24 g par défaut), marge cuisine Aucune / 150 / 250 kcal.
 - Les réponses vont dans un brouillon validé par `profileFields` ; rien n'est enregistré avant la fin. Une étape incomplète affiche un message (« Dis-nous si tu es un homme ou une femme et indique ton âge… », « Vérifie ton poids (35 à 250 kg) ») et met les champs en erreur ; il s'efface dès qu'on corrige.
-- À la fin (ou avec « Passer ») : les champs valides du brouillon sont fusionnés dans le profil et enregistrés (avec « Passer », le reste garde les valeurs par défaut et la page demande de compléter le profil). La page du jour s'affiche avec « C'est prêt. Ajoute tes séances du jour… », effacé à la première séance ajoutée. Les séances et choix déjà enregistrés ne sont pas touchés.
+- À la fin (ou avec « Passer ») : les champs valides du brouillon sont fusionnés dans le profil et enregistrés (avec « Passer », le reste garde les valeurs par défaut et la page demande de compléter le profil). Le formulaire des repas du jour s'ouvre ensuite (première ouverture de la journée), puis la page du jour s'affiche avec « C'est prêt. Ajoute tes séances du jour… », effacé à la première séance ajoutée. Les séances et choix déjà enregistrés ne sont pas touchés.
 
 ## Stockage
 
@@ -103,6 +110,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 - Toujours en try/catch : l'appli doit fonctionner sans stockage ou avec un stockage corrompu (JSON invalide, valeur qui n'est pas un objet). Les identifiants relus (taille, moment, protéine, féculent) sont validés avec `has()` (propriété propre), jamais avec `OBJ[clé]` qui laisserait passer `constructor` ou `__proto__`.
 - Pas de calendrier (retiré en 3.0.0, récupérable depuis le commit `eb38a17`) : la page montre toujours aujourd'hui (« Aujourd'hui, samedi 27 septembre », « jeudi 1er octobre » le premier du mois). Les dates de la semaine en cours servent seulement à la règle du repas libre. Si la page reste ouverte d'un jour à l'autre, elle revient sur le nouveau jour au retour sur l'onglet (`focus`, `visibilitychange`, `pageshow`).
 - Choix des plats relus et validés avec `has()` à chaque choix (`pd` : avoine ou pain).
+- Formulaire des repas : clé séparée `repas-du-jour:repas:v1`, la date (`AAAA-MM-JJ`) du dernier jour où il s'est ouvert tout seul. Absente : il s'ouvre au prochain chargement. Ajoutée en 3.4.0, rien à migrer.
 - Profil : clé séparée `repas-du-jour:profil:v1`, seulement les champs saisis `{ mode, sexe, age, taille, poids, gras, neat, repos, deficit, prot, ravito, shaker, shakerKcal, shakerProt, kcalPetite, kcalMoyenne, kcalLongueH, marge }`, relus avec `profileFields()` (bornes de `PROFILE_RANGES`). Un champ vidé reprend sa valeur par défaut. La clé `v1` n'a pas changé de forme (3.0.0 : champ `shaker` ajouté, absent = `'oui'` ; 3.2.0 : champ `prot`, absent = 2,0).
 - Migration du profil (1.3.0, champ `mode` ajouté) : un profil sans `mode` est lu en `'manuel'` s'il contient une dépense valide, sinon en `'auto'` (`cleanProfile`), et le mode déduit est fixé au chargement.
 - Si le format change, passer à une nouvelle clé (v2) ou migrer, sans casser les données existantes.
@@ -139,4 +147,4 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 - Tests de fond reproductibles (graine fixe). `npm run test:deep` les fait tourner beaucoup plus longtemps (quelques minutes) ; `SEED=123` change la graine, `FUZZ=5` l'intensité. Une violation affiche son type et des cas reproductibles (profil, séances, choix en JSON).
 - `tests/lib.js` : outils partagés (`loadEngine()` expose toute déclaration de premier niveau du script, `rng`, `checker`, `openPage`). `APP_HTML=chemin` fait tourner les tests de fond sur une autre copie de la page : une copie volontairement cassée doit les faire échouer.
 - Toute nouvelle ligne d'aliment doit être connue de `expected()` dans `tests/fuzz.test.js` (sinon « ligne inconnue du test »).
-- Le test d'interface tourne à date fixe (mercredi 7 octobre 2026, horloge simulée) : il ne doit jamais dépendre du jour réel. `open(seed, fresh)` enregistre un profil vide avant le chargement (pas d'accueil), sauf avec `fresh` pour tester le premier lancement.
+- Le test d'interface tourne à date fixe (mercredi 7 octobre 2026, horloge simulée) : il ne doit jamais dépendre du jour réel. `open(seed, fresh, repas)` enregistre un profil vide avant le chargement (pas d'accueil) et note le formulaire des repas comme déjà vu ce jour-là (il ne s'ouvre pas tout seul), sauf avec `fresh` pour tester le premier lancement ou `repas` pour tester le formulaire.
