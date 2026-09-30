@@ -254,6 +254,56 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .ref-t tbody th{padding-right:8px;text-align:left;font-weight:400;line-height:1.3;}
 .ref-t td{padding-left:10px;text-align:right;font-family:var(--sans);font-weight:600;font-stretch:92%;font-variant-numeric:tabular-nums;white-space:nowrap;}
 
+/* Calendrier : semaine du jour affiché, jour choisi en encre, aujourd'hui en betterave, point sous les jours planifiés */
+.cal{margin:0 0 18px;}
+.cal-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -10px 6px;}
+.cal-h .icon-btn:disabled{opacity:.3;cursor:default;}
+.cal-t{margin:0;font-family:var(--sans);font-weight:600;font-size:15px;color:var(--muted);}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;}
+.week button{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;padding:6px 0 11px;border:1px solid var(--line);border-radius:12px;background:transparent;font-family:var(--sans);}
+.week .wd{font-size:12.5px;color:var(--muted);}
+.week .dn{font-weight:700;font-size:18px;line-height:1.15;font-variant-numeric:tabular-nums;}
+.week button.is-today{border-color:var(--beet);border-width:2px;padding:5px 0 10px;}
+.week button.is-today .dn{color:var(--beet);}
+.week button.is-planned::after{content:"";position:absolute;left:50%;bottom:4px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:currentColor;opacity:.55;}
+.week button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.week button[aria-pressed="true"] .wd,.week button[aria-pressed="true"] .dn{color:var(--on-ink);}
+.week button:disabled{opacity:.35;cursor:default;}
+.cal-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.cal-acts .reset{margin:0;}
+.cal-acts [hidden]{display:none;}
+
+/* Planifier : raccourcis, dates, puis un jour par étape */
+.plan-step{margin:0 0 6px;font-family:var(--sans);font-weight:600;font-size:15px;color:var(--muted);}
+.plan-step:empty{display:none;}
+.plan-bar{height:5px;margin:0 0 18px;border-radius:3px;background:var(--line);overflow:hidden;}
+.plan-bar span{display:block;height:100%;background:var(--beet);}
+.plan .fields input,.courses .fields input{font-size:16px;font-weight:600;}
+.plan-presets{margin:0 0 18px;}
+.plan h2,.shop-t{margin:22px 0 10px;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
+.plan .acts{margin-bottom:6px;}
+.plan .switches{margin-top:14px;}
+.plan .acc-nav .btn.main{flex:1;}
+.plan-kcal{margin:14px 0 0;font-size:16px;}
+.plan-kcal strong{font-family:var(--sans);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+/* Courses : une ligne par aliment, à cocher */
+.shop{margin:0;padding:0;list-style:none;}
+.chk{display:grid;grid-template-columns:26px minmax(4.6em,auto) minmax(0,1fr);align-items:baseline;gap:4px 10px;width:100%;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;}
+.chk .box{align-self:center;width:22px;height:22px;border:2px solid var(--line);border-radius:6px;}
+.chk .box{position:relative;}
+.chk[aria-checked="true"] .box{border-color:var(--ink);background:var(--ink);}
+.chk[aria-checked="true"] .box::after{content:"";position:absolute;left:5px;top:1px;width:6px;height:11px;border:solid var(--on-ink);border-width:0 2.5px 2.5px 0;transform:rotate(45deg);}
+.chk .q{font-family:var(--sans);font-weight:800;font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;}
+.chk .name{font-size:17px;line-height:1.3;}
+.chk .note{display:block;font-size:14px;font-style:italic;color:var(--muted);}
+.chk[aria-checked="true"] .q,.chk[aria-checked="true"] .name{text-decoration:line-through;opacity:.5;}
+.shop-days{margin:0 0 14px;padding:0;list-style:none;}
+.shop-day{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;width:100%;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;}
+.shop-day .d{font-family:var(--sans);font-weight:700;font-size:16px;}
+.shop-day .k{font-family:var(--sans);font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.shop-day .note{grid-column:1/-1;font-size:14.5px;color:var(--muted);}
+.courses .regl-links{margin-bottom:18px;}
+
 /* Formulaire des repas du jour : tous les choix visibles, un par rangée */
 .day-top{margin:-4px 0 18px;}
 .day-top .reset{margin:0;}
@@ -356,6 +406,19 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <button type="button" class="icon-btn" id="gear" data-action="needs" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </div>
+  <div class="cal">
+    <div class="cal-h">
+      <button type="button" class="icon-btn" id="wk-prev" data-action="week" data-value="-1" aria-label="Semaine précédente"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <p class="cal-t" id="cal-t"></p>
+      <button type="button" class="icon-btn" id="wk-next" data-action="week" data-value="1" aria-label="Semaine suivante"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+    </div>
+    <div class="week" id="week" role="group" aria-label="Jours de la semaine"></div>
+    <div class="cal-acts">
+      <button type="button" class="reset" id="plan-btn" data-action="plan">Planifier</button>
+      <button type="button" class="reset" id="courses-btn" data-action="courses">Mes courses</button>
+      <button type="button" class="reset" id="today-btn" data-action="today" hidden>Revenir à aujourd’hui</button>
+    </div>
+  </div>
   <h1 id="title" tabindex="-1">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
   <p class="intro" id="intro" role="status"></p>
   <div class="sess" id="sess"></div>
@@ -367,7 +430,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 
   <div class="opts">
     <div class="switches">
-      <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="libre" id="sw-lib"><span>Repas libre ce soir</span><span class="knob" aria-hidden="true"></span></button>
+      <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="libre" id="sw-lib"><span id="sw-lib-t">Repas libre ce soir</span><span class="knob" aria-hidden="true"></span></button>
     </div>
     <p class="hint" id="hint" role="status"></p>
   </div>
@@ -387,7 +450,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <p>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</p>
     <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
     <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
-    <p>Tes choix sont mémorisés pour chaque jour de la semaine, sur cet appareil.</p>
+    <p>Tes séances et tes plats sont mémorisés pour chaque jour, sur cet appareil. Un jour pas encore choisi reprend les plats du même jour de la semaine.</p>
     <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
     <p class="version"><span>Version <span id="app-version"></span></span><a href="https://github.com/fnovellon/NutriPlan/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Nouveautés</a></p>
   </footer>
@@ -502,7 +565,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     </ol>
     <h2>Comment tes repas sont construits</h2>
     <ul>
-      <li>Chaque jour, à la première ouverture, tu choisis tes plats (ou tu laisses l’appli décider au hasard). Tu peux toujours changer un plat depuis ta journée&nbsp;; tes choix sont gardés pour ce jour de la semaine.</li>
+      <li>Chaque jour, à la première ouverture, tu choisis tes plats (ou tu laisses l’appli décider au hasard). Tu peux toujours changer un plat depuis ta journée. Chaque jour garde ses plats&nbsp;; un jour pas encore choisi reprend ceux du même jour de la semaine.</li>
       <li>Le petit-déjeuner, la collation et le shaker suivent ton profil et tes séances.</li>
       <li>Viande, poisson, œufs et skyr restent au plus près du menu de base, ajustés juste ce qu’il faut pour tenir ton objectif de protéines (en grammes par kilo) à 10&nbsp;% près.</li>
       <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance, sans dépasser une portion sportive (à 72&nbsp;kg&nbsp;: 120&nbsp;g de riz ou de pâtes crus, 100&nbsp;g de lentilles, 400&nbsp;g de pommes de terre). Au-delà, les grosses journées, un encas s’ajoute. Changer de féculent garde les mêmes calories.</li>
@@ -515,6 +578,12 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       <li>Le poids en gros est celui à peser <strong>cru</strong>. Le poids cuit, en dessous, est une estimation.</li>
       <li>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</li>
       <li>Les portions suivent ton poids&nbsp;: le menu est écrit pour 72&nbsp;kg.</li>
+    </ul>
+    <h2>Prévoir plusieurs jours</h2>
+    <ul>
+      <li>Le calendrier, en haut de ta journée, montre la semaine&nbsp;: touche un jour pour voir ou changer ses séances et ses plats. Un point marque les jours déjà prévus.</li>
+      <li><strong>Planifier</strong>&nbsp;: choisis les jours (31 au plus), puis, jour par jour, tes séances et tes plats, ou «&nbsp;Décide pour tous les jours restants&nbsp;».</li>
+      <li><strong>Mes courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin. Un jour sans séance prévue compte comme un jour de repos.</li>
     </ul>
     <h2>Installer l’appli sur ton téléphone</h2>
     <ul>
@@ -542,6 +611,29 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
   <button type="button" class="btn main wide" data-action="repas-ok">Voir ma journée</button>
 </main>
 
+<main class="app plan" id="plan" hidden>
+  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+  <p class="plan-step" id="plan-step"></p>
+  <h1 id="plan-h" tabindex="-1">Planifier</h1>
+  <div id="plan-body"></div>
+</main>
+
+<main class="app courses" id="courses" hidden>
+  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+  <h1 id="courses-h" tabindex="-1">Tes courses</h1>
+  <div class="fields">
+    <label class="field"><span>Du</span><span class="inp"><input type="date" data-range="courses" data-end="from"></span></label>
+    <label class="field"><span>Au</span><span class="inp"><input type="date" data-range="courses" data-end="to"></span></label>
+  </div>
+  <p class="calc" id="courses-span"></p>
+  <p class="warn" id="courses-err" role="alert"></p>
+  <div id="courses-list"></div>
+  <h2 class="shop-t" id="courses-days-t">Jour par jour</h2>
+  <ul class="shop-days" id="courses-days" aria-labelledby="courses-days-t"></ul>
+  <div class="regl-links"><button type="button" class="reset" data-action="co-uncheck">Tout décocher</button></div>
+  <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
+</main>
+
 <div class="sheet" id="sheet" hidden>
   <div class="scrim" data-action="close-pick"></div>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheet-t">
@@ -554,7 +646,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.5.0';
+const APP_VERSION = '3.6.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -588,7 +680,7 @@ const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour'
 /* Desserts du déjeuner et du dîner : quantités fixes (pas mises à l'échelle du poids), calories prises sur le féculent du même repas */
 const DESSERT = {
   aucun:{label:'Aucun'},
-  fruit:{label:'Fruit', item:function(){ return it('des', '1', 'fruit', 'pomme, poire, orange, 2 kiwis…', unitMac('pomme', 1)); }},
+  fruit:{label:'Fruit', item:function(){ return it('des', '1', 'fruit', 'pomme, poire, orange, 2 kiwis…', unitMac('pomme', 1), null, {id:'fruit', n:1}); }},
   compote:{label:'Compote', item:function(){ return it('des', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)); }},
   chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
 };
@@ -612,11 +704,16 @@ function refTable(){
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
-function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k}; }
-function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n}; }
+/* Valeurs d'une quantité ; buy : ce qu'il faut acheter (voir it) */
+function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k, buy:{id:food, g:g}}; }
+function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n, buy:{id:u, n:n}}; }
 /* cook : poids cuit estimé par mode de cuisson, affiché sous la quantité crue,
    ex. {raw:'cru', ways:[{g:135, adj:'cuit'}]} ou {raw:'crues', ways:[{g:340, adj:'à l’eau'}, {g:260, adj:'au four'}]} */
-function it(key, qty, name, note, m, cook){ return {key:key, qty:qty, name:name, note:note || null, m:m || null, cook:cook || null}; }
+/* Ligne d'un repas. m : kcal et macros ; buy : l'achat pour la liste de courses, {id, g} en grammes, {id, n} en pièces ou
+   {id, kcal} pour un budget (pris dans m.buy si absent) */
+function it(key, qty, name, note, m, cook, buy){
+  return {key:key, qty:qty, name:name, note:note || null, m:m ? {kcal:m.kcal, p:m.p, c:m.c, f:m.f} : null, cook:cook || null, buy:buy || (m && m.buy) || null};
+}
 /* Rendement de cuisson de la viande et du poisson (poids cuit / poids cru, ≈ table USDA des rendements de cuisson, 2012) */
 const YIELD = {poulet:0.75, boeuf:0.75, poisson:0.8, saumon:0.8};
 /* Portions : menu de référence pour 72 kg, mis à l'échelle du poids (k = poids / 72, borné à 0,65-1,4 ≈ 47 à 101 kg) */
@@ -644,7 +741,7 @@ function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
    Restent fixes : le demi-avocat et la boîte de thon (on ne coupe pas une boîte). */
 /* Remplacement proposé en note : même énergie, arrondie à 5 g (quantité fixe, comme ce qu'il remplace) */
 function swapGrams(kcal, food){ return Math.max(5, Math.round(kcal / FOOD[food][0] * 100 / 5) * 5); }
-function avocat(){ const m = mac('avocat', 70); return it('av', '½', 'avocat', 'ou ' + swapGrams(m.kcal, 'amandes') + NB + 'g d’amandes', m); }
+function avocat(){ const m = mac('avocat', 70); return it('av', '½', 'avocat', 'ou ' + swapGrams(m.kcal, 'amandes') + NB + 'g d’amandes', m, null, {id:'avocat', n:0.5}); }
 const PROT = {
   poulet:{label:'Poulet / dinde',
     base:function(k){ return [meat(sc(180, 10, k), 'poulet ou dinde', null, 'poulet')]; },
@@ -677,7 +774,7 @@ const PROT = {
     dej:function(){ return []; },
     diner:function(){ return []; }},
   thon:{label:'Thon', fixe:true,
-    base:function(){ return [it('p1', '1', 'boîte de thon au naturel', 'environ 110' + NB + 'g égoutté', mac('thon', 110)), it('p2', '1', 'œuf dur', 'ou ' + swapGrams(UNIT.oeuf[0], 'parmesan') + NB + 'g de parmesan', unitMac('oeuf', 1))]; },
+    base:function(){ return [it('p1', '1', 'boîte de thon au naturel', 'environ 110' + NB + 'g égoutté', mac('thon', 110), null, {id:'thon', n:1}), it('p2', '1', 'œuf dur', 'ou ' + swapGrams(UNIT.oeuf[0], 'parmesan') + NB + 'g de parmesan', unitMac('oeuf', 1))]; },
     dej:function(){ return []; },
     diner:function(){ return []; }}
 };
@@ -846,7 +943,7 @@ function shakerMac(p){
   const prot = Math.min(p.shakerProt, p.shakerKcal / 4), rest = p.shakerKcal - 4 * prot;
   return {kcal:p.shakerKcal, p:prot, c:rest / 8, f:rest / 18};
 }
-function shakerItem(p){ return it('shk', '1', 'shaker de protéines', 'une dose, à l’eau', shakerMac(p)); }
+function shakerItem(p){ return it('shk', '1', 'shaker de protéines', 'une dose, à l’eau', shakerMac(p), null, {id:'shaker', n:1}); }
 function gouterItems(k, kp){
   const sk = Math.max(SKYR_MIN, sc(150, 10, kp)), am = sc(15, 5, k);
   return [
@@ -877,7 +974,7 @@ function starchItem(id, kcal){
   const q = Math.max(S.step, Math.round(kcal / (S.f[0] / 100) / S.step) * S.step);
   const k = q / 100;
   return it('st', grams(q), S.name, null, {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k},
-    S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null);
+    S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null, {id:id, g:q});
 }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond (caps : kcal du plafond de chaque repas).
    off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).
@@ -903,7 +1000,7 @@ function allItems(secs){ return secs.reduce(function(a, s){ return a.concat(s.it
 function ideaFor(choice){ const row = IDEAS[choice.prot]; return row && row[choice.starch] ? row[choice.starch] : null; }
 function fuel(d, rate){
   const g = Math.round(rate * d / 5) * 5;
-  return it('fuel', grams(g), 'glucides pendant l’effort', rate + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0});
+  return it('fuel', grams(g), 'glucides pendant l’effort', rate + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0}, null, {id:'ravito', g:g});
 }
 
 /* Construit la journée pour un facteur de protéines pf donné (voir buildDay) */
@@ -930,7 +1027,7 @@ function composeDay(plan, ch, pr, pf){
      comptées en lipides (l'huile de cuisson en est l'essentiel) */
   const margeDej = Math.round(pr.marge / 2 / 5) * 5;
   [[lunch, margeDej], [dinner, pr.marge - margeDej]].forEach(function(x){
-    if (x[1] > 0) x[0].items.push(it('marge', '≈' + NB + x[1], 'kcal pour la cuisine', 'huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas)', {kcal:x[1], p:0, c:0, f:x[1] / 9}));
+    if (x[1] > 0) x[0].items.push(it('marge', '≈' + NB + x[1], 'kcal pour la cuisine', 'huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas)', {kcal:x[1], p:0, c:0, f:x[1] / 9}, null, {id:'marge', kcal:x[1]}));
   });
   /* Dessert choisi, en fin de repas */
   [[lunch, ch.dej], [dinner, ch.diner]].forEach(function(x){
@@ -999,7 +1096,7 @@ function composeDay(plan, ch, pr, pf){
     setStarch(dinner, starchItem(ch.diner.starch, sp.diner));
     if (sp.rest >= 30){
       const kc = Math.round(sp.rest / 10) * 10;
-      co.items.push(it('encas', '≈' + NB + fmtInt(kc), 'kcal d’encas', 'pour tes séances, à répartir autour d’elles si c’est beaucoup' + NB + ': pain complet et miel, fruits secs, riz au lait, barre de céréales', {kcal:kc, p:0, c:kc / 4, f:0}));
+      co.items.push(it('encas', '≈' + NB + fmtInt(kc), 'kcal d’encas', 'pour tes séances, à répartir autour d’elles si c’est beaucoup' + NB + ': pain complet et miel, fruits secs, riz au lait, barre de céréales', {kcal:kc, p:0, c:kc / 4, f:0}, null, {id:'encas', kcal:kc}));
     }
   };
   fill();
@@ -1036,7 +1133,7 @@ function composeDay(plan, ch, pr, pf){
     if (soirSec) secs.splice(secs.indexOf(soirSec), 1);
     libre = Math.round((total(dinner.items).kcal + soirKcal + 300 * k) / 50) * 50;
     secs[secs.indexOf(dinner)] = {id:'diner', title:'Repas libre', when:(dinner.when ? dinner.when + ', ' : '') + 'resto ou entre amis', libre:true,
-      items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0})]};
+      items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0}, null, {id:'libre', n:1, kcal:libre})]};
     tot = total(allItems(secs));
   }
   const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !plan.libre ? total(soirSec.items).p : 0;
@@ -1063,6 +1160,61 @@ function buildDay(plan, ch, profile){
   r.prot = {target:T, low:lo, high:hi, floor:lo, factor:pf};
   delete r.adjP; delete r.soirP;
   return r;
+}
+
+/* Liste de courses : les achats (buy) de plusieurs journées construites par buildDay, additionnés et rangés par rayon.
+   Poids crus, pièces entières (avocats : les moitiés arrondies à l'avocat entier), budgets en kcal.
+   Renvoie [{title, lines:[{id, qty, name, note}]}], rayons et lignes vides omis. */
+const SHOP_AISLES = [
+  {title:'Viandes et poissons', ids:['poulet', 'boeuf', 'poisson', 'saumon', 'crevettes', 'jambon']},
+  {title:'Crèmerie et œufs', ids:['skyr', 'oeufs', 'halloumi', 'parmesan']},
+  {title:'Pain et féculents, poids crus', ids:['pain'].concat(STARCH_ORDER)},
+  {title:'Fruits et légumes', ids:['legumes', 'fruitsRouges', 'banane', 'pomme', 'fruit', 'avocat']},
+  {title:'Épicerie', ids:['avoine', 'amandes', 'miel', 'chocolat', 'thon', 'compote', 'huile']},
+  {title:'Le reste', ids:['shaker', 'ravito', 'encas', 'marge', 'libre']}
+];
+function shopQty(g){
+  if (g < 1000) return grams(Math.round(g));
+  return (Math.round(g / 10) / 100).toLocaleString('fr-FR') + NB + 'kg';
+}
+function shoppingList(days){
+  const sum = {};
+  days.forEach(function(d){ d.secs.forEach(function(s){ s.items.forEach(function(i){
+    if (!i.buy) return;
+    const a = sum[i.buy.id] || (sum[i.buy.id] = {g:0, n:0, kcal:0});
+    a.g += i.buy.g || 0; a.n += i.buy.n || 0; a.kcal += i.buy.kcal || 0;
+  }); }); });
+  const get = function(id){ return sum[id] || {g:0, n:0, kcal:0}; };
+  const pl = function(n, one, many){ return n > 1 ? many : one; };
+  const kc = function(k){ return '≈' + NB + fmtInt(Math.round(k / 10) * 10) + NB + 'kcal'; };
+  const line = function(id){
+    const a = get(id);
+    if (id === 'oeufs'){
+      const n = get('oeuf').n + get('oeufMarine').n, m = get('oeufMarine').n;
+      return n ? {qty:String(n), name:pl(n, 'œuf', 'œufs'), note:m ? (m === n ? pl(m, 'à mariner', 'tous à mariner') : 'dont ' + m + ' à mariner') : null} : null;
+    }
+    if (id === 'avocat'){
+      const h = Math.round(a.n * 2), n = Math.ceil(h / 2);
+      return h ? {qty:String(n), name:pl(n, 'avocat', 'avocats'), note:h + ' ' + pl(h, 'moitié', 'moitiés')} : null;
+    }
+    const PIECES = {banane:['banane', 'bananes', null], pomme:['pomme', 'pommes', null], fruit:['fruit au choix', 'fruits au choix', 'pomme, poire, orange, 2 kiwis…'],
+      thon:['boîte de thon au naturel', 'boîtes de thon au naturel', null], compote:['compote', 'compotes', 'pots sans sucre ajouté'],
+      shaker:['dose de shaker', 'doses de shaker', null]};
+    if (has(PIECES, id)) return a.n ? {qty:String(a.n), name:pl(a.n, PIECES[id][0], PIECES[id][1]), note:PIECES[id][2]} : null;
+    if (id === 'libre') return a.n ? {qty:String(a.n), name:pl(a.n, 'repas libre', 'repas libres'), note:kc(a.kcal) + ' au total'} : null;
+    if (id === 'encas') return a.kcal ? {qty:kc(a.kcal), name:'d’encas', note:'pain complet et miel, fruits secs, riz au lait, barre de céréales'} : null;
+    if (id === 'marge') return a.kcal ? {qty:kc(a.kcal), name:'pour la cuisine', note:'environ ' + grams(Math.round(a.kcal / 9 / 5) * 5) + ' d’huile'} : null;
+    if (!a.g) return null;
+    if (id === 'ravito') return {qty:shopQty(a.g), name:'de glucides pour l’effort', note:'boisson d’effort, gels ou pâtes de fruits'};
+    const NAMES = {poulet:'poulet ou dinde', boeuf:'bœuf haché 5' + NB + '%', poisson:'poisson blanc', saumon:'saumon', crevettes:'crevettes cuites',
+      jambon:'jambon blanc', skyr:'skyr nature', halloumi:'halloumi', parmesan:'parmesan', pain:'pain complet', legumes:'légumes verts',
+      fruitsRouges:'fruits rouges', avoine:'flocons d’avoine', amandes:'amandes', miel:'miel', chocolat:'chocolat noir', huile:'huile d’olive'};
+    const NOTES = {jambon:slices(a.g, 45), pain:slices(a.g, 40), legumes:'au choix', fruitsRouges:'surgelés, c’est parfait', chocolat:'70' + NB + '% ou plus', huile:'en plus, pour tes lipides'};
+    return {qty:shopQty(a.g), name:has(STARCH, id) ? STARCH[id].name : NAMES[id], note:has(NOTES, id) ? NOTES[id] : null};
+  };
+  return SHOP_AISLES.map(function(g){
+    return {title:g.title, lines:g.ids.map(function(id){ const l = line(id); return l ? Object.assign({id:id}, l) : null; }).filter(Boolean)};
+  }).filter(function(g){ return g.lines.length; });
 }
 
 if (typeof document !== 'undefined'){
@@ -1093,29 +1245,39 @@ if (typeof document !== 'undefined'){
 
   const noon = function(){ const d = new Date(); d.setHours(12, 0, 0, 0); return d; };
   let today = noon(), todayJs = today.getDay();
+  /* Jours passés depuis plus de 21 jours effacés ; les jours à venir (planifiés) sont gardés */
   const purge = function(){
+    let n = 0;
     Object.keys(store.plans).forEach(function(k){
       const d = new Date(k + 'T12:00:00');
-      if (isNaN(d.getTime()) || Math.abs(today - d) > 21 * 864e5) delete store.plans[k];
+      if (!/^\d{4}-\d\d-\d\d$/.test(k) || isNaN(d.getTime()) || today - d > 21 * 864e5){ delete store.plans[k]; n++; }
     });
+    return n;
   };
-  purge();
-  if (migrated) persist();
+  if (purge() || migrated) persist();
 
   const $ = function(id){ return document.getElementById(id); };
   const isoDate = function(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-  /* Date d'un jour de la semaine en cours (lundi → dimanche) : sert à la règle du repas libre */
-  const dateForJsDay = function(js){
-    const d = new Date(today);
-    d.setDate(today.getDate() - ((todayJs + 6) % 7) + ((js + 6) % 7));
-    return d;
+  const fromIso = function(k){ const d = new Date(k + 'T12:00:00'); return isNaN(d.getTime()) ? null : d; };
+  const addDays = function(d, n){ const x = new Date(d); x.setDate(d.getDate() + n); x.setHours(12, 0, 0, 0); return x; };
+  const dayDiff = function(d){ return Math.round((d - today) / 864e5); };
+  /* Les 7 jours (lundi → dimanche) de la semaine d'une date : règle du repas libre, bandeau du calendrier */
+  const weekOf = function(d){ const mon = addDays(d, -((d.getDay() + 6) % 7)); return [0, 1, 2, 3, 4, 5, 6].map(function(i){ return addDays(mon, i); }); };
+  /* Libellés d'une date : « jeudi 1er octobre » (jour et mois liés par une espace insécable) */
+  const dayLabel = function(d){
+    return d.toLocaleDateString('fr-FR', {weekday:'long'}) + ' ' + (d.getDate() === 1 ? '1er' : d.getDate()) + NB + d.toLocaleDateString('fr-FR', {month:'long'});
   };
+  const cap = function(t){ return t.charAt(0).toUpperCase() + t.slice(1); };
+  /* « aujourd'hui », « demain », « hier » ou « jeudi 8 octobre » */
+  const dayRel = function(d){ const r = {'-1':'hier', '0':'aujourd’hui', '1':'demain'}[dayDiff(d)]; return r || dayLabel(d); };
 
-  /* Pas de calendrier : la page montre toujours aujourd'hui (sel = jour de la semaine d'aujourd'hui) */
-  let sel = todayJs, plan = null, ch = null, prevQty = new Map();
+  /* Jour affiché (calendrier) : selDate à midi, sel = son jour de la semaine */
+  let selDate = today, sel = todayJs, plan = null, ch = null, prevQty = new Map();
+  const selIso = function(){ return isoDate(selDate); };
 
-  const cleanCh = function(c, js){
-    const d = DEFAULT_CHOICES[js];
+  /* Choix des plats relus et validés ; ce qui manque vient de base (sinon des choix par défaut du jour de la semaine) */
+  const cleanCh = function(c, js, base){
+    const d = base || DEFAULT_CHOICES[js];
     const out = {pdBase:d.pdBase, dej:Object.assign({}, d.dej), diner:Object.assign({}, d.diner)};
     if (c && typeof c === 'object'){
       if (c.pdBase === 'avoine' || c.pdBase === 'pain') out.pdBase = c.pdBase;
@@ -1129,17 +1291,29 @@ if (typeof document !== 'undefined'){
     }
     return out;
   };
-  const loadSel = function(){ plan = cleanPlan(store.plans[isoDate(dateForJsDay(sel))], sel); ch = cleanCh(store.choices[sel], sel); };
-  const savePlan = function(){ store.plans[isoDate(dateForJsDay(sel))] = plan; persist(); };
-  const saveCh = function(){ store.choices[sel] = ch; persist(); };
+  /* Plats d'une date : les siens (plans[date].ch), sinon les derniers choisis pour ce jour de la semaine, sinon ceux par défaut */
+  const choicesFor = function(iso, js){
+    const rec = store.plans[iso], mem = cleanCh(store.choices[js], js);
+    return rec && rec.ch && typeof rec.ch === 'object' ? cleanCh(rec.ch, js, mem) : mem;
+  };
+  const loadSel = function(){ sel = selDate.getDay(); plan = cleanPlan(store.plans[selIso()], sel); ch = choicesFor(selIso(), sel); };
+  /* Enregistre le jour affiché : séances et repas libre, plats de la date s'ils ont été choisis */
+  const writeDay = function(iso, p, c){
+    const old = store.plans[iso], rec = {seances:p.seances, libre:p.libre};
+    if (c) rec.ch = c; else if (old && old.ch) rec.ch = old.ch;
+    store.plans[iso] = rec;
+  };
+  const savePlan = function(){ writeDay(selIso(), plan, null); persist(); };
+  /* Plats choisis : pour cette date, et en mémoire pour ce jour de la semaine (repris par les jours pas encore choisis) */
+  const saveCh = function(){ writeDay(selIso(), plan, ch); store.choices[sel] = ch; persist(); };
   /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */
   const clearOtherLibre = function(){
     const moved = [];
-    DAYS.forEach(function(x){
-      if (x.js === sel) return;
-      const iso = isoDate(dateForJsDay(x.js));
-      const p = cleanPlan(store.plans[iso], x.js);
-      if (p.libre){ p.libre = false; store.plans[iso] = p; moved.push(x.long); }
+    weekOf(selDate).forEach(function(d){
+      const iso = isoDate(d);
+      if (iso === selIso()) return;
+      const p = cleanPlan(store.plans[iso], d.getDay());
+      if (p.libre){ p.libre = false; writeDay(iso, p, null); moved.push(DAYS.find(function(x){ return x.js === d.getDay(); }).long); }
     });
     if (!moved.length) return '';
     return 'Un seul repas libre par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' + moved.join(' et de ') + ' sont retirés.' : 'celui de ' + moved[0] + ' est retiré.');
@@ -1193,14 +1367,12 @@ if (typeof document !== 'undefined'){
       (s.items.length ? '<ul class="items">' + s.items.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + '</div>';
   };
 
-  const renderControls = function(){
-    /* « 1er octobre », pas « 1 octobre » ; le jour et le mois restent sur la même ligne */
-    $('date').textContent = 'Aujourd’hui, ' + today.toLocaleDateString('fr-FR', {weekday:'long'}) + ' ' +
-      (today.getDate() === 1 ? '1er' : today.getDate()) + NB + today.toLocaleDateString('fr-FR', {month:'long'});
+  /* Séances du jour affiché : une ligne par séance (moment ou durée, bouton pour la retirer), boutons d'ajout */
+  const sessHTML = function(){
     const segBtn = function(action, i, value, label, on){
       return '<button type="button" data-action="' + action + '" data-index="' + i + '" data-value="' + value + '" aria-pressed="' + on + '">' + label + '</button>';
     };
-    $('sess').innerHTML = plan.seances.length ? plan.seances.map(function(x, i){
+    return plan.seances.length ? plan.seances.map(function(x, i){
       const name = SIZES[x.taille].band;
       const opts = x.taille === 'longue'
         ? DUREES.map(function(d){ return segBtn('sduree', i, d[0], d[1], d[0] === x.duree); }).join('')
@@ -1209,8 +1381,29 @@ if (typeof document !== 'undefined'){
         '<button type="button" class="rm" data-action="rm" data-index="' + i + '" aria-label="Retirer' + NB + ': ' + name.toLowerCase() + '">×</button>' +
         '<div class="seg" role="group" aria-label="' + (x.taille === 'longue' ? 'Durée' : 'Moment') + ' de la séance">' + opts + '</div></div>';
     }).join('') : '<p class="rest-t">Repos, pas de séance.</p>';
-    const full = plan.seances.length >= MAX_SEANCES, hasLong = plan.seances.some(function(x){ return x.taille === 'longue'; });
-    $('acts').querySelectorAll('button').forEach(function(b){ b.disabled = full || (b.dataset.value === 'longue' && hasLong); });
+  };
+  const addDisabled = function(taille){ return plan.seances.length >= MAX_SEANCES || (taille === 'longue' && plan.seances.some(function(x){ return x.taille === 'longue'; })); };
+  const renderControls = function(){
+    /* Jour affiché : « Aujourd'hui, jeudi 1er octobre », « Demain, … », sinon « Jeudi 8 octobre » */
+    const diff = dayDiff(selDate), rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
+    $('date').textContent = rel ? rel + ', ' + dayLabel(selDate) : cap(dayLabel(selDate));
+    $('title').textContent = (diff === 0 ? 'Qu’est-ce que tu fais aujourd’hui' : diff < 0 ? 'Qu’est-ce que tu as fait ' + dayRel(selDate) : 'Qu’est-ce que tu prévois ' + dayRel(selDate)) + NB + '?';
+    $('sw-lib-t').textContent = diff === 0 ? 'Repas libre ce soir' : 'Repas libre le soir';
+    $('today-btn').hidden = diff === 0;
+    /* Bandeau de la semaine du jour affiché : un point sous les jours déjà planifiés */
+    const wk = weekOf(selDate), short = function(d){ return d.toLocaleDateString('fr-FR', {month:'short'}); };
+    $('cal-t').textContent = 'Du ' + wk[0].getDate() + (wk[0].getMonth() !== wk[6].getMonth() ? NB + short(wk[0]) : '') + ' au ' + wk[6].getDate() + NB + short(wk[6]);
+    $('wk-prev').disabled = wk[0] <= addDays(today, -21);
+    $('wk-next').disabled = wk[6] >= addDays(today, 365);
+    $('week').innerHTML = wk.map(function(d){
+      const iso = isoDate(d), isToday = dayDiff(d) === 0, planned = has(store.plans, iso);
+      return '<button type="button" data-action="day" data-value="' + iso + '" aria-pressed="' + (iso === selIso()) + '"' +
+        ' aria-label="' + cap(dayLabel(d)) + (isToday ? ', aujourd’hui' : '') + (planned ? ', planifié' : '') + '"' +
+        ' class="' + (isToday ? 'is-today' : '') + (planned ? ' is-planned' : '') + '"' + (dayDiff(d) < -21 ? ' disabled' : '') + '>' +
+        '<span class="wd">' + d.toLocaleDateString('fr-FR', {weekday:'short'}) + '</span><span class="dn">' + d.getDate() + '</span></button>';
+    }).join('');
+    $('sess').innerHTML = sessHTML();
+    $('acts').querySelectorAll('button').forEach(function(b){ b.disabled = addDisabled(b.dataset.value); });
     $('sw-lib').setAttribute('aria-checked', String(plan.libre));
   };
   const r10 = function(n){ return fmtInt(Math.round(n / 10) * 10); };
@@ -1319,15 +1512,16 @@ if (typeof document !== 'undefined'){
     const next = new Map();
     $('day').innerHTML = res.secs.map(function(s){ return s.band ? bandHTML(s, next) : mealHTML(s, next); }).join('');
     prevQty = next;
+    if (planner && planner.i >= 0 && topScreen() === 'plan') renderPlan();
   };
 
   /* Écrans, un seul visible : accueil, page du jour, réglages (roue dentée) et aide (point d'interrogation).
      Réglages et aide s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du
      téléphone revient d'un cran) et la position dans la page est rétablie au retour. */
   let stack = [], pageScroll = 0;
-  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h'};
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const setView = function(v){ ['accueil', 'page', 'reglages', 'aide', 'repas'].forEach(function(id){ $(id).hidden = id !== v; }); };
+  const setView = function(v){ ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses'].forEach(function(id){ $(id).hidden = id !== v; }); };
   const topScreen = function(){ return stack.length ? stack[stack.length - 1].name : null; };
   const showTop = function(){
     const top = stack.length ? stack[stack.length - 1] : null;
@@ -1346,11 +1540,21 @@ if (typeof document !== 'undefined'){
   const closeScreen = function(fromHistory){
     if (!stack.length) return;
     const left = stack.pop();
+    if (left.name === 'plan') leavePlan();
     showTop();
     if (!stack.length) $(document.getElementById(left.opener) ? left.opener : 'gear').focus({preventScroll:true});
     if (!fromHistory){ try { if (history.state && history.state.screen) history.back(); } catch (e) {} }
   };
   const closeAllScreens = function(){ while (stack.length) closeScreen(false); };
+  /* Remplace l'écran du dessus sans nouvelle entrée d'historique (fin de l'assistant → courses) */
+  const replaceScreen = function(name){
+    const top = stack[stack.length - 1];
+    if (!top) return;
+    if (top.name === 'plan') leavePlan();
+    top.name = name;
+    try { history.replaceState({screen:name}, ''); } catch (e) {}
+    showTop();
+  };
 
   /* Formulaire des repas du jour : tous les choix visibles, sur un brouillon ; « Voir ma journée » l'enregistre,
      « Décide pour moi » tire tout au hasard ; la flèche ou le bouton retour ferment sans rien changer.
@@ -1358,23 +1562,29 @@ if (typeof document !== 'undefined'){
   const RKEY = 'repas-du-jour:repas:v1';
   let draft = null, repasVu = null, canStore = true;
   try { repasVu = localStorage.getItem(RKEY); } catch (e) { canStore = false; }
-  const renderRepas = function(){
+  /* Tous les choix des trois repas, en bulles (formulaire des repas et assistant de planification).
+     draft : bulles du brouillon (data-action="rf"), sinon choix enregistrés tout de suite (pd, prot, starch, dessert) */
+  const mealsFormHTML = function(src, draftMode, prefix){
     const row = function(kind, slot){
-      const P = pickDef(kind, slot, draft), id = 'rf-' + kind + (slot ? '-' + slot : '');
+      const P = pickDef(kind, slot, src), id = prefix + '-' + kind + (slot ? '-' + slot : '');
       return '<p class="rf-l" id="' + id + '">' + P.label + '</p><div class="opts-list" role="group" aria-labelledby="' + id + '">' +
         P.opts.map(function(o){
-          return '<button type="button" class="opt" data-action="rf" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +
+          return '<button type="button" class="opt" data-action="' + (draftMode ? 'rf' : P.action) + '" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +
             ' data-value="' + o[0] + '" aria-pressed="' + (o[0] === P.current) + '">' + o[1] + '</button>';
         }).join('') + '</div>';
     };
     const meal = function(id, title, rows, note){
-      return '<section class="rf" aria-labelledby="rf-h-' + id + '"><h2 id="rf-h-' + id + '">' + title + '</h2>' + (note ? '<p class="calc">' + note + '</p>' : '') + rows + '</section>';
+      return '<section class="rf" aria-labelledby="' + prefix + '-h-' + id + '"><h2 id="' + prefix + '-h-' + id + '">' + title + '</h2>' + (note ? '<p class="calc">' + note + '</p>' : '') + rows + '</section>';
     };
     const day = DAYS.find(function(x){ return x.js === sel; }).long;
-    $('repas-form').innerHTML = meal('pd', 'Petit-déjeuner', row('pd', null)) +
+    return meal('pd', 'Petit-déjeuner', row('pd', null)) +
       meal('dej', 'Déjeuner', row('prot', 'dej') + row('starch', 'dej') + row('dessert', 'dej')) +
       meal('diner', 'Dîner', row('prot', 'diner') + row('starch', 'diner') + row('dessert', 'diner'),
-        plan.libre ? 'Ce soir, c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
+        plan.libre ? (dayDiff(selDate) === 0 ? 'Ce soir' : 'Ce soir-là') + ', c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
+  };
+  const renderRepas = function(){
+    $('repas-h').textContent = dayDiff(selDate) === 0 ? 'Tes repas du jour' : 'Tes repas, ' + dayRel(selDate);
+    $('repas-form').innerHTML = mealsFormHTML(draft, true, 'rf');
   };
   /* Brouillon : les choix actuels du jour */
   const startDraft = function(){
@@ -1391,11 +1601,160 @@ if (typeof document !== 'undefined'){
   };
   const maybeOpenRepas = function(){
     const iso = isoDate(today);
-    if (!canStore || acc || pick || repasVu === iso) return;
+    if (!canStore || acc || pick || repasVu === iso || dayDiff(selDate) !== 0) return;
     repasVu = iso;
     try { localStorage.setItem(RKEY, iso); } catch (e) {}
     if (topScreen() === 'repas') startDraft(); else openRepas({id:'title'});
   };
+
+  /* Périodes (assistant et courses) : dates AAAA-MM-JJ, 31 jours au plus */
+  const MAX_DAYS = 31;
+  const isoOk = function(v){ return typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) && fromIso(v) !== null && isoDate(fromIso(v)) === v; };
+  const rangeDays = function(from, to){
+    const out = [];
+    for (let d = fromIso(from); d <= fromIso(to) && out.length <= MAX_DAYS; d = addDays(d, 1)) out.push(isoDate(d));
+    return out;
+  };
+  /* Message si la période ne va pas ; minDiff : premier jour possible, par rapport à aujourd'hui */
+  const rangeError = function(from, to, minDiff){
+    if (!isoOk(from) || !isoOk(to)) return 'Choisis une date de début et une date de fin.';
+    if (dayDiff(fromIso(from)) < minDiff) return minDiff === 0 ? 'Commence aujourd’hui ou plus tard.' : 'Commence au plus tôt ' + dayLabel(addDays(today, minDiff)) + '.';
+    if (fromIso(to) < fromIso(from)) return 'La fin doit venir après le début.';
+    if (dayDiff(fromIso(to)) > 365) return 'Pas plus d’un an à l’avance.';
+    if (rangeDays(from, to).length > MAX_DAYS) return MAX_DAYS + NB + 'jours au plus' + NB + ': raccourcis la période.';
+    return '';
+  };
+  const spanText = function(from, to){
+    const n = rangeDays(from, to).length;
+    return n > 1 ? n + NB + 'jours, du ' + dayLabel(fromIso(from)) + ' au ' + dayLabel(fromIso(to)) + '.' : '1' + NB + 'jour, ' + dayLabel(fromIso(from)) + '.';
+  };
+  /* Remplit les champs Du / Au d'un écran, et affiche la période ou ce qui ne va pas */
+  const fillRange = function(which, st, minDiff, keepInputs){
+    const box = $(which);
+    box.querySelectorAll('input[data-range]').forEach(function(el){
+      el.min = isoDate(addDays(today, minDiff)); el.max = isoDate(addDays(today, 365));
+      if (!keepInputs) el.value = st[el.dataset.end] || '';
+    });
+    const err = rangeError(st.from, st.to, minDiff);
+    $(which + '-err').textContent = err;
+    $(which + '-span').textContent = err ? '' : spanText(st.from, st.to);
+    return err;
+  };
+
+  /* Planifier : les jours choisis, puis un jour par étape (séances, repas libre, plats), puis les courses.
+     Chaque changement est enregistré tout de suite pour sa date ; en partant, la page revient sur le jour affiché avant. */
+  let planner = null;
+  const PRESETS = [['7', 'Les 7 prochains jours'], ['semaine', 'Cette semaine'], ['suivante', 'La semaine prochaine']];
+  const presetRange = function(k){
+    if (k === 'semaine') return [today, weekOf(today)[6]];
+    if (k === 'suivante'){ const w = weekOf(addDays(today, 7)); return [w[0], w[6]]; }
+    return [today, addDays(today, 6)];
+  };
+  const renderPlan = function(){
+    if (!planner) return;
+    if (planner.i < 0){
+      $('plan-step').textContent = '';
+      $('plan-h').textContent = 'Planifier';
+      $('plan-body').innerHTML = '<p class="repas-p">Choisis les jours à préparer. Pour chacun, tes séances et tes plats, puis ta liste de courses.</p>' +
+        '<div class="opts-list plan-presets" role="group" aria-label="Raccourcis">' + PRESETS.map(function(p){
+          const r = presetRange(p[0]), on = isoDate(r[0]) === planner.from && isoDate(r[1]) === planner.to;
+          return '<button type="button" class="opt" data-action="pl-preset" data-value="' + p[0] + '" aria-pressed="' + on + '">' + p[1] + '</button>';
+        }).join('') + '</div>' +
+        '<div class="fields plan-dates"><label class="field"><span>Du</span><span class="inp"><input type="date" data-range="plan" data-end="from"></span></label>' +
+        '<label class="field"><span>Au</span><span class="inp"><input type="date" data-range="plan" data-end="to"></span></label></div>' +
+        '<p class="calc" id="plan-span"></p><p class="warn" id="plan-err" role="alert"></p>' +
+        '<button type="button" class="btn main wide" data-action="pl-start">Commencer</button>';
+      fillRange('plan', planner, 0, false);
+      return;
+    }
+    const n = rangeDays(planner.from, planner.to).length, i = planner.i, res = buildDay(plan, ch, prof);
+    const rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[dayDiff(selDate)];
+    $('plan-step').textContent = 'Jour ' + (i + 1) + ' sur ' + n;
+    $('plan-h').textContent = rel ? rel + ', ' + dayLabel(selDate) : cap(dayLabel(selDate));
+    const adds = [['petite', 'Petite'], ['moyenne', 'Moyenne'], ['longue', 'Longue']].map(function(a){
+      return '<button type="button" data-action="add" data-value="' + a[0] + '"' + (addDisabled(a[0]) ? ' disabled' : '') + '><span class="a-t">+' + NB + a[1] + '</span></button>';
+    }).join('');
+    $('plan-body').innerHTML = '<div class="plan-bar" aria-hidden="true"><span style="width:' + Math.round((i + 1) / n * 100) + '%"></span></div>' +
+      '<h2>Séances</h2><div class="sess">' + sessHTML() + '</div><div class="acts" role="group" aria-label="Ajouter une séance">' + adds + '</div>' +
+      '<div class="switches"><button type="button" class="switch" role="switch" aria-checked="' + plan.libre + '" data-action="toggle" data-key="libre"><span>Repas libre le soir</span><span class="knob" aria-hidden="true"></span></button></div>' +
+      '<p class="hint" id="plan-hint" role="status">' + planner.msg + '</p>' +
+      mealsFormHTML(ch, false, 'pl') +
+      '<p class="plan-kcal">Environ <strong>' + r10(res.tot.kcal) + NB + 'kcal</strong> ce jour-là' + (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.') + '</p>' +
+      '<div class="regl-links"><button type="button" class="btn hasard" data-action="pl-hasard">Décide pour moi</button>' +
+      (i < n - 1 ? '<button type="button" class="reset" data-action="pl-hasard-tous">Décide pour tous les jours restants</button>' : '') + '</div>' +
+      '<div class="acc-nav"><button type="button" class="btn" data-action="pl-prev">Retour</button>' +
+      '<button type="button" class="btn main" data-action="pl-next">' + (i < n - 1 ? 'Jour suivant' : 'Voir mes courses') + '</button></div>';
+  };
+  /* Étape i de l'assistant (-1 : choix des jours) : le jour de l'étape devient le jour affiché */
+  const planGo = function(i){
+    planner.i = i; planner.msg = '';
+    if (i >= 0){ selDate = fromIso(rangeDays(planner.from, planner.to)[i]); loadSel(); prevQty = new Map(); render(); }
+    renderPlan();
+    scroller().scrollTop = 0;
+    $('plan-h').focus({preventScroll:true});
+  };
+  const leavePlan = function(){
+    if (!planner) return;
+    const back = planner.back;
+    planner = null;
+    $('plan-body').innerHTML = '';
+    selDate = back; loadSel(); prevQty = new Map(); render();
+  };
+  /* Fin de l'assistant : les courses de la période planifiée */
+  const finishPlan = function(){
+    shop.from = planner.from; shop.to = planner.to; saveShop();
+    replaceScreen('courses');
+    renderCourses(false);
+  };
+
+  /* Courses : période (gardée), liste additionnée par rayon, lignes cochées (gardées tant que leur quantité ne change pas) */
+  const SKEY = 'repas-du-jour:courses:v1';
+  let shop = {from:'', to:'', checked:[]};
+  try {
+    const o = JSON.parse(localStorage.getItem(SKEY) || 'null');
+    if (o && typeof o === 'object' && !Array.isArray(o)){
+      if (isoOk(o.from)) shop.from = o.from;
+      if (isoOk(o.to)) shop.to = o.to;
+      if (Array.isArray(o.checked)) shop.checked = o.checked.filter(function(x){ return typeof x === 'string'; }).slice(0, 500);
+    }
+  } catch (e) {}
+  const saveShop = function(){ try { localStorage.setItem(SKEY, JSON.stringify(shop)); } catch (e) {} };
+  const dayResult = function(iso){ const js = fromIso(iso).getDay(); return buildDay(cleanPlan(store.plans[iso], js), choicesFor(iso, js), prof); };
+  const renderCourses = function(keepInputs){
+    if (!keepInputs && (!isoOk(shop.from) || !isoOk(shop.to) || dayDiff(fromIso(shop.to)) < 0)){ shop.from = isoDate(today); shop.to = isoDate(addDays(today, 6)); }
+    const err = fillRange('courses', shop, -21, keepInputs);
+    if (err){ $('courses-list').innerHTML = ''; $('courses-days').innerHTML = ''; return; }
+    const days = rangeDays(shop.from, shop.to), res = days.map(dayResult);
+    $('courses-list').innerHTML = shoppingList(res).map(function(g, j){
+      return '<h2 class="shop-t" id="shop-' + j + '">' + g.title + '</h2><ul class="shop" aria-labelledby="shop-' + j + '">' + g.lines.map(function(l){
+        const key = l.id + '|' + l.qty;
+        return '<li><button type="button" class="chk" role="checkbox" aria-checked="' + (shop.checked.indexOf(key) >= 0) + '" data-action="co-check" data-value="' + key + '">' +
+          '<span class="box" aria-hidden="true"></span><span class="q">' + l.qty + '</span><span class="name">' + l.name + (l.note ? '<span class="note">' + l.note + '</span>' : '') + '</span></button></li>';
+      }).join('') + '</ul>';
+    }).join('');
+    const low = function(t){ return t.charAt(0).toLowerCase() + t.slice(1); };
+    const meal = function(c){ return low(PROT[c.prot].label) + ' et ' + low(STARCH[c.starch].label); };
+    $('courses-days').innerHTML = days.map(function(iso, j){
+      const d = fromIso(iso), p = cleanPlan(store.plans[iso], d.getDay()), c = choicesFor(iso, d.getDay()), r = res[j];
+      const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', meal(c.dej), r.libre ? 'repas libre le soir' : meal(c.diner)];
+      return '<li><button type="button" class="shop-day" data-action="co-day" data-value="' + iso + '"><span class="d">' + cap(dayLabel(d)) + '</span>' +
+        '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + (has(store.plans, iso) ? '' : ' (pas encore planifié)') + '</span></button></li>';
+    }).join('');
+  };
+  /* Champs Du / Au de l'assistant et des courses */
+  const rangeInput = function(e){
+    const el = e.target;
+    if (!el.dataset || !el.dataset.range) return;
+    const st = el.dataset.range === 'plan' ? planner : shop;
+    if (!st) return;
+    st[el.dataset.end] = isoOk(el.value) ? el.value : '';
+    if (el.dataset.range === 'plan'){
+      fillRange('plan', planner, 0, true);
+      $('plan').querySelectorAll('[data-action="pl-preset"]').forEach(function(b){ const r = presetRange(b.dataset.value); b.setAttribute('aria-pressed', String(isoDate(r[0]) === planner.from && isoDate(r[1]) === planner.to)); });
+    } else { saveShop(); renderCourses(true); }
+  };
+  document.addEventListener('input', rangeInput);
+  document.addEventListener('change', rangeInput);
   /* Panneau de choix d'un plat : fond grisé, page inerte ; se ferme par un choix, le fond, Échap ou le bouton retour */
   let pick = null;
   const openPick = function(kind, slot){
@@ -1538,6 +1897,8 @@ if (typeof document !== 'undefined'){
     if (!b) return;
     const v = b.dataset.value;
     let msg = '';
+    /* Boutons de l'assistant : seulement pendant l'assistant, à la bonne étape (choix des jours ou un jour) */
+    if (/^pl-/.test(b.dataset.action) && (!planner || ((b.dataset.action === 'pl-preset' || b.dataset.action === 'pl-start') !== (planner.i < 0)))) return;
     switch (b.dataset.action){
       case 'acc': {
         const k = b.dataset.key, o = {};
@@ -1559,9 +1920,9 @@ if (typeof document !== 'undefined'){
         plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
         plan = cleanPlan(plan, sel); savePlan();
         break;
-      case 'smoment': plan.seances[+b.dataset.index].moment = v; plan = cleanPlan(plan, sel); savePlan(); break;
-      case 'sduree': plan.seances[+b.dataset.index].duree = parseFloat(v); plan = cleanPlan(plan, sel); savePlan(); break;
-      case 'rm': plan.seances.splice(+b.dataset.index, 1); savePlan(); break;
+      case 'smoment': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].moment = v; plan = cleanPlan(plan, sel); savePlan(); break;
+      case 'sduree': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].duree = parseFloat(v); plan = cleanPlan(plan, sel); savePlan(); break;
+      case 'rm': if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan(); break;
       case 'toggle':
         plan[b.dataset.key] = !plan[b.dataset.key];
         if (b.dataset.key === 'libre' && plan.libre) msg = clearOtherLibre();
@@ -1576,6 +1937,71 @@ if (typeof document !== 'undefined'){
       }
       case 'open-pick': openPick(b.dataset.kind, b.dataset.slot || null); return;
       case 'repas': openRepas(b); return;
+      /* Calendrier : un jour, la semaine d'avant ou d'après (même jour de la semaine, ou aujourd'hui), retour à aujourd'hui */
+      case 'day': {
+        const d = fromIso(v);
+        if (!d || dayDiff(d) < -21 || dayDiff(d) > 365) return;
+        selDate = d; loadSel(); prevQty = new Map();
+        break;
+      }
+      case 'week': {
+        let d = addDays(selDate, 7 * (parseInt(v, 10) < 0 ? -1 : 1));
+        if (weekOf(d).some(function(x){ return dayDiff(x) === 0; })) d = today;
+        if (dayDiff(d) < -21 || dayDiff(d) > 365) return;
+        selDate = d; loadSel(); prevQty = new Map();
+        break;
+      }
+      case 'today': selDate = today; loadSel(); prevQty = new Map(); $('title').focus(); break;
+      /* Planifier : jours, étapes, hasard pour ce jour ou pour tous les jours restants */
+      case 'plan':
+        planner = {i:-1, from:isoDate(today), to:isoDate(addDays(today, 6)), back:selDate, msg:''};
+        renderPlan();
+        openScreen('plan', b);
+        return;
+      case 'pl-preset': {
+        const r = presetRange(v);
+        planner.from = isoDate(r[0]); planner.to = isoDate(r[1]);
+        renderPlan();
+        return;
+      }
+      case 'pl-start': if (!fillRange('plan', planner, 0, true)) planGo(0); return;
+      case 'pl-prev': planGo(planner.i - 1); return;
+      case 'pl-next':
+        if (planner.i < rangeDays(planner.from, planner.to).length - 1) planGo(planner.i + 1); else finishPlan();
+        return;
+      case 'pl-hasard':
+        ch = cleanCh(randomChoices(), sel); saveCh();
+        planner.msg = 'Plats tirés au hasard' + NB + ': touche un plat pour le changer.';
+        break;
+      case 'pl-hasard-tous':
+        rangeDays(planner.from, planner.to).slice(planner.i).forEach(function(iso){
+          const js = fromIso(iso).getDay(), c = cleanCh(randomChoices(), js);
+          writeDay(iso, cleanPlan(store.plans[iso], js), c);
+          store.choices[js] = c;
+        });
+        persist();
+        finishPlan();
+        return;
+      /* Courses : cocher une ligne, tout décocher, ouvrir un jour */
+      case 'courses': renderCourses(false); openScreen('courses', b); return;
+      case 'co-check': {
+        const k = shop.checked.indexOf(v);
+        if (k >= 0) shop.checked.splice(k, 1); else shop.checked.push(v);
+        saveShop();
+        b.setAttribute('aria-checked', String(k < 0));
+        return;
+      }
+      case 'co-uncheck': shop.checked = []; saveShop(); renderCourses(true); return;
+      case 'co-day': {
+        const d = fromIso(v);
+        if (!d) return;
+        closeAllScreens();
+        selDate = d; loadSel(); prevQty = new Map();
+        render();
+        scroller().scrollTop = 0;
+        $('title').focus({preventScroll:true});
+        return;
+      }
       case 'installer':
         if (installEvt){ installEvt.prompt(); installEvt = null; }
         $('install').hidden = true;
@@ -1605,7 +2031,7 @@ if (typeof document !== 'undefined'){
       case 'starch': if (has(STARCH, v)){ ch[b.dataset.slot].starch = v; saveCh(); } break;
       case 'dessert': if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } break;
       case 'reset':
-        delete store.plans[isoDate(dateForJsDay(sel))];
+        delete store.plans[selIso()];
         delete store.choices[sel];
         loadSel();
         if (plan.libre) msg = clearOtherLibre();
@@ -1614,7 +2040,16 @@ if (typeof document !== 'undefined'){
       default: return;
     }
     $('hint').textContent = msg;
+    if (planner && b.closest('#plan') && b.dataset.action !== 'pl-hasard') planner.msg = msg;
+    const inPlan = b.closest('#plan') ? b : null;
     render();
+    /* Assistant redessiné : le focus revient sur le même bouton */
+    if (inPlan && topScreen() === 'plan'){
+      const same = [...$('plan-body').querySelectorAll('[data-action="' + inPlan.dataset.action + '"]')].find(function(x){
+        return ['value', 'slot', 'index', 'key'].every(function(k){ return x.dataset[k] === inPlan.dataset[k]; });
+      });
+      if (same) same.focus({preventScroll:true});
+    }
     /* Un choix dans le panneau le valide et le ferme */
     if (pick && b.closest('#sheet')) closePick(false);
   });
@@ -1670,7 +2105,7 @@ if (typeof document !== 'undefined'){
   const refreshToday = function(){
     const n = noon();
     if (isoDate(n) === isoDate(today)) return;
-    today = n; todayJs = n.getDay(); sel = todayJs;
+    today = n; todayJs = n.getDay(); selDate = today;
     purge(); loadSel(); prevQty = new Map();
     $('hint').textContent = '';
     if (topScreen() === 'repas') startDraft();

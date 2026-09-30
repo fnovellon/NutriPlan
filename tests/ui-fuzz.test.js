@@ -85,6 +85,21 @@ function scan(dom, label){
   type(dom, '#besoins input[data-key="gras"]', 30); click(dom, '[data-action="prof"][data-key="mode"][data-value="auto"]'); scan(dom, 'réglages, masse grasse');
   click(dom, '#help-regl'); scan(dom, 'aide');
 }
+{
+  // Calendrier, assistant de planification (dates, étapes, erreurs), courses
+  const dom = open(Object.assign(seen(), { [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) }));
+  click(dom, '#week [data-value="2026-10-09"]'); scan(dom, 'page, autre jour');
+  click(dom, '#wk-next'); scan(dom, 'page, semaine suivante');
+  click(dom, '#today-btn');
+  click(dom, '#plan-btn'); scan(dom, 'planifier, dates');
+  type(dom, 'input[data-range="plan"][data-end="to"]', '2027-01-30'); scan(dom, 'planifier, période trop longue');
+  click(dom, '[data-action="pl-preset"][data-value="7"]');
+  click(dom, '[data-action="pl-start"]'); scan(dom, 'planifier, premier jour');
+  click(dom, '#plan-body [data-action="add"][data-value="longue"]'); click(dom, '#plan-body [data-action="toggle"]'); scan(dom, 'planifier, sortie longue et repas libre');
+  click(dom, '[data-action="pl-hasard-tous"]'); scan(dom, 'courses');
+  click(dom, '#courses-list .chk'); scan(dom, 'courses, ligne cochée');
+  type(dom, 'input[data-range="courses"][data-end="to"]', '2026-09-01'); scan(dom, 'courses, période invalide');
+}
 [
   ['petite corpulence au-dessus de l’objectif', { sexe: 'f', age: 28, taille: 160, poids: 45, deficit: 25, prot: 2.6 }],
   ['objectif de protéines bas', { age: 35, taille: 178, poids: 71, prot: 1.6 }],
@@ -146,6 +161,9 @@ function check(dom, log){
     const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
     Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
   } catch (e){ C.ok(false, 'stockage illisible', () => e.message + ' ' + where()); }
+  // Assistant : un seul choix par rangée ; courses : chaque ligne a sa quantité
+  if (!$('#plan').hidden) $('#plan-body').querySelectorAll('[role="group"].opts-list').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'assistant : un choix par rangée', where));
+  if (!$('#courses').hidden) d.querySelectorAll('#courses-list .chk').forEach(b => C.ok(/\d/.test(b.querySelector('.q').textContent) && ['true', 'false'].includes(b.getAttribute('aria-checked')), 'courses : ligne sans quantité', where));
   // Formulaire des repas : un seul choix par rangée
   if (!$('#repas').hidden) $('#repas-form').querySelectorAll('[role="group"]').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'formulaire : un choix par rangée', where));
   if ($('#page').hidden) return;
@@ -240,6 +258,51 @@ const ACTIONS = {
     } else C.ok(after.join() === before.join(), 'formulaire fermé sans valider : choix changés', () => before.join(' ') + ' // ' + after.join(' '));
     return 'repas ' + how;
   },
+  // Calendrier : un jour de la semaine, semaine d'avant ou d'après, retour à aujourd'hui
+  cal: dom => {
+    const d = dom.window.document;
+    if (d.querySelector('#page').hidden) return 'calendrier -';
+    const b = R.pick([...d.querySelectorAll('#week button:not(:disabled), #wk-prev:not(:disabled), #wk-next:not(:disabled), #today-btn:not([hidden])')]);
+    b.click();
+    const on = d.querySelector('#week [aria-pressed="true"]');
+    C.ok(on && d.querySelectorAll('#week [aria-pressed="true"]').length === 1, 'calendrier : un seul jour choisi', b.id || b.dataset.value);
+    return 'calendrier ' + (b.dataset.value || b.id);
+  },
+  // Assistant : dates (raccourci ou champs), quelques étapes avec séances et plats, puis courses, hasard pour tous ou flèche
+  planifier: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'planifier -';
+    d.querySelector('#plan-btn').click();
+    if (R.chance(.5)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
+    else type(dom, 'input[data-range="plan"][data-end="to"]', R.pick(['2026-10-09', '2026-10-20', '2026-12-31', '', '2026-10-01']));
+    d.querySelector('[data-action="pl-start"]').click();
+    for (let i = R.int(0, 4); i > 0 && d.querySelector('[data-action="pl-next"]'); i--){
+      for (let j = R.int(0, 3); j > 0; j--){
+        const b = R.pick([...d.querySelectorAll('#plan-body button:not(:disabled)')].filter(x => !/^pl-/.test(x.dataset.action)));
+        if (b) b.click();
+      }
+      R.pick(['pl-next', 'pl-next', 'pl-prev', 'pl-hasard']).split().forEach(a => { const b = d.querySelector('[data-action="' + a + '"]'); if (b) b.click(); });
+    }
+    const end = R.pick(['courses', 'tous', 'flèche', 'retour']);
+    if (end === 'courses') while (!d.querySelector('#plan').hidden && d.querySelector('[data-action="pl-next"]')) d.querySelector('[data-action="pl-next"]').click();
+    else if (end === 'tous' && d.querySelector('[data-action="pl-hasard-tous"]')) d.querySelector('[data-action="pl-hasard-tous"]').click();
+    else if (end === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
+    if (!d.querySelector('#plan').hidden) d.querySelector('#plan [data-action="fermer"]').click();
+    C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', end);
+    if (!d.querySelector('#courses').hidden && R.chance(.5)) d.querySelector('#courses [data-action="fermer"]').click();
+    return 'planifier ' + end;
+  },
+  // Courses : ouvrir, cocher, changer la période, ouvrir un jour ou revenir
+  courses: dom => {
+    const d = dom.window.document;
+    if (d.querySelector('#courses').hidden){ if (d.querySelector('#page').hidden) return 'courses -'; d.querySelector('#courses-btn').click(); }
+    for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#courses-list .chk')]); if (b) b.click(); }
+    if (R.chance(.3)) type(dom, 'input[data-range="courses"][data-end="' + R.pick(['from', 'to']) + '"]', R.pick(['2026-10-10', '2026-10-31', '', '2026-09-01', '2027-06-01']));
+    const day = R.pick([...d.querySelectorAll('#courses-days .shop-day')]);
+    if (day && R.chance(.4)) day.click(); else d.querySelector('#courses [data-action="fermer"]').click();
+    C.ok(d.querySelector('#courses').hidden, 'courses restées ouvertes', '');
+    return 'courses';
+  },
   day: dom => { clock.now += 864e5 * R.pick([1, 1, 2, 7]); dom.window.dispatchEvent(new dom.window.Event('focus')); return 'jour suivant'; },
   accueil: dom => {
     const d = dom.window.document;
@@ -266,7 +329,8 @@ for (let run = 0; run < RUNS; run++){
     if (step % 30 === 29){
       const was = dom.window.document;
       const before = was.querySelector('#day').innerHTML.replace(/ bump/g, ''), sumText = was.querySelector('#sum-text').textContent;
-      const onPage = !was.querySelector('#page').hidden;
+      // Au chargement, la page montre aujourd'hui : comparable seulement si elle montrait aujourd'hui
+      const onPage = !was.querySelector('#page').hidden && was.querySelector('#date').textContent.startsWith('Aujourd’hui');
       dom = open(snapshot(dom.window));
       const d2 = dom.window.document;
       if (onPage && !d2.querySelector('#page').hidden)

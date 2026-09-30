@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 3.6.0, 30 septembre 2026
+
+- Le calendrier revient : la semaine s'affiche en haut de ta journée. Touche un jour pour voir ou préparer ses séances et ses plats, avec les flèches pour changer de semaine. Un point marque les jours déjà prévus, « Revenir à aujourd'hui » te ramène au jour même.
+- Chaque jour garde maintenant ses propres plats : tu peux prévoir deux lundis différents. Un jour pas encore choisi reprend les derniers plats du même jour de la semaine, comme avant. Tes choix actuels sont gardés.
+- Nouveau « Planifier » : choisis les jours à préparer (les 7 prochains, cette semaine, la semaine prochaine ou tes dates, 31 jours au plus), puis, jour par jour, tes séances, ton repas libre et tes plats. « Décide pour moi » tire les plats d'un jour, ou de tous les jours restants.
+- Nouveau « Mes courses » : tout ce qu'il faut acheter pour les jours choisis, additionné et rangé par rayon (viandes et poissons, crèmerie et œufs, féculents, fruits et légumes, épicerie), en poids crus ou en pièces : combien d'œufs dont combien à mariner, d'avocats, de boîtes de thon… Plus le reste : doses de shaker, ravito, encas, cuisine, repas libres. Chaque ligne se coche au magasin, et un jour de la liste ouvre ce jour.
+- Les jours prévus à l'avance sont gardés ; seuls les jours passés depuis plus de 21 jours sont effacés.
+
 ## 3.5.0, 30 septembre 2026
 
 - L'appli s'installe sur ton téléphone, comme une vraie appli : icône sur l'écran d'accueil, plein écran, et elle marche même sans connexion (à la salle, dans le métro). Les nouvelles versions arrivent toutes seules dès que tu es connecté.

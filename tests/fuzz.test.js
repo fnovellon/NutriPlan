@@ -275,6 +275,20 @@ for (let i = 0; i < N; i++){
     });
   } else C.ok(r.libre === null && !r.secs.some(s => s.libre), 'repas libre un jour normal', cas);
 
+  // Achats (liste de courses) : chaque ligne dit ce qu'il faut acheter, d'accord avec sa quantité affichée
+  items.forEach(x => {
+    const b = x.buy, g = /^(\d+)\u00A0g$/.exec(x.qty);
+    if (!C.ok(b && typeof b.id === 'string', 'ligne sans achat', () => x.qty + ' ' + x.name)) return;
+    C.ok(['g', 'n', 'kcal'].some(k => fin(b[k]) && b[k] > 0), 'achat sans quantité', () => JSON.stringify(b));
+    if (b.g !== undefined && x.key !== 'fuel') C.ok(g && +g[1] === b.g, 'achat en grammes ≠ quantité affichée', () => x.qty + ' ' + x.name + ' ' + JSON.stringify(b));
+    if (b.n !== undefined && x.key !== 'lib') C.ok(x.qty === (b.n === 0.5 ? '½' : String(b.n)), 'achat en pièces ≠ quantité affichée', () => x.qty + ' ' + x.name + ' ' + JSON.stringify(b));
+    if (b.kcal !== undefined) C.ok(near(b.kcal, x.m.kcal, 1e-9), 'budget ≠ kcal de la ligne', () => x.qty + ' ' + x.name);
+    // Le bon aliment : celui de la table (le fruit du dessert est « au choix », pas une pomme)
+    const st = A.STARCH_ORDER.find(id => A.STARCH[id].name === x.name);
+    const want = x.name === 'fruit' ? 'fruit' : x.name === 'avocat' ? 'avocat' : x.name === 'boîte de thon au naturel' ? 'thon' : st || (BYNAME[x.name] && BYNAME[x.name][1]);
+    if (want) C.ok(b.id === want, 'achat : mauvais aliment', () => x.name + ' → ' + b.id);
+  });
+
   // Déterministe
   C.ok(JSON.stringify(A.buildDay(plan, ch, prof)) === JSON.stringify(r), 'résultat non déterministe', cas);
 }
@@ -360,6 +374,36 @@ for (let i = 0; i < N * 2; i++){
   } catch (e){ C.ok(false, 'exception sur données abîmées', () => e.message + ' ' + show()); }
 }
 C.ok(({}).polluted === undefined && !('taille' in {}) && !('seances' in {}), 'Object.prototype pollué', '');
+
+// --- Liste de courses : exactement la somme des achats des journées, rangée par rayon ------------------------------
+{
+  const PIECE = ['banane', 'pomme', 'fruit', 'thon', 'compote', 'shaker', 'libre'];
+  const num = q => Number(q.replace(/[^\d,]/g, '').replace(',', '.'));
+  const grams = q => /kg$/.test(q) ? num(q) * 1000 : num(q);
+  for (let i = 0; i < N / 10; i++){
+    const prof = randProfile(), days = Array.from({ length: R.int(1, 10) }, () => A.buildDay(randPlan(R.int(0, 6)), randChoices(), prof));
+    const input = () => JSON.stringify(prof);
+    const sum = {};
+    days.forEach(d => d.secs.forEach(s => s.items.forEach(x => {
+      const id = x.buy.id === 'oeuf' || x.buy.id === 'oeufMarine' ? 'oeufs' : x.buy.id, a = sum[id] || (sum[id] = { g: 0, n: 0, kcal: 0, mar: 0 });
+      a.g += x.buy.g || 0; a.n += x.buy.n || 0; a.kcal += x.buy.kcal || 0; if (x.buy.id === 'oeufMarine') a.mar += x.buy.n;
+    })));
+    const list = A.shoppingList(days), lines = {};
+    list.forEach(g => { C.ok(g.lines.length > 0 && typeof g.title === 'string', 'rayon vide', g.title); g.lines.forEach(l => { C.ok(!lines[l.id], 'aliment en double', l.id); lines[l.id] = l; }); });
+    C.ok(Object.keys(sum).sort().join() === Object.keys(lines).sort().join(), 'achats oubliés ou en trop dans la liste', () => Object.keys(sum).sort().join() + ' // ' + Object.keys(lines).sort().join());
+    Object.entries(lines).forEach(([id, l]) => {
+      const a = sum[id] || {};
+      [l.qty, l.name, l.note || ''].forEach(t => C.ok(!/NaN|undefined|null|Infinity/.test(t) && !/\d (g|kg|kcal)\b/.test(t), 'liste : texte cassé', () => JSON.stringify(l)));
+      if (id === 'oeufs') C.ok(+l.qty === a.n && (a.mar === 0 ? !l.note : new RegExp(a.mar === a.n ? 'à mariner' : 'dont ' + a.mar + ' à mariner').test(l.note)), 'liste : œufs', () => JSON.stringify([l, a]));
+      else if (id === 'avocat') C.ok(+l.qty === Math.ceil(Math.round(a.n * 2) / 2) && l.note.startsWith(String(Math.round(a.n * 2))), 'liste : avocats', () => JSON.stringify([l, a]));
+      else if (PIECE.includes(id)) C.ok(+l.qty === a.n, 'liste : pièces', () => JSON.stringify([l, a]));
+      else if (id === 'encas' || id === 'marge') C.ok(Math.abs(num(l.qty) - Math.round(a.kcal / 10) * 10) < 1e-6, 'liste : budget', () => JSON.stringify([l, a]));
+      else C.ok(Math.abs(grams(l.qty) - a.g) <= (a.g >= 1000 ? 5 : 0.5), 'liste : grammes', () => JSON.stringify([l, a]) + ' ' + input());
+    });
+    C.ok(JSON.stringify(A.shoppingList(days)) === JSON.stringify(list), 'liste non déterministe', input);
+  }
+  C.ok(A.shoppingList([]).length === 0, 'liste vide', '');
+}
 
 // --- « Décide pour moi » : tirages toujours valides, jamais la même protéine midi et soir, tous les choix possibles ---
 {
