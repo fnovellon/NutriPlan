@@ -1,10 +1,10 @@
 {
   "name": "repas-du-jour",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "private": true,
   "description": "Repas de la journée avec les quantités selon l'activité du jour",
   "scripts": {
-    "test": "node tests/engine.test.js && node tests/golden.test.js && node tests/fuzz.test.js && node tests/ui.test.js && node tests/ui-fuzz.test.js",
+    "test": "node tests/engine.test.js && node tests/golden.test.js && node tests/fuzz.test.js && node tests/ui.test.js && node tests/ui-fuzz.test.js && node tests/pwa.test.js",
     "test:deep": "node tests/fuzz.test.js 20 && node tests/ui-fuzz.test.js 10",
     "golden": "node tests/golden.test.js --update"
   },

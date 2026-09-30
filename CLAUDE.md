@@ -15,6 +15,12 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 ## Architecture
 
 - Tout est dans `index.html` : CSS + JavaScript vanilla, aucune dépendance à l'exécution, aucun build. Polices Google Fonts (Archivo, Newsreader) avec polices de secours.
+- Appli installable (PWA, 3.5.0), seuls fichiers à côté de `index.html` (un service worker est forcément un fichier à part ; ouverte seule depuis un fichier, la page marche comme avant) :
+  - `manifest.webmanifest` : « Repas du jour », nom court « Repas », `display: standalone`, adresses relatives (`./`, le site est dans un sous-dossier de GitHub Pages), couleurs papier, icônes ;
+  - `icons/` : `icon-192.png`, `icon-512.png` (l'icône de la page) et `icon-maskable-512.png` (fond plein, dessin réduit à 80 % pour la zone sûre d'Android), dessinées depuis le SVG de l'icône ;
+  - `sw.js` : service worker. Page : réseau d'abord (nouvelle version dès qu'on est connecté), copie gardée hors connexion (repli sur `./` puis `./index.html`). Manifeste, icônes et polices Google : copie d'abord. Autres sites et requêtes autres que GET : pas touchés. Cache `repas-du-jour-v1`, à changer seulement si la liste `CORE` change ; les anciens caches sont effacés à l'activation ;
+  - dans `index.html` : lien vers le manifeste, métas de l'écran d'accueil de l'iPhone (`apple-mobile-web-app-*`, barre d'état `default`), `apple-touch-icon` déjà en PNG ; service worker enregistré seulement si `serviceWorker` existe et que la page est servie en http(s) ; `beforeinstallprompt` gardé pour le bouton « Installer l'appli » des réglages (`#install`, caché sinon, caché aussi après `appinstalled`).
+  - Sur iPhone, l'appli installée a son propre stockage, séparé de Safari (l'accueil est à refaire une fois) ; sur Android, le stockage est partagé avec Chrome.
 - Le moteur (données + `buildDay`) est pur et testable hors navigateur. L'initialisation du DOM est protégée par `if (typeof document !== 'undefined')` : garder cette séparation.
 - Données :
   - `FOOD` : valeurs pour 100 g `[kcal, protéines, glucides, lipides]` ; `UNIT` : valeurs par pièce (banane ≈ 120 g de pulpe, pomme ≈ 150 g, compote 100 g, œuf moyen ≈ 50 g). Source : table Ciqual de l'Anses, arrondie, glucides disponibles (sans les fibres), vérifiée aliment par aliment en 3.3.1 ; skyr et halloumi d'après les étiquettes, légumes = moyenne de légumes verts. Toute nouvelle valeur doit venir de Ciqual (ou de l'étiquette pour un produit de marque).
@@ -31,7 +37,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 - `seanceCost(séance, profil)`, `dayCost(plan, profil)`. `energy(plan, profil)` renvoie `{ bmr, rest, restSource, cost, need, deficit, target, kgWeek }` (`mode` : `'auto'` ou `'manuel'` ; `restSource` : `'calcul'` ou `'saisie'`).
 - `splitStarch(budget, part, k, off, caps)` : `off = { dej, diner }`, kcal des desserts, prises sur le féculent du même repas ; `caps = { dej, diner }`, plafonds en kcal de chaque repas.
 - `composeDay(plan, choices, profil, pf)` construit la journée pour un facteur de protéines `pf` donné ; `buildDay(plan, choices, profil)` cherche `pf` (voir « Objectif de protéines ») et renvoie `{ secs, tot, libre, energy, ecart, scale, prot }` : `secs` est la timeline (repas + bandeaux de séance), `tot` les totaux, `libre` le budget du repas libre, `ecart` l'apport moins l'objectif (hors repas libre), `scale` le facteur de portions `k`, `prot` `{ target, low, high, floor, factor }` (fourchette ± 10 %, `floor` = `low`). Le profil est facultatif (valeurs par défaut).
-- Portions : `scaleOf(profil)` donne `k`, passé explicitement aux constructeurs de repas (`breakfast`, `snackItems`, `gouterItems`, `mainItems` → `PROT[p].base(k × pf)` / `.dej(k)` / `.diner(k)`, `avocat(k)`) ; les portions ajustées à l'objectif de protéines reçoivent `k × pf` et sont marquées `adj` (`adj(item)`) ; `PROT.thon.fixe` (la boîte ne s'ajuste pas) ; `sc(g, pas, k)` arrondit au pas, `pieces(n, k)` à l'unité, `slices(g, par)` écrit « 2 tranches » ou « environ 3 tranches ».
+- Portions : `scaleOf(profil)` donne `k`, passé explicitement aux constructeurs de repas (`breakfast`, `snackItems`, `gouterItems`, `mainItems` → `PROT[p].base(k × pf)` / `.dej(k)` / `.diner(k)`, `avocat()` fixe) ; les portions ajustées à l'objectif de protéines reçoivent `k × pf` et sont marquées `adj` (`adj(item)`) ; `PROT.thon.fixe` (la boîte ne s'ajuste pas) ; `sc(g, pas, k)` arrondit au pas, `pieces(n, k)` à l'unité, `slices(g, par)` écrit « 2 tranches » ou « environ 3 tranches ».
 
 ## Dépense et objectif (à respecter)
 
@@ -81,12 +87,12 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 ## Écrans
 
 - Cinq `<main>`, un seul visible (`setView`, attribut `hidden`) : `#accueil`, `#page` (la journée, aussi appelée récap), `#reglages`, `#aide` et `#repas` (formulaire des repas du jour).
-- En haut à droite de la page, à côté de la date : « ? » (`#help`, « Comment ça marche ») et la roue dentée (`#gear`, « Réglages »). Le lien « Régler » de la note du total mène aussi aux réglages.
-- Réglages : flèche retour, titre « Réglages », carte « Tes besoins » (`#besoins`), liens « Comment ça marche » et « Refaire l'accueil » en bas, bouton « Voir ma journée ».
-- Aide (« Comment ça marche ») : ta journée en trois temps (séances, dépense, déficit), comment les repas sont construits, lire les quantités, ajuster avec la moyenne de poids ; puis « Valeurs des aliments » : une table par groupe de `refTable()` (aliment, kcal, P, G, L ; colonnes de largeur fixe pour que les tables s'alignent), rendue une fois au chargement.
+- En haut à droite de la page, à côté de la date : fourchette et couteau (`#repas-btn`, « Choisir mes repas », ouvre le formulaire des repas), « ? » (`#help`, « Comment ça marche ») et la roue dentée (`#gear`, « Réglages »). Le lien « Régler » de la note du total mène aussi aux réglages. Dans la date, le jour et le mois sont liés par une espace insécable.
+- Réglages : flèche retour, titre « Réglages », carte « Tes besoins » (`#besoins`), liens « Comment ça marche », « Refaire l'accueil » et, sur Android quand le navigateur le propose, « Installer l'appli » en bas, bouton « Voir ma journée ».
+- Aide (« Comment ça marche ») : ta journée en trois temps (séances, dépense, déficit), comment les repas sont construits, lire les quantités, installer l'appli sur son téléphone (Android, iPhone, hors connexion), ajuster avec la moyenne de poids ; puis « Valeurs des aliments » : une table par groupe de `refTable()` (aliment, kcal, P, G, L ; colonnes de largeur fixe pour que les tables s'alignent), rendue une fois au chargement.
 - Formulaire « Tes repas du jour » (`#repas`) :
   - s'ouvre tout seul à la première ouverture de chaque jour : au chargement, après l'accueil, ou au retour sur l'onglet un autre jour ; jamais sans stockage ;
-  - se rouvre avec le bouton « Choisir mes repas » (`#open-repas`), juste au-dessus des repas de la page ;
+  - se rouvre avec l'icône en haut de la page (`#repas-btn`) ou le bouton « Choisir mes repas » (`#open-repas`), juste au-dessus des repas de la page ;
   - titre, une phrase, bouton « Décide pour moi », puis trois blocs : Petit-déjeuner (Base), Déjeuner et Dîner (Protéine, Féculent, Dessert). Tous les choix y sont visibles en bulles (`.opt`, `data-action="rf"`, un seul `aria-pressed` par rangée), présélectionnés avec les choix du jour ;
   - les choix vont dans un brouillon ; « Voir ma journée » (`repas-ok`) l'enregistre (comme les bulles de la page, par jour de la semaine) et revient sur la page. « Décide pour moi » (`repas-hasard`) enregistre `randomChoices()`, revient sur la page et le dit (« Repas tirés au hasard : touche un plat pour le changer. »). La flèche et le bouton retour du téléphone ferment sans rien changer ;
   - un jour de repas libre, le dîner rappelle « Ce soir, c'est ton repas libre : ce dîner est gardé pour les prochains mercredis. » ;
@@ -137,12 +143,13 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Commandes
 
-- Voir l'appli : ouvrir `index.html` dans un navigateur.
-- Tests : `npm install` puis `npm test` (une trentaine de secondes). Les lancer après chaque modification. Cinq fichiers :
+- Voir l'appli : ouvrir `index.html` dans un navigateur. Pour l'appli installable (service worker), la servir en http : `python3 -m http.server` puis `http://localhost:8000/` ; dans Chromium, `Page.getInstallabilityErrors` (CDP) doit être vide et la page doit se recharger hors connexion.
+- Tests : `npm install` puis `npm test` (une trentaine de secondes). Les lancer après chaque modification. Six fichiers :
   - `tests/engine.test.js` : le moteur, règle par règle (plus de 140 000 journées, une quinzaine de secondes) ;
   - `tests/golden.test.js` : 24 journées de référence écrites en clair dans `tests/golden.txt`. Tout changement de portion le fait échouer et montre les lignes qui changent ; si le changement est voulu, `npm run golden` réécrit le fichier, relire son diff avant de committer ;
   - `tests/fuzz.test.js` : tests de fond du moteur (journées au hasard, données abîmées, cohérence des données, voir « Portions au poids ») ;
   - `tests/ui.test.js` : simulation de l'interface avec jsdom ;
+  - `tests/pwa.test.js` : appli installable : manifeste (champs, icônes présentes à la taille déclarée), liens dans la page, service worker simulé sans navigateur (installation, anciens caches effacés, réseau d'abord pour la page, hors connexion, polices et icônes gardées, autres sites non touchés) ;
   - `tests/ui-fuzz.test.js` : chaque écran relu (texte cassé, typographie, accessibilité), dates en heure de Paris (changements d'heure, nouvel an, « 1er », semaine du repas libre), puis des actions au hasard vérifiées après chacune (totaux affichés, stockage valide, même page après rechargement).
 - Tests de fond reproductibles (graine fixe). `npm run test:deep` les fait tourner beaucoup plus longtemps (quelques minutes) ; `SEED=123` change la graine, `FUZZ=5` l'intensité. Une violation affiche son type et des cas reproductibles (profil, séances, choix en JSON).
 - `tests/lib.js` : outils partagés (`loadEngine()` expose toute déclaration de premier niveau du script, `rng`, `checker`, `openPage`). `APP_HTML=chemin` fait tourner les tests de fond sur une autre copie de la page : une copie volontairement cassée doit les faire échouer.

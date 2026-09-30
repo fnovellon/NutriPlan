@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 3.5.0, 30 septembre 2026
+
+- L'appli s'installe sur ton téléphone, comme une vraie appli : icône sur l'écran d'accueil, plein écran, et elle marche même sans connexion (à la salle, dans le métro). Les nouvelles versions arrivent toutes seules dès que tu es connecté.
+  - Android (Chrome) : menu ⋮ puis « Installer l'application », ou le bouton « Installer l'appli » en bas des réglages quand il apparaît.
+  - iPhone (Safari) : bouton Partager, puis « Sur l'écran d'accueil ». Sur iPhone, l'appli installée a ses propres données, à part de Safari : refais l'accueil une fois dedans.
+- Nouvelle icône en haut de la page (fourchette et couteau, à côté du « ? ») pour rouvrir le formulaire de tes repas. Le bouton « Choisir mes repas » au-dessus du petit-déjeuner reste là.
+- La date ne se coupe plus entre le jour et le mois.
+
 ## 3.4.0, 29 septembre 2026
 
 - Nouveau formulaire « Tes repas du jour » : chaque jour, à la première ouverture, tous les plats s'affichent d'un coup (base du petit-déjeuner, protéine, féculent et dessert du déjeuner et du dîner). Touche ce que tu veux manger, puis « Voir ma journée » pour arriver sur ton récap avec les quantités.

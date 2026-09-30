@@ -111,7 +111,7 @@ function scan(dom, label){
   clock.now = new Date(iso).getTime();
   const dom = open({ [PKEY]: '{}' }), d = dom.window.document;
   const today = iso.slice(0, 10);
-  C.ok(d.getElementById('date').textContent === 'Aujourd’hui, ' + title, 'date du jour', () => iso + ' : ' + d.getElementById('date').textContent);
+  C.ok(d.getElementById('date').textContent === 'Aujourd’hui, ' + title.replace(/(\d|er) /, '$1\u00A0'), 'date du jour', () => iso + ' : ' + d.getElementById('date').textContent);
   click(dom, '#sw-lib');   // repas libre aujourd'hui : celui du samedi de la même semaine est retiré
   const st = JSON.parse(dom.window.localStorage.getItem(KEY));
   C.ok(st.plans[today] && st.plans[today].libre === true, 'repas libre enregistré à la bonne date', () => iso + ' : ' + JSON.stringify(st.plans));
@@ -122,10 +122,10 @@ function scan(dom, label){
   // Page ouverte d'un jour à l'autre : au retour sur l'onglet, elle passe au nouveau jour
   clock.now = new Date('2026-10-31T23:58').getTime();
   const dom = open({ [PKEY]: '{}' }), d = dom.window.document;
-  C.ok(/samedi 31 octobre/.test(d.getElementById('date').textContent), 'veille de changement de mois', () => d.getElementById('date').textContent);
+  C.ok(/samedi 31\soctobre/.test(d.getElementById('date').textContent), 'veille de changement de mois', () => d.getElementById('date').textContent);
   clock.now = new Date('2026-11-01T00:03').getTime();
   dom.window.dispatchEvent(new dom.window.Event('focus'));
-  C.ok(/dimanche 1er novembre/.test(d.getElementById('date').textContent), 'passage au jour suivant', () => d.getElementById('date').textContent);
+  C.ok(/dimanche 1er\snovembre/.test(d.getElementById('date').textContent), 'passage au jour suivant', () => d.getElementById('date').textContent);
 }
 
 // --- 3. Actions au hasard, vérifiées après chacune --------------------------------------------------------------
@@ -220,7 +220,7 @@ const ACTIONS = {
     const bubbles = () => [...d.querySelectorAll('#day .sel')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
     if (d.querySelector('#repas').hidden){
       if (d.querySelector('#page').hidden) return 'repas -';
-      d.querySelector('#open-repas').click();
+      d.querySelector(R.pick(['#open-repas', '#repas-btn'])).click();
     }
     const before = bubbles();
     for (let i = R.int(0, 4); i > 0; i--) R.pick([...d.querySelectorAll('#repas-form .opt')]).click();

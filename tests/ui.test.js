@@ -63,7 +63,7 @@ const dom = open();
 const { d, $, click, stored, sections, setSwitch, starchLine, pressed, choose, chosen, sess, add, at, rm } = tools(dom);
 
 assert(/kcal/.test($('#sum-text').textContent), 'résumé absent au chargement');
-assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
+assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
 assert(/aujourd’hui/.test($('#title').textContent), 'titre du jour');
 assert(!$('[data-action="day"]') && !$('[data-action="week"]'), 'le calendrier est encore affiché');
 assert.deepStrictEqual(sess(), [], 'le jour part sans séance');
@@ -254,6 +254,22 @@ r.setSwitch('libre', true);
 r.click('#open-repas');
 assert(/Ce soir, c’est ton repas libre\s: ce dîner est gardé pour les prochains mercredis\./.test(r.$('[aria-labelledby="rf-h-diner"]').textContent), 'repas libre dans le formulaire');
 r.click('[data-action="repas-ok"]');
+// Icône « Choisir mes repas » en haut de la page : ouvre le formulaire, le focus y revient à la fermeture
+r.click('#repas-btn');
+assert(!r.$('#repas').hidden && r.$('#page').hidden, 'icône du formulaire des repas');
+r.click('#repas [data-action="fermer"]');
+assert.strictEqual(rw.document.activeElement, r.$('#repas-btn'), 'focus rendu à l’icône');
+// Installer l'appli (Android) : bouton caché tant que le navigateur ne le propose pas ; il lance la proposition puis disparaît
+assert(r.$('#install').hidden, 'bouton Installer affiché sans proposition du navigateur');
+let prompted = 0;
+const offer = () => { const ev = new rw.Event('beforeinstallprompt', { cancelable: true }); ev.prompt = () => { prompted++; }; rw.dispatchEvent(ev); return ev; };
+const bip = offer();
+assert(bip.defaultPrevented && !r.$('#install').hidden, 'bouton Installer non affiché');
+r.click('#install');
+assert(prompted === 1 && r.$('#install').hidden, 'installation non proposée');
+offer();
+rw.dispatchEvent(new rw.Event('appinstalled'));
+assert(r.$('#install').hidden, 'bouton Installer resté affiché après l’installation');
 // Sans stockage : le formulaire ne s'ouvre jamais tout seul
 const nostore = tools(new JSDOM(html, { runScripts: 'dangerously', url: 'https://example.org/', virtualConsole: vc,
   beforeParse: win => { withClock(win); Object.defineProperty(win, 'localStorage', { get(){ throw new Error('stockage bloqué'); } }); } }));
@@ -280,7 +296,7 @@ add('moyenne');
 // Page ouverte d'un jour à l'autre : elle revient sur le nouveau jour (jeudi, sans séance enregistrée)
 now = new Date(2026, 9, 8, 7, 30, 0).getTime();
 dom.window.dispatchEvent(new dom.window.Event('focus'));
-assert.strictEqual($('#date').textContent, 'Aujourd’hui, jeudi 8 octobre', 'date non mise à jour');
+assert.strictEqual($('#date').textContent, 'Aujourd’hui, jeudi 8 octobre', 'date non mise à jour');
 assert.deepStrictEqual(sess(), [], 'plan de la veille affiché le lendemain');
 // Nouveau jour : le formulaire des repas s'ouvre, avec les choix du jeudi
 assert(!$('#repas').hidden && $('#page').hidden && dom.window.localStorage.getItem(RKEY) === '2026-10-08', 'formulaire des repas non ouvert le lendemain');
@@ -525,7 +541,7 @@ lib.setSwitch('libre', true);
 assert(/Aujourd’hui\s:\s\d+\sg hors repas libre\./.test(lib.$('#calc-prot').textContent), 'protéines du jour libre : ' + lib.$('#calc-prot').textContent);
 // Le 1er du mois : « 1er octobre »
 now = new Date(2026, 9, 1, 9, 0, 0).getTime();
-assert.strictEqual(tools(open()).$('#date').textContent, 'Aujourd’hui, jeudi 1er octobre', 'premier du mois');
+assert.strictEqual(tools(open()).$('#date').textContent, 'Aujourd’hui, jeudi 1er octobre', 'premier du mois');
 now = new Date(2026, 9, 7, 9, 0, 0).getTime();
 for (const bad of ['{pas du json', '7', 'null']) {
   const b = tools(open(ls => ls.setItem(PKEY, bad)));
