@@ -120,8 +120,8 @@ assert($('[aria-labelledby="h-dej"] .qty.bump'), 'changement non mis en évidenc
 choose('starch', 'dej', 'riz');
 const dejLi = t => [...d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].find(li => li.querySelector('.name').textContent.startsWith(t));
 const ck = li => [...li.querySelectorAll('.q .ck')].map(e => e.textContent);
-const pouletCru = parseInt(dejLi('poulet').querySelector('.qty').textContent, 10);
-assert.deepStrictEqual(ck(dejLi('poulet')), ['cru', '≈\u00A0' + Math.round(pouletCru * 0.75 / 5) * 5 + '\u00A0g cuit'], 'poids cuit du poulet');
+const pouletCru = parseInt(dejLi('viande blanche').querySelector('.qty').textContent, 10);
+assert.deepStrictEqual(ck(dejLi('viande blanche')), ['cru', '≈\u00A0' + Math.round(pouletCru * 0.75 / 5) * 5 + '\u00A0g cuit'], 'poids cuit du poulet');
 assert(ck(dejLi('riz')).length === 2 && /cuit$/.test(ck(dejLi('riz'))[1]), 'poids cuit du riz');
 assert.deepStrictEqual(ck(dejLi('légumes')), [], 'poids cuit des légumes');
 choose('starch', 'dej', 'pdt');
@@ -151,10 +151,10 @@ const win = dom.window;
 assert.strictEqual(d.querySelectorAll('#day .sel').length, 7, 'une bulle par choix (base, 3 au déjeuner, 3 au dîner)');
 assert(!d.querySelector('#day [data-action="prot"], #day [data-action="starch"], #day [data-action="dessert"], #day [data-action="pd"]'), 'les autres choix sont affichés dans la page');
 const trig = $('[data-action="open-pick"][data-kind="prot"][data-slot="dej"]');
-assert(/Poulet/.test(trig.textContent) && trig.getAttribute('aria-haspopup') === 'dialog', 'bulle de la protéine du déjeuner');
+assert(trig.textContent.trim() === 'Viande blanche' && trig.getAttribute('aria-haspopup') === 'dialog', 'bulle de la protéine du déjeuner : ' + trig.textContent);
 const openSheet = () => { click('[data-action="open-pick"][data-kind="prot"][data-slot="dej"]'); assert(!$('#sheet').hidden, 'panneau non ouvert'); };
 openSheet();
-assert($('#sheet-t').textContent === 'Protéine du déjeuner' && d.querySelectorAll('#sheet .opt').length === 7, 'titre et choix du panneau');
+assert($('#sheet-t').textContent === 'Protéine du déjeuner' && d.querySelectorAll('#sheet .opt').length === 8, 'titre et choix du panneau');
 assert($('#page').hasAttribute('inert') && win.history.state && win.history.state.pick, 'page non inerte sous le panneau');
 assert.strictEqual(d.activeElement, $('#sheet .opt[aria-pressed="true"]'), 'focus sur le choix actuel');
 assert.strictEqual(d.activeElement.dataset.value, 'poulet', 'choix actuel du panneau');
@@ -178,7 +178,7 @@ choose('pd', null, 'avoine');
 const desPressed = slot => chosen('dessert', slot);
 const lastLine = slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].slice(-1)[0].textContent;
 click('[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]');
-assert.strictEqual(d.querySelectorAll('#sheet [data-action="dessert"][data-slot="dej"]').length, 4, 'choix de dessert au déjeuner');
+assert.strictEqual(d.querySelectorAll('#sheet [data-action="dessert"][data-slot="dej"]').length, 5, 'choix de dessert au déjeuner');
 click('#sheet .scrim');
 assert(desPressed('dej') === 'aucun' && desPressed('diner') === 'aucun', 'aucun dessert par défaut');
 // Le dessert est pris sur le féculent du même repas, ou sur l'encas si ce féculent est déjà à son plafond
@@ -201,13 +201,23 @@ const rdom = open(null, false, true), r = tools(rdom), rw = rdom.window;
 assert(!r.$('#repas').hidden && r.$('#page').hidden, 'formulaire des repas non ouvert au premier passage du jour');
 assert.strictEqual(rw.document.activeElement, r.$('#repas-h'), 'focus sur le titre du formulaire');
 assert.strictEqual(rw.localStorage.getItem(RKEY), '2026-10-07', 'formulaire non noté comme vu');
-// Tous les choix visibles, un seul choisi par rangée : ceux du jour (mercredi : avoine, poulet + riz, poisson + lentilles, sans dessert)
-const rows = () => [...r.d.querySelectorAll('#repas-form [role="group"]')].map(g => [...g.querySelectorAll('[aria-pressed="true"]')].map(b => b.dataset.value).join('+'));
+// Même sélecteur que la page : une ligne par choix, la sélection dans une bulle (mercredi : avoine, poulet + riz, poisson + lentilles, sans dessert)
+const rows = () => [...r.d.querySelectorAll('#repas-form .sel')].map(b => b.dataset.value);
 assert.deepStrictEqual(rows(), ['avoine', 'poulet', 'riz', 'aucun', 'poisson', 'lentilles', 'aucun'], 'choix du jour présélectionnés');
-assert.strictEqual(r.d.querySelectorAll('#repas-form .opt').length, 2 + 2 * (7 + 9 + 4), 'tous les choix affichés');
+assert(!r.d.querySelector('#repas-form .opt') && r.$('#repas-form .sel[data-kind="prot"][data-slot="dej"]').textContent === 'Viande blanche', 'formulaire : une bulle par choix');
 assert.deepStrictEqual([...r.d.querySelectorAll('#repas-form h2')].map(h => h.textContent), ['Petit-déjeuner', 'Déjeuner', 'Dîner'], 'repas du formulaire');
-// Choisir ne change rien avant de valider
-const rf = (kind, slot, v) => r.click(`#repas-form [data-kind="${kind}"]` + (slot ? `[data-slot="${slot}"]` : '') + `[data-value="${v}"]`);
+// La bulle ouvre le panneau des choix, avec le détail des groupes ; toucher un choix le met dans le brouillon et ferme le panneau
+r.click('#repas-form .sel[data-kind="prot"][data-slot="dej"]');
+assert(!r.$('#sheet').hidden && r.$('#repas').hasAttribute('inert') && r.$('#sheet-t').textContent === 'Protéine du déjeuner', 'panneau ouvert depuis le formulaire');
+assert.strictEqual(r.d.querySelectorAll('#sheet .opt').length, 8, 'toutes les protéines');
+assert.strictEqual(r.$('#sheet [data-value="saumon"] .opt-s').textContent, 'saumon, maquereau, sardines à l’huile', 'détail du poisson gras');
+r.click('#sheet .sheet-x');
+assert(r.$('#sheet').hidden && !r.$('#repas').hasAttribute('inert') && rw.document.activeElement === r.$('#sel-rprot-dej'), 'panneau fermé, focus sur la bulle');
+const rf = (kind, slot, v) => {
+  r.click(`#repas-form .sel[data-kind="${kind}"]` + (slot ? `[data-slot="${slot}"]` : ''));
+  r.click(`#sheet [data-value="${v}"]`);
+  assert(r.$('#sheet').hidden, 'panneau du formulaire resté ouvert');
+};
 rf('pd', null, 'pain'); rf('prot', 'dej', 'boeuf'); rf('starch', 'dej', 'pates'); rf('dessert', 'dej', 'chocolat'); rf('dessert', 'diner', 'fruit');
 assert.deepStrictEqual(rows(), ['pain', 'boeuf', 'pates', 'chocolat', 'poisson', 'lentilles', 'fruit'], 'sélection dans le formulaire');
 assert.strictEqual(rw.localStorage.getItem(KEY), null, 'choix enregistrés avant de valider');
@@ -242,8 +252,8 @@ r.click('#open-repas');
 rw.Math.random = () => 0.999;
 r.click('[data-action="repas-hasard"]');
 assert(!r.$('#page').hidden && r.$('#repas').hidden, 'récap non affiché après le tirage');
-assert.deepStrictEqual(everything(), ['pain', 'thon', 'gnocchis', 'chocolat', 'oeufs', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
-assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'oeufs', starch: 'gnocchis', dessert: 'chocolat' }, 'tirage non enregistré');
+assert.deepStrictEqual(everything(), ['pain', 'tofu', 'gnocchis', 'chocolat', 'thon', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
+assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat' }, 'tirage non enregistré');
 assert(/tirés au hasard/.test(r.$('#hint').textContent), 'message du tirage : ' + r.$('#hint').textContent);
 r.click('#open-repas');
 rw.Math.random = () => 0;
@@ -252,7 +262,7 @@ assert.deepStrictEqual(everything(), ['avoine', 'poulet', 'riz', 'aucun', 'boeuf
 // Jour de repas libre : le formulaire le rappelle au dîner
 r.setSwitch('libre', true);
 r.click('#open-repas');
-assert(/Ce soir, c’est ton repas libre\s: ce dîner est gardé pour les prochains mercredis\./.test(r.$('[aria-labelledby="rf-h-diner"]').textContent), 'repas libre dans le formulaire');
+assert(/Ce soir, c’est ton repas libre\s: ce dîner est gardé pour les prochains mercredis\./.test(r.$('[aria-labelledby="repas-h-diner"]').textContent), 'repas libre dans le formulaire');
 r.click('[data-action="repas-ok"]');
 // Icône « Choisir mes repas » en haut de la page : ouvre le formulaire, le focus y revient à la fermeture
 r.click('#repas-btn');
@@ -300,7 +310,7 @@ assert.strictEqual($('#date').textContent, 'Aujourd’hui, jeudi 8 octobre', 'd
 assert.deepStrictEqual(sess(), [], 'plan de la veille affiché le lendemain');
 // Nouveau jour : le formulaire des repas s'ouvre, avec les choix du jeudi
 assert(!$('#repas').hidden && $('#page').hidden && dom.window.localStorage.getItem(RKEY) === '2026-10-08', 'formulaire des repas non ouvert le lendemain');
-assert.strictEqual($('#repas-form [data-kind="prot"][data-slot="dej"][aria-pressed="true"]').dataset.value, 'boeuf', 'choix du jeudi dans le formulaire');
+assert.strictEqual($('#repas-form .sel[data-kind="prot"][data-slot="dej"]').dataset.value, 'boeuf', 'choix du jeudi dans le formulaire');
 click('#repas [data-action="fermer"]');
 assert(!$('#page').hidden && $('#repas').hidden, 'formulaire non fermé');
 now = new Date(2026, 9, 7, 9, 0, 0).getTime();
@@ -409,7 +419,7 @@ p.click('[data-action="prof"][data-key="neat"][data-value="debout"]');
 assert.strictEqual(prof().neat, 'debout', 'activité hors sport');
 
 // Objectif de protéines en g/kg : curseur, grammes du jour, portions ajustées
-const pouletQty = () => parseInt([...p.d.querySelectorAll('#day li')].find(li => /poulet ou dinde/.test(li.textContent)).querySelector('.qty').textContent, 10);
+const pouletQty = () => parseInt([...p.d.querySelectorAll('#day li')].find(li => /viande blanche maigre/.test(li.textContent)).querySelector('.qty').textContent, 10);
 assert(/2,0\sg\/kg/.test(p.$('#out-prot').textContent) && /Environ 140\sg par jour \(2,0 × 70,0\skg\)/.test(p.$('#calc-prot').textContent), 'objectif de protéines par défaut : ' + p.$('#calc-prot').textContent);
 const poulet20 = pouletQty();
 type('prot', 2.4);
@@ -478,10 +488,16 @@ p.click('#help');
 assert(view() === 'aide' && pw.document.activeElement === p.$('#aide-h') && pw.history.state.screen === 'aide', 'le « ? » n’ouvre pas l’aide');
 assert(/Ta journée en trois temps/.test(p.$('#aide').textContent) && /cru/.test(p.$('#aide').textContent), 'explications absentes');
 const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
-assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 33, 'table des aliments : ' + refRows.length + ' lignes');
+assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 36, 'table des aliments : ' + refRows.length + ' lignes');
 const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
 assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
 assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['352', '8,4', '77', '1'], 'valeurs du riz (cru)');
+// Nouveaux aliments (3.7.0) et groupes de valeurs proches
+const refCells = key => [...p.$(`#ref-tables tr[data-key="${key}"]`).querySelectorAll('th, td')].map(td => td.textContent.trim());
+assert.deepStrictEqual(refCells('tofu'), ['Tofu ferme, nature', '148', '14,4', '1,1', '9,3'], 'tofu dans la table');
+assert.deepStrictEqual(refCells('fruitsSecs'), ['Fruits secs (abricots, pruneaux, figues)', '245', '2,7', '56', '0,7'], 'fruits secs dans la table');
+assert(/Pois chiches/.test(refCells('poischiches')[0]) && refCells('poischiches')[1] === '351', 'pois chiches dans la table');
+assert(/Poisson gras \(saumon, maquereau, sardines/.test(refCells('saumon')[0]) && /Viande blanche maigre \(poulet, dinde, filet mignon de porc\)/.test(refCells('poulet')[0]), 'groupes dans la table');
 p.click('#aide [data-action="fermer"]');
 assert(view() === 'page' && pw.document.activeElement === p.$('#help'), 'retour de l’aide vers la page');
 p.click('#gear'); p.click('#help-regl');
@@ -627,8 +643,9 @@ assert.deepStrictEqual([c.$('#plan-step').textContent, c.$('#plan-h').textConten
 assert(cw.document.activeElement === c.$('#plan-h'), 'focus sur le jour');
 c.click('#plan-body [data-action="add"][data-value="petite"]');
 c.click('#plan-body [data-action="smoment"][data-index="0"][data-value="matin"]');
-c.click('#plan-body [data-action="starch"][data-slot="diner"][data-value="pdt"]');
-assert(cw.document.activeElement.dataset.value === 'pdt' && cw.document.activeElement.getAttribute('aria-pressed') === 'true', 'focus gardé sur le choix');
+c.click('#plan-body .sel[data-kind="starch"][data-slot="diner"]');
+c.click('#sheet [data-value="pdt"]');
+assert(cw.document.activeElement === c.$('#sel-pstarch-diner') && c.$('#sel-pstarch-diner').dataset.value === 'pdt', 'focus gardé sur le choix');
 cs = c.stored();
 assert(cs.plans['2026-10-08'].seances[0].moment === 'matin' && cs.plans['2026-10-08'].ch.diner.starch === 'pdt', 'étape enregistrée pour sa date');
 assert(/Environ\s[\d\s]+\skcal/.test(c.$('.plan-kcal').textContent), 'total du jour dans l’assistant');
@@ -640,7 +657,7 @@ assert.strictEqual(c.$('#plan-step').textContent, 'Jour 1 sur 3', 'retour à l�
 c.click('[data-action="pl-next"]');
 cw.Math.random = () => 0.999;
 c.click('[data-action="pl-hasard"]');
-assert(c.stored().plans['2026-10-09'].ch.dej.prot === 'thon' && /tirés au hasard/.test(c.$('#plan-hint').textContent), 'hasard pour ce jour');
+assert(c.stored().plans['2026-10-09'].ch.dej.prot === 'tofu' && /tirés au hasard/.test(c.$('#plan-hint').textContent), 'hasard pour ce jour');
 // Samedi 10 : repas libre par défaut, gardé ; « Décide pour tous les jours restants » mène aux courses
 c.click('[data-action="pl-next"]');
 assert(c.$('#plan-body [data-action="toggle"]').getAttribute('aria-checked') === 'true' && !c.$('[data-action="pl-hasard-tous"]') && c.$('[data-action="pl-next"]').textContent === 'Voir mes courses', 'dernière étape');
@@ -654,7 +671,7 @@ assert(c.$('#date').textContent.startsWith('Aujourd’hui'), 'page revenue sur l
 // Courses : période de l'assistant, rayons, lignes à cocher, jour par jour
 assert.strictEqual(c.$('#courses-span').textContent, '3 jours, du jeudi 8 octobre au samedi 10 octobre.', 'période des courses');
 const aisles = [...c.d.querySelectorAll('#courses-list h2')].map(h => h.textContent);
-assert.deepStrictEqual(aisles, ['Viandes et poissons', 'Crèmerie et œufs', 'Pain et féculents, poids crus', 'Fruits et légumes', 'Épicerie', 'Le reste'], 'rayons : ' + aisles);
+assert.deepStrictEqual(aisles, ['Viandes et poissons', 'Crèmerie, œufs et tofu', 'Pain et féculents, poids crus', 'Fruits et légumes', 'Épicerie', 'Le reste'], 'rayons : ' + aisles);
 const shopLine = name => [...c.d.querySelectorAll('#courses-list .chk')].find(b => b.querySelector('.name').childNodes[0].textContent === name);
 assert(shopLine('repas libre') && shopLine('doses de shaker').querySelector('.q').textContent === '3', 'repas libre et shaker comptés');
 // La liste est la somme des jours : le skyr des trois jours, relu sur chaque page du jour
@@ -697,9 +714,71 @@ assert(!c.$('#page').hidden && c.$('#date').textContent === 'Vendredi 9 octobre
 // Le formulaire des repas vaut pour le jour affiché
 c.click('#repas-btn');
 assert.strictEqual(c.$('#repas-h').textContent, 'Tes repas, vendredi 9 octobre', 'formulaire d’un autre jour');
-c.click('#repas-form [data-kind="prot"][data-slot="diner"][data-value="saumon"]');
+c.click('#repas-form .sel[data-kind="prot"][data-slot="diner"]');
+c.click('#sheet [data-value="saumon"]');
 c.click('[data-action="repas-ok"]');
 assert(c.stored().plans['2026-10-09'].ch.diner.prot === 'saumon' && c.stored().plans['2026-10-07'] === undefined, 'formulaire enregistré pour ce jour');
+
+// Réglages, « Tes aliments » : tout est proposé au départ ; un aliment touché n'est plus proposé (ni dans les choix, ni au hasard)
+const adom = open(), al = tools(adom), aw = adom.window;
+const aprof = () => JSON.parse(aw.localStorage.getItem(PKEY));
+const alim = (kind, v) => al.$(`#alim-list [data-kind="${kind}"][data-value="${v}"]`);
+const sheetVals = sel => { al.click(sel); const v = [...al.d.querySelectorAll('#sheet .opt')].map(o => o.dataset.value); al.click('#sheet .sheet-x'); return v; };
+al.click('#gear');
+assert.deepStrictEqual([...al.d.querySelectorAll('#alim-list .rf-l')].map(x => x.textContent), ['Base du petit-déjeuner', 'Protéines', 'Féculents', 'Desserts'], 'types d’aliments');
+assert(al.d.querySelectorAll('#alim-list .opt').length === 24 && !al.$('#alim-list .opt[aria-pressed="false"]'), 'tout est proposé au départ');
+assert.strictEqual(alim('prot', 'saumon').querySelector('.opt-s').textContent, 'saumon, maquereau, sardines à l’huile', 'détail du groupe');
+assert(!al.$('#alim-list [data-value="aucun"]'), '« Aucun » ne se retire pas');
+// Aujourd'hui (mercredi) a un plat choisi : il le garde ; les autres jours, le poulet est remplacé par le suivant proposé
+al.click('#aliments ~ [data-action="fermer"]');
+al.choose('starch', 'dej', 'pates');
+al.click('#gear');
+al.click('#alim-list [data-kind="prot"][data-value="poulet"]');
+assert(alim('prot', 'poulet').getAttribute('aria-pressed') === 'false' && aw.document.activeElement === alim('prot', 'poulet'), 'poulet retiré, focus gardé');
+assert.deepStrictEqual(aprof().off, ['prot:poulet'], 'retrait enregistré');
+al.click('#aliments ~ [data-action="fermer"]');
+assert.strictEqual(al.chosen('prot', 'dej'), 'poulet', 'plat déjà choisi aujourd’hui perdu');
+assert.deepStrictEqual(sheetVals('#sel-prot-dej'), ['poulet', 'boeuf', 'poisson', 'saumon', 'crevettes', 'oeufs', 'thon', 'tofu'], 'le plat choisi reste dans les choix');
+assert(!sheetVals('#sel-prot-diner').includes('poulet'), 'poulet encore proposé au dîner');
+al.click('#week [data-value="2026-10-06"]');
+assert(al.chosen('prot', 'dej') === 'poisson' && al.chosen('prot', 'diner') === 'boeuf', 'mardi sans poulet : ' + al.chosen('prot', 'dej') + ' / ' + al.chosen('prot', 'diner'));
+al.click('#wk-next'); al.click('#week [data-value="2026-10-14"]');
+assert(al.chosen('prot', 'dej') === 'boeuf' && !al.stored().plans['2026-10-14'], 'mémoire du mercredi : poulet remplacé');
+// Formulaire et assistant : mêmes choix ; « Décide pour moi » ne tire jamais un aliment retiré
+al.click('#repas-btn');
+assert(!sheetVals('#sel-rprot-dej').includes('poulet') && al.$('#sel-rprot-dej').dataset.value === 'boeuf', 'formulaire : poulet proposé');
+al.click('#repas [data-action="fermer"]');
+al.click('#today-btn');
+al.click('#gear');
+al.click('#alim-list [data-kind="pd"][data-value="avoine"]');
+al.click('#alim-list [data-kind="pd"][data-value="pain"]');
+assert(/Garde au moins une base pour le petit-déjeuner\./.test(al.$('#alim-warn').textContent) && alim('pd', 'pain').getAttribute('aria-pressed') === 'true', 'dernière base retirée');
+assert.deepStrictEqual(aprof().off, ['prot:poulet', 'pd:avoine'], 'retraits enregistrés');
+['fruit', 'compote', 'fruitsSecs', 'chocolat'].forEach(v => al.click(`#alim-list [data-kind="dessert"][data-value="${v}"]`));
+assert(!al.$('#alim-warn').textContent && al.d.querySelectorAll('#alim-list [data-kind="dessert"][aria-pressed="false"]').length === 4, 'tous les desserts peuvent être retirés');
+al.click('#aliments ~ [data-action="fermer"]');
+assert.deepStrictEqual(sheetVals('#sel-dessert-dej'), ['aucun'], 'desserts proposés');
+aw.Math.random = () => 0.999;
+al.click('#open-repas');
+al.click('[data-action="repas-hasard"]');
+const drawn = al.stored().choices[3];
+assert(drawn.pdBase === 'pain' && drawn.dej.prot === 'tofu' && drawn.diner.prot === 'thon' && drawn.dej.dessert === 'aucun', 'tirage avec retraits : ' + JSON.stringify(drawn));
+aw.Math.random = () => 0;
+al.click('#open-repas');
+al.click('[data-action="repas-hasard"]');
+assert(al.stored().choices[3].dej.prot === 'boeuf' && al.stored().choices[3].diner.prot === 'poisson', 'tirage sans poulet');
+al.click('#plan-btn'); al.click('[data-action="pl-start"]');
+assert(!sheetVals('#sel-pprot-diner').includes('poulet') && !sheetVals('#sel-ppd').includes('avoine'), 'assistant : aliment retiré proposé');
+al.click('#plan [data-action="fermer"]');
+// Remis : de nouveau proposé ; relu au rechargement ; profil abîmé : tout est proposé
+al.click('#gear');
+al.click('#alim-list [data-kind="prot"][data-value="poulet"]');
+assert.deepStrictEqual(aprof().off, ['pd:avoine', 'dessert:fruit', 'dessert:compote', 'dessert:fruitsSecs', 'dessert:chocolat'], 'poulet remis');
+const asnap = snapOf(aw), arel = tools(open(ls => Object.entries(asnap).forEach(([k, v]) => ls.setItem(k, v))));
+assert(arel.$('#alim-list [data-kind="pd"][data-value="avoine"]').getAttribute('aria-pressed') === 'false' && arel.$('#alim-list [data-kind="prot"][data-value="poulet"]').getAttribute('aria-pressed') === 'true', 'retraits relus');
+const abad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ off: ['prot:constructor', '__proto__:x', 'pd:avoine', 'pd:pain', 5, 'starch:riz'] }))));
+assert(abad.$('#alim-list [data-kind="pd"][data-value="avoine"]').getAttribute('aria-pressed') === 'true' && abad.$('#alim-list [data-kind="starch"][data-value="riz"]').getAttribute('aria-pressed') === 'false', 'retraits abîmés');
+assert.strictEqual(abad.chosen('starch', 'dej'), 'pates', 'riz retiré : remplacé par les pâtes');
 
 // Accueil au premier lancement : rien n'est enregistré avant la fin
 const fdom = open(null, true), f = tools(fdom), fw = fdom.window;

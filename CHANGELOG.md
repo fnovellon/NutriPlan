@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.7.0, 1er octobre 2026
+
+- Nouveaux aliments : tofu ferme en protéine, pois chiches en féculent, fruits secs en dessert (30 g d'abricots, de pruneaux ou de figues). Les lentilles deviennent « Lentilles, haricots rouges ». Une idée de plat est proposée pour chaque nouvelle combinaison.
+- Des aliments aux valeurs très proches sont regroupés dans un même choix : « Viande blanche » (poulet, dinde, filet mignon de porc) et « Poisson gras » (saumon, maquereau, sardines à l'huile). Prends celui que tu trouves, les quantités restent les mêmes. Le détail s'affiche sous chaque choix.
+- Nouvelle carte « Tes aliments » dans les réglages : touche un aliment que tu ne manges pas pour ne plus te le proposer, ni dans les choix ni dans « Décide pour moi ». Les jours où tu l'as déjà choisi le gardent ; les autres prennent l'aliment suivant. Tu peux le remettre à tout moment.
+- Le formulaire de tes repas et l'assistant « Planifier » utilisent maintenant le même sélecteur que ta journée : une ligne par repas avec ton choix, et tous les choix dans le panneau qui s'ouvre en le touchant. Plus compact, surtout avec les nouveaux aliments.
+- Dans la liste de courses, le rayon « Crèmerie et œufs » devient « Crèmerie, œufs et tofu ».
+- Tes choix et réglages enregistrés sont gardés tels quels.
+
 ## 3.6.0, 30 septembre 2026
 
 - Le calendrier revient : la semaine s'affiche en haut de ta journée. Touche un jour pour voir ou préparer ses séances et ses plats, avec les flèches pour changer de semaine. Un point marque les jours déjà prévus, « Revenir à aujourd'hui » te ramène au jour même.

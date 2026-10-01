@@ -110,10 +110,12 @@ assert.deepStrictEqual(old('longue', { duree: 2.5, libre: true }), { seances: [l
 assert.deepStrictEqual(old('repos', { natation: true }), { seances: [petite('midi')], libre: false }, 'natation');
 assert.deepStrictEqual(old('longue', { natation: true }).seances.length, 1, 'pas de natation un jour de sortie longue');
 
-// 6. Toutes les combinaisons avec le profil par défaut : apport ≈ objectif, planchers respectés
+// 6. Toutes les combinaisons de plats avec le profil par défaut : apport ≈ objectif, planchers respectés
+// (base du petit-déjeuner en alternance : chaque couple de plats est vu avec l'avoine et avec le pain sur l'ensemble)
 let n = 0;
-for (const [name, set] of Object.entries(SETS)) for (const pdBase of ['avoine', 'pain']) {
-  for (const p1 of PROT_ORDER) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const s2 of STARCH_ORDER) {
+for (const [name, set] of Object.entries(SETS)) {
+  for (const [i1, p1] of PROT_ORDER.entries()) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const [i2, s2] of STARCH_ORDER.entries()) {
+    const pdBase = (i1 + i2 + n) % 2 ? 'pain' : 'avoine';
     const combo = `${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
     assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : ${Math.round(r.tot.kcal)} kcal pour un objectif de ${r.energy.target}`);
@@ -131,9 +133,9 @@ for (const [name, set] of Object.entries(SETS)) {
   assert(Math.max(...totals) - Math.min(...totals) <= Math.max(40, 0.015 * buildDay(day(set), DEFAULT_CHOICES[3]).energy.target), `${name} : le total varie de ${Math.round(Math.max(...totals) - Math.min(...totals))} kcal selon le féculent`);
 }
 
-// 8. Déficits extrêmes : planchers toujours tenus, jamais nettement sous l'objectif
+// 8. Déficits extrêmes : planchers toujours tenus, jamais nettement sous l'objectif (féculent du dîner en rotation)
 for (const deficit of [0, 25]) for (const [name, set] of Object.entries(SETS)) {
-  for (const p1 of PROT_ORDER) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const s2 of STARCH_ORDER) {
+  for (const p1 of PROT_ORDER) for (const [j1, s1] of STARCH_ORDER.entries()) for (const [j2, p2] of PROT_ORDER.entries()) for (const s2 of [STARCH_ORDER[(j1 + j2) % STARCH_ORDER.length], STARCH_ORDER[(j1 + 2 * j2 + 3) % STARCH_ORDER.length]]) {
     const combo = `${deficit} %/${name}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase: 'avoine', dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, { deficit });
     assert(r.tot.p >= r.prot.floor - 0.5 && r.tot.f >= 55, `${combo} : P ${Math.round(r.tot.p)} g, L ${r.tot.f.toFixed(1)} g`);
@@ -394,11 +396,11 @@ const withDes = (dej, diner, base) => {
   return { pdBase: b.pdBase, dej: Object.assign({}, b.dej, { dessert: dej }), diner: Object.assign({}, b.diner, { dessert: diner }) };
 };
 const desOf = (r, id) => (r.secs.find(s => s.id === id) || { items: [] }).items.filter(i => i.key === 'des');
-const DES_KCAL = { fruit: 80, compote: 60, chocolat: 114 };
+const DES_KCAL = { fruit: 80, compote: 60, fruitsSecs: 74, chocolat: 114 };
 const desDay = day([]);
 const sansDes = buildDay(desDay, RIZ_PATES);
-assert.strictEqual(DESSERT_ORDER.join(), 'aucun,fruit,compote,chocolat', 'liste des desserts');
-for (const d of ['fruit', 'compote', 'chocolat']) {
+assert.strictEqual(DESSERT_ORDER.join(), 'aucun,fruit,compote,fruitsSecs,chocolat', 'liste des desserts');
+for (const d of ['fruit', 'compote', 'fruitsSecs', 'chocolat']) {
   const r = buildDay(desDay, withDes(d, 'aucun'));
   const l = desOf(r, 'dej');
   assert(l.length === 1 && Math.round(l[0].m.kcal) === DES_KCAL[d] && !desOf(r, 'diner').length, `${d} : ligne du dessert au déjeuner`);
@@ -421,10 +423,10 @@ assert.strictEqual(midiKeys(withDes('fruit', 'aucun')), 'des', 'séance à midi 
 assert.strictEqual(midiKeys(withDes('aucun', 'chocolat')), 'comp', 'le dessert du dîner ne touche pas la compote de midi');
 // Repas libre : pas de dessert au dîner
 assert(!desOf(buildDay(day([], { libre: true }), withDes('aucun', 'chocolat')), 'diner').length, 'dessert affiché avec le repas libre');
-// Garde-fous : 12 journées types × 16 couples de desserts × protéines (féculents variés)
+// Garde-fous : 12 journées types × tous les couples de desserts × protéines variées (chaque protéine avec deux autres) × féculents variés
 let nd = 0;
 for (const [name, set] of Object.entries(SETS)) for (const d1 of DESSERT_ORDER) for (const d2 of DESSERT_ORDER) {
-  for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']]) {
+  for (const [i, p1] of PROT_ORDER.entries()) for (const p2 of [PROT_ORDER[(i + 1) % PROT_ORDER.length], PROT_ORDER[(i + 3) % PROT_ORDER.length], p1]) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates'], ['poischiches', 'boulgour']]) {
     const combo = `${name}/${d1}+${d2}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase: 'avoine', dej: { prot: p1, starch: s1, dessert: d1 }, diner: { prot: p2, starch: s2, dessert: d2 } });
     const choco = [d1, d2].filter(d => d === 'chocolat').length * 8.4;

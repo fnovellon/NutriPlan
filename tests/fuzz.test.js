@@ -68,8 +68,8 @@ const qtys = s => s.items.map(x => x.qty + ' ' + x.name).join(' | ');
 
 // Aliment affiché → valeurs de la table (quantité en grammes ou en pièces)
 const BYNAME = {
-  'poulet ou dinde': ['food', 'poulet'], ['bœuf haché 5' + NB + '%']: ['food', 'boeuf'], 'poisson blanc': ['food', 'poisson'],
-  'saumon': ['food', 'saumon'], 'crevettes cuites': ['food', 'crevettes'], 'halloumi': ['food', 'halloumi'],
+  'viande blanche maigre': ['food', 'poulet'], ['bœuf haché 5' + NB + '%']: ['food', 'boeuf'], 'poisson blanc': ['food', 'poisson'],
+  'poisson gras': ['food', 'saumon'], 'tofu ferme': ['food', 'tofu'], 'fruits secs': ['food', 'fruitsSecs'], 'crevettes cuites': ['food', 'crevettes'], 'halloumi': ['food', 'halloumi'],
   'jambon blanc': ['food', 'jambon'], 'parmesan': ['food', 'parmesan'], 'skyr nature': ['food', 'skyr'],
   'flocons d’avoine': ['food', 'avoine'], 'pain complet': ['food', 'pain'], 'fruits rouges': ['food', 'fruitsRouges'],
   'amandes': ['food', 'amandes'], 'miel': ['food', 'miel'], 'légumes': ['food', 'legumes'], 'huile d’olive': ['food', 'huile'],
@@ -77,7 +77,7 @@ const BYNAME = {
   'œufs': ['unit', 'oeuf'], 'œuf': ['unit', 'oeuf'], 'œuf dur': ['unit', 'oeuf'], 'œufs marinés': ['unit', 'oeufMarine'], 'œuf mariné': ['unit', 'oeufMarine'], 'banane': ['unit', 'banane'],
   'pomme': ['unit', 'pomme'], 'fruit': ['unit', 'pomme'], 'compote': ['unit', 'compote']
 };
-const YIELD = { 'poulet ou dinde': 0.75, ['bœuf haché 5' + NB + '%']: 0.75, 'poisson blanc': 0.8, 'saumon': 0.8 };
+const YIELD = { 'viande blanche maigre': 0.75, ['bœuf haché 5' + NB + '%']: 0.75, 'poisson blanc': 0.8, 'poisson gras': 0.8 };
 // Valeurs attendues d'une ligne d'après sa quantité affichée ; null si la ligne n'est pas un aliment connu
 function expected(item, pr){
   const g = /^(\d+) g$/.exec(item.qty), n = /^(\d+)$/.exec(item.qty), bud = /^≈ ([\d  ]+)$/.exec(item.qty);
@@ -336,9 +336,12 @@ for (let i = 0; i < N / 3; i++){
 }
 const WEIRD = [undefined, null, NaN, Infinity, -Infinity, 0, -1, 1e9, '', 'abc', '12', true, false, [], [1, 2], {}, { a: 1 },
   '__proto__', 'constructor', 'toString', 'hasOwnProperty', 'petite', 'moyenne', 'longue', 'matin', 'midi', 'soir', 1.5, 2, 2.5, 3, '2', 72,
-  'auto', 'manuel', 'h', 'f', 'oui', 'non', 'assis', 'muscu', 'course', 'double'];
+  'auto', 'manuel', 'h', 'f', 'oui', 'non', 'assis', 'muscu', 'course', 'double', 'prot:poulet', 'starch:riz', 'dessert:aucun', 'pd:constructor',
+  ['prot:thon', 'prot:thon', 'pd:pain'], ['pd:avoine', 'pd:pain'], ['dessert:fruit', 5, null, 'prot:__proto__']];
+// Aliments qu'on peut retirer des propositions (réglages) : « type:id »
+const ALL_OFF = Object.entries(A.CHOICE_IDS).flatMap(([k, ids]) => ids.map(id => k + ':' + id));
 const KEYS = ['seances', 'libre', 'taille', 'moment', 'duree', 'mode', 'sexe', 'age', 'poids', 'gras', 'repos', 'neat', 'deficit', 'prot',
-  'ravito', 'shaker', 'shakerKcal', 'shakerProt', 'kcalPetite', 'kcalMoyenne', 'kcalLongueH', 'marge', 'activity', 'natation', '__proto__', 'constructor'];
+  'ravito', 'shaker', 'shakerKcal', 'shakerProt', 'kcalPetite', 'kcalMoyenne', 'kcalLongueH', 'marge', 'off', 'activity', 'natation', '__proto__', 'constructor'];
 const weird = d => d > 2 || R.chance(.6) ? R.pick(WEIRD) : R.chance(.5) ? Array.from({ length: R.int(0, 5) }, () => weirdObj(d + 1)) : weirdObj(d + 1);
 const weirdObj = d => {
   const o = {};
@@ -365,6 +368,7 @@ for (let i = 0; i < N * 2; i++){
     });
     C.ok(['auto', 'manuel'].includes(pr.mode) && ['h', 'f'].includes(pr.sexe) && has(A.NEAT, pr.neat) && ['oui', 'non'].includes(pr.shaker), 'profil : valeur énumérée invalide', show);
     C.ok(Object.keys(pr).every(key => has(A.PROFILE_DEFAULT, key)), 'profil : champ inconnu gardé', show);
+    C.ok(Array.isArray(pr.off) && pr.off.every(o => ALL_OFF.includes(o)) && ['pd', 'prot', 'starch'].every(k => A.allowed(k, pr.off).length > 0), 'profil : aliments retirés invalides', show);
     const r = A.buildDay(p, A.DEFAULT_CHOICES[js], x);
     C.ok(fin(r.tot.kcal) && fin(r.tot.p), 'buildDay sur profil abîmé : total invalide', show);
     const mp = A.migratePlan(x);
@@ -423,6 +427,52 @@ C.ok(({}).polluted === undefined && !('taille' in {}) && !('seances' in {}), 'Ob
   // Valeurs extrêmes du hasard (0 et presque 1) : toujours dans les listes
   [() => 0, () => 0.9999999999].forEach(f => { const c = A.randomChoices(f); C.ok(c.dej.prot !== c.diner.prot && has(A.STARCH, c.diner.starch) && has(A.DESSERT, c.diner.dessert), 'tirage aux bornes', () => JSON.stringify(c)); });
   C.ok(seenOpt.size === 2 + 2 * (A.PROT_ORDER.length + A.STARCH_ORDER.length + A.DESSERT_ORDER.length), 'tirage : des choix jamais tirés', () => seenOpt.size + ' choix tirés');
+}
+
+// --- Aliments proposés ou non (réglages) : retraits valides, jamais un aliment retiré tiré au hasard ni proposé à sa place --
+{
+  const EXTRA = ['prot:', ':riz', 'prot:constructor', '__proto__:poulet', 'dessert:aucun', 'starch:riz ', 'Prot:poulet', 7, null, {}, ['prot:poulet']];
+  for (let i = 0; i < N; i++){
+    const rate = R.pick([0.1, 0.3, 0.6, 0.9, 1]);
+    const raw = ALL_OFF.filter(() => R.chance(rate)).concat(R.chance(.3) ? [R.pick(EXTRA), R.pick(EXTRA), R.pick(ALL_OFF)] : []);
+    const off = A.cleanOff(raw), show = () => JSON.stringify(raw);
+    C.ok(off.every(o => ALL_OFF.includes(o)) && new Set(off).size === off.length, 'cleanOff : entrée invalide ou en double', show);
+    // Un retrait valide est gardé, sauf si tout un type est retiré (base, protéine, féculent : il en faut au moins un)
+    Object.keys(A.CHOICE_IDS).forEach(k => {
+      const asked = A.CHOICE_IDS[k].filter(id => raw.includes(k + ':' + id)), kept = A.CHOICE_IDS[k].filter(id => off.includes(k + ':' + id));
+      const allOff = asked.length === A.CHOICE_IDS[k].length && k !== 'dessert';
+      C.ok(kept.join() === (allOff ? '' : asked.join()), 'cleanOff : retrait perdu', () => k + ' ' + show());
+      C.ok(A.allowed(k, off).length > 0, 'cleanOff : plus aucun choix', () => k + ' ' + show());
+    });
+    C.ok(A.allowed('dessert', off)[0] === 'aucun', 'aliments : « Aucun » toujours proposé en dessert', show);
+    C.ok(JSON.stringify(A.cleanProfile({ off: raw }).off) === JSON.stringify(off) && (off.length ? JSON.stringify(A.profileFields({ off: raw }).off) === JSON.stringify(off) : !has(A.profileFields({ off: raw }), 'off')), 'profil : aliments retirés', show);
+    const ok = k => A.allowed(k, off), prots = ok('prot');
+    // Mémoire et choix par défaut : un aliment retiré remplacé par le suivant proposé (dessert : aucun), le reste gardé
+    const c = R.chance(.5) ? randChoices() : copy(A.DEFAULT_CHOICES[R.int(0, 6)]), w = A.withAllowed(c, off), wshow = () => show() + ' ' + JSON.stringify(c) + ' → ' + JSON.stringify(w);
+    const nextOk = (k, id, avoid) => { const all = A.CHOICE_IDS[k], i = all.indexOf(id); for (let j = 1; j <= all.length; j++){ const x = all[(i + j) % all.length]; if (ok(k).includes(x) && x !== avoid) return x; } return ok(k)[0]; };
+    C.ok(w.pdBase === (ok('pd').includes(c.pdBase) ? c.pdBase : nextOk('pd', c.pdBase)), 'withAllowed : base', wshow);
+    ['dej', 'diner'].forEach(sl => {
+      const des = A.dessertOf(c[sl]);
+      C.ok(w[sl].starch === (ok('starch').includes(c[sl].starch) ? c[sl].starch : nextOk('starch', c[sl].starch)), 'withAllowed : féculent', wshow);
+      C.ok(w[sl].dessert === (ok('dessert').includes(des) ? des : 'aucun'), 'withAllowed : dessert', wshow);
+      C.ok(prots.includes(w[sl].prot) && (!prots.includes(c[sl].prot) || w[sl].prot === c[sl].prot), 'withAllowed : protéine', wshow);
+    });
+    const replaced = !prots.includes(c.dej.prot) || !prots.includes(c.diner.prot);
+    C.ok(!replaced || prots.length < 2 || w.dej.prot !== w.diner.prot, 'withAllowed : même protéine midi et soir après un remplacement', wshow);
+    C.ok(Number.isFinite(A.buildDay(A.emptyPlan(3), w, {}).tot.kcal), 'withAllowed : journée invalide', wshow);
+    // « Décide pour moi » : seulement des aliments proposés, protéines différentes s'il en reste au moins deux
+    const r = A.randomChoices(R.next, off), rshow = () => show() + ' → ' + JSON.stringify(r);
+    C.ok(ok('pd').includes(r.pdBase) && ['dej', 'diner'].every(sl => prots.includes(r[sl].prot) && ok('starch').includes(r[sl].starch) && ok('dessert').includes(r[sl].dessert)), 'tirage : aliment retiré', rshow);
+    C.ok(prots.length < 2 || r.dej.prot !== r.diner.prot, 'tirage : même protéine midi et soir', rshow);
+  }
+  // Une seule protéine proposée : midi et soir, sans erreur
+  const one = A.cleanOff(A.PROT_ORDER.slice(1).map(p => 'prot:' + p));
+  C.ok(A.randomChoices(() => 0.5, one).dej.prot === 'poulet' && A.randomChoices(() => 0.5, one).diner.prot === 'poulet', 'une seule protéine proposée', JSON.stringify(one));
+  // Tout retiré : rien n'est retenu (sauf les desserts), l'appli propose tout
+  C.ok(JSON.stringify(A.cleanOff(ALL_OFF)) === JSON.stringify(A.CHOICE_IDS.dessert.map(d => 'dessert:' + d)), 'tout retiré', '');
+  // Exemple écrit à la main : mardi (poulet midi, bœuf soir), poulet retiré → pas bœuf deux fois
+  const tue = A.withAllowed(A.DEFAULT_CHOICES[2], ['prot:poulet']);
+  C.ok(tue.dej.prot === 'poisson' && tue.diner.prot === 'boeuf', 'mardi sans poulet', () => JSON.stringify(tue));
 }
 
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------

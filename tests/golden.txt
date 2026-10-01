@@ -9,7 +9,7 @@ P 158 g (fourchette 130 à 158, facteur 0.68), G 184 g, L 61 g, portions × 1.00
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Déjeuner :
-    120 g poulet ou dinde [≈ 90 g cuit]  132 kcal
+    120 g viande blanche maigre [≈ 90 g cuit] (poulet, dinde ou filet mignon de porc)  132 kcal
     95 g riz basmati [≈ 290 g cuit]  334 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -18,7 +18,7 @@ P 158 g (fourchette 130 à 158, facteur 0.68), G 184 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner :
     140 g poisson blanc [≈ 110 g cuit] (cabillaud, colin…)  115 kcal
-    70 g lentilles [≈ 180 g cuites]  229 kcal
+    70 g lentilles ou haricots rouges [≈ 180 g cuites]  229 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -32,7 +32,7 @@ P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.00
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -45,7 +45,7 @@ P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -65,13 +65,13 @@ P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
     ≈ 50 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  50 kcal
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Dîner :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -90,7 +90,7 @@ P 154 g (fourchette 130 à 158, facteur 0.62), G 255 g, L 61 g, portions × 1.00
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Déjeuner (après la séance) :
-    110 g poulet ou dinde [≈ 85 g cuit]  121 kcal
+    110 g viande blanche maigre [≈ 85 g cuit] (poulet, dinde ou filet mignon de porc)  121 kcal
     110 g riz basmati [≈ 330 g cuit]  387 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -100,7 +100,7 @@ P 154 g (fourchette 130 à 158, facteur 0.62), G 255 g, L 61 g, portions × 1.00
     1 banane  105 kcal
   Dîner :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
-    70 g lentilles [≈ 180 g cuites]  229 kcal
+    70 g lentilles ou haricots rouges [≈ 180 g cuites]  229 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -114,7 +114,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.00
     1 banane  105 kcal
     15 g amandes  89 kcal
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -128,7 +128,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -149,13 +149,13 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
     ≈ 100 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  100 kcal
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Dîner :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -169,7 +169,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.00
     1 banane  105 kcal
     15 g amandes  89 kcal
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -184,7 +184,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -199,7 +199,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.00
     15 g amandes  89 kcal
   Petite séance
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -213,7 +213,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -228,7 +228,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 408 g, L 61 g, portions × 1.00
     15 g amandes  89 kcal
   Séance moyenne
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -242,7 +242,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 408 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -261,7 +261,7 @@ P 158 g (fourchette 130 à 158, facteur 0.59), G 431 g, L 61 g, portions × 1.00
   Shaker (juste après la sortie) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Déjeuner (après la sortie) :
-    110 g poulet ou dinde [≈ 85 g cuit]  121 kcal
+    110 g viande blanche maigre [≈ 85 g cuit] (poulet, dinde ou filet mignon de porc)  121 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -272,7 +272,7 @@ P 158 g (fourchette 130 à 158, facteur 0.59), G 431 g, L 61 g, portions × 1.00
     ≈ 150 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  150 kcal
   Dîner :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -289,7 +289,7 @@ P 158 g (fourchette 130 à 158, facteur 0.60), G 628 g, L 61 g, portions × 1.00
   Sortie longue Vélo ou course, 3 h et +. :
     180 g glucides pendant l’effort (60 g par heure : boisson d’effort, gels ou pâtes de fruits)  720 kcal
   Déjeuner (après la sortie) :
-    110 g poulet ou dinde [≈ 85 g cuit]  121 kcal
+    110 g viande blanche maigre [≈ 85 g cuit] (poulet, dinde ou filet mignon de porc)  121 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -303,7 +303,7 @@ P 158 g (fourchette 130 à 158, facteur 0.60), G 628 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -321,7 +321,7 @@ P 157 g (fourchette 130 à 158, facteur 0.54), G 507 g, L 62 g, portions × 1.00
     1 banane  105 kcal
   Petite séance
   Déjeuner (après la séance) :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -337,7 +337,7 @@ P 157 g (fourchette 130 à 158, facteur 0.54), G 507 g, L 62 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -400,7 +400,7 @@ P 157 g (fourchette 130 à 158, facteur 0.72), G 296 g, L 61 g, portions × 1.00
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Déjeuner (après la séance) :
-    130 g poulet ou dinde [≈ 100 g cuit]  143 kcal
+    130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
     100 g riz basmati [≈ 300 g cuit]  352 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -426,7 +426,7 @@ P 114 g (fourchette 94 à 114, facteur 0.74), G 118 g, L 45 g, portions × 0.722
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     10 g amandes  59 kcal
   Déjeuner :
-    100 g poulet ou dinde [≈ 75 g cuit]  110 kcal
+    100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     45 g riz basmati [≈ 140 g cuit]  158 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -463,7 +463,7 @@ P 216 g (fourchette 180 à 220, facteur 0.88), G 508 g, L 88 g, portions × 1.38
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
-    200 g saumon [≈ 160 g cuit] (cuisson sans matière grasse)  412 kcal
+    200 g poisson gras [≈ 160 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  412 kcal
     165 g riz basmati [≈ 500 g cuit]  581 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -481,7 +481,7 @@ P 125 g (fourchette 104 à 128, facteur 0.91), G 202 g, L 47 g, portions × 0.80
     2 œufs marinés  160 kcal
     1 banane  105 kcal
   Déjeuner :
-    130 g poulet ou dinde [≈ 100 g cuit]  143 kcal
+    130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
     90 g riz basmati [≈ 270 g cuit]  317 kcal
     250 g légumes (minimum, à volonté)  75 kcal
   Dîner :
@@ -516,7 +516,7 @@ P 174 g (fourchette 144 à 176, facteur 0.83), G 717 g, L 67 g, portions × 1.11
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
-    170 g poulet ou dinde [≈ 130 g cuit]  187 kcal
+    170 g viande blanche maigre [≈ 130 g cuit] (poulet, dinde ou filet mignon de porc)  187 kcal
     440 g patate douce [≈ 440 g à l’eau, ≈ 330 g au four]  378 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
@@ -561,7 +561,7 @@ P 160 g (fourchette 135 à 165, facteur 0.74), G 397 g, L 60 g, portions × 1.04
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Déjeuner (après la séance) :
-    140 g poulet ou dinde [≈ 105 g cuit]  154 kcal
+    140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
     420 g pommes de terre [≈ 420 g à l’eau, ≈ 320 g au four]  336 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -606,7 +606,7 @@ P 219 g (fourchette 181 à 222, facteur 0.88), G 1143 g, L 88 g, portions × 1.4
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
-    200 g saumon [≈ 160 g cuit] (cuisson sans matière grasse)  412 kcal
+    200 g poisson gras [≈ 160 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  412 kcal
     170 g riz basmati [≈ 510 g cuit]  598 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -647,7 +647,7 @@ P 99 g (fourchette 84 à 103, facteur 0.70), G 118 g, L 58 g, portions × 0.650
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     10 g amandes  59 kcal
   Déjeuner :
-    70 g saumon [≈ 55 g cuit] (cuisson sans matière grasse)  144 kcal
+    70 g poisson gras [≈ 55 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  144 kcal
     20 g boulgour [≈ 50 g cuit]  66 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal

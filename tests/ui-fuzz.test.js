@@ -76,13 +76,16 @@ function scan(dom, label){
   click(dom, '[data-action="toggle"][data-key="libre"]'); scan(dom, 'page, repas libre');
   click(dom, '[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]'); scan(dom, 'panneau de choix'); click(dom, '#sheet [data-value="chocolat"]');
   click(dom, '#open-repas'); scan(dom, 'formulaire des repas, repas libre');
-  click(dom, '#repas-form [data-kind="prot"][data-slot="dej"][data-value="thon"]'); click(dom, '[data-action="repas-ok"]');
+  click(dom, '#repas-form .sel[data-kind="prot"][data-slot="dej"]'); scan(dom, 'formulaire des repas, panneau de choix');
+  click(dom, '#sheet [data-value="thon"]'); click(dom, '[data-action="repas-ok"]');
   click(dom, '#gear'); scan(dom, 'réglages');
   click(dom, '[data-action="prof"][data-key="mode"][data-value="manuel"]'); scan(dom, 'réglages, manuel');
   type(dom, '#besoins input[data-key="repos"]', 900); scan(dom, 'réglages, dépense hors bornes'); type(dom, '#besoins input[data-key="repos"]', 2500);
   click(dom, '[data-action="prof"][data-key="shaker"][data-value="non"]'); scan(dom, 'réglages, sans shaker');
   type(dom, '#besoins input[data-key="deficit"]', 25); scan(dom, 'réglages, déficit 25 %');
   type(dom, '#besoins input[data-key="gras"]', 30); click(dom, '[data-action="prof"][data-key="mode"][data-value="auto"]'); scan(dom, 'réglages, masse grasse');
+  click(dom, '#alim-list [data-kind="prot"][data-value="poulet"]'); click(dom, '#alim-list [data-kind="dessert"][data-value="chocolat"]'); scan(dom, 'réglages, aliments retirés');
+  click(dom, '#alim-list [data-kind="pd"][data-value="avoine"]'); click(dom, '#alim-list [data-kind="pd"][data-value="pain"]'); scan(dom, 'réglages, dernière base gardée');
   click(dom, '#help-regl'); scan(dom, 'aide');
 }
 {
@@ -96,6 +99,7 @@ function scan(dom, label){
   click(dom, '[data-action="pl-preset"][data-value="7"]');
   click(dom, '[data-action="pl-start"]'); scan(dom, 'planifier, premier jour');
   click(dom, '#plan-body [data-action="add"][data-value="longue"]'); click(dom, '#plan-body [data-action="toggle"]'); scan(dom, 'planifier, sortie longue et repas libre');
+  click(dom, '#plan-body .sel[data-kind="starch"][data-slot="dej"]'); scan(dom, 'planifier, panneau de choix'); click(dom, '#sheet [data-value="poischiches"]');
   click(dom, '[data-action="pl-hasard-tous"]'); scan(dom, 'courses');
   click(dom, '#courses-list .chk'); scan(dom, 'courses, ligne cochée');
   type(dom, 'input[data-range="courses"][data-end="to"]', '2026-09-01'); scan(dom, 'courses, période invalide');
@@ -160,12 +164,19 @@ function check(dom, log){
     });
     const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
     Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
+    // Aliments retirés : valides, au moins un proposé par type (sauf les desserts), les mêmes que dans les réglages
+    const all = [...d.querySelectorAll('#alim-list .opt')], off = pr.off || [];
+    C.ok(Array.isArray(off) && off.every(x => all.some(b => b.dataset.kind + ':' + b.dataset.value === x)), 'aliments retirés invalides', () => JSON.stringify(off));
+    ['pd', 'prot', 'starch'].forEach(k => C.ok(all.some(b => b.dataset.kind === k && !off.includes(k + ':' + b.dataset.value)), 'plus aucun aliment proposé', () => k + ' ' + where()));
+    C.ok(all.every(b => (b.getAttribute('aria-pressed') === 'false') === off.includes(b.dataset.kind + ':' + b.dataset.value)), 'réglages ≠ aliments retirés', where);
   } catch (e){ C.ok(false, 'stockage illisible', () => e.message + ' ' + where()); }
-  // Assistant : un seul choix par rangée ; courses : chaque ligne a sa quantité
-  if (!$('#plan').hidden) $('#plan-body').querySelectorAll('[role="group"].opts-list').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'assistant : un choix par rangée', where));
+  // Assistant et formulaire : une bulle par choix, avec sa valeur ; courses : chaque ligne a sa quantité
+  ['#plan-body', '#repas-form'].forEach(id => {
+    if ($(id).closest('main').hidden || !$(id + ' .sel')) return;
+    const sels = [...d.querySelectorAll(id + ' .sel')];
+    C.ok(sels.length === 7 && sels.every(b => b.dataset.value && b.textContent.trim()), 'bulles de choix', () => id + ' ' + where());
+  });
   if (!$('#courses').hidden) d.querySelectorAll('#courses-list .chk').forEach(b => C.ok(/\d/.test(b.querySelector('.q').textContent) && ['true', 'false'].includes(b.getAttribute('aria-checked')), 'courses : ligne sans quantité', where));
-  // Formulaire des repas : un seul choix par rangée
-  if (!$('#repas').hidden) $('#repas-form').querySelectorAll('[role="group"]').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'formulaire : un choix par rangée', where));
   if ($('#page').hidden) return;
   // Total affiché = somme des lignes (arrondies), chaque repas aussi
   const lis = [...d.querySelectorAll('#day li')];
@@ -199,7 +210,9 @@ const ACTIONS = {
     if (!b) return 'choix -';
     b.click();
     if (d.querySelector('#sheet').hidden) throw new Error('panneau non ouvert');
-    const o = R.pick([...d.querySelectorAll('#sheet .opt')]); o.click();
+    const opts = [...d.querySelectorAll('#sheet .opt')], off = JSON.parse(dom.window.localStorage.getItem(PKEY) || '{}').off || [];
+    C.ok(opts.filter(x => x.getAttribute('aria-pressed') === 'true').length === 1 && opts.every(x => x.dataset.value === b.dataset.value || !off.includes(b.dataset.kind + ':' + x.dataset.value)), 'panneau : aliment retiré proposé', () => b.dataset.kind + ' ' + JSON.stringify(off) + ' ' + opts.map(x => x.dataset.value).join());
+    const o = R.pick(opts); o.click();
     if (b.dataset.kind && d.querySelector('[data-action="open-pick"][data-kind="' + b.dataset.kind + '"]' + (b.dataset.slot ? '[data-slot="' + b.dataset.slot + '"]' : '')).dataset.value !== o.dataset.value) throw new Error('choix non appliqué');
     return 'choix ' + b.dataset.kind + '=' + o.dataset.value;
   },
@@ -241,9 +254,13 @@ const ACTIONS = {
       d.querySelector(R.pick(['#open-repas', '#repas-btn'])).click();
     }
     const before = bubbles();
-    for (let i = R.int(0, 4); i > 0; i--) R.pick([...d.querySelectorAll('#repas-form .opt')]).click();
-    d.querySelectorAll('#repas-form [role="group"]').forEach(g => C.ok(g.querySelectorAll('[aria-pressed="true"]').length === 1, 'formulaire : un choix par rangée', () => g.getAttribute('aria-labelledby')));
-    const want = [...d.querySelectorAll('#repas-form [aria-pressed="true"]')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
+    for (let i = R.int(0, 4); i > 0; i--){
+      R.pick([...d.querySelectorAll('#repas-form .sel')]).click();
+      if (d.querySelector('#sheet').hidden || !d.querySelector('#repas').hasAttribute('inert')) throw new Error('panneau du formulaire non ouvert');
+      R.pick([...d.querySelectorAll('#sheet .opt')]).click();
+      if (!d.querySelector('#sheet').hidden || d.querySelector('#repas').hasAttribute('inert')) throw new Error('panneau du formulaire resté ouvert');
+    }
+    const want = [...d.querySelectorAll('#repas-form .sel')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
     const how = R.pick(['valide', 'hasard', 'flèche', 'retour']);
     if (how === 'valide') d.querySelector('[data-action="repas-ok"]').click();
     else if (how === 'hasard') d.querySelector('[data-action="repas-hasard"]').click();
@@ -254,7 +271,10 @@ const ACTIONS = {
     if (how === 'valide') C.ok(after.every(x => want.includes(x)), 'formulaire validé : choix non appliqués', () => want.join(' ') + ' // ' + after.join(' '));
     else if (how === 'hasard'){
       const prot = slot => (after.find(x => x.startsWith('prot' + slot + '=')) || '').split('=')[1];
-      C.ok(!prot('diner') || prot('dej') !== prot('diner'), 'hasard : même protéine midi et soir', () => after.join(' '));
+      // Même protéine seulement s'il n'en reste qu'une de proposée (réglages, « Tes aliments »)
+      const off = JSON.parse(w.localStorage.getItem(PKEY) || '{}').off || [];
+      const prots = [...d.querySelectorAll('#alim-list [data-kind="prot"]')].filter(b => !off.includes('prot:' + b.dataset.value)).length;
+      C.ok(!prot('diner') || prots < 2 || prot('dej') !== prot('diner'), 'hasard : même protéine midi et soir', () => after.join(' ') + ' ' + JSON.stringify(off));
     } else C.ok(after.join() === before.join(), 'formulaire fermé sans valider : choix changés', () => before.join(' ') + ' // ' + after.join(' '));
     return 'repas ' + how;
   },
@@ -280,6 +300,11 @@ const ACTIONS = {
       for (let j = R.int(0, 3); j > 0; j--){
         const b = R.pick([...d.querySelectorAll('#plan-body button:not(:disabled)')].filter(x => !/^pl-/.test(x.dataset.action)));
         if (b) b.click();
+        // Une bulle de plat ouvre le panneau : un choix le valide et le ferme
+        if (!d.querySelector('#sheet').hidden){
+          R.pick([...d.querySelectorAll('#sheet .opt')]).click();
+          if (!d.querySelector('#sheet').hidden) throw new Error('panneau de l’assistant resté ouvert');
+        }
       }
       R.pick(['pl-next', 'pl-next', 'pl-prev', 'pl-hasard']).split().forEach(a => { const b = d.querySelector('[data-action="' + a + '"]'); if (b) b.click(); });
     }
@@ -302,6 +327,16 @@ const ACTIONS = {
     if (day && R.chance(.4)) day.click(); else d.querySelector('#courses [data-action="fermer"]').click();
     C.ok(d.querySelector('#courses').hidden, 'courses restées ouvertes', '');
     return 'courses';
+  },
+  // Réglages, « Tes aliments » : retirer ou remettre quelques aliments
+  aliments: dom => {
+    const d = dom.window.document;
+    if (d.querySelector('#page').hidden) return 'aliments -';
+    d.querySelector('#gear').click();
+    const done = [];
+    for (let i = R.int(1, 4); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#alim-list .opt')]); b.click(); done.push(b.dataset.value); }
+    d.querySelector('#reglages [data-action="fermer"]').click();
+    return 'aliments ' + done.join(' ');
   },
   day: dom => { clock.now += 864e5 * R.pick([1, 1, 2, 7]); dom.window.dispatchEvent(new dom.window.Event('focus')); return 'jour suivant'; },
   accueil: dom => {
