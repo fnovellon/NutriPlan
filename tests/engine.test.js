@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -111,11 +111,11 @@ assert.deepStrictEqual(old('repos', { natation: true }), { seances: [petite('mid
 assert.deepStrictEqual(old('longue', { natation: true }).seances.length, 1, 'pas de natation un jour de sortie longue');
 
 // 6. Toutes les combinaisons de plats avec le profil par défaut : apport ≈ objectif, planchers respectés
-// (base du petit-déjeuner en alternance : chaque couple de plats est vu avec l'avoine et avec le pain sur l'ensemble)
+// (base du petit-déjeuner en alternance : chaque couple de plats est vu avec l'avoine, le pain et le salé sur l'ensemble)
 let n = 0;
 for (const [name, set] of Object.entries(SETS)) {
   for (const [i1, p1] of PROT_ORDER.entries()) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const [i2, s2] of STARCH_ORDER.entries()) {
-    const pdBase = (i1 + i2 + n) % 2 ? 'pain' : 'avoine';
+    const pdBase = PD_ORDER[(i1 + i2 + n) % PD_ORDER.length];
     const combo = `${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
     const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
     assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : ${Math.round(r.tot.kcal)} kcal pour un objectif de ${r.energy.target}`);
@@ -182,6 +182,39 @@ assert(fruit([]) === 'fruits rouges' && fruit([petite('soir')]) === 'fruits roug
 assert(secOf(r0([petite('midi')]), 'dej').items.some(i => i.key === 'comp') && secOf(r0([petite('midi')]), 'dej').when === 'après la séance', 'séance à midi : compote au déjeuner');
 assert.strictEqual(secOf(r0([moyenne('soir')]), 'diner').when, 'après la séance', 'dîner après la séance');
 assert.strictEqual(secOf(r0([longue(2)]), 'pd').when, '1h30 à 2 h avant la sortie', 'petit-déjeuner avant la sortie');
+// Collation : des œufs tout court (plus de marinade depuis la 3.8.0)
+const oe = secOf(r0([]), 'co').items.find(i => i.key === 'oe');
+assert(oe.qty === '2' && oe.name === 'œufs' && oe.note === 'durs ou mollets, préparés à l’avance' && oe.m.kcal === UNIT.oeuf[0] * 2 && oe.buy.id === 'oeuf', 'œufs de la collation');
+// Petit-déjeuner, trois bases : avoine (ou muesli), pain complet, salé (pain, œufs, une tranche de jambon, fruit ; ni skyr ni amandes)
+const pdOf = (pdBase, set, prof) => secOf(buildDay(day(set), Object.assign({}, DEFAULT_CHOICES[3], { pdBase }), prof || {}), 'pd').items;
+const line = (items, key) => { const i = items.find(x => x.key === key); return i ? [i.qty, i.name, i.note].join(' | ') : null; };
+assert.strictEqual(line(pdOf('avoine', []), 'base'), '60\u00a0g | flocons d’avoine ou muesli | muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr', 'avoine ou muesli');
+assert.strictEqual(pdOf('pain', []).map(i => i.key).join(' '), 'base skyr fruit am', 'pain complet');
+const sale = pdOf('sale', []);
+assert.strictEqual(sale.map(i => i.key).join(' '), 'base oeufs jambon fruit', 'salé : ni skyr ni amandes');
+assert.deepStrictEqual(plain(sale.map(i => [i.qty, i.name])), [['80\u00a0g', 'pain complet'], ['2', 'œufs'], ['45\u00a0g', 'jambon blanc'], ['125\u00a0g', 'fruits rouges']], 'salé : portions');
+assert(line(sale, 'oeufs').endsWith('à la coque, pochés ou brouillés sans matière grasse') && line(sale, 'jambon').endsWith('1 tranche'), 'salé : notes');
+assert(!sale.some(i => i.adj), 'salé : portions fixes (pas ajustées à l’objectif de protéines)');
+assert.strictEqual(pdOf('sale', [moyenne('soir')]).find(i => i.key === 'fruit').name, 'banane', 'salé : banane les jours de séance moyenne');
+// 52 kg : portions × k, un œuf ; sortie longue : version sucrée au pain, dite dans la note
+assert.deepStrictEqual(plain(pdOf('sale', [], { sexe: 'f', poids: 52 }).map(i => i.qty)), ['60\u00a0g', '1', '35\u00a0g', '125\u00a0g'], 'salé à 52 kg');
+assert.strictEqual(line(pdOf('sale', [], { poids: 45 }), 'oeufs'), '1 | œuf | à la coque, poché ou brouillé sans matière grasse', 'salé : un œuf');
+const saleLong = pdOf('sale', [longue(2)]), painLong = pdOf('pain', [longue(2)]);
+assert.deepStrictEqual(plain(saleLong.map(i => [i.key, i.qty])), plain(painLong.map(i => [i.key, i.qty])), 'salé un jour de sortie longue = version sucrée au pain');
+assert.strictEqual(saleLong[0].note, 'environ 3 tranches, en version sucrée avant la sortie longue (plus digeste)', 'sortie longue : version sucrée dite');
+// Thon midi et soir avec le salé : plus rien ne s'ajuste à l'objectif de protéines, la journée est comptée en butée
+const thonSale = { pdBase: 'sale', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'lentilles' } };
+const ts = buildDay(day([]), thonSale);
+assert(ts.tot.p > ts.prot.high && ts.prot.factor === PF_MIN, `thon deux fois et salé : ${Math.round(ts.tot.p)} g, facteur ${ts.prot.factor}`);
+const tsLow = buildDay(day([]), thonSale, { prot: 3, shaker: 'non' });
+assert(tsLow.prot.factor === PF_MAX && tsLow.secs.some(sec => sec.id === 'soir'), 'thon deux fois et salé, objectif haut : butée haute et skyr du soir');
+// Salé et sucré ont presque les mêmes lipides au petit-déjeuner (œufs ≈ amandes), le total du jour ne bouge pas
+const fatPd = items => items.reduce((a, i) => a + i.m.f, 0);
+near(fatPd(sale), fatPd(pdOf('avoine', [])), 1, 'lipides du petit-déjeuner salé');
+for (const [name, set] of Object.entries(SETS)) {
+  const t = PD_ORDER.map(pdBase => buildDay(day(set), Object.assign({}, DEFAULT_CHOICES[3], { pdBase })).tot.kcal);
+  assert(Math.max(...t) - Math.min(...t) <= 40, `${name} : la base du petit-déjeuner change le total (${t.map(Math.round).join(', ')})`);
+}
 // Un seul shaker par jour, juste après la dernière séance
 for (const [name, set] of Object.entries(SETS)) for (const libre of [false, true]) {
   const r = buildDay(day(set, { libre }), DEFAULT_CHOICES[3]);
@@ -315,9 +348,9 @@ for (const poids of [45, 72, 110]) {
   near(FOOD.amandes[0] * 0.25, av.m.kcal, 0.15 * av.m.kcal, 'amandes ≈ ½ avocat');
   near(FOOD.parmesan[0] * 0.2, oeuf.m.kcal, 0.15 * oeuf.m.kcal, 'parmesan ≈ œuf dur');
 }
-// Accords : « 1 œuf mariné », « 1 œuf », « une demi-tranche » aux plus petites portions (corrigé en 3.3.2)
+// Accords : « 1 œuf » (collation, déjeuner), « une demi-tranche » aux plus petites portions (corrigé en 3.3.2)
 const tiny = composeDay(day([]), oeufsJambon, cleanProfile({ poids: 45 }), 0.5);
-assert.deepStrictEqual([itemOf(tiny, 'co', 'oe').qty, itemOf(tiny, 'co', 'oe').name], ['1', 'œuf mariné'], 'un œuf mariné');
+assert.deepStrictEqual([itemOf(tiny, 'co', 'oe').qty, itemOf(tiny, 'co', 'oe').name, itemOf(tiny, 'co', 'oe').note], ['1', 'œuf', 'dur ou mollet, préparé à l’avance'], 'un œuf à la collation');
 assert.deepStrictEqual([itemOf(tiny, 'dej', 'p1').qty, itemOf(tiny, 'dej', 'p1').name], ['1', 'œuf'], 'un œuf');
 assert.strictEqual(itemOf(tiny, 'dej', 'p2').note, 'environ une demi-tranche', 'demi-tranche de jambon');
 // Garde-fous pour d'autres corpulences : toutes les journées types × toutes les protéines (féculents variés)
@@ -331,7 +364,7 @@ const FRIENDS = {
 let nf = 0;
 for (const [who, prof] of Object.entries(FRIENDS)) {
   const k = scaleOf(cleanProfile(prof));
-  for (const [name, set] of Object.entries(SETS)) for (const pdBase of ['avoine', 'pain']) {
+  for (const [name, set] of Object.entries(SETS)) for (const pdBase of PD_ORDER) {
     for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']]) {
       const combo = `${who}/${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
       const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, prof);
@@ -385,8 +418,8 @@ const p20 = pday([], undefined, { prot: 2 }), p26 = pday([], undefined, { prot: 
 assert(parseInt(pq(p26, 'dej', 'p1')) > parseInt(pq(p20, 'dej', 'p1')) && parseInt(pq(p26, 'pd', 'skyr')) > parseInt(pq(p20, 'pd', 'skyr')), 'objectif plus haut, portions plus grandes');
 assert(starchKcal(p26)[0] < starchKcal(p20)[0], 'objectif plus haut, moins de féculents');
 near(p26.tot.kcal, p20.tot.kcal, 30, 'total du jour indépendant de l’objectif de protéines');
-// Valeurs de référence (lundi : poulet + riz, crevettes + quinoa ; 72 kg, 2 g/kg) : poulet 140 g, skyr 190 g
-assert(pq(p20, 'dej', 'p1') === '140\u00a0g' && pq(p20, 'pd', 'skyr') === '190\u00a0g', `2 g/kg : poulet ${pq(p20, 'dej', 'p1')}, skyr ${pq(p20, 'pd', 'skyr')}`);
+// Valeurs de référence (lundi : poulet + riz, crevettes + quinoa ; 72 kg, 2 g/kg) : poulet 130 g, skyr 190 g
+assert(pq(p20, 'dej', 'p1') === '130\u00a0g' && pq(p20, 'pd', 'skyr') === '190\u00a0g', `2 g/kg : poulet ${pq(p20, 'dej', 'p1')}, skyr ${pq(p20, 'pd', 'skyr')}`);
 
 // 19. Desserts : pris sur le féculent du même repas, total du jour inchangé
 // Menu de base de ces tests : riz et pâtes un jour sans séance, loin de leurs plafonds

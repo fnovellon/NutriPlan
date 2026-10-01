@@ -1,10 +1,10 @@
 # Journées de référence (npm run golden pour réécrire après un changement voulu)
 
 == 72 kg, profil par défaut, repos
-dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1990 kcal (écart 10)
-P 158 g (fourchette 130 à 158, facteur 0.68), G 184 g, L 61 g, portions × 1.000
+dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1974 kcal (écart -6)
+P 157 g (fourchette 130 à 158, facteur 0.68), G 181 g, L 61 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     170 g skyr nature  105 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
@@ -14,20 +14,20 @@ P 158 g (fourchette 130 à 158, facteur 0.68), G 184 g, L 61 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner :
     140 g poisson blanc [≈ 110 g cuit] (cabillaud, colin…)  115 kcal
-    70 g lentilles ou haricots rouges [≈ 180 g cuites]  229 kcal
+    70 g lentilles ou haricots rouges [≈ 180 g cuits]  229 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, petite le soir
-dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2266 kcal (écart -4)
-P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.000
+dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2270 kcal (écart 0)
+P 155 g (fourchette 130 à 158, facteur 0.56), G 254 g, L 61 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     140 g skyr nature  87 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
@@ -37,33 +37,33 @@ P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
-    ≈ 50 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  50 kcal
+    ≈ 70 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  70 kcal
   Petite séance
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, petite le matin
-dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2266 kcal (écart -4)
-P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.000
+dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2270 kcal (écart 0)
+P 155 g (fourchette 130 à 158, facteur 0.55), G 254 g, L 61 g, portions × 1.000
   Petit-déjeuner (1h30 avant la séance) :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     140 g skyr nature  87 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Petite séance
   Collation (juste après la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 shaker de protéines (une dose, à l’eau)  120 kcal
-    ≈ 50 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  50 kcal
+    ≈ 70 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  70 kcal
   Déjeuner :
     100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
@@ -71,17 +71,17 @@ P 156 g (fourchette 130 à 158, facteur 0.56), G 252 g, L 61 g, portions × 1.00
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Dîner :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, petite à midi
-dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2273 kcal (écart 3)
-P 154 g (fourchette 130 à 158, facteur 0.62), G 255 g, L 61 g, portions × 1.000
+dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2271 kcal (écart 1)
+P 156 g (fourchette 130 à 158, facteur 0.64), G 254 g, L 61 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
-    150 g skyr nature  93 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
+    160 g skyr nature  99 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Avant la séance (vers 11 h 30) :
@@ -96,21 +96,21 @@ P 154 g (fourchette 130 à 158, facteur 0.62), G 255 g, L 61 g, portions × 1.00
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (dans l’après-midi) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
   Dîner :
-    120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
-    70 g lentilles ou haricots rouges [≈ 180 g cuites]  229 kcal
+    130 g poisson blanc [≈ 105 g cuit] (cabillaud, colin…)  107 kcal
+    70 g lentilles ou haricots rouges [≈ 180 g cuits]  229 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, moyenne le soir
-dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2433 kcal (écart 3)
-P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.000
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2432 kcal (écart 2)
+P 158 g (fourchette 130 à 158, facteur 0.58), G 291 g, L 61 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
-    140 g skyr nature  87 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
+    150 g skyr nature  93 kcal
     1 banane  105 kcal
     15 g amandes  89 kcal
   Déjeuner :
@@ -119,7 +119,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
     ≈ 100 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  100 kcal
@@ -127,27 +127,27 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.00
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
-    110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, moyenne le matin
-dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2433 kcal (écart 3)
-P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.000
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2427 kcal (écart -3)
+P 156 g (fourchette 130 à 158, facteur 0.56), G 293 g, L 61 g, portions × 1.000
   Petit-déjeuner (1h30 avant la séance) :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     140 g skyr nature  87 kcal
     1 banane  105 kcal
     15 g amandes  89 kcal
   Séance moyenne
   Collation (juste après la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
     1 shaker de protéines (une dose, à l’eau)  120 kcal
-    ≈ 100 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  100 kcal
+    ≈ 110 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  110 kcal
   Déjeuner :
     100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
@@ -155,16 +155,16 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 293 g, L 61 g, portions × 1.00
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Dîner :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, petite + moyenne le soir
-dépense 3069 kcal (repos 2328, séances 742), objectif 2720 kcal, apport 2723 kcal (écart 3)
-P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.000
+dépense 3069 kcal (repos 2328, séances 742), objectif 2720 kcal, apport 2717 kcal (écart -3)
+P 156 g (fourchette 130 à 158, facteur 0.55), G 366 g, L 61 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     140 g skyr nature  87 kcal
     1 banane  105 kcal
     15 g amandes  89 kcal
@@ -174,26 +174,26 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
-    ≈ 390 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  390 kcal
+    ≈ 400 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  400 kcal
   Petite séance
   Séance moyenne
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, petite le matin + moyenne le soir
-dépense 3069 kcal (repos 2328, séances 742), objectif 2720 kcal, apport 2723 kcal (écart 3)
-P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.000
+dépense 3069 kcal (repos 2328, séances 742), objectif 2720 kcal, apport 2717 kcal (écart -3)
+P 156 g (fourchette 130 à 158, facteur 0.55), G 366 g, L 61 g, portions × 1.000
   Petit-déjeuner (1h30 avant la séance) :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     140 g skyr nature  87 kcal
     1 banane  105 kcal
     15 g amandes  89 kcal
@@ -204,25 +204,25 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 365 g, L 61 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
-    ≈ 390 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  390 kcal
+    ≈ 400 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  400 kcal
   Séance moyenne
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, deux moyennes
-dépense 3235 kcal (repos 2328, séances 907), objectif 2890 kcal, apport 2893 kcal (écart 3)
+dépense 3235 kcal (repos 2328, séances 907), objectif 2890 kcal, apport 2887 kcal (écart -3)
 P 156 g (fourchette 130 à 158, facteur 0.55), G 408 g, L 61 g, portions × 1.000
   Petit-déjeuner (1h30 avant la séance) :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     140 g skyr nature  87 kcal
     1 banane  105 kcal
     15 g amandes  89 kcal
@@ -233,16 +233,16 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 408 g, L 61 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
-    ≈ 560 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  560 kcal
+    ≈ 570 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  570 kcal
   Séance moyenne
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -251,7 +251,7 @@ P 156 g (fourchette 130 à 158, facteur 0.55), G 408 g, L 61 g, portions × 1.00
 dépense 3336 kcal (repos 2328, séances 1008), objectif 2990 kcal, apport 2985 kcal (écart -5)
 P 158 g (fourchette 130 à 158, facteur 0.59), G 431 g, L 61 g, portions × 1.000
   Petit-déjeuner (1h30 à 2 h avant la sortie) :
-    80 g flocons d’avoine  296 kcal
+    80 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  296 kcal
     100 g skyr nature  62 kcal
     1 banane  105 kcal
     15 g miel  48 kcal
@@ -272,7 +272,7 @@ P 158 g (fourchette 130 à 158, facteur 0.59), G 431 g, L 61 g, portions × 1.00
     ≈ 150 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  150 kcal
   Dîner :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
@@ -281,7 +281,7 @@ P 158 g (fourchette 130 à 158, facteur 0.59), G 431 g, L 61 g, portions × 1.00
 dépense 4128 kcal (repos 2328, séances 1800), objectif 3780 kcal, apport 3775 kcal (écart -5)
 P 158 g (fourchette 130 à 158, facteur 0.60), G 628 g, L 61 g, portions × 1.000
   Petit-déjeuner (1h30 à 2 h avant la sortie) :
-    80 g flocons d’avoine  296 kcal
+    80 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  296 kcal
     100 g skyr nature  62 kcal
     1 banane  105 kcal
     15 g miel  48 kcal
@@ -303,16 +303,16 @@ P 158 g (fourchette 130 à 158, facteur 0.60), G 628 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, profil par défaut, quatre séances
-dépense 3645 kcal (repos 2328, séances 1318), objectif 3300 kcal, apport 3302 kcal (écart 2)
-P 157 g (fourchette 130 à 158, facteur 0.54), G 507 g, L 62 g, portions × 1.000
+dépense 3645 kcal (repos 2328, séances 1318), objectif 3300 kcal, apport 3296 kcal (écart -4)
+P 156 g (fourchette 130 à 158, facteur 0.54), G 507 g, L 62 g, portions × 1.000
   Petit-déjeuner (1h30 avant la séance) :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     130 g skyr nature  81 kcal
     1 banane  105 kcal
     15 g amandes  89 kcal
@@ -327,58 +327,58 @@ P 157 g (fourchette 130 à 158, facteur 0.54), G 507 g, L 62 g, portions × 1.00
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
-    ≈ 810 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  810 kcal
+    ≈ 820 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  820 kcal
   Séance moyenne
   Petite séance
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner (après la séance) :
     110 g poisson blanc [≈ 90 g cuit] (cabillaud, colin…)  90 kcal
-    100 g lentilles ou haricots rouges [≈ 250 g cuites]  327 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ½ avocat (ou 25 g d’amandes)  137 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, repas libre, repos (samedi)
-dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 2280 kcal (écart -7), dont repas libre 900
-P 120 g (fourchette 130 à 158, facteur 0.83), G 124 g, L 40 g, portions × 1.000
+dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 2287 kcal (écart 4), dont repas libre 900
+P 119 g (fourchette 130 à 158, facteur 0.77), G 128 g, L 40 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
-    210 g skyr nature  130 kcal
-    125 g fruits rouges (surgelés, c’est parfait)  48 kcal
-    15 g amandes  89 kcal
-  Déjeuner :
-    1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
-    1 œuf dur (ou 20 g de parmesan)  72 kcal
-    75 g pâtes [≈ 170 g cuites]  266 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
-    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
-  Collation (dans l’après-midi) :
-    2 œufs marinés  160 kcal
-    1 shaker de protéines (une dose, à l’eau)  120 kcal
-  Repas libre (resto ou entre amis) :
-    900 kcal environ (de quoi te faire plaisir, sans peser)  900 kcal
-
-== 72 kg, repas libre, petite le soir, desserts
-dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2567 kcal (écart -2), dont repas libre 1050
-P 118 g (fourchette 130 à 158, facteur 0.78), G 157 g, L 40 g, portions × 1.000
-  Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     190 g skyr nature  118 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Déjeuner :
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
-    65 g pâtes [≈ 150 g cuites]  231 kcal
+    85 g pâtes [≈ 200 g cuites]  302 kcal
+    250 g légumes (minimum, à volonté)  75 kcal
+    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+  Collation (dans l’après-midi) :
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    1 shaker de protéines (une dose, à l’eau)  120 kcal
+  Repas libre (resto ou entre amis) :
+    900 kcal environ (de quoi te faire plaisir, sans peser)  900 kcal
+
+== 72 kg, repas libre, petite le soir, desserts
+dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2569 kcal (écart 8), dont repas libre 1050
+P 119 g (fourchette 130 à 158, facteur 0.78), G 159 g, L 40 g, portions × 1.000
+  Petit-déjeuner :
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
+    190 g skyr nature  118 kcal
+    125 g fruits rouges (surgelés, c’est parfait)  48 kcal
+    15 g amandes  89 kcal
+  Déjeuner :
+    1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
+    1 œuf dur (ou 20 g de parmesan)  72 kcal
+    70 g pâtes [≈ 160 g cuites]  248 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 fruit (pomme, poire, orange, 2 kiwis…)  80 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
   Petite séance
   Shaker (juste après la séance) :
@@ -387,8 +387,8 @@ P 118 g (fourchette 130 à 158, facteur 0.78), G 157 g, L 40 g, portions × 1.00
     1 050 kcal environ (de quoi te faire plaisir, sans peser)  1050 kcal
 
 == 72 kg, moyenne à midi, pain, chocolat et fruit
-dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2436 kcal (écart 6)
-P 157 g (fourchette 130 à 158, facteur 0.72), G 296 g, L 61 g, portions × 1.000
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2437 kcal (écart 7)
+P 157 g (fourchette 130 à 158, facteur 0.72), G 297 g, L 62 g, portions × 1.000
   Petit-déjeuner :
     80 g pain complet (2 tranches)  192 kcal
     180 g skyr nature  112 kcal
@@ -401,12 +401,12 @@ P 157 g (fourchette 130 à 158, facteur 0.72), G 296 g, L 61 g, portions × 1.00
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Déjeuner (après la séance) :
     130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
-    100 g riz basmati [≈ 300 g cuit]  352 kcal
+    105 g riz basmati [≈ 320 g cuit]  370 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     20 g chocolat noir (70 % ou plus, 2 à 4 carrés selon la tablette)  114 kcal
   Collation (dans l’après-midi) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
   Dîner :
@@ -418,10 +418,10 @@ P 157 g (fourchette 130 à 158, facteur 0.72), G 296 g, L 61 g, portions × 1.00
     1 fruit (pomme, poire, orange, 2 kiwis…)  80 kcal
 
 == 52 kg, femme, déficit 20 %, repos
-dépense 1710 kcal (repos 1710, séances 0), objectif 1370 kcal, apport 1385 kcal (écart 15)
-P 114 g (fourchette 94 à 114, facteur 0.74), G 118 g, L 45 g, portions × 0.722
+dépense 1710 kcal (repos 1710, séances 0), objectif 1370 kcal, apport 1377 kcal (écart 7)
+P 114 g (fourchette 94 à 114, facteur 0.75), G 117 g, L 45 g, portions × 0.722
   Petit-déjeuner :
-    45 g flocons d’avoine  167 kcal
+    45 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  167 kcal
     130 g skyr nature  81 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     10 g amandes  59 kcal
@@ -431,7 +431,7 @@ P 114 g (fourchette 94 à 114, facteur 0.74), G 118 g, L 45 g, portions × 0.722
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
-    1 œuf mariné  80 kcal
+    1 œuf (dur ou mollet, préparé à l’avance)  72 kcal
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner :
     60 g crevettes cuites  59 kcal
@@ -441,10 +441,10 @@ P 114 g (fourchette 94 à 114, facteur 0.74), G 118 g, L 45 g, portions × 0.722
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 100 kg, déficit 10 %, deux moyennes
-dépense 4050 kcal (repos 2790, séances 1260), objectif 3770 kcal, apport 3762 kcal (écart -8)
-P 216 g (fourchette 180 à 220, facteur 0.88), G 508 g, L 88 g, portions × 1.389
+dépense 4050 kcal (repos 2790, séances 1260), objectif 3770 kcal, apport 3758 kcal (écart -12)
+P 216 g (fourchette 180 à 220, facteur 0.89), G 510 g, L 88 g, portions × 1.389
   Petit-déjeuner (1h30 avant la séance) :
-    85 g flocons d’avoine  315 kcal
+    85 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  315 kcal
     310 g skyr nature  192 kcal
     1 banane  105 kcal
     20 g amandes  118 kcal
@@ -455,10 +455,10 @@ P 216 g (fourchette 180 à 220, facteur 0.88), G 508 g, L 88 g, portions × 1.38
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    3 œufs marinés  240 kcal
+    3 œufs (durs ou mollets, préparés à l’avance)  216 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
-    ≈ 400 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  400 kcal
+    ≈ 420 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  420 kcal
   Séance moyenne
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
@@ -469,20 +469,20 @@ P 216 g (fourchette 180 à 220, facteur 0.88), G 508 g, L 88 g, portions × 1.38
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 58 kg, sans shaker ni marge, petite le matin
-dépense 2066 kcal (repos 1834, séances 232), objectif 1790 kcal, apport 1792 kcal (écart 2)
-P 125 g (fourchette 104 à 128, facteur 0.91), G 202 g, L 47 g, portions × 0.806
+dépense 2066 kcal (repos 1834, séances 232), objectif 1790 kcal, apport 1793 kcal (écart 3)
+P 125 g (fourchette 104 à 128, facteur 0.91), G 203 g, L 47 g, portions × 0.806
   Petit-déjeuner (1h30 avant la séance) :
-    50 g flocons d’avoine  185 kcal
+    50 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  185 kcal
     180 g skyr nature  112 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     10 g amandes  59 kcal
   Petite séance
   Collation (juste après la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
   Déjeuner :
     130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
-    90 g riz basmati [≈ 270 g cuit]  317 kcal
+    95 g riz basmati [≈ 290 g cuit]  334 kcal
     250 g légumes (minimum, à volonté)  75 kcal
   Dîner :
     110 g bœuf haché 5 % [≈ 85 g cuit]  143 kcal
@@ -495,7 +495,7 @@ P 125 g (fourchette 104 à 128, facteur 0.91), G 202 g, L 47 g, portions × 0.80
 dépense 4600 kcal (repos 2600, séances 2000), objectif 4210 kcal, apport 4216 kcal (écart 6)
 P 174 g (fourchette 144 à 176, facteur 0.83), G 717 g, L 67 g, portions × 1.111
   Petit-déjeuner (1h30 à 2 h avant la sortie) :
-    90 g flocons d’avoine  333 kcal
+    90 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  333 kcal
     140 g skyr nature  87 kcal
     1 banane  105 kcal
     15 g miel  48 kcal
@@ -523,21 +523,21 @@ P 174 g (fourchette 144 à 176, facteur 0.83), G 717 g, L 67 g, portions × 1.11
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, 2,6 g/kg, thon deux fois, sans shaker (skyr du soir)
-dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1980 kcal (écart 0)
-P 172 g (fourchette 168 à 206, facteur 1.50), G 177 g, L 57 g, portions × 1.000
+dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1982 kcal (écart 2)
+P 172 g (fourchette 168 à 206, facteur 1.50), G 179 g, L 57 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     380 g skyr nature  236 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Déjeuner :
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
-    75 g riz basmati [≈ 230 g cuit]  264 kcal
+    80 g riz basmati [≈ 240 g cuit]  282 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
   Dîner :
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
@@ -548,8 +548,8 @@ P 172 g (fourchette 168 à 206, facteur 1.50), G 177 g, L 57 g, portions × 1.00
     150 g skyr nature  93 kcal
 
 == 75 kg, 12 % de masse grasse, petite à midi
-dépense 3326 kcal (repos 3026, séances 300), objectif 2870 kcal, apport 2868 kcal (écart -2)
-P 160 g (fourchette 135 à 165, facteur 0.74), G 397 g, L 60 g, portions × 1.042
+dépense 3326 kcal (repos 3026, séances 300), objectif 2870 kcal, apport 2872 kcal (écart 2)
+P 160 g (fourchette 135 à 165, facteur 0.74), G 400 g, L 60 g, portions × 1.042
   Petit-déjeuner :
     80 g pain complet (2 tranches)  192 kcal
     190 g skyr nature  118 kcal
@@ -567,9 +567,9 @@ P 160 g (fourchette 135 à 165, facteur 0.74), G 397 g, L 60 g, portions × 1.04
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (dans l’après-midi) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
-    ≈ 370 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  370 kcal
+    ≈ 390 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  390 kcal
   Dîner :
     2 œufs  144 kcal
     70 g jambon blanc (environ 1,5 tranche)  83 kcal
@@ -579,10 +579,10 @@ P 160 g (fourchette 135 à 165, facteur 0.74), G 397 g, L 60 g, portions × 1.04
     5 g huile d’olive (en plus, pour tes lipides)  45 kcal
 
 == 130 kg, quatre séances (encas)
-dépense 6713 kcal (repos 4035, séances 2678), objectif 6310 kcal, apport 6323 kcal (écart 13)
-P 219 g (fourchette 181 à 222, facteur 0.88), G 1143 g, L 88 g, portions × 1.400
+dépense 6713 kcal (repos 4035, séances 2678), objectif 6310 kcal, apport 6329 kcal (écart 19)
+P 218 g (fourchette 181 à 222, facteur 0.88), G 1147 g, L 88 g, portions × 1.400
   Petit-déjeuner (1h30 avant la séance) :
-    85 g flocons d’avoine  315 kcal
+    85 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  315 kcal
     310 g skyr nature  192 kcal
     1 banane  105 kcal
     20 g amandes  118 kcal
@@ -598,10 +598,10 @@ P 219 g (fourchette 181 à 222, facteur 0.88), G 1143 g, L 88 g, portions × 1.4
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (1h30 avant la séance) :
-    3 œufs marinés  240 kcal
+    3 œufs (durs ou mollets, préparés à l’avance)  216 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
-    ≈ 2 760 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  2760 kcal
+    ≈ 2 790 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  2790 kcal
   Séance moyenne
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
@@ -612,21 +612,21 @@ P 219 g (fourchette 181 à 222, facteur 0.88), G 1143 g, L 88 g, portions × 1.4
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, 1,6 g/kg, œufs et crevettes
-dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2265 kcal (écart -5)
-P 135 g (fourchette 104 à 127, facteur 0.50), G 273 g, L 65 g, portions × 1.000
+dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2266 kcal (écart -4)
+P 135 g (fourchette 104 à 127, facteur 0.50), G 275 g, L 65 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine  222 kcal
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     130 g skyr nature  81 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     15 g amandes  89 kcal
   Déjeuner :
     2 œufs  144 kcal
     45 g jambon blanc (1 tranche)  54 kcal
-    260 g gnocchis frais  445 kcal
+    270 g gnocchis frais  462 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs marinés  160 kcal
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 banane  105 kcal
   Petite séance
   Shaker (juste après la séance) :
@@ -638,11 +638,70 @@ P 135 g (fourchette 104 à 127, facteur 0.50), G 273 g, L 65 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
-== 45 kg, déficit 25 %, repos (au-dessus de l’objectif)
-dépense 1367 kcal (repos 1367, séances 0), objectif 1030 kcal, apport 1436 kcal (écart 406)
-P 99 g (fourchette 84 à 103, facteur 0.70), G 118 g, L 58 g, portions × 0.650
+== 72 kg, petit-déjeuner salé, moyenne le soir, tofu et fruits secs
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2428 kcal (écart -2)
+P 158 g (fourchette 130 à 158, facteur 0.50), G 267 g, L 69 g, portions × 1.000
   Petit-déjeuner :
-    40 g flocons d’avoine  148 kcal
+    80 g pain complet (2 tranches)  192 kcal
+    2 œufs (à la coque, pochés ou brouillés sans matière grasse)  144 kcal
+    45 g jambon blanc (1 tranche)  54 kcal
+    1 banane  105 kcal
+  Déjeuner :
+    100 g tofu ferme (nature, pressé puis poêlé)  148 kcal
+    100 g pois chiches [≈ 220 g cuits ou égouttés]  351 kcal
+    250 g légumes (minimum, à volonté)  75 kcal
+    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+    30 g fruits secs (abricots, pruneaux ou figues)  74 kcal
+  Collation (1h30 avant la séance) :
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    1 banane  105 kcal
+    1 compote (sans sucre ajouté)  60 kcal
+    ≈ 140 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  140 kcal
+  Séance moyenne
+  Shaker (juste après la séance) :
+    1 shaker de protéines (une dose, à l’eau)  120 kcal
+  Dîner (après la séance) :
+    80 g poisson gras [≈ 65 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  165 kcal
+    100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
+    250 g légumes (minimum, à volonté)  75 kcal
+    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+
+== 72 kg, petit-déjeuner salé, longue 2 h (version sucrée)
+dépense 3336 kcal (repos 2328, séances 1008), objectif 2990 kcal, apport 2992 kcal (écart 2)
+P 155 g (fourchette 130 à 158, facteur 0.78), G 441 g, L 58 g, portions × 1.000
+  Petit-déjeuner (1h30 à 2 h avant la sortie) :
+    110 g pain complet (environ 3 tranches, en version sucrée avant la sortie longue (plus digeste))  264 kcal
+    120 g skyr nature  74 kcal
+    1 banane  105 kcal
+    15 g miel  48 kcal
+    15 g amandes  89 kcal
+  Sortie longue Vélo ou course, 2 h. :
+    120 g glucides pendant l’effort (60 g par heure : boisson d’effort, gels ou pâtes de fruits)  480 kcal
+  Shaker (juste après la sortie) :
+    1 shaker de protéines (une dose, à l’eau)  120 kcal
+  Déjeuner (après la sortie) :
+    140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
+    400 g pommes de terre [≈ 400 g à l’eau, ≈ 300 g au four]  320 kcal
+    250 g légumes (minimum, à volonté)  75 kcal
+    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+  Goûter :
+    120 g skyr nature  74 kcal
+    1 pomme  80 kcal
+    15 g amandes  89 kcal
+    ≈ 100 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  100 kcal
+  Dîner :
+    2 œufs  144 kcal
+    70 g jambon blanc (environ 1,5 tranche)  83 kcal
+    120 g riz basmati [≈ 360 g cuit]  422 kcal
+    250 g légumes (minimum, à volonté)  75 kcal
+    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+    5 g huile d’olive (en plus, pour tes lipides)  45 kcal
+
+== 45 kg, déficit 25 %, repos (au-dessus de l’objectif)
+dépense 1367 kcal (repos 1367, séances 0), objectif 1030 kcal, apport 1428 kcal (écart 398)
+P 98 g (fourchette 84 à 103, facteur 0.70), G 116 g, L 58 g, portions × 0.650
+  Petit-déjeuner :
+    40 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  148 kcal
     110 g skyr nature  68 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
     10 g amandes  59 kcal
@@ -653,7 +712,7 @@ P 99 g (fourchette 84 à 103, facteur 0.70), G 118 g, L 58 g, portions × 0.650
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté)  60 kcal
   Collation (dans l’après-midi) :
-    1 œuf mariné  80 kcal
+    1 œuf (dur ou mollet, préparé à l’avance)  72 kcal
     1 shaker de protéines (une dose, à l’eau)  120 kcal
   Dîner :
     90 g poisson blanc [≈ 70 g cuit] (cabillaud, colin…)  74 kcal

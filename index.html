@@ -580,7 +580,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <ul>
       <li>Chaque jour, à la première ouverture, tu choisis tes plats (ou tu laisses l’appli décider au hasard). Tu peux toujours changer un plat depuis ta journée. Chaque jour garde ses plats&nbsp;; un jour pas encore choisi reprend ceux du même jour de la semaine.</li>
       <li>Certains choix regroupent des aliments aux valeurs proches (viande blanche maigre, poisson gras, lentilles ou haricots rouges, fruits secs)&nbsp;: prends celui que tu trouves. Un aliment que tu ne manges pas se retire des propositions dans les réglages, «&nbsp;Tes aliments&nbsp;».</li>
-      <li>Le petit-déjeuner, la collation et le shaker suivent ton profil et tes séances.</li>
+      <li>Le petit-déjeuner, la collation et le shaker suivent ton profil et tes séances. Au petit-déjeuner, trois bases&nbsp;: flocons d’avoine (ou muesli sans sucre ajouté, à tremper la veille dans le skyr si tu veux), pain complet, ou salé (pain, œufs, jambon). Les jours de sortie longue, le salé laisse la place à une version sucrée, plus digeste avant de partir.</li>
       <li>Viande, poisson, œufs et skyr restent au plus près du menu de base, ajustés juste ce qu’il faut pour tenir ton objectif de protéines (en grammes par kilo) à 10&nbsp;% près.</li>
       <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance, sans dépasser une portion sportive (à 72&nbsp;kg&nbsp;: 120&nbsp;g de riz ou de pâtes crus, 100&nbsp;g de lentilles, 400&nbsp;g de pommes de terre). Au-delà, les grosses journées, un encas s’ajoute. Changer de féculent garde les mêmes calories.</li>
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
@@ -660,7 +660,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.7.0';
+const APP_VERSION = '3.8.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -679,10 +679,10 @@ const FOOD = {
    lentilles ou haricots rouges (327 et 314 kcal), fruits secs (abricots 230, pruneaux 253, figues 252 kcal : moyenne).
    Tofu nature (148 kcal, 14,4 g, 9,3 g) et pois chiches secs (351 kcal, 20,5 g, 5,9 g) n'ont pas de voisin assez proche. */
 /* Valeurs par pièce : banane ≈ 120 g de pulpe, pomme ≈ 150 g, pot de compote 100 g, œuf calibre moyen ≈ 50 g sans
-   coquille ; œuf mariné : l'œuf plus un peu de sucre et de sauce soja de la marinade */
+   coquille */
 const UNIT = {
   banane:[105,1.3,24,0.3], pomme:[80,0.4,17.5,0.3], compote:[60,0.3,13,0.2],
-  oeuf:[72,6.3,0.4,4.8], oeufMarine:[80,6.5,1.5,4.8]
+  oeuf:[72,6.3,0.4,4.8]
 };
 const STARCH = {
   riz:{cap:120, label:'Riz', f:[352,8.4,77,1], step:5, raw:'cru', cook:[[3, 'cuit']], name:'riz basmati'},
@@ -692,7 +692,7 @@ const STARCH = {
   quinoa:{cap:120, label:'Quinoa', f:[358,14,58,6], step:5, raw:'cru', cook:[[2.7, 'cuit']], name:'quinoa'},
   semoule:{cap:120, label:'Semoule', f:[352,12.7,73,1], step:5, raw:'crue', cook:[[2.3, 'cuite']], name:'semoule'},
   boulgour:{cap:120, label:'Boulgour', f:[331,11,68,1.7], step:5, raw:'cru', cook:[[2.5, 'cuit']], name:'boulgour'},
-  lentilles:{cap:100, label:'Lentilles, haricots rouges', f:[327,25.8,45,1.3], step:5, raw:'crues', cook:[[2.5, 'cuites']], name:'lentilles ou haricots rouges'},
+  lentilles:{cap:100, label:'Lentilles, haricots rouges', f:[327,25.8,45,1.3], step:5, raw:'secs', cook:[[2.5, 'cuits']], name:'lentilles ou haricots rouges'},
   poischiches:{cap:100, label:'Pois chiches', f:[351,20.5,47.5,5.9], step:5, raw:'secs', cook:[[2.2, 'cuits ou égouttés']], name:'pois chiches'},
   gnocchis:{cap:300, label:'Gnocchis', f:[171,4.7,35,1.4], step:10, name:'gnocchis frais'}
 };
@@ -706,13 +706,20 @@ const DESSERT = {
   chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
 };
 const DESSERT_ORDER = ['aucun','fruit','compote','fruitsSecs','chocolat'];
+/* Base du petit-déjeuner : avoine (ou muesli sans sucre ajouté, valeurs proches), pain complet, ou salé (pain, œufs, jambon) */
+const PD = {
+  avoine:{label:'Flocons d’avoine', sub:'ou muesli sans sucre ajouté'},
+  pain:{label:'Pain complet'},
+  sale:{label:'Salé', sub:'pain complet, œufs, jambon'}
+};
+const PD_ORDER = ['avoine','pain','sale'];
 /* Table de référence des aliments (écran « Comment ça marche ») : chaque valeur de FOOD, UNIT et STARCH y figure une fois */
 const REF_GROUPS = [
   {title:'Viandes, poissons, laitages', per:'pour 100' + NB + 'g', src:'food', rows:[['poulet','Viande blanche maigre (poulet, dinde, filet mignon de porc)'],['boeuf','Bœuf haché 5' + NB + '%'],['poisson','Poisson blanc'],['saumon','Poisson gras (saumon, maquereau, sardines à l’huile)'],['crevettes','Crevettes cuites'],['thon','Thon au naturel, égoutté'],['jambon','Jambon blanc'],['halloumi','Halloumi'],['tofu','Tofu ferme, nature'],['parmesan','Parmesan'],['skyr','Skyr nature']]},
   {title:'Féculents', per:'pour 100' + NB + 'g crus', src:'starch', rows:STARCH_ORDER.map(function(id){ return [id, STARCH[id].name.charAt(0).toUpperCase() + STARCH[id].name.slice(1)]; })},
-  {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['fruitsSecs','Fruits secs (abricots, pruneaux, figues)'],['chocolat','Chocolat noir 70' + NB + '%']]},
+  {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine (ou muesli sans sucre ajouté)'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['fruitsSecs','Fruits secs (abricots, pruneaux, figues)'],['chocolat','Chocolat noir 70' + NB + '%']]},
   {title:'Légumes et matières grasses', per:'pour 100' + NB + 'g', src:'food', rows:[['legumes','Légumes verts (moyenne)'],['avocat','Avocat'],['huile','Huile d’olive']]},
-  {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf moyen'],['oeufMarine','Œuf mariné'],['banane','Banane moyenne'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté, 100' + NB + 'g']]}
+  {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf moyen'],['banane','Banane moyenne'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté, 100' + NB + 'g']]}
 ];
 function refTable(){
   return REF_GROUPS.map(function(g){
@@ -873,7 +880,7 @@ const DEFAULT_CHOICES = {
 };
 /* Aliments proposés : ceux retirés dans les réglages (profil off, entrées « type:id ») ne sont plus proposés ni tirés au
    hasard. Il en reste toujours au moins un par type ; « Aucun » dessert reste toujours possible. */
-const CHOICE_IDS = {pd:['avoine', 'pain'], prot:PROT_ORDER, starch:STARCH_ORDER, dessert:DESSERT_ORDER.filter(function(d){ return d !== 'aucun'; })};
+const CHOICE_IDS = {pd:PD_ORDER, prot:PROT_ORDER, starch:STARCH_ORDER, dessert:DESSERT_ORDER.filter(function(d){ return d !== 'aucun'; })};
 function cleanOff(o){
   if (!Array.isArray(o)) return [];
   let out = [];
@@ -978,12 +985,23 @@ function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; })
 /* Petit-déjeuner : menu de sortie longue si longue ; banane dès qu'il y a une séance moyenne ou longue */
 function breakfast(long, banane, base, k, kp){
   const items = [];
-  if (base === 'pain'){
-    const g = sc(long ? 110 : 80, 10, k);
+  /* Salé : pain complet, œufs et une tranche de jambon (portions fixes comme les œufs), sans skyr ni amandes.
+     Les jours de sortie longue, version sucrée au pain (plus digeste 1h30 avant de partir). */
+  if (base === 'sale' && !long){
+    const g = sc(80, 10, k), n = pieces(2, k), j = sc(45, 5, k);
     items.push(it('base', grams(g), 'pain complet', slices(g, 40), mac('pain', g)));
+    items.push(it('oeufs', String(n), n > 1 ? 'œufs' : 'œuf', n > 1 ? 'à la coque, pochés ou brouillés sans matière grasse' : 'à la coque, poché ou brouillé sans matière grasse', unitMac('oeuf', n)));
+    items.push(it('jambon', grams(j), 'jambon blanc', slices(j, 45), mac('jambon', j)));
+    if (banane) items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
+    else items.push(it('fruit', grams(125), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', 125)));
+    return items;
+  }
+  if (base === 'pain' || base === 'sale'){
+    const g = sc(long ? 110 : 80, 10, k);
+    items.push(it('base', grams(g), 'pain complet', slices(g, 40) + (base === 'sale' ? ', en version sucrée avant la sortie longue (plus digeste)' : ''), mac('pain', g)));
   } else {
     const g = sc(long ? 80 : 60, 5, k);
-    items.push(it('base', grams(g), 'flocons d’avoine', null, mac('avoine', g)));
+    items.push(it('base', grams(g), 'flocons d’avoine ou muesli', 'muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr', mac('avoine', g)));
   }
   const sk = Math.max(SKYR_MIN, sc(long ? 150 : 250, 10, kp));
   items.push(adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))));
@@ -997,10 +1015,10 @@ function breakfast(long, banane, base, k, kp){
   items.push(it('am', grams(am), 'amandes', null, mac('amandes', am)));
   return items;
 }
-/* Collation : œufs marinés, + banane s'il y a une séance, + compote s'il y a une moyenne ou une longue */
+/* Collation : œufs, + banane s'il y a une séance, + compote s'il y a une moyenne ou une longue */
 function snackItems(seance, grosse, k){
   const n = pieces(2, k);
-  const items = [it('oe', String(n), n > 1 ? 'œufs marinés' : 'œuf mariné', null, unitMac('oeufMarine', n))];
+  const items = [it('oe', String(n), n > 1 ? 'œufs' : 'œuf', n > 1 ? 'durs ou mollets, préparés à l’avance' : 'dur ou mollet, préparé à l’avance', unitMac('oeuf', n))];
   if (seance) items.push(it('ban', '1', 'banane', null, unitMac('banane', 1)));
   if (grosse) items.push(it('comp', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)));
   return items;
@@ -1175,16 +1193,17 @@ function composeDay(plan, ch, pr, pf){
      - lipides (peu ou pas de marge cuisine, petites portions) : de l'huile en plus au dîner. */
   let skyr = 0, gras = 0, soirSec = null;
   const skyrMax = sc(300, 10, k);
-  for (let pass = 0; pass < 8; pass++){
+  for (let pass = 0; pass < 12; pass++){
     const lowP = tot.p < protFloor && skyr < skyrMax, lowF = tot.f < FAT_MIN * k && gras < 60;
     if (!lowP && !lowF) break;
+    /* Protéines d'abord : le skyr réajuste les féculents et apporte un peu de lipides, l'huile est revue au passage suivant */
     if (lowP){
       skyr = skyr ? Math.min(skyrMax, skyr + Math.max(10, Math.ceil((protFloor - tot.p) / 0.105 / 10) * 10)) : sc(150, 10, k);
       const item = it('skyr', grams(skyr), 'skyr nature', null, mac('skyr', skyr));
       if (soirSec) soirSec.items = [item];
       else { soirSec = {id:'soir', title:'Soir', when:'pour compléter tes protéines', items:[item]}; secs.push(soirSec); }
     }
-    if (lowF){
+    else {
       gras += Math.ceil((FAT_MIN * k - tot.f + 0.5) / 5) * 5;
       dinner.items = dinner.items.filter(function(i){ return i.key !== 'gras'; });
       dinner.items.push(it('gras', grams(gras), 'huile d’olive', 'en plus, pour tes lipides', mac('huile', gras)));
@@ -1217,7 +1236,9 @@ function buildDay(plan, ch, profile){
   let pf = 1, r = composeDay(base, ch, pr, pf);
   for (let pass = 0; pass < 5; pass++){
     const P = r.tot.p - r.soirP, adj1 = r.adjP / pf;
-    if (adj1 <= 0 || (P >= lo && P <= hi)) break;
+    if (P >= lo && P <= hi) break;
+    /* Rien d'ajustable (thon midi et soir, petit-déjeuner salé) : la journée ne dépend pas de pf, comptée en butée */
+    if (adj1 <= 0){ pf = P > hi ? PF_MIN : PF_MAX; break; }
     const aim = P > hi ? hi - 0.02 * T : lo + 0.02 * T;
     const next = Math.min(PF_MAX, Math.max(PF_MIN, (aim - (P - r.adjP)) / adj1));
     if (Math.abs(next - pf) < 0.01) break;
@@ -1258,8 +1279,8 @@ function shoppingList(days){
   const line = function(id){
     const a = get(id);
     if (id === 'oeufs'){
-      const n = get('oeuf').n + get('oeufMarine').n, m = get('oeufMarine').n;
-      return n ? {qty:String(n), name:pl(n, 'œuf', 'œufs'), note:m ? (m === n ? pl(m, 'à mariner', 'tous à mariner') : 'dont ' + m + ' à mariner') : null} : null;
+      const n = get('oeuf').n;
+      return n ? {qty:String(n), name:pl(n, 'œuf', 'œufs'), note:null} : null;
     }
     if (id === 'avocat'){
       const h = Math.round(a.n * 2), n = Math.ceil(h / 2);
@@ -1276,8 +1297,8 @@ function shoppingList(days){
     if (id === 'ravito') return {qty:shopQty(a.g), name:'de glucides pour l’effort', note:'boisson d’effort, gels ou pâtes de fruits'};
     const NAMES = {poulet:'viande blanche maigre', boeuf:'bœuf haché 5' + NB + '%', poisson:'poisson blanc', saumon:'poisson gras', crevettes:'crevettes cuites',
       jambon:'jambon blanc', skyr:'skyr nature', halloumi:'halloumi', parmesan:'parmesan', tofu:'tofu ferme', pain:'pain complet', legumes:'légumes verts',
-      fruitsRouges:'fruits rouges', avoine:'flocons d’avoine', amandes:'amandes', miel:'miel', fruitsSecs:'fruits secs', chocolat:'chocolat noir', huile:'huile d’olive'};
-    const NOTES = {poulet:'poulet, dinde ou filet mignon de porc', poisson:'cabillaud, colin…', saumon:'saumon, maquereau ou sardines à l’huile', tofu:'nature',
+      fruitsRouges:'fruits rouges', avoine:'flocons d’avoine ou muesli', amandes:'amandes', miel:'miel', fruitsSecs:'fruits secs', chocolat:'chocolat noir', huile:'huile d’olive'};
+    const NOTES = {poulet:'poulet, dinde ou filet mignon de porc', poisson:'cabillaud, colin…', saumon:'saumon, maquereau ou sardines à l’huile', tofu:'nature', avoine:'muesli sans sucre ajouté',
       jambon:slices(a.g, 45), pain:slices(a.g, 40), legumes:'au choix', fruitsRouges:'surgelés, c’est parfait', fruitsSecs:'abricots, pruneaux ou figues',
       chocolat:'70' + NB + '% ou plus', huile:'en plus, pour tes lipides'};
     return {qty:shopQty(a.g), name:has(STARCH, id) ? STARCH[id].name : NAMES[id], note:has(NOTES, id) ? NOTES[id] : null};
@@ -1350,7 +1371,7 @@ if (typeof document !== 'undefined'){
     const d = base || DEFAULT_CHOICES[js];
     const out = {pdBase:d.pdBase, dej:Object.assign({}, d.dej), diner:Object.assign({}, d.diner)};
     if (c && typeof c === 'object'){
-      if (c.pdBase === 'avoine' || c.pdBase === 'pain') out.pdBase = c.pdBase;
+      if (has(PD, c.pdBase)) out.pdBase = c.pdBase;
       ['dej', 'diner'].forEach(function(s){
         if (c[s] && typeof c[s] === 'object'){
           if (has(PROT, c[s].prot)) out[s].prot = c[s].prot;
@@ -1393,16 +1414,15 @@ if (typeof document !== 'undefined'){
   const REPAS = {dej:'du déjeuner', diner:'du dîner'};
   /* Choix possibles d'une rangée ; src : les choix affichés (ceux du jour, ou le brouillon du formulaire des repas) */
   /* Libellé d'un aliment au choix (et ce qu'il regroupe) */
-  const PD_LABEL = {avoine:'Flocons d’avoine', pain:'Pain complet'};
   const labelOf = function(kind, id){
-    const x = kind === 'pd' ? {label:PD_LABEL[id]} : kind === 'prot' ? PROT[id] : kind === 'starch' ? STARCH[id] : DESSERT[id];
+    const x = kind === 'pd' ? PD[id] : kind === 'prot' ? PROT[id] : kind === 'starch' ? STARCH[id] : DESSERT[id];
     return {label:x.label, sub:x.sub || null};
   };
   /* Les aliments proposés (réglages) ; le choix actuel reste affiché même s'il n'est plus proposé */
   const pickDef = function(kind, slot, src){
     const c = src || ch, off = cleanProfile(prof).off;
     const cur = kind === 'pd' ? c.pdBase : kind === 'dessert' ? dessertOf(c[slot]) : c[slot][kind];
-    const all = kind === 'pd' ? ['avoine', 'pain'] : kind === 'prot' ? PROT_ORDER : kind === 'starch' ? STARCH_ORDER : DESSERT_ORDER, ok = allowed(kind, off);
+    const all = kind === 'pd' ? PD_ORDER : kind === 'prot' ? PROT_ORDER : kind === 'starch' ? STARCH_ORDER : DESSERT_ORDER, ok = allowed(kind, off);
     const opts = all.filter(function(id){ return id === cur || ok.indexOf(id) >= 0; }).map(function(id){ const l = labelOf(kind, id); return [id, l.label, l.sub]; });
     const LABEL = {pd:'Base', prot:'Protéine', starch:'Féculent', dessert:'Dessert'};
     return {label:LABEL[kind], title:kind === 'pd' ? 'Base du petit-déjeuner' : LABEL[kind] + ' ' + REPAS[slot], action:kind, current:cur, opts:opts};
@@ -1511,6 +1531,7 @@ if (typeof document !== 'undefined'){
     if (!res.libre && t.p < res.prot.low - 0.5){
       const pr = cleanProfile(prof), tips = [];
       if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
+      if (ch.pdBase === 'sale' && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner sucré (avec du skyr)');
       if (pr.shaker === 'non') tips.push('reprends un shaker');
       tips.push('baisse ton objectif de protéines');
       note += ' Tes protéines restent sous ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g)' + NB +
@@ -2006,7 +2027,7 @@ if (typeof document !== 'undefined'){
         if (b.dataset.key === 'libre' && plan.libre) msg = clearOtherLibre();
         savePlan();
         break;
-      case 'pd': if (v === 'avoine' || v === 'pain'){ ch.pdBase = v; saveCh(); } break;
+      case 'pd': if (has(PD, v)){ ch.pdBase = v; saveCh(); } break;
       case 'prof': {
         const o = {};
         o[b.dataset.key] = v;
@@ -2106,7 +2127,7 @@ if (typeof document !== 'undefined'){
       case 'rf': {
         const slot = b.dataset.slot, kind = b.dataset.kind;
         if (!draft) return;
-        if (kind === 'pd' && (v === 'avoine' || v === 'pain')) draft.pdBase = v;
+        if (kind === 'pd' && has(PD, v)) draft.pdBase = v;
         else if (kind === 'prot' && has(PROT, v)) draft[slot].prot = v;
         else if (kind === 'starch' && has(STARCH, v)) draft[slot].starch = v;
         else if (kind === 'dessert' && has(DESSERT, v)) draft[slot].dessert = v;

@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.8.0, 1er octobre 2026
+
+- Nouveau petit-déjeuner salé : pain complet, 2 œufs (à la coque, pochés ou brouillés), une tranche de jambon et ton fruit. Il remplace le skyr et les amandes, avec presque autant de lipides, et le reste de ta journée s'ajuste pour tes protéines. Les jours de sortie longue, il laisse la place à la version sucrée au pain et au miel, plus digeste avant de partir.
+- Les flocons d'avoine peuvent être remplacés par du muesli sans sucre ajouté (valeurs très proches) : « flocons d'avoine ou muesli ». Astuce ajoutée : trempés la veille dans le skyr, c'est prêt au réveil.
+- Collation : des œufs tout simples (durs ou mollets, préparés à l'avance) au lieu des œufs marinés. La liste de courses ne parle plus d'œufs à mariner.
+- Petite correction : « lentilles ou haricots rouges » s'accorde maintenant au masculin (« secs », « cuits »).
+- Correction rare : l'huile « en plus, pour tes lipides » n'est plus ajoutée quand le skyr du soir suffit déjà.
+- Si tu prends du thon midi et soir avec le petit-déjeuner salé, il ne reste rien à ajuster pour tes protéines : la page te le dit, et propose le petit-déjeuner sucré s'il t'en manque.
+
 ## 3.7.0, 1er octobre 2026
 
 - Nouveaux aliments : tofu ferme en protéine, pois chiches en féculent, fruits secs en dessert (30 g d'abricots, de pruneaux ou de figues). Les lentilles deviennent « Lentilles, haricots rouges ». Une idée de plat est proposée pour chaque nouvelle combinaison.

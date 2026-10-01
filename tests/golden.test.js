@@ -40,6 +40,8 @@ const CASES = SETS.map(([name, s]) => ['72 kg, profil par défaut, ' + name, {},
   ['75 kg, 12 % de masse grasse, petite à midi', { poids: 75, gras: 12, neat: 'mixte' }, { seances: [petite('midi')], libre: false }, choices(0)],
   ['130 kg, quatre séances (encas)', { age: 30, taille: 195, poids: 130, neat: 'debout', deficit: 10 }, { seances: [petite('matin'), moyenne('matin'), petite('midi'), moyenne('soir')], libre: false }, choices(4)],
   ['72 kg, 1,6 g/kg, œufs et crevettes', { prot: 1.6 }, { seances: [petite('soir')], libre: false }, choices(3, { dej: meal('oeufs', 'gnocchis'), diner: meal('crevettes', 'patate') })],
+  ['72 kg, petit-déjeuner salé, moyenne le soir, tofu et fruits secs', {}, { seances: [moyenne('soir')], libre: false }, choices(3, { pdBase: 'sale', dej: meal('tofu', 'poischiches', 'fruitsSecs'), diner: meal('saumon', 'lentilles') })],
+  ['72 kg, petit-déjeuner salé, longue 2 h (version sucrée)', {}, { seances: [longue(2)], libre: false }, choices(0, { pdBase: 'sale' })],
   ['45 kg, déficit 25 %, repos (au-dessus de l’objectif)', { sexe: 'f', age: 50, taille: 150, poids: 45, deficit: 25 }, { seances: [], libre: false }, choices(3, { dej: meal('saumon', 'boulgour', 'compote'), diner: meal('poisson', 'semoule', 'fruit') })]
 ]);
 

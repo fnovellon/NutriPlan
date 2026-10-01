@@ -85,7 +85,7 @@ function scan(dom, label){
   type(dom, '#besoins input[data-key="deficit"]', 25); scan(dom, 'réglages, déficit 25 %');
   type(dom, '#besoins input[data-key="gras"]', 30); click(dom, '[data-action="prof"][data-key="mode"][data-value="auto"]'); scan(dom, 'réglages, masse grasse');
   click(dom, '#alim-list [data-kind="prot"][data-value="poulet"]'); click(dom, '#alim-list [data-kind="dessert"][data-value="chocolat"]'); scan(dom, 'réglages, aliments retirés');
-  click(dom, '#alim-list [data-kind="pd"][data-value="avoine"]'); click(dom, '#alim-list [data-kind="pd"][data-value="pain"]'); scan(dom, 'réglages, dernière base gardée');
+  ['avoine', 'sale', 'pain'].forEach(v => click(dom, '#alim-list [data-kind="pd"][data-value="' + v + '"]')); scan(dom, 'réglages, dernière base gardée');
   click(dom, '#help-regl'); scan(dom, 'aide');
 }
 {

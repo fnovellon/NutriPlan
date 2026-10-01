@@ -173,6 +173,18 @@ choose('prot', 'dej', 'poulet');
 choose('pd', null, 'pain');
 assert(chosen('pd') === 'pain' && /Pain complet/.test($('#sel-pd').textContent), 'base du petit-déjeuner');
 choose('pd', null, 'avoine');
+// Trois bases au petit-déjeuner, avec leur détail ; le salé : pain, œufs, une tranche de jambon et fruit, ni skyr ni amandes
+const pdLines = () => [...d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].map(li => li.textContent);
+click('#sel-pd');
+assert.deepStrictEqual([...d.querySelectorAll('#sheet .opt')].map(o => [o.dataset.value, (o.querySelector('.opt-s') || {}).textContent || null]),
+  [['avoine', 'ou muesli sans sucre ajouté'], ['pain', null], ['sale', 'pain complet, œufs, jambon']], 'bases du petit-déjeuner');
+click('#sheet [data-value="sale"]');
+assert(chosen('pd') === 'sale' && $('#sel-pd').textContent.trim() === 'Salé' && stored().choices[3].pdBase === 'sale', 'petit-déjeuner salé non choisi');
+assert(pdLines().length === 4 && /2\s*œufs/.test(pdLines()[1]) && /jambon blanc/.test(pdLines()[2]) && /1 tranche/.test(pdLines()[2]) && !pdLines().some(t => /skyr|amandes/.test(t)), 'petit-déjeuner salé : ' + pdLines().join(' / '));
+choose('pd', null, 'avoine');
+assert(/flocons d’avoine ou muesli/.test(pdLines()[0]) && /trempés la veille dans le skyr/.test(pdLines()[0]), 'avoine ou muesli : ' + pdLines()[0]);
+// Collation : des œufs tout court
+assert([...d.querySelectorAll('#day li')].some(li => /^2\s*œufs/.test(li.textContent.trim()) && /durs ou mollets/.test(li.textContent)) && !/mariné/.test($('#day').textContent), 'œufs de la collation');
 
 // Dessert : rangée au déjeuner et au dîner, Aucun par défaut, ligne en fin de repas, choix enregistré
 const desPressed = slot => chosen('dessert', slot);
@@ -252,7 +264,7 @@ r.click('#open-repas');
 rw.Math.random = () => 0.999;
 r.click('[data-action="repas-hasard"]');
 assert(!r.$('#page').hidden && r.$('#repas').hidden, 'récap non affiché après le tirage');
-assert.deepStrictEqual(everything(), ['pain', 'tofu', 'gnocchis', 'chocolat', 'thon', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
+assert.deepStrictEqual(everything(), ['sale', 'tofu', 'gnocchis', 'chocolat', 'thon', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
 assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat' }, 'tirage non enregistré');
 assert(/tirés au hasard/.test(r.$('#hint').textContent), 'message du tirage : ' + r.$('#hint').textContent);
 r.click('#open-repas');
@@ -488,7 +500,7 @@ p.click('#help');
 assert(view() === 'aide' && pw.document.activeElement === p.$('#aide-h') && pw.history.state.screen === 'aide', 'le « ? » n’ouvre pas l’aide');
 assert(/Ta journée en trois temps/.test(p.$('#aide').textContent) && /cru/.test(p.$('#aide').textContent), 'explications absentes');
 const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
-assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 36, 'table des aliments : ' + refRows.length + ' lignes');
+assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 35, 'table des aliments : ' + refRows.length + ' lignes');
 const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
 assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
 assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['352', '8,4', '77', '1'], 'valeurs du riz (cru)');
@@ -544,6 +556,8 @@ const thon2 = tools(open(ls => {
   ls.setItem(KEY, JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }));
 }));
 assert(/Tes protéines restent sous ton objectif \(\d+\sg, pour 192 à 234\sg\)\s: remplace le thon, reprends un shaker ou baisse ton objectif de protéines\./.test(thon2.$('#sum-note').textContent), 'protéines sous la fourchette : ' + thon2.$('#sum-note').textContent);
+thon2.choose('pd', null, 'sale');
+assert(/: remplace le thon, prends un petit-déjeuner sucré \(avec du skyr\), reprends un shaker ou baisse ton objectif de protéines\./.test(thon2.$('#sum-note').textContent), 'salé, protéines sous la fourchette : ' + thon2.$('#sum-note').textContent);
 assert(!/restent sous ton objectif/.test(p.$('#sum-note').textContent), 'alerte protéines sans raison');
 // Au-delà de 101 kg (ou sous 47 kg), le calcul des protéines s'arrête à la borne des portions, et la page l'explique
 for (const [poids, re] of [[130, /2,0 × 100,8\skg\)[^]*Au-delà de 100,8\skg, ton objectif et tes portions ne suivent plus ton poids\./], [40, /2,0 × 46,8\skg\)[^]*Sous 46,8\skg, ton objectif et tes portions ne suivent plus ton poids\./]]) {
@@ -726,7 +740,7 @@ const alim = (kind, v) => al.$(`#alim-list [data-kind="${kind}"][data-value="${v
 const sheetVals = sel => { al.click(sel); const v = [...al.d.querySelectorAll('#sheet .opt')].map(o => o.dataset.value); al.click('#sheet .sheet-x'); return v; };
 al.click('#gear');
 assert.deepStrictEqual([...al.d.querySelectorAll('#alim-list .rf-l')].map(x => x.textContent), ['Base du petit-déjeuner', 'Protéines', 'Féculents', 'Desserts'], 'types d’aliments');
-assert(al.d.querySelectorAll('#alim-list .opt').length === 24 && !al.$('#alim-list .opt[aria-pressed="false"]'), 'tout est proposé au départ');
+assert(al.d.querySelectorAll('#alim-list .opt').length === 25 && !al.$('#alim-list .opt[aria-pressed="false"]'), 'tout est proposé au départ');
 assert.strictEqual(alim('prot', 'saumon').querySelector('.opt-s').textContent, 'saumon, maquereau, sardines à l’huile', 'détail du groupe');
 assert(!al.$('#alim-list [data-value="aucun"]'), '« Aucun » ne se retire pas');
 // Aujourd'hui (mercredi) a un plat choisi : il le garde ; les autres jours, le poulet est remplacé par le suivant proposé
@@ -751,9 +765,10 @@ al.click('#repas [data-action="fermer"]');
 al.click('#today-btn');
 al.click('#gear');
 al.click('#alim-list [data-kind="pd"][data-value="avoine"]');
+al.click('#alim-list [data-kind="pd"][data-value="sale"]');
 al.click('#alim-list [data-kind="pd"][data-value="pain"]');
 assert(/Garde au moins une base pour le petit-déjeuner\./.test(al.$('#alim-warn').textContent) && alim('pd', 'pain').getAttribute('aria-pressed') === 'true', 'dernière base retirée');
-assert.deepStrictEqual(aprof().off, ['prot:poulet', 'pd:avoine'], 'retraits enregistrés');
+assert.deepStrictEqual(aprof().off, ['prot:poulet', 'pd:avoine', 'pd:sale'], 'retraits enregistrés');
 ['fruit', 'compote', 'fruitsSecs', 'chocolat'].forEach(v => al.click(`#alim-list [data-kind="dessert"][data-value="${v}"]`));
 assert(!al.$('#alim-warn').textContent && al.d.querySelectorAll('#alim-list [data-kind="dessert"][aria-pressed="false"]').length === 4, 'tous les desserts peuvent être retirés');
 al.click('#aliments ~ [data-action="fermer"]');
@@ -773,10 +788,10 @@ al.click('#plan [data-action="fermer"]');
 // Remis : de nouveau proposé ; relu au rechargement ; profil abîmé : tout est proposé
 al.click('#gear');
 al.click('#alim-list [data-kind="prot"][data-value="poulet"]');
-assert.deepStrictEqual(aprof().off, ['pd:avoine', 'dessert:fruit', 'dessert:compote', 'dessert:fruitsSecs', 'dessert:chocolat'], 'poulet remis');
+assert.deepStrictEqual(aprof().off, ['pd:avoine', 'pd:sale', 'dessert:fruit', 'dessert:compote', 'dessert:fruitsSecs', 'dessert:chocolat'], 'poulet remis');
 const asnap = snapOf(aw), arel = tools(open(ls => Object.entries(asnap).forEach(([k, v]) => ls.setItem(k, v))));
 assert(arel.$('#alim-list [data-kind="pd"][data-value="avoine"]').getAttribute('aria-pressed') === 'false' && arel.$('#alim-list [data-kind="prot"][data-value="poulet"]').getAttribute('aria-pressed') === 'true', 'retraits relus');
-const abad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ off: ['prot:constructor', '__proto__:x', 'pd:avoine', 'pd:pain', 5, 'starch:riz'] }))));
+const abad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ off: ['prot:constructor', '__proto__:x', 'pd:avoine', 'pd:pain', 'pd:sale', 5, 'starch:riz'] }))));
 assert(abad.$('#alim-list [data-kind="pd"][data-value="avoine"]').getAttribute('aria-pressed') === 'true' && abad.$('#alim-list [data-kind="starch"][data-value="riz"]').getAttribute('aria-pressed') === 'false', 'retraits abîmés');
 assert.strictEqual(abad.chosen('starch', 'dej'), 'pates', 'riz retiré : remplacé par les pâtes');
 
