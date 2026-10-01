@@ -253,8 +253,14 @@ for (let i = 0; i < N; i++){
   const co = sec(r, 'co'), coNames = co.items.map(x => x.name);
   if (long) C.ok(['skyr nature', 'pomme', 'amandes'].every(n => coNames.includes(n)), 'goûter incomplet', () => coNames.join(', '));
   else {
+    // Déjà des œufs dans la journée (salé, « Œufs + jambon ») : skyr et amandes à la place des œufs
+    const oeufs = ch.pdBase === 'sale' || ch.dej.prot === 'oeufs' || ch.diner.prot === 'oeufs';
     const oe = co.items[0], nOe = A.pieces(2, k);
-    C.ok(oe.qty === String(nOe) && oe.name === (nOe > 1 ? 'œufs' : 'œuf') && oe.buy.id === 'oeuf', 'œufs de la collation', () => oe.qty + ' ' + oe.name);
+    if (oeufs) C.ok(co.items[0].key === 'csk' && co.items[1].key === 'cam' && co.items[0].qty === Math.max(100, Math.round(100 * k / 10) * 10) + NB + 'g' && co.items[1].qty === Math.round(15 * k / 5) * 5 + NB + 'g' && !co.items.some(x => x.key === 'oe'), 'collation sans œufs', () => coNames.join(', ') + ' ' + input);
+    else C.ok(oe.qty === String(nOe) && oe.name === (nOe > 1 ? 'œufs' : 'œuf') && oe.buy.id === 'oeuf', 'œufs de la collation', () => oe.qty + ' ' + oe.name);
+    // Œufs de la journée : 4 au plus à 72 kg (salé ou « Œufs + jambon », jamais avec ceux de la collation), hors repas libre
+    const eggs = items.filter(x => x.buy && x.buy.id === 'oeuf').reduce((t, x) => t + x.buy.n, 0);
+    if (!plan.libre && ch.dej.prot !== 'oeufs' && ch.diner.prot !== 'oeufs') C.ok(eggs <= A.pieces(2, k) + 2, 'trop d’œufs dans la journée', () => eggs + ' ' + input);
     C.ok(coNames.includes('banane') === plan.seances.length > 0, 'banane de la collation', () => coNames.join(', ') + ' ' + input);
     C.ok(coNames.includes('compote') === grosse, 'compote de la collation', () => coNames.join(', ') + ' ' + input);
   }
@@ -482,6 +488,32 @@ C.ok(({}).polluted === undefined && !('taille' in {}) && !('seances' in {}), 'Ob
   // Exemple écrit à la main : mardi (poulet midi, bœuf soir), poulet retiré → pas bœuf deux fois
   const tue = A.withAllowed(A.DEFAULT_CHOICES[2], ['prot:poulet']);
   C.ok(tue.dej.prot === 'poisson' && tue.diner.prot === 'boeuf', 'mardi sans poulet', () => JSON.stringify(tue));
+}
+
+// --- Repères de la semaine et tirage équilibré ----------------------------------------------------------------------
+{
+  for (let i = 0; i < N / 5; i++){
+    const prof = randProfile(), days = Array.from({ length: R.int(1, 7) }, () => A.buildDay(randPlan(R.int(0, 6)), randChoices(), prof));
+    const all = A.weekBalance(days), sum = days.map(d => A.weekBalance([d])).reduce((a, b) => { Object.keys(a).forEach(x => { a[x] += b[x]; }); return a; });
+    C.ok(Object.keys(all).every(x => Math.abs(all[x] - sum[x]) < 1e-9), 'repères : somme des jours', () => JSON.stringify([all, sum]));
+    C.ok(all.gras <= all.poisson && all.poisson <= 2 * days.length && all.legumes <= 2 * days.length && all.rouge >= 0 && all.charcuterie >= 0, 'repères : valeurs', () => JSON.stringify(all));
+    days.forEach(d => { const dn = d.secs.find(x => x.id === 'diner'); if (dn.libre) C.ok(JSON.stringify(A.weekBalance([d])) === JSON.stringify(A.weekBalance([{ secs: d.secs.filter(x => x.id !== 'diner') }])), 'repères : repas libre compté', ''); });
+    const needs = A.weekNeeds(all);
+    C.ok(needs.includes('charcuterie') === all.charcuterie > 150.5 && needs.includes('rouge') === all.rouge > 500.5 && needs.includes('gras') === all.gras < 1 && needs.includes('poisson') === all.poisson < 2 && needs.includes('legumes') === all.legumes < 2, 'besoins de la semaine', () => JSON.stringify([all, needs]));
+  }
+  for (let i = 0; i < N; i++){
+    const off = A.cleanOff(ALL_OFF.filter(() => R.chance(0.2))), k = R.pick([0.65, 0.8, 1, 1.2, 1.4]);
+    const bal = { poisson: R.int(0, 3), gras: R.int(0, 1), legumes: R.int(0, 3), rouge: R.between(0, 600, 10), charcuterie: R.between(0, 200, 5) };
+    const c = A.randomChoices(R.next, off, bal, k), show = () => JSON.stringify([off, bal, k, c]), ok = kind => A.allowed(kind, off);
+    C.ok(ok('pd').includes(c.pdBase) && ['dej', 'diner'].every(sl => ok('prot').includes(c[sl].prot) && ok('starch').includes(c[sl].starch) && ok('dessert').includes(c[sl].dessert)), 'tirage équilibré : aliment retiré', show);
+    C.ok(ok('prot').length < 2 || c.dej.prot !== c.diner.prot, 'tirage équilibré : même protéine', show);
+    if (c.pdBase === 'sale' && ok('prot').some(p => p !== 'oeufs' && p !== c.dej.prot)) C.ok(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'tirage : œufs + jambon avec le salé', show);
+    const jS = Math.round(45 * k / 5) * 5, jO = Math.round(90 * k / 5) * 5, bC = Math.round(150 * k / 10) * 10 * 0.75;
+    if (ok('pd').some(x => x !== 'sale') && bal.charcuterie + jS > 150) C.ok(c.pdBase !== 'sale', 'tirage : salé malgré la charcuterie', show);
+    // Bœuf écarté s'il reste, pour chaque repas, une autre protéine sous les repères (la règle « pas deux fois la même » passe avant)
+    const ham = bal.charcuterie + (c.pdBase === 'sale' ? jS : 0), okProt = p => p !== 'boeuf' && !(p === 'oeufs' && (c.pdBase === 'sale' || ham + jO > 150));
+    if (bal.rouge + bC > 500 && ok('prot').filter(okProt).length >= 2) C.ok(c.dej.prot !== 'boeuf' && c.diner.prot !== 'boeuf', 'tirage : bœuf malgré la viande rouge', show);
+  }
 }
 
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------

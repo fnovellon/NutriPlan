@@ -548,8 +548,8 @@ P 172 g (fourchette 168 à 206, facteur 1.50), G 179 g, L 57 g, portions × 1.00
     150 g skyr nature  93 kcal
 
 == 75 kg, 12 % de masse grasse, petite à midi
-dépense 3326 kcal (repos 3026, séances 300), objectif 2870 kcal, apport 2872 kcal (écart 2)
-P 160 g (fourchette 135 à 165, facteur 0.74), G 400 g, L 60 g, portions × 1.042
+dépense 3326 kcal (repos 3026, séances 300), objectif 2870 kcal, apport 2869 kcal (écart -1)
+P 161 g (fourchette 135 à 165, facteur 0.73), G 402 g, L 58 g, portions × 1.042
   Petit-déjeuner :
     80 g pain complet (2 tranches)  192 kcal
     190 g skyr nature  118 kcal
@@ -567,9 +567,10 @@ P 160 g (fourchette 135 à 165, facteur 0.74), G 400 g, L 60 g, portions × 1.04
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (dans l’après-midi) :
-    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    100 g skyr nature (à la place des œufs, déjà au menu aujourd’hui)  62 kcal
+    15 g amandes  89 kcal
     1 banane  105 kcal
-    ≈ 390 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  390 kcal
+    ≈ 380 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  380 kcal
   Dîner :
     2 œufs  144 kcal
     70 g jambon blanc (environ 1,5 tranche)  83 kcal
@@ -612,8 +613,8 @@ P 218 g (fourchette 181 à 222, facteur 0.88), G 1147 g, L 88 g, portions × 1.4
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, 1,6 g/kg, œufs et crevettes
-dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2266 kcal (écart -4)
-P 135 g (fourchette 104 à 127, facteur 0.50), G 275 g, L 65 g, portions × 1.000
+dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2273 kcal (écart 3)
+P 136 g (fourchette 104 à 127, facteur 0.51), G 279 g, L 64 g, portions × 1.000
   Petit-déjeuner :
     60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     130 g skyr nature  81 kcal
@@ -626,7 +627,8 @@ P 135 g (fourchette 104 à 127, facteur 0.50), G 275 g, L 65 g, portions × 1.00
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
-    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    100 g skyr nature (à la place des œufs, déjà au menu aujourd’hui)  62 kcal
+    15 g amandes  89 kcal
     1 banane  105 kcal
   Petite séance
   Shaker (juste après la séance) :
@@ -639,8 +641,8 @@ P 135 g (fourchette 104 à 127, facteur 0.50), G 275 g, L 65 g, portions × 1.00
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, petit-déjeuner salé, moyenne le soir, tofu et fruits secs
-dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2428 kcal (écart -2)
-P 158 g (fourchette 130 à 158, facteur 0.50), G 267 g, L 69 g, portions × 1.000
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2434 kcal (écart 4)
+P 159 g (fourchette 130 à 158, facteur 0.50), G 272 g, L 67 g, portions × 1.000
   Petit-déjeuner :
     80 g pain complet (2 tranches)  192 kcal
     2 œufs (à la coque, pochés ou brouillés sans matière grasse)  144 kcal
@@ -653,7 +655,8 @@ P 158 g (fourchette 130 à 158, facteur 0.50), G 267 g, L 69 g, portions × 1.00
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     30 g fruits secs (abricots, pruneaux ou figues)  74 kcal
   Collation (1h30 avant la séance) :
-    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    100 g skyr nature (à la place des œufs, déjà au menu aujourd’hui)  62 kcal
+    15 g amandes  89 kcal
     1 banane  105 kcal
     1 compote (sans sucre ajouté)  60 kcal
     ≈ 140 kcal d’encas (pour tes séances, à répartir autour d’elles si c’est beaucoup : pain complet et miel, fruits secs, riz au lait, barre de céréales)  140 kcal

@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -185,6 +185,23 @@ assert.strictEqual(secOf(r0([longue(2)]), 'pd').when, '1h30 à 2 h avant la sor
 // Collation : des œufs tout court (plus de marinade depuis la 3.8.0)
 const oe = secOf(r0([]), 'co').items.find(i => i.key === 'oe');
 assert(oe.qty === '2' && oe.name === 'œufs' && oe.note === 'durs ou mollets, préparés à l’avance' && oe.m.kcal === UNIT.oeuf[0] * 2 && oe.buy.id === 'oeuf', 'œufs de la collation');
+// Déjà des œufs dans la journée (salé, « Œufs + jambon ») : skyr et amandes à la collation, presque la même chose
+const coOf = (c, set, prof) => secOf(buildDay(day(set || []), Object.assign({}, DEFAULT_CHOICES[3], c), prof || {}), 'co').items;
+const coKeys = (c, set, prof) => coOf(c, set, prof).map(i => i.key).join(' ');
+assert(/^oe/.test(coKeys({})) && /^oe/.test(coKeys({ dej: { prot: 'thon', starch: 'riz' } })), 'œufs à la collation sans autres œufs (l’œuf dur du thon ne compte pas)');
+for (const c of [{ pdBase: 'sale' }, { dej: { prot: 'oeufs', starch: 'riz' } }, { diner: { prot: 'oeufs', starch: 'riz' } }]) {
+  const co = coOf(c);
+  assert(/^csk cam/.test(coKeys(c)) && !co.some(i => i.key === 'oe'), 'skyr et amandes à la collation : ' + JSON.stringify(c));
+  assert.deepStrictEqual(plain(co.slice(0, 2).map(i => [i.qty, i.name, i.note])), [['100\u00a0g', 'skyr nature', 'à la place des œufs, déjà au menu aujourd’hui'], ['15\u00a0g', 'amandes', null]], 'collation sans œufs : portions');
+  near(co[0].m.kcal + co[1].m.kcal, 2 * UNIT.oeuf[0], 10, 'collation sans œufs : mêmes calories');
+  near(co[0].m.p + co[1].m.p, 2 * UNIT.oeuf[1], 2, 'collation sans œufs : mêmes protéines');
+  near(co[0].m.f + co[1].m.f, 2 * UNIT.oeuf[3], 2, 'collation sans œufs : mêmes lipides');
+}
+assert(/^csk cam ban comp shk/.test(coKeys({ pdBase: 'sale' }, [moyenne('matin')])), 'collation sans œufs après la séance du matin, avec le shaker');
+assert.strictEqual(coOf({ pdBase: 'sale' }, [], { poids: 120 })[0].qty, '140\u00a0g', 'skyr de la collation × k');
+assert.strictEqual(coOf({ pdBase: 'sale' }, [], { poids: 50 })[0].qty, '100\u00a0g', 'skyr de la collation : jamais sous 100 g');
+// Sortie longue : le salé redevient sucré (pas d'œufs le matin), le goûter ne change pas
+assert(coKeys({ pdBase: 'sale' }, [longue(2)]).split(' ').includes('skyr'), 'goûter de sortie longue inchangé');
 // Petit-déjeuner, trois bases : avoine (ou muesli), pain complet, salé (pain, œufs, une tranche de jambon, fruit ; ni skyr ni amandes)
 const pdOf = (pdBase, set, prof) => secOf(buildDay(day(set), Object.assign({}, DEFAULT_CHOICES[3], { pdBase }), prof || {}), 'pd').items;
 const line = (items, key) => { const i = items.find(x => x.key === key); return i ? [i.qty, i.name, i.note].join(' | ') : null; };
@@ -350,7 +367,8 @@ for (const poids of [45, 72, 110]) {
 }
 // Accords : « 1 œuf » (collation, déjeuner), « une demi-tranche » aux plus petites portions (corrigé en 3.3.2)
 const tiny = composeDay(day([]), oeufsJambon, cleanProfile({ poids: 45 }), 0.5);
-assert.deepStrictEqual([itemOf(tiny, 'co', 'oe').qty, itemOf(tiny, 'co', 'oe').name, itemOf(tiny, 'co', 'oe').note], ['1', 'œuf', 'dur ou mollet, préparé à l’avance'], 'un œuf à la collation');
+const tinyCo = composeDay(day([]), DEFAULT_CHOICES[3], cleanProfile({ poids: 45 }), 0.5);
+assert.deepStrictEqual([itemOf(tinyCo, 'co', 'oe').qty, itemOf(tinyCo, 'co', 'oe').name, itemOf(tinyCo, 'co', 'oe').note], ['1', 'œuf', 'dur ou mollet, préparé à l’avance'], 'un œuf à la collation');
 assert.deepStrictEqual([itemOf(tiny, 'dej', 'p1').qty, itemOf(tiny, 'dej', 'p1').name], ['1', 'œuf'], 'un œuf');
 assert.strictEqual(itemOf(tiny, 'dej', 'p2').note, 'environ une demi-tranche', 'demi-tranche de jambon');
 // Garde-fous pour d'autres corpulences : toutes les journées types × toutes les protéines (féculents variés)
@@ -489,5 +507,38 @@ assert(/^\d+\.\d+\.\d+$/.test(APP_VERSION), 'version mal formée : ' + APP_VERSI
 assert.strictEqual(pkg.version, APP_VERSION, 'version de package.json');
 assert.strictEqual(lock.version, APP_VERSION, 'version de package-lock.json');
 assert.strictEqual((changelog.match(/^## (\d+\.\d+\.\d+)/m) || [])[1], APP_VERSION, 'dernière version de CHANGELOG.md');
+
+// Repères de la semaine (Santé publique France) : comptés sur les journées construites, repas libre exclu
+const wd = (dej, diner, extra) => buildDay(day([], extra && extra.libre ? { libre: true } : {}), Object.assign({ pdBase: (extra && extra.pd) || 'avoine', dej: { prot: dej[0], starch: dej[1] }, diner: { prot: diner[0], starch: diner[1] } }));
+const wk = weekBalance([wd(['saumon', 'riz'], ['poisson', 'lentilles']), wd(['thon', 'poischiches'], ['boeuf', 'pates'], { pd: 'sale' }), wd(['oeufs', 'riz'], ['saumon', 'riz'], { libre: true })]);
+const g = (r, slot, key) => r.secs.find(x => x.id === slot).items.find(i => i.key === key);
+const d2 = wd(['thon', 'poischiches'], ['boeuf', 'pates'], { pd: 'sale' }), d3 = wd(['oeufs', 'riz'], ['saumon', 'riz'], { libre: true });
+assert.strictEqual(wk.poisson, 3, 'poisson : saumon, poisson blanc, thon (le saumon du repas libre ne compte pas)');
+assert.strictEqual(wk.gras, 1, 'poisson gras');
+assert.strictEqual(wk.legumes, 2, 'légumes secs : lentilles et pois chiches');
+near(wk.rouge, g(d2, 'diner', 'p1').buy.g * 0.75, 1e-9, 'viande rouge : bœuf cru × 0,75');
+near(wk.charcuterie, g(d2, 'pd', 'jambon').buy.g + g(d3, 'dej', 'p2').buy.g, 1e-9, 'charcuterie : jambon du salé et des « Œufs + jambon »');
+assert.deepStrictEqual(plain(weekNeeds({ poisson: 2, gras: 1, legumes: 2, rouge: 500, charcuterie: 150 })), [], 'semaine équilibrée (limites comprises)');
+assert.deepStrictEqual(plain(weekNeeds({ poisson: 0, gras: 0, legumes: 1, rouge: 501, charcuterie: 151 })), ['charcuterie', 'rouge', 'gras', 'poisson', 'legumes'], 'ordre des besoins');
+assert.deepStrictEqual(plain(WEEK_GOALS), { poisson: 2, gras: 1, legumes: 2, rouge: 500, charcuterie: 150 }, 'repères');
+// Tirage équilibré : jamais « Œufs + jambon » avec le salé ; bœuf et salé écartés si la semaine déborde ; poisson et légumes secs favorisés
+const seq = vals => { let i = 0; return () => vals[i++ % vals.length]; };
+for (let i = 0; i < 400; i++) {
+  const rnd = seq([(i * 0.618) % 1, (i * 0.377) % 1, (i * 0.123) % 1, (i * 0.851) % 1]);
+  const c = randomChoices(rnd, []);
+  if (c.pdBase === 'sale') assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'œufs + jambon avec le salé');
+  const full = randomChoices(seq([(i * 0.618) % 1, (i * 0.377) % 1]), [], { poisson: 2, gras: 1, legumes: 2, rouge: 480, charcuterie: 140 }, 1);
+  assert(full.pdBase !== 'sale' && ![full.dej.prot, full.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'semaine pleine : ni bœuf, ni charcuterie en plus');
+}
+const count = (bal, test, n = 3000) => { let x = 0, s = 1; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647; for (let i = 0; i < n; i++) if (test(randomChoices(rnd, [], bal, 1))) x++; return x / n; };
+const fishOf = c => [c.dej.prot, c.diner.prot].filter(p => ['poisson', 'saumon', 'thon'].includes(p)).length;
+const legOf = c => [c.dej.starch, c.diner.starch].filter(st => ['lentilles', 'poischiches'].includes(st)).length;
+const empty = { poisson: 0, gras: 0, legumes: 0, rouge: 0, charcuterie: 0 }, done = { poisson: 2, gras: 1, legumes: 2, rouge: 0, charcuterie: 0 };
+assert(count(empty, c => fishOf(c) > 0) > count(done, c => fishOf(c) > 0) + 0.2, 'poisson favorisé tant qu’il en manque');
+assert(count(empty, c => c.dej.prot === 'saumon' || c.diner.prot === 'saumon') > count({ ...empty, gras: 1 }, c => c.dej.prot === 'saumon' || c.diner.prot === 'saumon') + 0.1, 'poisson gras favorisé tant qu’il manque');
+assert(count(empty, c => legOf(c) > 0) > count(done, c => legOf(c) > 0) + 0.2, 'légumes secs favorisés tant qu’il en manque');
+// Sans repère (bal absent) : tirage uniforme, comme avant ; aux bornes, premier et dernier choix proposés
+assert.deepStrictEqual(plain(randomChoices(() => 0, [])), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', dessert: 'aucun' }, diner: { prot: 'boeuf', starch: 'riz', dessert: 'aucun' } }, 'tirage au plus bas');
+assert.deepStrictEqual(plain(randomChoices(() => 0.9999, [])), { pdBase: 'sale', dej: { prot: 'tofu', starch: 'gnocchis', dessert: 'chocolat' }, diner: { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat' } }, 'tirage au plus haut (salé : pas d’« Œufs + jambon »)');
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines)`);

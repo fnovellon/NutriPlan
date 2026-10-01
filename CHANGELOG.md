@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 3.9.0, 1er octobre 2026
+
+- Nouveau « Ta semaine », sous le calendrier : tes plats prévus du lundi au dimanche comparés aux repères de Santé publique France. Du poisson deux fois, dont un poisson gras ; des légumes secs au moins deux fois ; au plus 500 g de viande rouge cuite et 150 g de charcuterie (le jambon en est). Une phrase te dit ce qui manque ou ce qui déborde ; touche-la pour voir le détail.
+- Si un de tes choix fait dépasser la viande rouge ou la charcuterie de la semaine, la page te le dit tout de suite.
+- « Décide pour moi » équilibre ta semaine : il favorise le poisson et les légumes secs tant qu'il en manque, et écarte le bœuf, le jambon ou le petit-déjeuner salé quand il y en a déjà assez. Jamais d'œufs-jambon avec le petit-déjeuner salé.
+- Moins d'œufs : quand il y en a déjà au menu (petit-déjeuner salé, œufs-jambon), la collation passe à 100 g de skyr et 15 g d'amandes, presque la même chose.
+- Dans l'assistant « Planifier », chaque jour rappelle où en est ta semaine.
+
 ## 3.8.0, 1er octobre 2026
 
 - Nouveau petit-déjeuner salé : pain complet, 2 œufs (à la coque, pochés ou brouillés), une tranche de jambon et ton fruit. Il remplace le skyr et les amandes, avec presque autant de lipides, et le reste de ta journée s'ajuste pour tes protéines. Les jours de sortie longue, il laisse la place à la version sucrée au pain et au miel, plus digeste avant de partir.

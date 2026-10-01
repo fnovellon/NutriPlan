@@ -70,6 +70,7 @@ function scan(dom, label){
   const dom = open(Object.assign(seen(), { [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) }));
   ['petite', 'moyenne', 'longue'].forEach(a => click(dom, '[data-action="add"][data-value="' + a + '"]'));
   scan(dom, 'page, trois séances');
+  dom.window.document.querySelector('#wk-bal').open = true; scan(dom, 'page, carte de la semaine ouverte');
   C.ok(dom.window.document.querySelector('#acts [data-value="longue"]').disabled, '« + Longue » actif avec une sortie longue', '');
   click(dom, '[data-action="add"][data-value="petite"]'); scan(dom, 'page, quatre séances');
   C.ok([...dom.window.document.querySelectorAll('#acts button')].every(b => b.disabled), 'bouton d’ajout actif à 4 séances', '');
@@ -197,6 +198,11 @@ function check(dom, log){
   const libre = $('#sw-lib').getAttribute('aria-checked') === 'true';
   C.ok(libre === /Repas libre/.test(($('#h-diner') || { textContent: '' }).textContent), 'interrupteur du repas libre ≠ page', where);
   C.ok($('#sheet').hidden || /^choose-open/.test(log[log.length - 1]), 'panneau de choix resté ouvert', where);
+  // Ta semaine : cinq repères, une phrase ; alerte si un repère est dépassé, « équilibrée » si tous sont tenus
+  const wbRows = [...d.querySelectorAll('#wb-list li')];
+  C.ok(wbRows.length === 5 && $('#wb-msg').textContent.trim().length > 10, 'carte de la semaine', where);
+  C.ok($('#wk-bal').classList.contains('is-over') === wbRows.some(li => li.className === 'is-over'), 'carte de la semaine : alerte', () => $('#wb-msg').textContent + ' : ' + where());
+  C.ok($('#wk-bal').classList.contains('is-ok') === wbRows.every(li => li.className === 'is-ok') && $('#wk-bal').classList.contains('is-ok') === /équilibrée/.test($('#wb-msg').textContent), 'carte de la semaine : équilibre', () => $('#wb-msg').textContent + ' : ' + where());
   // Chaque bulle de choix montre une valeur qui existe
   d.querySelectorAll('#day .sel').forEach(b => C.ok(b.dataset.value && b.textContent.trim(), 'bulle de choix vide', () => b.outerHTML.slice(0, 120)));
 }
@@ -275,6 +281,8 @@ const ACTIONS = {
       const off = JSON.parse(w.localStorage.getItem(PKEY) || '{}').off || [];
       const prots = [...d.querySelectorAll('#alim-list [data-kind="prot"]')].filter(b => !off.includes('prot:' + b.dataset.value)).length;
       C.ok(!prot('diner') || prots < 2 || prot('dej') !== prot('diner'), 'hasard : même protéine midi et soir', () => after.join(' ') + ' ' + JSON.stringify(off));
+      // Jamais « Œufs + jambon » avec le petit-déjeuner salé, s'il reste d'autres protéines
+      if (after.includes('pd=sale') && prots > 2) C.ok(prot('dej') !== 'oeufs' && prot('diner') !== 'oeufs', 'hasard : œufs-jambon avec le salé', () => after.join(' '));
     } else C.ok(after.join() === before.join(), 'formulaire fermé sans valider : choix changés', () => before.join(' ') + ' // ' + after.join(' '));
     return 'repas ' + how;
   },
@@ -328,6 +336,8 @@ const ACTIONS = {
     C.ok(d.querySelector('#courses').hidden, 'courses restées ouvertes', '');
     return 'courses';
   },
+  // Ta semaine : ouvrir ou refermer la carte
+  semaine: dom => { const e = dom.window.document.querySelector('#wk-bal'); if (dom.window.document.querySelector('#page').hidden) return 'semaine -'; e.open = !e.open; return 'semaine ' + (e.open ? 'ouverte' : 'fermée'); },
   // Réglages, « Tes aliments » : retirer ou remettre quelques aliments
   aliments: dom => {
     const d = dom.window.document;

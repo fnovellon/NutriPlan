@@ -781,7 +781,8 @@ assert(drawn.pdBase === 'pain' && drawn.dej.prot === 'tofu' && drawn.diner.prot 
 aw.Math.random = () => 0;
 al.click('#open-repas');
 al.click('[data-action="repas-hasard"]');
-assert(al.stored().choices[3].dej.prot === 'boeuf' && al.stored().choices[3].diner.prot === 'poisson', 'tirage sans poulet');
+// Le reste de la semaine a déjà ≈ 500 g de viande rouge : le bœuf est écarté du tirage (repères de la semaine)
+assert(/Viande rouge, cuite≈\s500\sg/.test(al.$('#wb-list').textContent) && al.stored().choices[3].dej.prot === 'poisson' && al.stored().choices[3].diner.prot === 'saumon', 'tirage sans poulet ni bœuf : ' + JSON.stringify(al.stored().choices[3]) + ' ' + al.$('#wb-list').textContent);
 al.click('#plan-btn'); al.click('[data-action="pl-start"]');
 assert(!sheetVals('#sel-pprot-diner').includes('poulet') && !sheetVals('#sel-ppd').includes('avoine'), 'assistant : aliment retiré proposé');
 al.click('#plan [data-action="fermer"]');
@@ -794,6 +795,42 @@ assert(arel.$('#alim-list [data-kind="pd"][data-value="avoine"]').getAttribute('
 const abad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ off: ['prot:constructor', '__proto__:x', 'pd:avoine', 'pd:pain', 'pd:sale', 5, 'starch:riz'] }))));
 assert(abad.$('#alim-list [data-kind="pd"][data-value="avoine"]').getAttribute('aria-pressed') === 'true' && abad.$('#alim-list [data-kind="starch"][data-value="riz"]').getAttribute('aria-pressed') === 'false', 'retraits abîmés');
 assert.strictEqual(abad.chosen('starch', 'dej'), 'pates', 'riz retiré : remplacé par les pâtes');
+
+// Ta semaine : repères de Santé publique France, sous le calendrier (semaine par défaut : il manque des légumes secs)
+const wkd = open(), wk = tools(wkd), ww = wkd.window;
+const wbRows = t => [...t.d.querySelectorAll('#wb-list li')].map(li => [li.className, li.querySelector('span').textContent]);
+assert(wk.$('#wk-bal').tagName === 'DETAILS' && !wk.$('#wk-bal').open && /^Pense aux légumes secs, encore une fois/.test(wk.$('#wb-msg').textContent), 'carte de la semaine : ' + wk.$('#wb-msg').textContent);
+assert.deepStrictEqual(wbRows(wk), [['is-ok', 'Poisson'], ['is-ok', 'dont poisson gras'], ['is-todo', 'Légumes secs'], ['is-ok', 'Viande rouge, cuite'], ['is-ok', 'Charcuterie']], 'repères de la semaine');
+assert(/1 sur 2\s\(à prévoir\)/.test(wk.$('#wb-list').textContent), 'légumes secs à prévoir');
+wk.choose('starch', 'dej', 'poischiches');
+assert(wk.$('#wb-msg').textContent === 'Elle est équilibrée, bravo.' && wk.$('#wk-bal').classList.contains('is-ok'), 'semaine équilibrée : ' + wk.$('#wb-msg').textContent);
+// Un choix qui fait déborder la semaine : le message le dit tout de suite ; la carte passe en alerte
+const heavy = {};
+['2026-10-05', '2026-10-06', '2026-10-08', '2026-10-09'].forEach(iso => { heavy[iso] = { seances: [], libre: false, ch: { pdBase: 'sale', dej: { prot: 'boeuf', starch: 'riz' }, diner: { prot: iso === '2026-10-05' ? 'boeuf' : 'oeufs', starch: 'pates' } } }; });
+const hvd = open(ls => ls.setItem(KEY, JSON.stringify({ plans: heavy, choices: {} }))), hv = tools(hvd), hw = hvd.window;
+assert(/^Trop de charcuterie \(≈\s\d+\sg, 150\sg au plus\)\s: préfère le petit-déjeuner sucré/.test(hv.$('#wb-msg').textContent) && hv.$('#wk-bal').classList.contains('is-over'), 'trop de charcuterie : ' + hv.$('#wb-msg').textContent);
+hv.choose('prot', 'dej', 'boeuf');
+assert(/^Ça fait ≈\s\d+\sg de viande rouge cuite cette semaine, 500\sg au plus\s: alterne avec la volaille, le poisson ou le tofu\.$/.test(hv.$('#hint').textContent), 'viande rouge dépassée : ' + hv.$('#hint').textContent);
+hv.choose('prot', 'dej', 'poulet');
+// « Décide pour moi » équilibre : ni bœuf, ni salé, ni œufs-jambon quand la semaine en a déjà trop ; poisson et légumes secs favorisés
+let seedR = 7; hw.Math.random = () => (seedR = (seedR * 16807) % 2147483647) / 2147483647;
+let fishN = 0, legN = 0;
+for (let i = 0; i < 25; i++) {
+  hv.click('#open-repas'); hv.click('[data-action="repas-hasard"]');
+  const c = hv.stored().plans['2026-10-07'].ch;
+  assert(c.pdBase !== 'sale' && ![c.dej.prot, c.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'tirage déséquilibré : ' + JSON.stringify(c));
+  fishN += [c.dej.prot, c.diner.prot].filter(p => ['poisson', 'saumon', 'thon'].includes(p)).length;
+  legN += [c.dej.starch, c.diner.starch].filter(st => ['lentilles', 'poischiches'].includes(st)).length;
+}
+assert(fishN >= 15 && legN >= 8, `poisson et légumes secs favorisés : ${fishN} poissons, ${legN} légumes secs sur 50 repas`);
+// Collation : pas d'œufs quand il y en a déjà au menu (petit-déjeuner salé)
+hv.choose('pd', null, 'sale');
+const coLis = [...hv.d.querySelectorAll('[aria-labelledby="h-co"] li')].map(li => li.textContent);
+assert(/skyr nature/.test(coLis[0]) && /à la place des œufs, déjà au menu aujourd’hui/.test(coLis[0]) && /amandes/.test(coLis[1]) && !coLis.some(t => /œuf/.test(t.replace('à la place des œufs', ''))), 'collation sans œufs : ' + coLis.join(' / '));
+// Assistant : la semaine en une phrase sous le total du jour
+hv.click('#plan-btn'); hv.click('[data-action="pl-start"]');
+assert(/^Ta semaine\s: trop de charcuterie/.test(hv.$('#plan-wb').textContent), 'semaine dans l’assistant : ' + hv.$('#plan-wb').textContent);
+hv.click('#plan [data-action="fermer"]');
 
 // Accueil au premier lancement : rien n'est enregistré avant la fin
 const fdom = open(null, true), f = tools(fdom), fw = fdom.window;
