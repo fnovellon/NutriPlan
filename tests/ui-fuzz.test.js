@@ -165,6 +165,8 @@ function check(dom, log){
       C.ok(/^\d{4}-\d\d-\d\d$/.test(date), 'date enregistrée invalide', () => date);
       // Enregistré champ par champ (3.11.0) : ce qui manque vient de la semaine type
       C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || typeof p.libre === 'boolean'), 'plan enregistré invalide', () => JSON.stringify(p));
+      // Recette enregistrée : toujours celle de la protéine et du féculent du repas
+      if (p && p.ch) C.ok(['dej', 'diner'].every(sl => !p.ch[sl] || !('recette' in p.ch[sl]) || p.ch[sl].recette === p.ch[sl].prot + '-' + p.ch[sl].starch), 'recette enregistrée qui ne va pas', () => JSON.stringify(p.ch));
     });
     const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
     Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
@@ -219,6 +221,14 @@ function check(dom, log){
   } catch (e){ C.ok(false, 'semaine type illisible', () => e.message); }
   // Chaque bulle de choix montre une valeur qui existe
   d.querySelectorAll('#day .sel').forEach(b => C.ok(b.dataset.value && b.textContent.trim(), 'bulle de choix vide', () => b.outerHTML.slice(0, 120)));
+  // Recettes : une sous le déjeuner et le dîner (pas au repas libre) ; choisie, ni « légumes » ni marge cuisine dans le repas
+  ['dej', 'diner'].forEach(sl => {
+    const meal = $('[aria-labelledby="h-' + sl + '"]'); if (!meal) return;
+    const box = meal.querySelector('.rec'), names = [...meal.querySelectorAll('.items .name')].map(n => n.childNodes[0].textContent);
+    C.ok(!!box === !(sl === 'diner' && libre), 'recette proposée', () => sl + ' ' + where());
+    if (box && box.classList.contains('is-on')) C.ok(!names.includes('légumes') && !names.includes('kcal pour la cuisine') && /^Recette/.test(box.textContent), 'recette choisie : lignes de base restées', () => names.join(', ') + ' ' + where());
+    else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
+  });
 }
 const ACTIONS = {
   add: dom => { const b = R.pick([...dom.window.document.querySelectorAll('#acts button')]); b.click(); return 'ajoute ' + b.dataset.value; },
@@ -251,6 +261,27 @@ const ACTIONS = {
     return 'annule ' + how;
   },
   reset: dom => { dom.window.document.querySelector('[data-action="reset"]').click(); return 'plan de base'; },
+  // Recette d'un repas : choisir ou retirer depuis la page, ou ouvrir la fiche (choisir, retirer ou fermer)
+  recette: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'recette -';
+    const box = R.pick([...d.querySelectorAll('#day .rec')]);
+    if (!box) return 'recette -';
+    const on = box.classList.contains('is-on'), slot = box.closest('.meal').getAttribute('aria-labelledby').slice(2), how = R.pick(['page', 'fiche', 'ferme']);
+    if (how === 'page') box.querySelector('[data-action="rec-on"], [data-action="rec-off"]').click();
+    else {
+      box.querySelector('[data-action="rec-view"]').click();
+      if (d.querySelector('#sheet').hidden || d.querySelector('#sheet-rec').hidden || !d.querySelector('#page').hasAttribute('inert')) throw new Error('fiche non ouverte');
+      C.ok(d.querySelectorAll('#sheet-rec .rec-steps li').length === 3 && d.querySelectorAll('#sheet-rec .items li').length >= 4 && d.querySelector('#sheet-t').textContent.length > 5, 'fiche de recette incomplète', () => d.querySelector('#sheet-rec').textContent.slice(0, 200));
+      if (how === 'fiche') d.querySelector('#sheet-rec .btn').click();
+      else if (R.chance(.5)) d.querySelector('#sheet .sheet-x').click();
+      else w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
+      if (!d.querySelector('#sheet').hidden || d.querySelector('#page').hasAttribute('inert')) throw new Error('fiche restée ouverte');
+    }
+    const now = d.querySelector('[aria-labelledby="h-' + slot + '"] .rec'), want = how === 'ferme' ? on : !on;
+    C.ok(now && now.classList.contains('is-on') === want, 'recette : choix non appliqué', () => slot + ' ' + how + ' ' + on);
+    return 'recette ' + slot + ' ' + how + (want ? ' choisie' : ' retirée');
+  },
   screens: dom => {
     const d = dom.window.document, w = dom.window;
     const seq = R.pick([['#gear', '#reglages [data-action="fermer"]'], ['#help', '#aide [data-action="fermer"]'], ['#gear', '#help-regl', '#aide .btn.wide', '#reglages .btn.wide'], ['#gear', 'retour'], ['#help', 'retour']]);

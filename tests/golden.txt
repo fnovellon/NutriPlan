@@ -726,3 +726,63 @@ P 103 g (fourchette 84 à 103, facteur 0.66), G 118 g, L 56 g, portions × 0.650
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 fruit (pomme, poire, orange, 2 kiwis…)  80 kcal
+
+== 72 kg, recettes midi et soir, repos (curry, bolognaise)
+dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1987 kcal (écart 7)
+P 155 g (fourchette 130 à 158, facteur 0.75), G 199 g, L 57 g, portions × 1.000
+  Petit-déjeuner :
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
+    190 g skyr nature  118 kcal
+    125 g fruits rouges (surgelés, c’est parfait)  48 kcal
+    15 g amandes  89 kcal
+  Déjeuner :
+    130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
+    90 g riz basmati [≈ 270 g cuit]  317 kcal
+    70 g oignon (ou échalote)  27 kcal
+    100 g poivron  37 kcal
+    80 g épinards (frais ou surgelés)  28 kcal
+    5 g huile d’olive (1 c. à café)  45 kcal
+    15 g lait de coco (1 c. à soupe)  29 kcal
+    40 g skyr nature (pour la sauce)  25 kcal
+  Collation (dans l’après-midi) :
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    1 shaker de protéines (une dose, à l’eau)  120 kcal
+  Dîner :
+    110 g bœuf haché 5 % [≈ 85 g cuit]  143 kcal
+    60 g pâtes [≈ 140 g cuites]  213 kcal
+    60 g oignon (ou échalote)  23 kcal
+    50 g carottes  20 kcal
+    140 g pulpe de tomate (en conserve)  46 kcal
+    10 g huile d’olive (2 c. à café)  90 kcal
+    15 g parmesan (râpé sur les pâtes)  61 kcal
+
+== 72 kg, recette au dîner, moyenne le soir, chocolat (poke bowl)
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2428 kcal (écart -2)
+P 155 g (fourchette 130 à 158, facteur 0.77), G 284 g, L 68 g, portions × 1.000
+  Petit-déjeuner :
+    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
+    190 g skyr nature  118 kcal
+    1 banane  105 kcal
+    15 g amandes  89 kcal
+  Déjeuner :
+    140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
+    95 g riz basmati [≈ 290 g cuit]  334 kcal
+    250 g légumes (minimum, à volonté)  75 kcal
+    ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+  Collation (1h30 avant la séance) :
+    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    1 banane  105 kcal
+    1 compote (sans sucre ajouté)  60 kcal
+  Séance moyenne
+  Shaker (juste après la séance) :
+    1 shaker de protéines (une dose, à l’eau)  120 kcal
+  Dîner (après la séance) :
+    120 g poisson gras [≈ 95 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  247 kcal
+    95 g riz basmati [≈ 290 g cuit]  334 kcal
+    100 g concombre  12 kcal
+    70 g carottes  28 kcal
+    50 g chou (rouge ou chinois)  15 kcal
+    30 g oignon (ou échalote)  12 kcal
+    5 g huile de sésame (1 c. à café, ou d’olive)  45 kcal
+    3 g graines de sésame (1 c. à café)  19 kcal
+    20 g chocolat noir (70 % ou plus, 2 à 4 carrés selon la tablette)  114 kcal

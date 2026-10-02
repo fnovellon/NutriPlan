@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -548,8 +548,8 @@ assert(count(empty, c => fishOf(c) > 0) > count(done, c => fishOf(c) > 0) + 0.2,
 assert(count(empty, c => c.dej.prot === 'saumon' || c.diner.prot === 'saumon') > count({ ...empty, gras: 1 }, c => c.dej.prot === 'saumon' || c.diner.prot === 'saumon') + 0.1, 'poisson gras favorisé tant qu’il manque');
 assert(count(empty, c => legOf(c) > 0) > count(done, c => legOf(c) > 0) + 0.2, 'légumes secs favorisés tant qu’il en manque');
 // Sans repère (bal absent) : tirage uniforme, comme avant ; aux bornes, premier et dernier choix proposés
-assert.deepStrictEqual(plain(randomChoices(() => 0, [])), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', dessert: 'aucun' }, diner: { prot: 'boeuf', starch: 'riz', dessert: 'aucun' } }, 'tirage au plus bas');
-assert.deepStrictEqual(plain(randomChoices(() => 0.9999, [])), { pdBase: 'sale', dej: { prot: 'tofu', starch: 'gnocchis', dessert: 'chocolat' }, diner: { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat' } }, 'tirage au plus haut (salé : pas d’« Œufs + jambon »)');
+assert.deepStrictEqual(plain(randomChoices(() => 0, [])), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', dessert: 'aucun', recette: 'poulet-riz' }, diner: { prot: 'boeuf', starch: 'riz', dessert: 'aucun', recette: 'boeuf-riz' } }, 'tirage au plus bas (recette choisie d’office)');
+assert.deepStrictEqual(plain(randomChoices(() => 0.9999, [])), { pdBase: 'sale', dej: { prot: 'tofu', starch: 'gnocchis', dessert: 'chocolat', recette: 'tofu-gnocchis' }, diner: { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat', recette: 'thon-gnocchis' } }, 'tirage au plus haut (salé : pas d’« Œufs + jambon »)');
 
 // Semaine type (3.11.0) : séances habituelles par jour et soir du repas libre ; un jour pas encore rempli les reprend
 const sem = cleanWeek({ jours: { 1: [petite('soir'), moyenne('matin')], 3: [longue(2.5), longue(3), petite('midi')], 5: [], 9: [petite('soir')], x: 1 }, libre: 0 });
@@ -574,4 +574,77 @@ assert.deepStrictEqual(plain(cleanProfile({}).semaine), { jours: {}, libre: 6 },
 // Les séances de la semaine type comptent dans la dépense du jour
 assert(energy(emptyPlan(1, sem), cleanProfile({})).target > energy(emptyPlan(1), cleanProfile({})).target, 'séances de la semaine type comptées');
 
-console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines)`);
+// 17. Recettes (3.12.0) : une par couple protéine × féculent ; choisie, ses légumes, sa matière grasse et ses ajouts remplacent la
+// ligne « légumes » et la marge cuisine du repas, le féculent s'ajuste et le total du jour ne bouge pas
+assert.strictEqual(Object.keys(RECIPES).length, 80, '80 recettes');
+for (const p of PROT_ORDER) for (const st of STARCH_ORDER) {
+  const ids = plain(recipesFor(p, st)), x = RECIPES[p + '-' + st];
+  assert.deepStrictEqual(ids, [p + '-' + st], `recette de ${p} × ${st}`);
+  assert(x.p === p && x.s === st && x.min > 0 && x.steps.length === 3 && x.t && x.aro, `recette ${p}-${st} complète`);
+  assert.strictEqual(Object.values(x.leg).reduce((a, g) => a + g, 0), 250, `${p}-${st} : 250 g de légumes`);
+  for (const v of Object.keys(x.leg)) assert(VEG_IDS.includes(v) && FOOD[v] && RFOOD[v], `${p}-${st} : légume ${v} connu`);
+  for (const c of x.cuis) assert(FOOD[c[0]] && c[1] > 0 && c[2] && c[3], `${p}-${st} : matière grasse ${c[0]}`);
+  assert(new Set(x.cuis.map(c => c[0])).size === x.cuis.length, `${p}-${st} : une ligne par matière grasse`);
+  for (const a of Object.keys(x.plus)) assert(['skyr', 'miel'].includes(a) && x.plus[a] > 0, `${p}-${st} : ajout ${a}`);
+  for (const t of [x.t, x.aro, ...x.steps, x.soir || ''].concat(x.cuis.map(c => c[3]))) {
+    assert(!/ [:;?!%]/.test(t) && !/\d (g|min|ml|°C)\b/.test(t) && !/c\. à/.test(t) && !/'/.test(t), `typographie : ${t}`);
+  }
+}
+// recipeOf : la recette doit aller avec la protéine et le féculent ; identifiants inconnus ou hérités refusés
+assert.strictEqual(recipeOf({ prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }), 'poulet-riz', 'recette valide');
+for (const bad of [{ prot: 'poulet', starch: 'pates', recette: 'poulet-riz' }, { prot: 'boeuf', starch: 'riz', recette: 'poulet-riz' }, { prot: 'poulet', starch: 'riz', recette: 'x' },
+  { prot: 'poulet', starch: 'riz', recette: '__proto__' }, { prot: 'poulet', starch: 'riz', recette: 'constructor' }, { prot: 'poulet', starch: 'riz', recette: 3 }, { prot: 'poulet', starch: 'riz' }, null]) {
+  assert.strictEqual(recipeOf(bad), null, 'recette refusée : ' + JSON.stringify(bad));
+}
+const RC = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poulet', starch: 'pdt' } };
+const RC0 = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'poulet', starch: 'pdt' } };
+for (const set of [[], [moyenne('soir')], [longue(2)]]) {
+  const a = composeDay(day(set), RC, cleanProfile({}), 1), b = composeDay(day(set), RC0, cleanProfile({}), 1);
+  const dj = a.secs.find(s => s.id === 'dej'), dn = a.secs.find(s => s.id === 'diner'), keys = dj.items.map(i => i.key);
+  assert(!keys.includes('leg') && !keys.includes('marge') && dn.items.some(i => i.key === 'leg') && dn.items.some(i => i.key === 'marge'), 'recette : ni « légumes » ni marge au déjeuner, le dîner les garde');
+  assert.deepStrictEqual(plain(keys.filter(k => /^[vfx]-/.test(k))), ['v-oignon', 'v-poivron', 'v-epinards', 'f-huile', 'f-coco', 'x-skyr'], 'lignes de la recette, dans l’ordre');
+  const line = key => dj.items.find(i => i.key === key);
+  assert(line('v-oignon').qty === '70 g' && line('v-oignon').name === 'oignon' && line('v-oignon').buy.id === 'oignon' && line('v-oignon').buy.g === 70, 'oignon');
+  near(line('v-epinards').m.kcal, FOOD.epinards[0] * 0.8, 1e-9, 'épinards');
+  assert(line('f-huile').qty === '5 g' && line('f-huile').note === '1 c. à café' && line('f-coco').qty === '15 g', 'matière grasse en grammes, mesure en note');
+  near(line('f-coco').m.f, FOOD.coco[3] * 0.15, 1e-9, 'lait de coco');
+  assert(line('x-skyr').qty === '40 g' && line('x-skyr').note === 'pour la sauce', 'skyr de la sauce');
+  assert(dj.recipe === 'poulet-riz' && dj.suggest === 'poulet-riz' && dn.recipe === null && dn.suggest === 'poulet-pdt', 'recette choisie et suggestion');
+  // À protéines fixes, le féculent du jour compense exactement ce que la recette change (arrondis)
+  const fixedOf = r => total(r.secs.flatMap(s => s.items).filter(i => i.key !== 'st' && i.key !== 'encas')).kcal;
+  near(starchKcal(b).reduce((x, y) => x + y) - starchKcal(a).reduce((x, y) => x + y), fixedOf(a) - fixedOf(b), 25, 'féculents ajustés à la recette');
+  near(buildDay(day(set), RC).tot.kcal, buildDay(day(set), RC0).tot.kcal, 30, 'recette : total du jour inchangé');
+}
+// L'ajout du soir garde son rôle, avec la note de la recette
+const amOf = c => buildDay(day([]), c).secs.find(s => s.id === 'diner').items.find(i => i.key === 'dam');
+assert.strictEqual(amOf({ pdBase: 'avoine', dej: { prot: 'boeuf', starch: 'riz' }, diner: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' } }).note, 'effilées et grillées à sec, sur le curry', 'amandes : note de la recette');
+assert.strictEqual(amOf({ pdBase: 'avoine', dej: { prot: 'boeuf', starch: 'riz' }, diner: { prot: 'poulet', starch: 'pdt', recette: 'poulet-pdt' } }).note, 'sur les légumes ou en fin de repas', 'amandes : note habituelle sans note de recette');
+assert.strictEqual(buildDay(day([]), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'riz', recette: 'boeuf-riz' } }).secs.find(s => s.id === 'diner').items.find(i => i.key === 'pm').note, 'râpé sur le chili, comme un cheddar', 'parmesan : note de la recette');
+// Recette qui ne va plus (féculent changé) : ignorée, le repas reste comme avant
+assert.deepStrictEqual(plain(buildDay(day([]), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'pates', recette: 'poulet-riz' }, diner: RC0.diner })),
+  plain(buildDay(day([]), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'pates' }, diner: RC0.diner })), 'recette d’un autre féculent ignorée');
+// Repas libre : le dîner (avec sa recette) est remplacé, ses lignes partent avec lui
+const libR = buildDay(day([], { libre: true }), { pdBase: 'avoine', dej: RC0.dej, diner: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' } });
+assert(libR.libre && !libR.secs.flatMap(s => s.items).some(i => /^[vfx]-/.test(i.key)), 'repas libre : plus de lignes de recette');
+// Mémoire du jour de la semaine : la recette reste si sa protéine et son féculent restent proposés
+assert.strictEqual(withAllowed({ pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: RC0.diner }, []).dej.recette, 'poulet-riz', 'recette gardée');
+assert(!('recette' in withAllowed({ pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: RC0.diner }, ['starch:riz']).dej), 'féculent retiré : recette oubliée');
+// Courses : les légumes et la matière grasse de la recette, chacun dans un rayon
+const shopR = shoppingList([buildDay(day([]), RC)]), shopLine = id => shopR.flatMap(g => g.lines).find(l => l.id === id);
+assert(shopLine('oignon').qty === '70 g' && shopLine('coco').qty === '15 g' && shopLine('huile').qty === '5 g', 'courses : oignon, lait de coco, huile');
+const aisleIds = SHOP_AISLES.flatMap(g => g.ids);
+for (const id of VEG_IDS.concat(['huile', 'coco', 'creme', 'lait', 'sesame', 'tahini', 'olives', 'parmesan'])) assert.strictEqual(aisleIds.filter(x => x === id).length, 1, `courses : ${id} dans un rayon`);
+// Garde-fous avec les recettes : 12 journées types × 3 bases × les 80 recettes au déjeuner (dîner : une autre recette)
+let nr = 0;
+for (const [name, set] of Object.entries(SETS)) for (const pdBase of PD_ORDER) PROT_ORDER.forEach((p1, i) => STARCH_ORDER.forEach((s1, j) => {
+  const p2 = PROT_ORDER[(i + j + 1) % 8], s2 = STARCH_ORDER[(j + 3) % 10];
+  const c = { pdBase, dej: { prot: p1, starch: s1, recette: p1 + '-' + s1 }, diner: { prot: p2, starch: s2, recette: p2 + '-' + s2 } };
+  const combo = `recettes/${name}/${pdBase}/${p1}-${s1}/${p2}-${s2}`, r = buildDay(day(set), c);
+  assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : écart de ${Math.round(r.ecart)} kcal`);
+  assert(protOk(r), `${combo} : ${Math.round(r.tot.p)} g de protéines`);
+  assert(r.tot.f >= FAT_MIN - 0.5 && r.tot.f <= fatCap(r, 1) + 1, `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
+  assert(starchOk(r, s1, s2, 1), `${combo} : féculents hors bornes`);
+  nr++;
+}));
+
+console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes)`);

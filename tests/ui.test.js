@@ -265,7 +265,8 @@ rw.Math.random = () => 0.999;
 r.click('[data-action="repas-hasard"]');
 assert(!r.$('#page').hidden && r.$('#repas').hidden, 'récap non affiché après le tirage');
 assert.deepStrictEqual(everything(), ['sale', 'tofu', 'gnocchis', 'chocolat', 'thon', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
-assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat' }, 'tirage non enregistré');
+assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat', recette: 'thon-gnocchis' }, 'tirage non enregistré (recette choisie d’office)');
+assert(r.$('[aria-labelledby="h-dej"] .rec.is-on') && r.$('[aria-labelledby="h-diner"] .rec.is-on'), 'tirage : recettes choisies sur la page');
 assert(/tirés au hasard/.test(r.$('#hint').textContent), 'message du tirage : ' + r.$('#hint').textContent);
 r.click('#open-repas');
 rw.Math.random = () => 0;
@@ -297,10 +298,68 @@ const nostore = tools(new JSDOM(html, { runScripts: 'dangerously', url: 'https:/
   beforeParse: win => { withClock(win); Object.defineProperty(win, 'localStorage', { get(){ throw new Error('stockage bloqué'); } }); } }));
 assert(nostore.$('#repas').hidden && !nostore.$('#page').hidden && nostore.$('#accueil').hidden, 'sans stockage : ' + ['accueil', 'page', 'repas'].filter(id => !nostore.$('#' + id).hidden));
 
-// L'idée de plat suit les choix
+// Recettes (3.12.0) : la suggestion suit la protéine et le féculent ; « Voir la recette » ouvre sa fiche, « Choisir » la prend,
+// « Retirer » revient au repas de base ; changer de féculent l'oublie
 choose('prot', 'diner', 'boeuf');
 choose('starch', 'diner', 'pates');
-assert(/bolognaise/.test($('[aria-labelledby="h-diner"] .idea').textContent), 'idée de plat');
+const recBox = slot => $(`[aria-labelledby="h-${slot}"] .rec`);
+const dinerNames = () => [...d.querySelectorAll('[aria-labelledby="h-diner"] .items li .name')].map(n => n.childNodes[0].textContent);
+const kcalOf = el => Number(el.textContent.replace(/\D/g, ''));
+assert(/^Suggestion\s:\sPâtes à la bolognaise/.test(recBox('diner').textContent) && !recBox('diner').classList.contains('is-on'), 'suggestion du dîner : ' + recBox('diner').textContent);
+assert(/35\smin, se garde/.test(recBox('diner').textContent) && $('#rec-c-diner').getAttribute('aria-label') === 'Choisir la recette du dîner', 'temps et bouton de la suggestion');
+assert(dinerNames().includes('légumes') && dinerNames().includes('kcal pour la cuisine'), 'dîner sans recette : ' + dinerNames().join(', '));
+const totalR0 = kcalOf($('#sum-text strong'));
+click('#rec-v-diner');
+assert(!$('#sheet').hidden && $('#sheet-t').textContent === 'Pâtes à la bolognaise' && $('#sheet-list').hidden && !$('#sheet-rec').hidden && $('#page').hasAttribute('inert'), 'fiche de la recette');
+assert.strictEqual(d.activeElement, $('#sheet-rec [data-action="rec-on"]'), 'focus sur « Choisir cette recette »');
+const fiche = $('#sheet-rec').textContent;
+assert(d.querySelectorAll('#sheet-rec .rec-steps li').length === 3 && /bœuf haché/.test(fiche) && /pâtes/.test(fiche) && /oignon/.test(fiche) && /pulpe de tomate/.test(fiche) && /huile d’olive/.test(fiche) && /Ail, laurier, thym, basilic\./.test(fiche), 'fiche : quantités, aromates, étapes');
+assert(!/kcal pour la cuisine|chocolat/.test(fiche) && /En tout\s:\s*[\d\s]+kcal/.test($('#sheet-rec .rec-tot').textContent), 'fiche : sans marge ni dessert, total du repas');
+d.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+assert($('#sheet').hidden && d.activeElement === $('#rec-v-diner') && !recBox('diner').classList.contains('is-on') && !('recette' in stored().choices[3].diner), 'Échap : fiche fermée sans rien choisir');
+// Choisir depuis la fiche : les lignes de la recette remplacent « légumes » et la marge, le total ne bouge pas
+click('#rec-v-diner'); click('#sheet-rec [data-action="rec-on"]');
+assert($('#sheet').hidden && recBox('diner').classList.contains('is-on') && /^Recette\s:\sPâtes à la bolognaise/.test(recBox('diner').textContent), 'recette choisie');
+assert.strictEqual(d.activeElement, $('#rec-v-diner'), 'focus rendu au bouton de la fiche');
+assert(stored().plans['2026-10-07'].ch.diner.recette === 'boeuf-pates' && stored().choices[3].diner.recette === 'boeuf-pates', 'recette enregistrée');
+assert(['oignon', 'carottes', 'pulpe de tomate', 'huile d’olive'].every(n => dinerNames().includes(n)) && !dinerNames().includes('légumes') && !dinerNames().includes('kcal pour la cuisine'), 'lignes de la recette : ' + dinerNames().join(', '));
+assert(Math.abs(kcalOf($('#sum-text strong')) - totalR0) <= 20, 'la recette change le total : ' + totalR0 + ' → ' + kcalOf($('#sum-text strong')));
+{
+  const meal = $('[aria-labelledby="h-diner"]');
+  const shown = [...meal.querySelectorAll('.items .mac > span:first-child')].reduce((a, e) => a + kcalOf(e), 0);
+  assert(Math.abs(shown - kcalOf(meal.querySelector('.kcal'))) <= 10 && meal.querySelectorAll('.items li').length === meal.querySelectorAll('.items .mac').length, 'recette : macros de chaque ligne');
+}
+// Retirer, puis choisir depuis la page : le focus reste sur le bouton
+click('#rec-c-diner');
+assert(!recBox('diner').classList.contains('is-on') && dinerNames().includes('légumes') && !('recette' in stored().choices[3].diner) && d.activeElement === $('#rec-c-diner') && $('#rec-c-diner').textContent === 'Choisir', 'recette retirée');
+click('#rec-c-diner');
+assert(recBox('diner').classList.contains('is-on') && d.activeElement === $('#rec-c-diner') && $('#rec-c-diner').textContent === 'Retirer', 'recette choisie depuis la page');
+click('#rec-v-diner');
+assert($('#sheet-rec [data-action="rec-off"]') && /Choisie pour ce dîner/.test($('#sheet-rec .rec-meta').textContent), 'fiche d’une recette choisie');
+click('#sheet .sheet-x');
+// Changer de féculent : la recette est oubliée, celle du nouveau couple est proposée
+choose('starch', 'diner', 'riz');
+assert(/^Suggestion\s:\sChili de bœuf aux poivrons, riz/.test(recBox('diner').textContent) && !('recette' in stored().choices[3].diner) && dinerNames().includes('légumes'), 'féculent changé : recette oubliée');
+choose('starch', 'diner', 'pates');
+assert(!recBox('diner').classList.contains('is-on'), 'revenir au féculent ne reprend pas la recette');
+// Repas libre : pas de recette au dîner
+setSwitch('libre', true);
+assert(!recBox('diner') && recBox('dej'), 'repas libre : pas de suggestion au dîner');
+setSwitch('libre', false);
+// Rechargée : la recette choisie est relue (et refusée si elle ne va pas avec les plats enregistrés)
+const recSeed = (diner, extra) => ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner } } }, choices: {} }));
+const rl = tools(open(recSeed({ prot: 'saumon', starch: 'riz', recette: 'poulet-riz' })));
+assert(rl.$('[aria-labelledby="h-dej"] .rec.is-on') && !rl.$('[aria-labelledby="h-diner"] .rec.is-on') && /Poke bowl/.test(rl.$('[aria-labelledby="h-diner"] .rec').textContent), 'recettes relues et validées');
+const rl2 = tools(open(recSeed({ prot: 'saumon', starch: 'riz', recette: '__proto__' })));
+assert(!rl2.$('[aria-labelledby="h-diner"] .rec.is-on'), 'recette abîmée refusée');
+// Formulaire des repas : la recette suit le brouillon (gardée si le couple ne change pas, oubliée sinon)
+rl.click('#open-repas'); rl.click('[data-action="repas-ok"]');
+assert(rl.$('[aria-labelledby="h-dej"] .rec.is-on'), 'formulaire validé sans changement : recette gardée');
+rl.click('#open-repas');
+rl.click('#repas-form .sel[data-kind="starch"][data-slot="dej"]'); rl.click('#sheet [data-value="pates"]');
+rl.click('#repas-form .sel[data-kind="starch"][data-slot="dej"]'); rl.click('#sheet [data-value="riz"]');
+rl.click('[data-action="repas-ok"]');
+assert(!rl.$('[aria-labelledby="h-dej"] .rec.is-on'), 'formulaire : féculent changé, recette oubliée');
 
 // Stockage : l'activité par date, les choix par jour de la semaine
 let st = stored();
@@ -500,13 +559,16 @@ p.click('#help');
 assert(view() === 'aide' && pw.document.activeElement === p.$('#aide-h') && pw.history.state.screen === 'aide', 'le « ? » n’ouvre pas l’aide');
 assert(/Ta journée en trois temps/.test(p.$('#aide').textContent) && /cru/.test(p.$('#aide').textContent), 'explications absentes');
 const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
-assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 34, 'table des aliments : ' + refRows.length + ' lignes');
+assert(p.d.querySelectorAll('#ref-tables table').length === 6 && refRows.length === 57, 'table des aliments : ' + refRows.length + ' lignes');
 const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
 assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
 assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['352', '8,4', '77', '1'], 'valeurs du riz (cru)');
 // Nouveaux aliments (3.7.0) et groupes de valeurs proches
 const refCells = key => [...p.$(`#ref-tables tr[data-key="${key}"]`).querySelectorAll('th, td')].map(td => td.textContent.trim());
 assert.deepStrictEqual(refCells('tofu'), ['Tofu ferme, nature', '148', '14,4', '1,1', '9,3'], 'tofu dans la table');
+// Légumes et matières grasses des recettes (3.12.0)
+assert.deepStrictEqual(refCells('oignon'), ['Oignon (ou échalote)', '39', '1,1', '6,3', '0,6'], 'oignon dans la table');
+assert.deepStrictEqual(refCells('coco'), ['Lait de coco', '190', '2', '6,3', '17,6'], 'lait de coco dans la table');
 assert.deepStrictEqual(refCells('fruitsSecs'), ['Fruits secs (abricots, pruneaux, figues)', '245', '2,7', '56', '0,7'], 'fruits secs dans la table');
 assert(/Pois chiches/.test(refCells('poischiches')[0]) && refCells('poischiches')[1] === '351', 'pois chiches dans la table');
 assert(/Poisson gras \(saumon, maquereau, sardines/.test(refCells('saumon')[0]) && /Viande blanche maigre \(poulet, dinde, filet mignon de porc\)/.test(refCells('poulet')[0]), 'groupes dans la table');

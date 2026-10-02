@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.12.0, 2 octobre 2026
+
+- Une recette pour chaque plat : sous le déjeuner et le dîner, l'appli te propose une recette pour ta protéine et ton féculent (80 recettes, une par association, du poulet au curry au dahl de lentilles).
+- « Voir la recette » ouvre sa fiche : tes quantités pour ce repas, les aromates et les étapes. « Choisir » la prend pour ce repas, « Retirer » revient au repas de base.
+- Recette choisie : ses légumes (toujours 250 g, détaillés : oignon, poivron, épinards…) et sa matière grasse (huile, lait de coco, parmesan…) sont comptés avec leurs vraies valeurs, à la place de la ligne « légumes » et de la marge cuisine de ce repas. Le féculent s'ajuste, le total de ta journée ne bouge pas, et tes calories et macros se mettent à jour.
+- Changer de protéine ou de féculent retire la recette et te propose celle du nouveau plat. Pas de recette pour le dîner d'un repas libre.
+- « Décide pour moi » choisit la recette d'office.
+- La liste de courses détaille les légumes et la matière grasse des recettes choisies, et la table des aliments de l'aide compte 23 aliments de plus (légumes, lait de coco, crème, sésame, olives…).
+
 ## 3.11.1, 2 octobre 2026
 
 - L'objectif de protéines se règle maintenant de 1,6 à 2,2 g/kg (2,0 par défaut), la fourchette conseillée en sèche. Si tu l'avais mis plus haut, il passe à 2,2 g/kg.

@@ -1,4 +1,4 @@
-// Journées de référence : 24 journées types écrites en clair dans tests/golden.txt (portions, poids cuits, totaux).
+// Journées de référence : 28 journées types écrites en clair dans tests/golden.txt (portions, poids cuits, totaux).
 // Tout changement du moteur qui touche une portion fait échouer ce test et montre les lignes qui changent.
 // Changement voulu : npm run golden (réécrit tests/golden.txt), puis relire le diff avant de le committer.
 const fs = require('fs');
@@ -14,6 +14,7 @@ const moyenne = moment => ({ taille: 'moyenne', moment });
 const longue = duree => ({ taille: 'longue', moment: 'matin', duree });
 const choices = (js, extra) => Object.assign(JSON.parse(JSON.stringify(A.DEFAULT_CHOICES[js])), extra || {});
 const meal = (prot, starch, dessert) => ({ prot, starch, dessert: dessert || 'aucun' });
+const rec = (prot, starch, dessert) => Object.assign(meal(prot, starch, dessert), { recette: prot + '-' + starch });
 const SETS = [
   ['repos', []],
   ['petite le soir', [petite('soir')]],
@@ -42,7 +43,10 @@ const CASES = SETS.map(([name, s]) => ['72 kg, profil par défaut, ' + name, {},
   ['72 kg, 1,6 g/kg, œufs et crevettes', { prot: 1.6 }, { seances: [petite('soir')], libre: false }, choices(3, { dej: meal('oeufs', 'gnocchis'), diner: meal('crevettes', 'patate') })],
   ['72 kg, petit-déjeuner salé, moyenne le soir, tofu et fruits secs', {}, { seances: [moyenne('soir')], libre: false }, choices(3, { pdBase: 'sale', dej: meal('tofu', 'poischiches', 'fruitsSecs'), diner: meal('saumon', 'lentilles') })],
   ['72 kg, petit-déjeuner salé, longue 2 h (version sucrée)', {}, { seances: [longue(2)], libre: false }, choices(0, { pdBase: 'sale' })],
-  ['45 kg, déficit 25 %, repos (au-dessus de l’objectif)', { sexe: 'f', age: 50, taille: 150, poids: 45, deficit: 25 }, { seances: [], libre: false }, choices(3, { dej: meal('saumon', 'boulgour', 'compote'), diner: meal('poisson', 'semoule', 'fruit') })]
+  ['45 kg, déficit 25 %, repos (au-dessus de l’objectif)', { sexe: 'f', age: 50, taille: 150, poids: 45, deficit: 25 }, { seances: [], libre: false }, choices(3, { dej: meal('saumon', 'boulgour', 'compote'), diner: meal('poisson', 'semoule', 'fruit') })],
+  // Recettes choisies (3.12.0) : leurs légumes, matière grasse et ajouts à la place des légumes et de la marge cuisine
+  ['72 kg, recettes midi et soir, repos (curry, bolognaise)', {}, { seances: [], libre: false }, choices(3, { dej: rec('poulet', 'riz'), diner: rec('boeuf', 'pates') })],
+  ['72 kg, recette au dîner, moyenne le soir, chocolat (poke bowl)', {}, { seances: [moyenne('soir')], libre: false }, choices(1, { diner: rec('saumon', 'riz', 'chocolat') })]
 ]);
 
 const plainText = s => String(s).replace(/[  ]/g, ' ');
