@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -548,5 +548,28 @@ assert(count(empty, c => legOf(c) > 0) > count(done, c => legOf(c) > 0) + 0.2, '
 // Sans repère (bal absent) : tirage uniforme, comme avant ; aux bornes, premier et dernier choix proposés
 assert.deepStrictEqual(plain(randomChoices(() => 0, [])), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', dessert: 'aucun' }, diner: { prot: 'boeuf', starch: 'riz', dessert: 'aucun' } }, 'tirage au plus bas');
 assert.deepStrictEqual(plain(randomChoices(() => 0.9999, [])), { pdBase: 'sale', dej: { prot: 'tofu', starch: 'gnocchis', dessert: 'chocolat' }, diner: { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat' } }, 'tirage au plus haut (salé : pas d’« Œufs + jambon »)');
+
+// Semaine type (3.11.0) : séances habituelles par jour et soir du repas libre ; un jour pas encore rempli les reprend
+const sem = cleanWeek({ jours: { 1: [petite('soir'), moyenne('matin')], 3: [longue(2.5), longue(3), petite('midi')], 5: [], 9: [petite('soir')], x: 1 }, libre: 0 });
+assert.deepStrictEqual(plain(sem), { jours: { 1: [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'matin' }], 3: [{ taille: 'longue', moment: 'matin', duree: 2.5 }, { taille: 'petite', moment: 'midi' }] }, libre: 0 }, 'semaine type validée');
+assert.deepStrictEqual(plain(cleanWeek(null)), { jours: {}, libre: 6 }, 'pas de semaine type');
+assert.deepStrictEqual(plain(cleanWeek({ jours: 'x', libre: 7 })), { jours: {}, libre: 6 }, 'semaine type abîmée');
+assert.strictEqual(cleanWeek({ libre: 2.5 }).libre, 6, 'repas libre : un jour entier');
+assert.deepStrictEqual(plain(emptyPlan(1, sem)), { seances: [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'matin' }], libre: false }, 'lundi : séances de la semaine type');
+assert(emptyPlan(0, sem).libre && !emptyPlan(6, sem).libre && emptyPlan(6).libre, 'repas libre : jour de la semaine type, samedi sans elle');
+const e1 = emptyPlan(1, sem); e1.seances[0].moment = 'matin';
+assert.strictEqual(sem.jours[1][0].moment, 'soir', 'la semaine type n’est pas modifiée par un jour');
+// Ce qui est enregistré l'emporte, champ par champ ; sans semaine type, rien ne change (repos, samedi)
+assert.deepStrictEqual(plain(cleanPlan({ ch: {} }, 1, sem)), plain(emptyPlan(1, sem)), 'jour avec des plats seulement : séances de la semaine type');
+assert.deepStrictEqual(plain(cleanPlan({ seances: [] }, 1, sem).seances), [], 'repos enregistré : gardé');
+assert.strictEqual(cleanPlan({ libre: false }, 0, sem).libre, false, 'repas libre retiré : gardé');
+assert.deepStrictEqual(plain(cleanPlan({ libre: true }, 1, sem).seances), plain(sem.jours[1]), 'repas libre seul : séances de la semaine type');
+assert.deepStrictEqual(plain(cleanPlan(undefined, 3)), { seances: [], libre: false }, 'sans semaine type : repos');
+assert.deepStrictEqual(plain(cleanSeances([petite('matin'), { taille: 'x' }, longue(4), longue(2)])), [{ taille: 'petite', moment: 'matin' }, { taille: 'longue', moment: 'matin', duree: 2 }], 'séances validées');
+// Profil : la semaine type n'est gardée que si elle diffère de celle par défaut
+assert(!('semaine' in profileFields({ semaine: { jours: {}, libre: 6 } })) && profileFields({ semaine: { jours: {}, libre: 3 } }).semaine.libre === 3, 'semaine type dans le profil');
+assert.deepStrictEqual(plain(cleanProfile({}).semaine), { jours: {}, libre: 6 }, 'semaine type par défaut');
+// Les séances de la semaine type comptent dans la dépense du jour
+assert(energy(emptyPlan(1, sem), cleanProfile({})).target > energy(emptyPlan(1), cleanProfile({})).target, 'séances de la semaine type comptées');
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines)`);

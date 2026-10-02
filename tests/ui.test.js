@@ -832,6 +832,70 @@ hv.click('#plan-btn'); hv.click('[data-action="pl-start"]');
 assert(/^Ta semaine\s: trop de charcuterie/.test(hv.$('#plan-wb').textContent), 'semaine dans l’assistant : ' + hv.$('#plan-wb').textContent);
 hv.click('#plan [data-action="fermer"]');
 
+// Réglages, « Ta semaine type » : séances habituelles par jour et soir du repas libre, reprises par les jours pas encore remplis
+const swd = open(), sw = tools(swd), sww = swd.window;
+const sprof = () => JSON.parse(sww.localStorage.getItem(PKEY));
+const semDays = () => [...sw.d.querySelectorAll('#sem-days button')].map(b => b.querySelector('.wd').textContent + b.querySelector('.dn').textContent);
+sw.click('#gear');
+assert.deepStrictEqual(semDays(), ['lun.–', 'mar.–', 'mer.–', 'jeu.–', 'ven.–', 'sam.–', 'dim.–'], 'semaine type vide au départ');
+assert(sw.$('#sem-days [aria-pressed="true"]').dataset.value === '3' && sw.$('#sem-h').textContent === 'Mercredi' && /Repos, pas de séance/.test(sw.$('#sem-sess').textContent), 'jour d’aujourd’hui choisi');
+assert.strictEqual(sw.$('#sem-lib [aria-pressed="true"]').dataset.value, '6', 'repas libre le samedi par défaut');
+sw.click('#sem-days [data-value="1"]');
+assert.strictEqual(sww.document.activeElement, sw.$('#sem-days [data-value="1"]'), 'focus gardé sur le jour');
+sw.click('#sem-acts [data-value="petite"]'); sw.click('#sem-acts [data-value="moyenne"]');
+sw.click('#sem-sess [data-action="sem-smoment"][data-index="1"][data-value="matin"]');
+sw.click('#sem-days [data-value="3"]'); sw.click('#sem-acts [data-value="longue"]');
+sw.click('#sem-sess [data-action="sem-sduree"][data-index="0"][data-value="3"]');
+assert(sw.$('#sem-acts [data-value="longue"]').disabled && !sw.$('#sem-acts [data-value="petite"]').disabled, 'une seule sortie longue par jour');
+sw.click('#sem-lib [data-value="0"]');
+assert.deepStrictEqual(semDays(), ['lun.2', 'mar.–', 'mer.1', 'jeu.–', 'ven.–', 'sam.–', 'dim.–'], 'séances par jour');
+assert.deepStrictEqual(sprof().semaine, { jours: { 1: [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'matin' }], 3: [{ taille: 'longue', moment: 'matin', duree: 3 }] }, libre: 0 }, 'semaine type enregistrée');
+assert.strictEqual(sw.$('#sem-days [data-value="1"]').getAttribute('aria-label'), 'lundi\u00a0: 2 séances', 'jour lu par les lecteurs d’écran');
+// Les jours pas encore remplis la reprennent : aujourd'hui (mercredi) la sortie longue, rien d'enregistré pour la date
+sw.click('#reglages [data-action="fermer"]');
+assert.deepStrictEqual(sw.sess(), ['Sortie longue'], 'séances de la semaine type sur la page');
+assert(!sw.stored() || !sw.stored().plans['2026-10-07'], 'jour non rempli enregistré');
+const libreOf = iso => { sw.click(`#week [data-value="${iso}"]`); return sw.$('#sw-lib').getAttribute('aria-checked') === 'true'; };
+assert(!libreOf('2026-10-10') && libreOf('2026-10-11'), 'repas libre de la semaine type : dimanche');
+// Choisir un plat n'enregistre pas les séances : elles suivent toujours la semaine type
+sw.click('#week [data-value="2026-10-07"]');
+sw.choose('starch', 'dej', 'pates');
+assert.deepStrictEqual(Object.keys(sw.stored().plans['2026-10-07']), ['ch'], 'plats seuls enregistrés');
+sw.click('#gear'); sw.click('#sem-days [data-value="3"]'); sw.click('#sem-sess [data-action="sem-rm"][data-index="0"]');
+assert.strictEqual(sww.document.activeElement, sw.$('#sem-acts [data-value="petite"]'), 'focus après le retrait');
+sw.click('#reglages [data-action="fermer"]');
+assert(sw.sess().length === 0 && sw.chosen('starch', 'dej') === 'pates', 'semaine type changée : séances suivies, plats gardés');
+// Un jour modifié à la main garde ses séances ; « Revenir au plan de base » revient à la semaine type
+sw.click('#week [data-value="2026-10-05"]');
+assert.deepStrictEqual(sw.sess(), ['Petite séance', 'Séance moyenne'], 'lundi : séances de la semaine type');
+sw.rm(0);
+sw.click('#gear'); sw.click('#sem-days [data-value="1"]'); sw.click('#sem-acts [data-value="petite"]'); sw.click('#reglages [data-action="fermer"]');
+assert.deepStrictEqual(sw.sess(), ['Séance moyenne'], 'jour modifié : séances gardées');
+assert.deepStrictEqual(Object.keys(sw.stored().plans['2026-10-05']), ['seances'], 'séances seules enregistrées');
+sw.click('[data-action="reset"]');
+assert.strictEqual(sw.sess().length, 3, 'plan de base : semaine type');
+// Un seul repas libre par semaine : l'activer jeudi retire celui de la semaine type (dimanche)
+sw.click('#week [data-value="2026-10-08"]');
+sw.setSwitch('libre', true);
+assert(/celui de dimanche est retiré/.test(sw.$('#hint').textContent) && sw.stored().plans['2026-10-11'].libre === false, 'repas libre de la semaine type retiré : ' + sw.$('#hint').textContent);
+assert(!libreOf('2026-10-11'), 'dimanche sans repas libre');
+// La semaine suivante, pas encore remplie : la semaine type, aussi dans les courses et l'assistant
+sw.click('#today-btn');
+sw.click('#courses-btn');
+{ const el = sw.$('input[data-range="courses"][data-end="to"]'); el.value = '2026-10-12'; el.dispatchEvent(new sww.Event('input', { bubbles: true })); }
+const mon = [...sw.d.querySelectorAll('#courses-days .shop-day')].find(b => b.dataset.value === '2026-10-12');
+assert(mon && /^3\sséances/.test(mon.querySelector('.note').textContent) && /pas encore planifié/.test(mon.querySelector('.note').textContent), 'courses : semaine type ' + (mon && mon.textContent));
+sw.click('#courses [data-action="fermer"]');
+sw.click('#plan-btn');
+assert(/partent des séances de ta semaine type/.test(sw.$('#plan-body').textContent), 'assistant : semaine type annoncée');
+sw.click('#plan [data-action="fermer"]');
+// Relue au rechargement ; abîmée, elle est ignorée
+const ssnap = snapOf(sww), srel = tools(open(ls => Object.entries(ssnap).forEach(([k, v]) => ls.setItem(k, v))));
+srel.click('#wk-next'); srel.click('#week [data-value="2026-10-12"]');
+assert.strictEqual(srel.sess().length, 3, 'semaine type relue');
+const sbad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ semaine: { jours: { 3: 'x', 9: [{ taille: 'petite' }], __proto__: [] }, libre: 'dimanche' } }))));
+assert(sbad.sess().length === 0 && sbad.$('#sem-lib [aria-pressed="true"]').dataset.value === '6', 'semaine type abîmée');
+
 // Accueil au premier lancement : rien n'est enregistré avant la fin
 const fdom = open(null, true), f = tools(fdom), fw = fdom.window;
 const fprof = () => JSON.parse(fw.localStorage.getItem(PKEY));

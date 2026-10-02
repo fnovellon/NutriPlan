@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 3.11.0, 2 octobre 2026
+
+- Nouvelle carte « Ta semaine type » dans les réglages : indique tes séances habituelles jour par jour (petite, moyenne, longue, et leur moment) et le soir de ton repas libre.
+- Tous les jours que tu n'as pas encore modifiés les reprennent tout seuls : ta journée, « Planifier », tes courses et « Ta semaine » ont directement les bonnes séances, donc les bonnes quantités.
+- Un jour modifié à la main garde ce que tu y as mis ; « Revenir au plan de base » le remet sur ta semaine type. Choisir un plat ne fige plus les séances du jour.
+- Toujours un seul repas libre par semaine : si tu l'actives un autre jour, celui de ta semaine type est retiré pour cette semaine-là.
+
 ## 3.10.0, 2 octobre 2026
 
 - Plus d'avocat : avec la viande blanche ou le poisson blanc, le dîner prend maintenant 25 g d'amandes (sur les légumes ou en fin de repas), presque les mêmes calories et les mêmes bons gras. Ils restent nécessaires ces jours-là pour tenir ton minimum de lipides.

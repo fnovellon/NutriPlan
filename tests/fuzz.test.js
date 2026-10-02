@@ -355,7 +355,7 @@ const WEIRD = [undefined, null, NaN, Infinity, -Infinity, 0, -1, 1e9, '', 'abc',
 // Aliments qu'on peut retirer des propositions (réglages) : « type:id »
 const ALL_OFF = Object.entries(A.CHOICE_IDS).flatMap(([k, ids]) => ids.map(id => k + ':' + id));
 const KEYS = ['seances', 'libre', 'taille', 'moment', 'duree', 'mode', 'sexe', 'age', 'poids', 'gras', 'repos', 'neat', 'deficit', 'prot',
-  'ravito', 'shaker', 'shakerKcal', 'shakerProt', 'kcalPetite', 'kcalMoyenne', 'kcalLongueH', 'marge', 'off', 'activity', 'natation', '__proto__', 'constructor'];
+  'ravito', 'shaker', 'shakerKcal', 'shakerProt', 'kcalPetite', 'kcalMoyenne', 'kcalLongueH', 'marge', 'off', 'semaine', 'jours', '0', '3', '6', 'activity', 'natation', '__proto__', 'constructor'];
 const weird = d => d > 2 || R.chance(.6) ? R.pick(WEIRD) : R.chance(.5) ? Array.from({ length: R.int(0, 5) }, () => weirdObj(d + 1)) : weirdObj(d + 1);
 const weirdObj = d => {
   const o = {};
@@ -382,6 +382,9 @@ for (let i = 0; i < N * 2; i++){
     });
     C.ok(['auto', 'manuel'].includes(pr.mode) && ['h', 'f'].includes(pr.sexe) && has(A.NEAT, pr.neat) && ['oui', 'non'].includes(pr.shaker), 'profil : valeur énumérée invalide', show);
     C.ok(Object.keys(pr).every(key => has(A.PROFILE_DEFAULT, key)), 'profil : champ inconnu gardé', show);
+    const sw = pr.semaine;
+    C.ok(sw && Number.isInteger(sw.libre) && sw.libre >= 0 && sw.libre <= 6 && Object.entries(sw.jours).every(([js, l]) => /^[0-6]$/.test(js) && Array.isArray(l) && l.length >= 1 && l.length <= 4 && l.every(x => has(A.SIZES, x.taille) && has(A.MOMENT_RANK, x.moment)) && l.filter(x => x.taille === 'longue').length <= 1), 'profil : semaine type invalide', show);
+    for (let js = 0; js < 7; js++){ const e = A.cleanPlan(R.chance(.5) ? x : undefined, js, sw); C.ok(Array.isArray(e.seances) && e.seances.length <= 4 && typeof e.libre === 'boolean', 'cleanPlan avec semaine type : forme', show); }
     C.ok(Array.isArray(pr.off) && pr.off.every(o => ALL_OFF.includes(o)) && ['pd', 'prot', 'starch'].every(k => A.allowed(k, pr.off).length > 0), 'profil : aliments retirés invalides', show);
     const r = A.buildDay(p, A.DEFAULT_CHOICES[js], x);
     C.ok(fin(r.tot.kcal) && fin(r.tot.p), 'buildDay sur profil abîmé : total invalide', show);
@@ -392,6 +395,23 @@ for (let i = 0; i < N * 2; i++){
   } catch (e){ C.ok(false, 'exception sur données abîmées', () => e.message + ' ' + show()); }
 }
 C.ok(({}).polluted === undefined && !('taille' in {}) && !('seances' in {}), 'Object.prototype pollué', '');
+
+// --- Semaine type : un jour pas encore rempli la reprend ; ce qui est enregistré l'emporte, champ par champ ----------
+for (let i = 0; i < N / 3; i++){
+  const jours = {};
+  for (let js = 0; js < 7; js++) if (R.chance(.5)) jours[js] = randPlan(js, false).seances;
+  const sem = A.cleanWeek({ jours, libre: R.int(0, 6) }), js = R.int(0, 6), show = () => JSON.stringify([sem, js]);
+  const base = A.emptyPlan(js, sem);
+  C.ok(JSON.stringify(base.seances) === JSON.stringify(sem.jours[js] || []) && base.libre === (js === sem.libre), 'jour par défaut ≠ semaine type', show);
+  const rec = {}, seances = randPlan(js, false).seances;
+  if (R.chance(.5)) rec.seances = seances;
+  if (R.chance(.5)) rec.libre = R.chance(.5);
+  if (R.chance(.5)) rec.ch = randChoices();
+  const p = A.cleanPlan(rec, js, sem), q = () => show() + ' ' + JSON.stringify(rec);
+  C.ok(JSON.stringify(p.seances) === JSON.stringify('seances' in rec ? A.cleanSeances(rec.seances) : base.seances), 'séances : enregistrées ou semaine type', q);
+  C.ok(p.libre === ('libre' in rec ? rec.libre : base.libre), 'repas libre : enregistré ou semaine type', q);
+  C.ok(JSON.stringify(A.cleanWeek(JSON.parse(JSON.stringify(sem)))) === JSON.stringify(sem), 'semaine type relue à l’identique', show);
+}
 
 // --- Liste de courses : exactement la somme des achats des journées, rangée par rayon ------------------------------
 {

@@ -300,6 +300,11 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .wb-list .is-over b{color:var(--beet);}
 .wb .calc{margin:6px 14px 12px 34px;font-size:14px;}
 .plan-wb{margin:6px 0 0;}
+/* Semaine type (réglages) : les 7 jours, puis les séances du jour choisi */
+.sem-days{margin-bottom:6px;}
+.sem-days .dn{font-size:13px;font-weight:600;line-height:1.3;}
+h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
+#sem-lib .opt{min-width:44px;}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
 /* Planifier : raccourcis, dates, puis un jour par étape */
@@ -584,6 +589,22 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
       </div>
     </div>
   </section>
+  <section class="needs" id="semaine" aria-labelledby="sem-t">
+    <h2 class="needs-t" id="sem-t">Ta semaine type</h2>
+    <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
+    <div class="needs-body">
+      <div class="week sem-days" id="sem-days" role="group" aria-label="Jour de la semaine type"></div>
+      <h3 class="rf-l sem-h" id="sem-h"></h3>
+      <div class="sess" id="sem-sess"></div>
+      <div class="acts" id="sem-acts" role="group" aria-label="Ajouter une séance à ce jour">
+        <button type="button" data-action="sem-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
+        <button type="button" data-action="sem-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
+        <button type="button" data-action="sem-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
+      </div>
+      <p class="rf-l" id="sem-lib-l">Repas libre, le soir</p>
+      <div class="opts-list" id="sem-lib" role="group" aria-labelledby="sem-lib-l"></div>
+    </div>
+  </section>
   <section class="needs" id="aliments" aria-labelledby="alim-t">
     <h2 class="needs-t" id="alim-t">Tes aliments</h2>
     <p class="needs-s">Touche un aliment pour ne plus te le proposer&nbsp;: il disparaît des choix et de «&nbsp;Décide pour moi&nbsp;». Les jours où il est déjà choisi le gardent.</p>
@@ -630,7 +651,8 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
     <ul>
       <li>Le calendrier, en haut de ta journée, montre la semaine&nbsp;: touche un jour pour voir ou changer ses séances et ses plats. Un point marque les jours déjà prévus.</li>
       <li><strong>Planifier</strong>&nbsp;: choisis les jours (31 au plus), puis, jour par jour, tes séances et tes plats, ou «&nbsp;Décide pour tous les jours restants&nbsp;».</li>
-      <li><strong>Mes courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin. Un jour sans séance prévue compte comme un jour de repos.</li>
+      <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas libre. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
+      <li><strong>Mes courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
     </ul>
     <h2>Installer l’appli sur ton téléphone</h2>
     <ul>
@@ -693,7 +715,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.10.0';
+const APP_VERSION = '3.11.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -875,23 +897,43 @@ const DAYS = [
   {js:0, long:'dimanche'}
 ];
 /* Chaque jour part sans séance ; seul le repas libre du samedi est prévu par défaut */
-function emptyPlan(js){ return {seances:[], libre:js === 6}; }
-/* Plan d'un jour relu du stockage : séances valides (au plus 4, une seule longue, toujours le matin) */
-function cleanPlan(p, js){
-  const out = emptyPlan(js);
-  if (!p || typeof p !== 'object') return out;
-  if (has(p, 'libre')) out.libre = !!p.libre;
+/* Séances valides : au plus 4, une seule longue, toujours le matin */
+function cleanSeances(list){
+  const out = [];
   let long = false;
-  (Array.isArray(p.seances) ? p.seances : []).forEach(function(x){
-    if (!x || typeof x !== 'object' || !has(SIZES, x.taille) || out.seances.length >= MAX_SEANCES) return;
+  (Array.isArray(list) ? list : []).forEach(function(x){
+    if (!x || typeof x !== 'object' || !has(SIZES, x.taille) || out.length >= MAX_SEANCES) return;
     if (x.taille === 'longue'){
       if (long) return;
       long = true;
-      out.seances.push({taille:'longue', moment:'matin', duree:DUREES.some(function(d){ return d[0] === x.duree; }) ? x.duree : 2});
+      out.push({taille:'longue', moment:'matin', duree:DUREES.some(function(d){ return d[0] === x.duree; }) ? x.duree : 2});
     } else {
-      out.seances.push({taille:x.taille, moment:has(MOMENT_RANK, x.moment) ? x.moment : 'soir'});
+      out.push({taille:x.taille, moment:has(MOMENT_RANK, x.moment) ? x.moment : 'soir'});
     }
   });
+  return out;
+}
+/* Semaine type (réglages, 3.11.0) : séances habituelles par jour (clés getDay, 0 = dimanche) et jour du repas libre
+   (samedi par défaut). Seuls les jours avec des séances sont gardés. */
+function cleanWeek(o){
+  const out = {jours:{}, libre:6};
+  if (!o || typeof o !== 'object') return out;
+  if (o.jours && typeof o.jours === 'object')
+    for (let js = 0; js < 7; js++){ if (has(o.jours, String(js))){ const l = cleanSeances(o.jours[js]); if (l.length) out.jours[js] = l; } }
+  if (Number.isInteger(o.libre) && o.libre >= 0 && o.libre <= 6) out.libre = o.libre;
+  return out;
+}
+/* Jour pas encore rempli : les séances de la semaine type (aucune sans elle), repas libre son jour (samedi sans elle) */
+function emptyPlan(js, sem){
+  const w = sem || null, l = w && has(w.jours, String(js)) ? w.jours[js] : [];
+  return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6)};
+}
+/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type */
+function cleanPlan(p, js, sem){
+  const out = emptyPlan(js, sem);
+  if (!p || typeof p !== 'object') return out;
+  if (has(p, 'libre')) out.libre = !!p.libre;
+  if (has(p, 'seances')) out.seances = cleanSeances(p.seances);
   return out;
 }
 /* Plan enregistré avant la 2.0.0 (activité par sport) converti en séances */
@@ -1025,7 +1067,7 @@ function randomChoices(rand, off, bal, k){
 }
 
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[]};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], semaine:{jours:{}, libre:6}};
 const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,3]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
@@ -1043,6 +1085,7 @@ function profileFields(o){
     if (typeof v === 'number' && v >= r[0] && v <= r[1]) out[k] = v;
   });
   if (Array.isArray(o.off)){ const off = cleanOff(o.off); if (off.length) out.off = off; }
+  if (o.semaine && typeof o.semaine === 'object'){ const w = cleanWeek(o.semaine); if (Object.keys(w.jours).length || w.libre !== 6) out.semaine = w; }
   return out;
 }
 /* Profil complet. Enregistré avant la 1.3.0 (sans mode) : manuel s'il contient une dépense valide, sinon automatique. */
@@ -1051,6 +1094,7 @@ function cleanProfile(o){
   if (!f.mode) f.mode = has(f, 'repos') ? 'manuel' : 'auto';
   const out = Object.assign({}, PROFILE_DEFAULT, f);
   out.off = (f.off || []).slice();
+  out.semaine = cleanWeek(f.semaine);
   return out;
 }
 /* Métabolisme de base : Cunningham si la masse grasse est connue (plus juste chez les sportifs), sinon Mifflin-St Jeor */
@@ -1488,24 +1532,35 @@ if (typeof document !== 'undefined'){
     const rec = store.plans[iso], mem = withAllowed(cleanCh(store.choices[js], js), cleanProfile(prof).off);
     return rec && rec.ch && typeof rec.ch === 'object' ? cleanCh(rec.ch, js, mem) : mem;
   };
-  const loadSel = function(){ sel = selDate.getDay(); plan = cleanPlan(store.plans[selIso()], sel); ch = choicesFor(selIso(), sel); };
-  /* Enregistre le jour affiché : séances et repas libre, plats de la date s'ils ont été choisis */
-  const writeDay = function(iso, p, c){
-    const old = store.plans[iso], rec = {seances:p.seances, libre:p.libre};
-    if (c) rec.ch = c; else if (old && old.ch) rec.ch = old.ch;
+  /* Semaine type des réglages : séances habituelles et jour du repas libre */
+  const semOf = function(){ return cleanProfile(prof).semaine; };
+  /* Plan d'une date : ce qui est enregistré, le reste de la semaine type. Le repas libre de la semaine type ne compte pas
+     si un autre jour de la même semaine en a un enregistré (un seul par semaine). */
+  const planFor = function(iso){
+    const d = fromIso(iso), rec = store.plans[iso], p = cleanPlan(rec, d.getDay(), semOf());
+    if (p.libre && !(rec && typeof rec === 'object' && has(rec, 'libre')) && weekOf(d).some(function(x){
+      const i = isoDate(x), o = store.plans[i];
+      return i !== iso && o && typeof o === 'object' && has(o, 'libre') && o.libre === true;
+    })) p.libre = false;
+    return p;
+  };
+  const loadSel = function(){ sel = selDate.getDay(); plan = planFor(selIso()); ch = choicesFor(selIso(), sel); };
+  /* Enregistre une date champ par champ (séances, repas libre, plats) : ce qui n'a jamais été touché reste à la semaine type */
+  const writeDay = function(iso, f){
+    const old = store.plans[iso] && typeof store.plans[iso] === 'object' ? store.plans[iso] : {}, rec = {};
+    ['seances', 'libre', 'ch'].forEach(function(k){ if (has(f, k)) rec[k] = f[k]; else if (has(old, k)) rec[k] = old[k]; });
     store.plans[iso] = rec;
   };
-  const savePlan = function(){ writeDay(selIso(), plan, null); persist(); };
+  const savePlan = function(f){ writeDay(selIso(), f); persist(); };
   /* Plats choisis : pour cette date, et en mémoire pour ce jour de la semaine (repris par les jours pas encore choisis) */
-  const saveCh = function(){ writeDay(selIso(), plan, ch); store.choices[sel] = ch; persist(); };
+  const saveCh = function(){ writeDay(selIso(), {ch:ch}); store.choices[sel] = ch; persist(); };
   /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */
   const clearOtherLibre = function(){
     const moved = [];
     weekOf(selDate).forEach(function(d){
       const iso = isoDate(d);
       if (iso === selIso()) return;
-      const p = cleanPlan(store.plans[iso], d.getDay());
-      if (p.libre){ p.libre = false; writeDay(iso, p, null); moved.push(DAYS.find(function(x){ return x.js === d.getDay(); }).long); }
+      if (planFor(iso).libre){ writeDay(iso, {libre:false}); moved.push(DAYS.find(function(x){ return x.js === d.getDay(); }).long); }
     });
     if (!moved.length) return '';
     return 'Un seul repas libre par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' + moved.join(' et de ') + ' sont retirés.' : 'celui de ' + moved[0] + ' est retiré.');
@@ -1571,21 +1626,22 @@ if (typeof document !== 'undefined'){
   };
 
   /* Séances du jour affiché : une ligne par séance (moment ou durée, bouton pour la retirer), boutons d'ajout */
-  const sessHTML = function(){
+  const sessHTML = function(list, pre){
+    const l = list || plan.seances, a = pre || '';
     const segBtn = function(action, i, value, label, on){
-      return '<button type="button" data-action="' + action + '" data-index="' + i + '" data-value="' + value + '" aria-pressed="' + on + '">' + label + '</button>';
+      return '<button type="button" data-action="' + a + action + '" data-index="' + i + '" data-value="' + value + '" aria-pressed="' + on + '">' + label + '</button>';
     };
-    return plan.seances.length ? plan.seances.map(function(x, i){
+    return l.length ? l.map(function(x, i){
       const name = SIZES[x.taille].band;
       const opts = x.taille === 'longue'
         ? DUREES.map(function(d){ return segBtn('sduree', i, d[0], d[1], d[0] === x.duree); }).join('')
         : MOMENTS.map(function(m){ return segBtn('smoment', i, m[0], m[1], m[0] === x.moment); }).join('');
       return '<div class="srow"><span class="s-t">' + name + (x.taille === 'longue' ? '<span class="a-s"> le matin</span>' : '') + '</span>' +
-        '<button type="button" class="rm" data-action="rm" data-index="' + i + '" aria-label="Retirer' + NB + ': ' + name.toLowerCase() + '">×</button>' +
+        '<button type="button" class="rm" data-action="' + a + 'rm" data-index="' + i + '" aria-label="Retirer' + NB + ': ' + name.toLowerCase() + '">×</button>' +
         '<div class="seg" role="group" aria-label="' + (x.taille === 'longue' ? 'Durée' : 'Moment') + ' de la séance">' + opts + '</div></div>';
     }).join('') : '<p class="rest-t">Repos, pas de séance.</p>';
   };
-  const addDisabled = function(taille){ return plan.seances.length >= MAX_SEANCES || (taille === 'longue' && plan.seances.some(function(x){ return x.taille === 'longue'; })); };
+  const addDisabled = function(taille, list){ const l = list || plan.seances; return l.length >= MAX_SEANCES || (taille === 'longue' && l.some(function(x){ return x.taille === 'longue'; })); };
   const renderControls = function(){
     /* Jour affiché : « Aujourd'hui, jeudi 1er octobre », « Demain, … », sinon « Jeudi 8 octobre » */
     const diff = dayDiff(selDate), rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
@@ -1852,7 +1908,8 @@ if (typeof document !== 'undefined'){
     if (planner.i < 0){
       $('plan-step').textContent = '';
       $('plan-h').textContent = 'Planifier';
-      $('plan-body').innerHTML = '<p class="repas-p">Choisis les jours à préparer. Pour chacun, tes séances et tes plats, puis ta liste de courses.</p>' +
+      $('plan-body').innerHTML = '<p class="repas-p">Choisis les jours à préparer. Pour chacun, tes séances et tes plats, puis ta liste de courses.' +
+        (Object.keys(semOf().jours).length ? ' Les jours pas encore remplis partent des séances de ta semaine type (réglages).' : '') + '</p>' +
         '<div class="opts-list plan-presets" role="group" aria-label="Raccourcis">' + PRESETS.map(function(p){
           const r = presetRange(p[0]), on = isoDate(r[0]) === planner.from && isoDate(r[1]) === planner.to;
           return '<button type="button" class="opt" data-action="pl-preset" data-value="' + p[0] + '" aria-pressed="' + on + '">' + p[1] + '</button>';
@@ -1917,7 +1974,7 @@ if (typeof document !== 'undefined'){
     }
   } catch (e) {}
   const saveShop = function(){ try { localStorage.setItem(SKEY, JSON.stringify(shop)); } catch (e) {} };
-  const dayResult = function(iso){ const js = fromIso(iso).getDay(); return buildDay(cleanPlan(store.plans[iso], js), choicesFor(iso, js), prof); };
+  const dayResult = function(iso){ return buildDay(planFor(iso), choicesFor(iso, fromIso(iso).getDay()), prof); };
   /* Repères de la semaine (lundi → dimanche) d'une date, sans le jour skip (celui qu'on tire au hasard) */
   const weekBal = function(d, skip){ return weekBalance(weekOf(d).map(isoDate).filter(function(iso){ return iso !== skip; }).map(dayResult)); };
   /* « Décide pour moi » d'une date : équilibré avec le reste de sa semaine */
@@ -1969,7 +2026,7 @@ if (typeof document !== 'undefined'){
     const low = function(t){ return t.charAt(0).toLowerCase() + t.slice(1); };
     const meal = function(c){ return low(PROT[c.prot].label) + ' et ' + low(STARCH[c.starch].label); };
     $('courses-days').innerHTML = days.map(function(iso, j){
-      const d = fromIso(iso), p = cleanPlan(store.plans[iso], d.getDay()), c = choicesFor(iso, d.getDay()), r = res[j];
+      const d = fromIso(iso), p = planFor(iso), c = choicesFor(iso, d.getDay()), r = res[j];
       const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', meal(c.dej), r.libre ? 'repas libre le soir' : meal(c.diner)];
       return '<li><button type="button" class="shop-day" data-action="co-day" data-value="' + iso + '"><span class="d">' + cap(dayLabel(d)) + '</span>' +
         '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + (has(store.plans, iso) ? '' : ' (pas encore planifié)') + '</span></button></li>';
@@ -2158,15 +2215,16 @@ if (typeof document !== 'undefined'){
       case 'add':
         $('intro').textContent = '';
         plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
-        plan = cleanPlan(plan, sel); savePlan();
+        plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances});
         break;
-      case 'smoment': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].moment = v; plan = cleanPlan(plan, sel); savePlan(); break;
-      case 'sduree': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].duree = parseFloat(v); plan = cleanPlan(plan, sel); savePlan(); break;
-      case 'rm': if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan(); break;
+      case 'smoment': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].moment = v; plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); break;
+      case 'sduree': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].duree = parseFloat(v); plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); break;
+      case 'rm': if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan({seances:plan.seances}); break;
       case 'toggle':
-        plan[b.dataset.key] = !plan[b.dataset.key];
-        if (b.dataset.key === 'libre' && plan.libre) msg = clearOtherLibre();
-        savePlan();
+        if (b.dataset.key !== 'libre') return;
+        plan.libre = !plan.libre;
+        if (plan.libre) msg = clearOtherLibre();
+        savePlan({libre:plan.libre});
         break;
       case 'pd': if (has(PD, v)){ ch.pdBase = v; saveCh(); } break;
       case 'prof': {
@@ -2192,6 +2250,21 @@ if (typeof document !== 'undefined'){
         const again = $('alim-list').querySelector('[data-kind="' + kind + '"][data-value="' + v + '"]');
         if (again) again.focus({preventScroll:true});
         loadSel();
+        break;
+      }
+      case 'sem-day': if (!/^[0-6]$/.test(v || '')) return; semSel = +v; renderSemaine(); semFocus(b); return;
+      case 'sem-add': case 'sem-rm': case 'sem-smoment': case 'sem-sduree': case 'sem-lib': {
+        const w = semOf(), list = (w.jours[semSel] || []).map(function(x){ return Object.assign({}, x); }), i = +b.dataset.index, act = b.dataset.action;
+        if (act === 'sem-add'){ if (!has(SIZES, v) || addDisabled(v, list)) return; list.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2}); }
+        else if (act === 'sem-rm'){ if (!list[i]) return; list.splice(i, 1); }
+        else if (act === 'sem-smoment'){ if (!list[i] || !has(MOMENT_RANK, v)) return; list[i].moment = v; }
+        else if (act === 'sem-sduree'){ if (!list[i]) return; list[i].duree = parseFloat(v); }
+        else { if (!/^[0-6]$/.test(v || '')) return; w.libre = +v; }
+        w.jours[semSel] = list;
+        saveWeek(w);
+        renderSemaine();
+        semFocus(b);
+        loadSel(); prevQty = new Map();
         break;
       }
       case 'open-pick': openPick(b.dataset.kind, b.dataset.slot || null, b.dataset.ctx || 'page', b); return;
@@ -2235,7 +2308,7 @@ if (typeof document !== 'undefined'){
       case 'pl-hasard-tous':
         rangeDays(planner.from, planner.to).slice(planner.i).forEach(function(iso){
           const js = fromIso(iso).getDay(), c = cleanCh(drawFor(iso), js);
-          writeDay(iso, cleanPlan(store.plans[iso], js), c);
+          writeDay(iso, {ch:c});
           store.choices[js] = c;
         });
         persist();
@@ -2328,6 +2401,39 @@ if (typeof document !== 'undefined'){
     }).join('');
   };
   renderAliments();
+
+  /* Réglages, « Ta semaine type » : un jour à la fois, ses séances avec les mêmes boutons que la page */
+  let semSel = todayJs;
+  const SHORT = {0:'dim.', 1:'lun.', 2:'mar.', 3:'mer.', 4:'jeu.', 5:'ven.', 6:'sam.'};
+  const renderSemaine = function(){
+    const w = semOf(), list = w.jours[semSel] || [];
+    $('sem-days').innerHTML = DAYS.map(function(d){
+      const n = (w.jours[d.js] || []).length;
+      return '<button type="button" data-action="sem-day" data-value="' + d.js + '" aria-pressed="' + (d.js === semSel) + '" aria-label="' + d.long + NB + ': ' +
+        (n ? n + ' séance' + (n > 1 ? 's' : '') : 'repos') + '"><span class="wd">' + SHORT[d.js] + '</span><span class="dn">' + (n || '–') + '</span></button>';
+    }).join('');
+    $('sem-h').textContent = cap(DAYS.find(function(d){ return d.js === semSel; }).long);
+    $('sem-sess').innerHTML = sessHTML(list, 'sem-');
+    $('sem-acts').querySelectorAll('button').forEach(function(b){ b.disabled = addDisabled(b.dataset.value, list); });
+    $('sem-lib').innerHTML = DAYS.map(function(d){
+      return '<button type="button" class="opt" data-action="sem-lib" data-value="' + d.js + '" aria-pressed="' + (w.libre === d.js) + '" aria-label="' + d.long + '">' + SHORT[d.js] + '</button>';
+    }).join('');
+  };
+  /* Enregistrée dans le profil, seulement si elle diffère de la semaine par défaut (aucune séance, repas libre le samedi) */
+  const saveWeek = function(w){
+    const c = cleanWeek(w);
+    if (Object.keys(c.jours).length || c.libre !== 6) prof.semaine = c; else delete prof.semaine;
+    saveProf();
+  };
+  /* Après un changement, le focus revient sur le même bouton (sinon sur « + Petite ») */
+  const semFocus = function(b){
+    const same = [...$('semaine').querySelectorAll('[data-action="' + b.dataset.action + '"]')].find(function(x){
+      return x.dataset.value === b.dataset.value && x.dataset.index === b.dataset.index;
+    });
+    const el = same && !same.disabled ? same : $('sem-acts').querySelector('button:not(:disabled)') || $('sem-days').querySelector('[aria-pressed="true"]');
+    if (el) el.focus({preventScroll:true});
+  };
+  renderSemaine();
 
   /* Champs du profil : enregistrés à chaque saisie valide, vidés = valeur par défaut */
   const fillNeeds = function(){

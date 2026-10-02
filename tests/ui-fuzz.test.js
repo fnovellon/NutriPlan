@@ -87,6 +87,7 @@ function scan(dom, label){
   type(dom, '#besoins input[data-key="gras"]', 30); click(dom, '[data-action="prof"][data-key="mode"][data-value="auto"]'); scan(dom, 'réglages, masse grasse');
   click(dom, '#alim-list [data-kind="prot"][data-value="poulet"]'); click(dom, '#alim-list [data-kind="dessert"][data-value="chocolat"]'); scan(dom, 'réglages, aliments retirés');
   ['avoine', 'sale', 'pain'].forEach(v => click(dom, '#alim-list [data-kind="pd"][data-value="' + v + '"]')); scan(dom, 'réglages, dernière base gardée');
+  click(dom, '#sem-days [data-value="2"]'); click(dom, '#sem-acts [data-value="petite"]'); click(dom, '#sem-acts [data-value="longue"]'); click(dom, '#sem-lib [data-value="0"]'); scan(dom, 'réglages, semaine type');
   click(dom, '#help-regl'); scan(dom, 'aide');
 }
 {
@@ -161,7 +162,8 @@ function check(dom, log){
     C.ok(s && typeof s === 'object' && s.plans && s.choices, 'stockage invalide', where);
     Object.entries(s.plans).forEach(([date, p]) => {
       C.ok(/^\d{4}-\d\d-\d\d$/.test(date), 'date enregistrée invalide', () => date);
-      C.ok(Array.isArray(p.seances) && p.seances.length <= 4 && typeof p.libre === 'boolean', 'plan enregistré invalide', () => JSON.stringify(p));
+      // Enregistré champ par champ (3.11.0) : ce qui manque vient de la semaine type
+      C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || typeof p.libre === 'boolean'), 'plan enregistré invalide', () => JSON.stringify(p));
     });
     const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
     Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
@@ -194,6 +196,12 @@ function check(dom, log){
   const n = d.querySelectorAll('#sess .srow').length, hasLong = [...d.querySelectorAll('#sess .s-t')].some(e => /Sortie longue/.test(e.textContent));
   d.querySelectorAll('#acts button').forEach(b => C.ok(b.disabled === (n >= 4 || (b.dataset.value === 'longue' && hasLong)), 'bouton d’ajout', () => b.dataset.value + ' ' + b.disabled + ' : ' + where()));
   C.ok(d.querySelectorAll('#day .band').length === n, 'un bandeau par séance', where);
+  // Jour dont les séances n'ont jamais été modifiées : celles de la semaine type (aucune sans elle)
+  try {
+    const iso = ($('#week [aria-pressed="true"]') || { dataset: {} }).dataset.value, st = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{}}');
+    const rec = st.plans[iso], sem = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).semaine, js = new Date(iso + 'T12:00:00').getDay();
+    if (iso && !(rec && 'seances' in rec)) C.ok(n === (sem && sem.jours && sem.jours[js] ? sem.jours[js].length : 0), 'séances de la semaine type', () => iso + ' : ' + n + ' ' + JSON.stringify(sem) + ' ' + where());
+  } catch (e){ C.ok(false, 'séances de la semaine type : lecture', () => e.message); }
   C.ok(n > 0 || $('#sess .rest-t'), '« Repos, pas de séance » sans séance', where);
   const libre = $('#sw-lib').getAttribute('aria-checked') === 'true';
   C.ok(libre === /Repas libre/.test(($('#h-diner') || { textContent: '' }).textContent), 'interrupteur du repas libre ≠ page', where);
@@ -203,6 +211,11 @@ function check(dom, log){
   C.ok(wbRows.length === 5 && $('#wb-msg').textContent.trim().length > 10, 'carte de la semaine', where);
   C.ok($('#wk-bal').classList.contains('is-over') === wbRows.some(li => li.className === 'is-over'), 'carte de la semaine : alerte', () => $('#wb-msg').textContent + ' : ' + where());
   C.ok($('#wk-bal').classList.contains('is-ok') === wbRows.every(li => li.className === 'is-ok') && $('#wk-bal').classList.contains('is-ok') === /équilibrée/.test($('#wb-msg').textContent), 'carte de la semaine : équilibre', () => $('#wb-msg').textContent + ' : ' + where());
+  // Semaine type : profil valide (jours 0 à 6, 4 séances au plus, une longue), repas libre d'un jour de 0 à 6
+  try {
+    const sem = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).semaine;
+    if (sem) C.ok(Number.isInteger(sem.libre) && sem.libre >= 0 && sem.libre <= 6 && Object.entries(sem.jours).every(([js, l]) => /^[0-6]$/.test(js) && l.length >= 1 && l.length <= 4 && l.filter(x => x.taille === 'longue').length <= 1), 'semaine type enregistrée invalide', () => JSON.stringify(sem));
+  } catch (e){ C.ok(false, 'semaine type illisible', () => e.message); }
   // Chaque bulle de choix montre une valeur qui existe
   d.querySelectorAll('#day .sel').forEach(b => C.ok(b.dataset.value && b.textContent.trim(), 'bulle de choix vide', () => b.outerHTML.slice(0, 120)));
 }
@@ -338,6 +351,19 @@ const ACTIONS = {
   },
   // Ta semaine : ouvrir ou refermer la carte
   semaine: dom => { const e = dom.window.document.querySelector('#wk-bal'); if (dom.window.document.querySelector('#page').hidden) return 'semaine -'; e.open = !e.open; return 'semaine ' + (e.open ? 'ouverte' : 'fermée'); },
+  // Réglages, « Ta semaine type » : un jour, quelques séances ajoutées, déplacées ou retirées, le soir du repas libre
+  semaineType: dom => {
+    const d = dom.window.document;
+    if (d.querySelector('#page').hidden) return 'semaine type -';
+    d.querySelector('#gear').click();
+    const done = [];
+    for (let i = R.int(1, 5); i > 0; i--){
+      const b = R.pick([...d.querySelectorAll('#semaine button:not(:disabled)')]);
+      b.click(); done.push(b.dataset.action + '=' + (b.dataset.value || ''));
+    }
+    d.querySelector('#reglages [data-action="fermer"]').click();
+    return 'semaine type ' + done.join(' ');
+  },
   // Réglages, « Tes aliments » : retirer ou remettre quelques aliments
   aliments: dom => {
     const d = dom.window.document;
