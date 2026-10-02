@@ -616,7 +616,7 @@ P 218 g (fourchette 181 à 222, facteur 0.88), G 1147 g, L 88 g, portions × 1.4
 
 == 72 kg, 1,6 g/kg, œufs et crevettes
 dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2273 kcal (écart 3)
-P 136 g (fourchette 104 à 127, facteur 0.51), G 279 g, L 64 g, portions × 1.000
+P 136 g (fourchette 104 à 127, facteur 0.50), G 279 g, L 64 g, portions × 1.000
   Petit-déjeuner :
     60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     130 g skyr nature  81 kcal

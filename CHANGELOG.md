@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 3.13.0, 2 octobre 2026
+
+- Batch cooking : dans « Planifier », choisis 3, 4 ou 5 recettes puis « Décide pour moi, en batch cooking ». L'appli prend des recettes qui se gardent, variées et équilibrées sur la semaine (poisson, légumes secs, pas trop de viande rouge ni de charcuterie), et les répète aux déjeuners et aux dîners de toute la période. Jamais la même protéine midi et soir (sauf si tes aliments retirés ne laissent pas le choix), rien pour le repas libre.
+- Tes courses montrent ensuite « Ton batch cooking » : le jour où cuisiner (la veille, ou aujourd'hui si la période commence aujourd'hui), puis pour chaque recette ce qu'il faut cuire en tout, le contenu de chaque boîte (viande et féculent du jour, cuits) et la préparation.
+- Un plat cuisiné se garde 3 jours au frigo : les boîtes suivantes sont marquées « congélateur », à sortir la veille au soir. Les salades et les bowls aux crudités, qui se congèlent mal, sont mangés les premiers jours.
+- Chaque jour reste modifiable ensuite, sur la page ou dans l'assistant.
+- Correctif : avec des œufs-jambon midi et soir et un objectif de protéines bas, les portions pouvaient garder un œuf de trop et dépasser la fourchette de protéines.
+
 ## 3.12.0, 2 octobre 2026
 
 - Une recette pour chaque plat : sous le déjeuner et le dîner, l'appli te propose une recette pour ta protéine et ton féculent (80 recettes, une par association, du poulet au curry au dahl de lentilles).

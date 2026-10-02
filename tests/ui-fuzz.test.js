@@ -182,6 +182,11 @@ function check(dom, log){
     const sels = [...d.querySelectorAll(id + ' .sel')];
     C.ok(sels.length === 7 && sels.every(b => b.dataset.value && b.textContent.trim()), 'bulles de choix', () => id + ' ' + where());
   });
+  // Fiche du batch cooking : chaque recette annonce autant de boîtes qu'elle en liste, deux au moins
+  if (!$('#courses').hidden) d.querySelectorAll('#courses-batch details.batch').forEach(card => {
+    const n = card.querySelectorAll('.b-list')[1].querySelectorAll('li').length;
+    C.ok(n >= 2 && new RegExp('^' + n + '\\sboîtes').test(card.querySelector('.b-n').textContent) && card.querySelectorAll('.rec-steps li').length === 3, 'fiche de batch cooking', () => card.textContent.slice(0, 160) + ' ' + where());
+  });
   if (!$('#courses').hidden) d.querySelectorAll('#courses-list .chk').forEach(b => C.ok(/\d/.test(b.querySelector('.q').textContent) && ['true', 'false'].includes(b.getAttribute('aria-checked')), 'courses : ligne sans quantité', where));
   if ($('#page').hidden) return;
   // Total affiché = somme des lignes (arrondies), chaque repas aussi
@@ -348,6 +353,16 @@ const ACTIONS = {
     d.querySelector('#plan-btn').click();
     if (R.chance(.5)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
     else type(dom, 'input[data-range="plan"][data-end="to"]', R.pick(['2026-10-09', '2026-10-20', '2026-12-31', '', '2026-10-01']));
+    // Batch cooking : nombre de recettes, puis tout d'un coup, et les courses avec la fiche
+    if (R.chance(.5)){
+      if (R.chance(.8)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
+      R.pick([...d.querySelectorAll('[data-action="pl-nrec"]')]).click();
+      d.querySelector('[data-action="pl-batch"]').click();
+      if (!d.querySelector('#plan').hidden) d.querySelector('#plan [data-action="fermer"]').click();
+      C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', 'batch');
+      if (!d.querySelector('#courses').hidden && R.chance(.3)) d.querySelector('#courses [data-action="fermer"]').click();
+      return 'planifier batch';
+    }
     d.querySelector('[data-action="pl-start"]').click();
     for (let i = R.int(0, 4); i > 0 && d.querySelector('[data-action="pl-next"]'); i--){
       for (let j = R.int(0, 3); j > 0; j--){

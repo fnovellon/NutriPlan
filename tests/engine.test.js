@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -647,4 +647,68 @@ for (const [name, set] of Object.entries(SETS)) for (const pdBase of PD_ORDER) P
   nr++;
 }));
 
-console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes)`);
+// 18. Correctif 3.13.0 : le facteur de protéines va jusqu'à sa borne (œufs-jambon midi et soir : 2 œufs à 0,508, 1 à 0,5)
+{
+  const prof = { sexe: 'h', age: 23, taille: 220, poids: 71.2, neat: 'debout', prot: 1.8, ravito: 70 };
+  const set = [moyenne('matin'), petite('midi'), longue(1.5)], c = { pdBase: 'avoine', dej: { prot: 'oeufs', starch: 'riz', dessert: 'chocolat' }, diner: { prot: 'oeufs', starch: 'pates', dessert: 'chocolat' } };
+  const a = buildDay(cleanPlan({ seances: set, libre: false }, 3), c, prof), b = buildDay(cleanPlan({ seances: set, libre: false }, 3), c, { ...prof, prot: 1.9 });
+  assert(a.prot.factor === PF_MIN && a.tot.p <= a.prot.high + 0.5, `œufs-jambon : facteur ${a.prot.factor}, ${Math.round(a.tot.p)} g pour ${Math.round(a.prot.high)} au plus`);
+  assert(b.tot.p >= a.tot.p - 8, 'objectif plus haut, pas moins de protéines');
+}
+
+// 19. Batch cooking (3.13.0) : quelques recettes qui se gardent, répétées midi et soir, cuisinées la veille
+const lcg = seed => { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
+const week = (len, libre) => Array.from({ length: len }, (_, i) => ({ libre: i === libre }));
+let nb = 0;
+for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; seed <= 40; seed++) {
+  const days = week(7, 5), cs = batchChoices(days, n, [], k, lcg(seed)), combo = `batch ${n} recettes, k ${k}, graine ${seed}`;
+  assert.strictEqual(cs.length, 7, combo + ' : un choix par jour');
+  const served = [];
+  cs.forEach((c, i) => {
+    for (const slot of ['dej', 'diner']) assert(recipeOf(c[slot]) === c[slot].recette && RECIPES[c[slot].recette].box, `${combo} : recette qui se garde`);
+    assert(c.dej.prot !== c.diner.prot, `${combo} : même protéine midi et soir le jour ${i}`);
+    if (c.pdBase === 'sale') assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', `${combo} : œufs-jambon avec le salé`);
+    served.push({ i, id: c.dej.recette });
+    if (!days[i].libre) served.push({ i, id: c.diner.recette });
+  });
+  const count = {};
+  served.forEach(x => { count[x.id] = (count[x.id] || 0) + 1; });
+  const counts = Object.values(count);
+  assert(counts.length === n && Math.max(...counts) - Math.min(...counts) <= 1 && counts.reduce((a, x) => a + x, 0) === 13, `${combo} : ${JSON.stringify(count)}`);
+  assert.strictEqual(new Set(Object.keys(count).map(id => RECIPES[id].p)).size, n, `${combo} : protéines différentes`);
+  // Une recette qui se congèle mal est mangée dans les 3 premiers jours
+  served.forEach(x => assert(RECIPES[x.id].gel || x.i < FRIDGE_DAYS, `${combo} : ${x.id} (se congèle mal) le jour ${x.i}`));
+  // Repères de la semaine : viande rouge et charcuterie sous leurs limites
+  const res = cs.map((c, i) => buildDay({ seances: [], libre: days[i].libre }, c, { poids: 72 * k }));
+  const bal = weekBalance(res);
+  assert(bal.rouge <= 500.5 && bal.charcuterie <= 150.5, `${combo} : ${JSON.stringify(bal)}`);
+  // Fiche : une recette par recette servie, boîtes = repas servis, totaux = somme des boîtes, frigo 3 jours après la veille
+  const blocks = batchCook(res.map(r => ({ res: r })));
+  assert(blocks.length === 1 && blocks[0].recipes.length === n, `${combo} : fiche`);
+  for (const r of blocks[0].recipes) {
+    assert.strictEqual(r.boxes.length, count[r.id], `${combo} : boîtes de ${r.id}`);
+    r.boxes.forEach(b => assert.strictEqual(b.fridge, b.day + 1 <= FRIDGE_DAYS, `${combo} : frigo ou congélateur`));
+    const st = res.flatMap(x => x.secs).filter(s => s.recipe === r.id && !s.libre).flatMap(s => s.items).filter(i => i.key === 'st').reduce((a, i) => a + i.buy.g, 0);
+    const line = r.totals.find(t => t.id === RECIPES[r.id].s);
+    assert.strictEqual(line.qty, st < 1000 ? st + ' g' : (Math.round(st / 10) / 100).toLocaleString('fr-FR') + ' kg', `${combo} : féculent à cuire`);
+  }
+  nb++;
+}
+// Même tirage, même résultat ; aliments retirés jamais proposés ; jour même : boîtes du 4e jour encore au frigo
+assert.deepStrictEqual(plain(batchChoices(week(7, 5), 4, [], 1, lcg(9))), plain(batchChoices(week(7, 5), 4, [], 1, lcg(9))), 'batch reproductible');
+const offB = ['prot:poulet', 'prot:boeuf', 'starch:riz', 'starch:pates'];
+batchChoices(week(7, -1), 4, offB, 1, lcg(3)).forEach(c => ['dej', 'diner'].forEach(sl => assert(!['poulet', 'boeuf'].includes(c[sl].prot) && !['riz', 'pates'].includes(c[sl].starch), 'batch : aliment retiré')));
+const resB = batchChoices(week(7, -1), 4, [], 1, lcg(5)).map(c => ({ res: buildDay({ seances: [], libre: false }, c) }));
+assert(batchCook(resB, 0)[0].recipes.every(r => r.boxes.every(b => b.fridge === b.day <= FRIDGE_DAYS)), 'cuisiné le jour même : 3 jours de plus');
+// Périodes courtes et longues : 2 jours → 2 recettes ; 10 jours → deux blocs, le second de 3 jours
+const two = batchChoices(week(2, -1), 5, [], 1, lcg(2));
+assert.strictEqual(new Set(two.flatMap(c => [c.dej.recette, c.diner.recette])).size, 2, '2 jours : 2 recettes');
+const ten = batchChoices(week(10, -1), 4, [], 1, lcg(4)).map(c => ({ res: buildDay({ seances: [], libre: false }, c) }));
+const tb = batchCook(ten);
+assert(tb.length === 2 && tb[1].start === 7 && tb[1].recipes.reduce((a, r) => a + r.boxes.length, 0) === 6 && tb[1].recipes.every(r => r.boxes.every(b => b.fridge)), '10 jours : deux blocs');
+// Recette servie une fois, ou qui ne se garde pas : pas dans la fiche
+const once = buildDay(day([]), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poisson', starch: 'riz', recette: 'poisson-riz' } });
+assert.deepStrictEqual(plain(batchCook([{ res: once }, { res: once }])).map(b => b.recipes.map(r => r.id)), [['poulet-riz']], 'papillote (ne se garde pas) hors de la fiche');
+assert.deepStrictEqual(plain(batchCook([{ res: once }])), [], 'une seule fois : pas de batch');
+
+console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

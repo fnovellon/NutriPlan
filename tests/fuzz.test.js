@@ -567,6 +567,66 @@ for (let i = 0; i < N / 3; i++){
   }
 }
 
+// --- Batch cooking : périodes, nombres de recettes, aliments retirés et corpulences au hasard ---------------------------
+{
+  const ALL_OFF2 = Object.entries(A.CHOICE_IDS).flatMap(([k, ids]) => ids.map(id => k + ':' + id));
+  for (let i = 0; i < N / 3; i++){
+    const len = R.chance(.6) ? 7 : R.int(1, 31), n = R.pick([3, 4, 5, 3, 4, 5, 2, 6, 'x']), k = R.pick([0.65, 0.8, 1, 1.2, 1.4]);
+    const off = A.cleanOff(ALL_OFF2.filter(() => R.chance(R.pick([0, 0.1, 0.3, 0.6]))));
+    const days = Array.from({ length: len }, () => ({ libre: R.chance(.12) }));
+    const cs = A.batchChoices(days, n, off, k, R.next), show = () => JSON.stringify([len, n, k, off, days.map(d => d.libre ? 1 : 0).join('')]);
+    if (!C.ok(cs.length === len, 'batch : un choix par jour', show)) continue;
+    const ok = kind => A.allowed(kind, off), nn = [3, 4, 5].includes(n) ? n : 4;
+    const pool = Object.keys(A.RECIPES).filter(id => ok('prot').includes(A.RECIPES[id].p) && ok('starch').includes(A.RECIPES[id].s));
+    const keep = pool.filter(id => A.RECIPES[id].box), gelOk = keep.filter(id => A.RECIPES[id].gel);
+    // Protéines qui ne débordent jamais les repères (ni bœuf ni œufs-jambon), en tout et parmi les recettes qui se congèlent bien
+    const free = new Set(keep.filter(id => !['boeuf', 'oeufs'].includes(A.RECIPES[id].p)).map(id => A.RECIPES[id].p)).size;
+    const freeGel = new Set(gelOk.filter(id => !['boeuf', 'oeufs'].includes(A.RECIPES[id].p)).map(id => A.RECIPES[id].p)).size;
+    cs.forEach((c, d) => {
+      C.ok(ok('pd').includes(c.pdBase) && ['dej', 'diner'].every(sl => A.recipeOf(c[sl]) === c[sl].recette && ok('prot').includes(c[sl].prot) && ok('starch').includes(c[sl].starch) && ok('dessert').includes(c[sl].dessert)), 'batch : choix invalide ou retiré', () => show() + ' ' + JSON.stringify(c));
+      if (keep.length) C.ok(A.RECIPES[c.dej.recette].box && A.RECIPES[c.diner.recette].box, 'batch : recette qui ne se garde pas', show);
+      if (c.pdBase === 'sale' && ok('pd').length > 1) C.ok(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'batch : œufs-jambon avec le salé', show);
+    });
+    for (let b = 0; b < len; b += 7){
+      const blk = cs.slice(b, b + 7), bd = days.slice(b, b + 7), served = [];
+      blk.forEach((c, d) => { served.push({ d, slot: 'dej', c: c.dej }); if (!bd[d].libre) served.push({ d, slot: 'diner', c: c.diner }); });
+      const m = served.length, nr = Math.min(nn, m, Math.max(2, Math.floor(m / 2))), count = {};
+      served.forEach(x => { count[x.c.recette] = (count[x.c.recette] || 0) + 1; });
+      const cnt = Object.values(count), bshow = () => show() + ' bloc ' + b + ' ' + JSON.stringify(count);
+      const pl = keep.length ? keep : pool;
+      C.ok(cnt.length <= nr && (pl.length < nr || cnt.length === nr) && (cnt.length < nr || Math.max(...cnt) - Math.min(...cnt) <= 1), 'batch : nombre de recettes ou de boîtes', bshow);
+      // Jamais la même protéine midi et soir quand les recettes du bloc ont toutes une protéine différente
+      const perP = {};
+      Object.entries(count).forEach(([id, x]) => { perP[A.RECIPES[id].p] = (perP[A.RECIPES[id].p] || 0) + x; });
+      if (Object.keys(perP).length === cnt.length && cnt.length >= 2 && Object.values(perP).every(x => x <= bd.length) && (bd.length <= 3 || freeGel >= nr)) blk.forEach((c, d) => { if (!bd[d].libre) C.ok(c.dej.prot !== c.diner.prot, 'batch : même protéine midi et soir', bshow); });
+      // Qui se congèle mal : dans les 3 premiers jours (assez de recettes qui se congèlent bien, protéines variées)
+      if (bd.length > 3 && freeGel >= nr) served.forEach(x => C.ok(A.RECIPES[x.c.recette].gel || x.d < 3, 'batch : se congèle mal, servie après 3 jours', () => bshow() + ' ' + x.c.recette + ' jour ' + x.d));
+      // Repères estimés (portions de base) : bœuf et jambon sous leurs limites quand il reste d'autres choix
+      const beef = served.filter(x => x.c.prot === 'boeuf').length, oe = served.filter(x => x.c.prot === 'oeufs').length, sale = blk.filter(c => c.pdBase === 'sale').length;
+      const enough = (bd.length > 3 ? freeGel : free) >= nr;
+      if (enough) C.ok(beef * Math.round(150 * k / 10) * 10 * 0.75 <= 500 + 1e-9 && oe * Math.round(90 * k / 5) * 5 <= 150, 'batch : viande rouge ou charcuterie', bshow);
+      if (ok('pd').some(x => x !== 'sale') && enough) C.ok(oe * Math.round(90 * k / 5) * 5 + sale * Math.round(45 * k / 5) * 5 <= 150, 'batch : charcuterie avec le salé', bshow);
+    }
+    // Fiche : boîtes = repas servis des recettes qui se gardent (deux fois au moins par bloc), totaux = somme des boîtes
+    if (i % 3) continue;
+    const prof = randProfile(), res = cs.map((c, d) => A.buildDay({ seances: [], libre: days[d].libre }, c, prof));
+    const lead = R.pick([0, 1]), blocks = A.batchCook(res.map(r => ({ res: r })), lead);
+    blocks.forEach(bl => bl.recipes.forEach(r => {
+      const secs = res.slice(bl.start, bl.start + 7).flatMap((x, d) => x.secs.filter(s => s.recipe === r.id && !s.libre).map(s => ({ s, d })));
+      C.ok(r.boxes.length === secs.length && secs.length >= 2 && A.RECIPES[r.id].box, 'fiche : boîtes', () => show() + ' ' + r.id);
+      r.boxes.forEach((bx, j) => C.ok(bx.day === bl.start + secs[j].d && bx.fridge === (secs[j].d + (bl.start === 0 && lead === 0 ? 0 : 1) <= 3), 'fiche : jour ou frigo', () => show() + ' ' + JSON.stringify(bx)));
+      const sum = {};
+      secs.forEach(({ s }) => s.items.filter(x => /^(p1|p2|st|[vfx]-)/.test(x.key)).forEach(x => { const a = sum[x.buy.id] || (sum[x.buy.id] = { g: 0, n: 0 }); a.g += x.buy.g || 0; a.n += x.buy.n || 0; }));
+      C.ok(Object.keys(sum).sort().join() === r.totals.map(t => t.id).sort().join(), 'fiche : aliments à cuire', () => r.id);
+      r.totals.forEach(t => {
+        const a = sum[t.id], q = Number(t.qty.replace(/[^\d,]/g, '').replace(',', '.')) * (/kg$/.test(t.qty) ? 1000 : 1);
+        C.ok(a && Math.abs(q - (a.n || a.g)) <= (a.g >= 1000 ? 5 : 1e-9), 'fiche : quantité à cuire ≠ somme des boîtes', () => r.id + ' ' + JSON.stringify([t, a]));
+        [t.qty, t.name, t.note || ''].forEach(x => C.ok(!/NaN|undefined|null/.test(x) && !/\d (g|kg)\b/.test(x), 'fiche : texte cassé', () => JSON.stringify(t)));
+      });
+    }));
+  }
+}
+
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------
 // Recettes : une par couple, légumes et matières grasses connus (table, nom, rayon des courses)
 A.PROT_ORDER.forEach(p => A.STARCH_ORDER.forEach(s => C.ok(JSON.stringify(A.recipesFor(p, s)) === JSON.stringify([p + '-' + s]), 'recette manquante', p + ' × ' + s)));

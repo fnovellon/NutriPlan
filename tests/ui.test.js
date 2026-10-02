@@ -1036,5 +1036,59 @@ assert(!sk.$('#repas').hidden, 'formulaire des repas après Passer');
 sk.click('[data-action="repas-hasard"]');
 assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil/.test(sk.$('#sum-note').textContent), 'page après Passer');
 
+// Batch cooking (3.13.0) : « Planifier », 3 recettes pour les 7 prochains jours (mercredi → mardi, repas libre samedi),
+// répétées midi et soir ; les courses montrent la fiche (à cuisiner aujourd'hui, boîtes au frigo puis au congélateur)
+{
+  const bt = tools(open()), bw = bt.d.defaultView;
+  bt.click('#plan-btn');
+  assert(bt.$('[data-action="pl-nrec"][aria-pressed="true"]').dataset.value === '4' && /Batch cooking/.test(bt.$('.plan-batch h2').textContent), '4 recettes par défaut');
+  bt.click('[data-action="pl-nrec"][data-value="3"]');
+  assert(bt.$('[data-action="pl-nrec"][aria-pressed="true"]').dataset.value === '3' && bt.d.activeElement === bt.$('[data-action="pl-nrec"][data-value="3"]'), 'nombre de recettes choisi, focus gardé');
+  let seed = 11;
+  bw.Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  bt.click('[data-action="pl-batch"]');
+  assert(!bt.$('#courses').hidden && bt.$('#plan').hidden && bt.$('#courses-span').textContent.startsWith('7\u00a0jours'), 'courses après le batch : ' + bt.$('#courses-span').textContent);
+  const st = bt.stored(), isos = ['2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13'];
+  const meals = isos.flatMap(iso => { const c = st.plans[iso].ch; return iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]; });
+  const count = {};
+  meals.forEach(m => { assert.strictEqual(m.recette, m.prot + '-' + m.starch, 'recette enregistrée'); count[m.recette] = (count[m.recette] || 0) + 1; });
+  assert(Object.keys(count).length === 3 && Object.values(count).sort().join() === '4,4,5', 'trois recettes, 13 boîtes : ' + JSON.stringify(count));
+  isos.forEach(iso => { const c = st.plans[iso].ch; assert(c.dej.prot !== c.diner.prot, 'même protéine midi et soir : ' + iso); });
+  assert.deepStrictEqual(st.choices[3], st.plans['2026-10-07'].ch, 'mémoire du mercredi');
+  // Fiche : à cuisiner aujourd'hui (la période commence aujourd'hui), une fiche par recette, boîtes au frigo 3 jours
+  assert(/^À cuisiner aujourd’hui\s:\s3 recettes, 13 boîtes\./.test(bt.$('#courses-batch .calc').textContent), 'fiche : ' + bt.$('#courses-batch .calc').textContent);
+  const cards = [...bt.d.querySelectorAll('#courses-batch details.batch')];
+  assert(cards.length === 3 && cards.every(x => !x.open), 'une fiche repliée par recette');
+  let boxes = 0, freezer = 0;
+  cards.forEach(card => {
+    const lis = [...card.querySelectorAll('.b-list')[1].querySelectorAll('li')];
+    assert(new RegExp('^' + lis.length + '\\sboîtes').test(card.querySelector('.b-n').textContent), 'nombre de boîtes : ' + card.querySelector('.b-n').textContent);
+    lis.forEach(li => {
+      const day = Number(li.querySelector('.b-q').textContent.match(/\d+/)[0]), cold = /congélateur/.test(li.textContent);
+      assert.strictEqual(cold, day >= 11, 'frigo jusqu’au samedi, congélateur ensuite : ' + li.textContent);
+      if (cold) freezer++;
+    });
+    boxes += lis.length;
+    assert(card.querySelectorAll('.rec-steps li').length === 3 && card.querySelector('.b-list li .b-q').textContent.length > 0, 'à cuire et préparation');
+  });
+  assert(boxes === 13 && new RegExp('mets les ' + freezer + ' boîtes marquées').test(bt.$('#courses-batch .calc').textContent), 'boîtes au congélateur : ' + freezer);
+  // À cuire en tout = somme des boîtes (la protéine, première ligne, crue)
+  const amount = t => { const x = Number(t.replace(/[^\d,]/g, '').replace(',', '.')); return /kg/.test(t) ? x * 1000 : x; };
+  cards.forEach(card => {
+    const total = amount(card.querySelector('.b-list li .b-q').textContent);
+    const sum = [...card.querySelectorAll('.b-list')[1].querySelectorAll('li .name')].reduce((a, n) => a + Number(n.textContent.match(/^\d+/)[0]), 0);
+    assert(Math.abs(total - sum) <= (total >= 1000 ? 5 : 0), 'à cuire ≠ somme des boîtes : ' + total + ' / ' + sum);
+  });
+  // La page du jour suit : recette choisie à midi
+  bt.click('#courses [data-action="fermer"]');
+  assert(bt.$('[aria-labelledby="h-dej"] .rec.is-on'), 'recette du batch sur la page');
+  // Période invalide : pas de batch
+  bt.click('#plan-btn');
+  const end = bt.$('input[data-range="plan"][data-end="to"]');
+  end.value = '2026-10-01'; end.dispatchEvent(new bw.Event('input', { bubbles: true }));
+  bt.click('[data-action="pl-batch"]');
+  assert(!bt.$('#plan').hidden && /La fin doit venir après le début/.test(bt.$('#plan-err').textContent), 'batch refusé sur une période invalide');
+}
+
 assert.deepStrictEqual(errors, [], 'erreurs JavaScript : ' + errors.join(' | '));
 console.log('interface OK');
