@@ -693,7 +693,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.9.0';
+const APP_VERSION = '3.10.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -701,7 +701,7 @@ const APP_VERSION = '3.9.0';
 const FOOD = {
   avoine:[370,13.5,60,7], pain:[240,8.5,45,1.5], skyr:[62,10.5,4,0.2],
   fruitsRouges:[38,1,6.5,0.3], amandes:[590,23,9.5,51], miel:[320,0.3,80,0],
-  legumes:[30,2,4,0.3], huile:[900,0,0,100], avocat:[195,1.6,0.8,20.6], parmesan:[406,30.5,0,31],
+  legumes:[30,2,4,0.3], huile:[900,0,0,100], parmesan:[406,30.5,0,31],
   poulet:[110,23,0,1.4], boeuf:[130,22,0,4.6], poisson:[82,18,0,0.7], saumon:[206,22,0,12.4],
   crevettes:[99,21,0,1.1], halloumi:[320,22,2,25], jambon:[119,21.5,0.6,3.5], thon:[112,25,0,1],
   chocolat:[572,9.3,33,42], tofu:[148,14.4,1.1,9.3], fruitsSecs:[245,2.7,56,0.7]
@@ -751,7 +751,7 @@ const REF_GROUPS = [
   {title:'Viandes, poissons, laitages', per:'pour 100' + NB + 'g', src:'food', rows:[['poulet','Viande blanche maigre (poulet, dinde, filet mignon de porc)'],['boeuf','Bœuf haché 5' + NB + '%'],['poisson','Poisson blanc'],['saumon','Poisson gras (saumon, maquereau, sardines à l’huile)'],['crevettes','Crevettes cuites'],['thon','Thon au naturel, égoutté'],['jambon','Jambon blanc'],['halloumi','Halloumi'],['tofu','Tofu ferme, nature'],['parmesan','Parmesan'],['skyr','Skyr nature']]},
   {title:'Féculents', per:'pour 100' + NB + 'g crus', src:'starch', rows:STARCH_ORDER.map(function(id){ return [id, STARCH[id].name.charAt(0).toUpperCase() + STARCH[id].name.slice(1)]; })},
   {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine (ou muesli sans sucre ajouté)'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['fruitsSecs','Fruits secs (abricots, pruneaux, figues)'],['chocolat','Chocolat noir 70' + NB + '%']]},
-  {title:'Légumes et matières grasses', per:'pour 100' + NB + 'g', src:'food', rows:[['legumes','Légumes verts (moyenne)'],['avocat','Avocat'],['huile','Huile d’olive']]},
+  {title:'Légumes et matières grasses', per:'pour 100' + NB + 'g', src:'food', rows:[['legumes','Légumes verts (moyenne)'],['huile','Huile d’olive']]},
   {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf moyen'],['banane','Banane moyenne'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté, 100' + NB + 'g']]}
 ];
 function refTable(){
@@ -799,15 +799,17 @@ function total(items){
 function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
 
 /* Protéines du déjeuner et du dîner, avec leur matière grasse : portions de référence (72 kg) mises à l'échelle k.
-   Restent fixes : le demi-avocat et la boîte de thon (on ne coupe pas une boîte). */
+   Restent fixes : les amandes du dîner (comme l'était le demi-avocat) et la boîte de thon (on ne coupe pas une boîte). */
 /* Remplacement proposé en note : même énergie, arrondie à 5 g (quantité fixe, comme ce qu'il remplace) */
 function swapGrams(kcal, food){ return Math.max(5, Math.round(kcal / FOOD[food][0] * 100 / 5) * 5); }
-function avocat(){ const m = mac('avocat', 70); return it('av', '½', 'avocat', 'ou ' + swapGrams(m.kcal, 'amandes') + NB + 'g d’amandes', m, null, {id:'avocat', n:0.5}); }
+/* Lipides du dîner avec une protéine très maigre (viande blanche, poisson blanc) : 25 g d'amandes, fixes (3.10.0 : à la place
+   du ½ avocat, même énergie) */
+function amandesDiner(){ return it('dam', grams(25), 'amandes', 'sur les légumes ou en fin de repas', mac('amandes', 25)); }
 const PROT = {
   poulet:{label:'Viande blanche', sub:'poulet, dinde, filet mignon de porc',
     base:function(k){ return [meat(sc(180, 10, k), 'viande blanche maigre', 'poulet, dinde ou filet mignon de porc', 'poulet')]; },
     dej:function(){ return []; },
-    diner:function(){ return [avocat()]; }},
+    diner:function(){ return [amandesDiner()]; }},
   boeuf:{label:'Bœuf 5' + NB + '%',
     base:function(k){ return [meat(sc(150, 10, k), 'bœuf haché 5' + NB + '%', null, 'boeuf')]; },
     dej:function(){ return []; },
@@ -815,7 +817,7 @@ const PROT = {
   poisson:{label:'Poisson blanc',
     base:function(k){ return [meat(sc(200, 10, k), 'poisson blanc', 'cabillaud, colin…', 'poisson')]; },
     dej:function(){ return []; },
-    diner:function(){ return [avocat()]; }},
+    diner:function(){ return [amandesDiner()]; }},
   saumon:{label:'Poisson gras', sub:'saumon, maquereau, sardines à l’huile',
     base:function(k){ return [meat(sc(160, 10, k), 'poisson gras', 'saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse', 'saumon')]; },
     dej:function(){ return []; },
@@ -1355,13 +1357,13 @@ function buildDay(plan, ch, profile){
 }
 
 /* Liste de courses : les achats (buy) de plusieurs journées construites par buildDay, additionnés et rangés par rayon.
-   Poids crus, pièces entières (avocats : les moitiés arrondies à l'avocat entier), budgets en kcal.
+   Poids crus, pièces entières, budgets en kcal.
    Renvoie [{title, lines:[{id, qty, name, note}]}], rayons et lignes vides omis. */
 const SHOP_AISLES = [
   {title:'Viandes et poissons', ids:['poulet', 'boeuf', 'poisson', 'saumon', 'crevettes', 'jambon']},
   {title:'Crèmerie, œufs et tofu', ids:['skyr', 'oeufs', 'halloumi', 'parmesan', 'tofu']},
   {title:'Pain et féculents, poids crus', ids:['pain'].concat(STARCH_ORDER)},
-  {title:'Fruits et légumes', ids:['legumes', 'fruitsRouges', 'banane', 'pomme', 'fruit', 'avocat']},
+  {title:'Fruits et légumes', ids:['legumes', 'fruitsRouges', 'banane', 'pomme', 'fruit']},
   {title:'Épicerie', ids:['avoine', 'amandes', 'miel', 'fruitsSecs', 'chocolat', 'thon', 'compote', 'huile']},
   {title:'Le reste', ids:['shaker', 'ravito', 'encas', 'marge', 'libre']}
 ];
@@ -1384,10 +1386,6 @@ function shoppingList(days){
     if (id === 'oeufs'){
       const n = get('oeuf').n;
       return n ? {qty:String(n), name:pl(n, 'œuf', 'œufs'), note:null} : null;
-    }
-    if (id === 'avocat'){
-      const h = Math.round(a.n * 2), n = Math.ceil(h / 2);
-      return h ? {qty:String(n), name:pl(n, 'avocat', 'avocats'), note:h + ' ' + pl(h, 'moitié', 'moitiés')} : null;
     }
     const PIECES = {banane:['banane', 'bananes', null], pomme:['pomme', 'pommes', null], fruit:['fruit au choix', 'fruits au choix', 'pomme, poire, orange, 2 kiwis…'],
       thon:['boîte de thon au naturel', 'boîtes de thon au naturel', null], compote:['compote', 'compotes', 'pots sans sucre ajouté'],

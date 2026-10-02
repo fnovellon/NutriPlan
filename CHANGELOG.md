@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.10.0, 2 octobre 2026
+
+- Plus d'avocat : avec la viande blanche ou le poisson blanc, le dîner prend maintenant 25 g d'amandes (sur les légumes ou en fin de repas), presque les mêmes calories et les mêmes bons gras. Ils restent nécessaires ces jours-là pour tenir ton minimum de lipides.
+- Les amandes apportent un peu plus de protéines que l'avocat : ces jours-là, la viande ou le poisson baissent parfois de 10 g pour rester dans ton objectif. Le total de la journée ne change pas.
+- L'avocat disparaît aussi de la liste de courses et de la table des aliments.
+
 ## 3.9.0, 1er octobre 2026
 
 - Nouveau « Ta semaine », sous le calendrier : tes plats prévus du lundi au dimanche comparés aux repères de Santé publique France. Du poisson deux fois, dont un poisson gras ; des légumes secs au moins deux fois ; au plus 500 g de viande rouge cuite et 150 g de charcuterie (le jambon en est). Une phrase te dit ce qui manque ou ce qui déborde ; touche-la pour voir le détail.

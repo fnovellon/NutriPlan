@@ -500,7 +500,7 @@ p.click('#help');
 assert(view() === 'aide' && pw.document.activeElement === p.$('#aide-h') && pw.history.state.screen === 'aide', 'le « ? » n’ouvre pas l’aide');
 assert(/Ta journée en trois temps/.test(p.$('#aide').textContent) && /cru/.test(p.$('#aide').textContent), 'explications absentes');
 const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
-assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 35, 'table des aliments : ' + refRows.length + ' lignes');
+assert(p.d.querySelectorAll('#ref-tables table').length === 5 && refRows.length === 34, 'table des aliments : ' + refRows.length + ' lignes');
 const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
 assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
 assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['352', '8,4', '77', '1'], 'valeurs du riz (cru)');
@@ -781,8 +781,8 @@ assert(drawn.pdBase === 'pain' && drawn.dej.prot === 'tofu' && drawn.diner.prot 
 aw.Math.random = () => 0;
 al.click('#open-repas');
 al.click('[data-action="repas-hasard"]');
-// Le reste de la semaine a déjà ≈ 500 g de viande rouge : le bœuf est écarté du tirage (repères de la semaine)
-assert(/Viande rouge, cuite≈\s500\sg/.test(al.$('#wb-list').textContent) && al.stored().choices[3].dej.prot === 'poisson' && al.stored().choices[3].diner.prot === 'saumon', 'tirage sans poulet ni bœuf : ' + JSON.stringify(al.stored().choices[3]) + ' ' + al.$('#wb-list').textContent);
+// Le reste de la semaine a déjà 400 à 500 g de viande rouge : un bœuf de plus dépasserait, il est écarté du tirage
+assert(/Viande rouge, cuite≈\s(4[0-9]0|500)\sg/.test(al.$('#wb-list').textContent) && al.stored().choices[3].dej.prot === 'poisson' && al.stored().choices[3].diner.prot === 'saumon', 'tirage sans poulet ni bœuf : ' + JSON.stringify(al.stored().choices[3]) + ' ' + al.$('#wb-list').textContent);
 al.click('#plan-btn'); al.click('[data-action="pl-start"]');
 assert(!sheetVals('#sel-pprot-diner').includes('poulet') && !sheetVals('#sel-ppd').includes('avoine'), 'assistant : aliment retiré proposé');
 al.click('#plan [data-action="fermer"]');

@@ -87,7 +87,6 @@ function expected(item, pr){
   if (src && src[0] === 'unit' && n) return A.UNIT[src[1]].map(v => v * n[1]);
   if (st && g) return A.STARCH[st].f.map(v => v * g[1] / 100);
   if (item.name === 'boîte de thon au naturel' && item.qty === '1') return A.FOOD.thon.map(v => v * 1.1);
-  if (item.name === 'avocat' && item.qty === '½') return A.FOOD.avocat.map(v => v * 0.7);
   // Shaker : protéines saisies (au plus kcal / 4), le reste des kcal à parts égales entre glucides et lipides
   if (item.name === 'shaker de protéines' && item.qty === '1'){ const p = Math.min(pr.shakerProt, pr.shakerKcal / 4), rest = pr.shakerKcal - 4 * p; return [pr.shakerKcal, p, rest / 8, rest / 18]; }
   if (item.name === 'glucides pendant l’effort' && g) return [4 * g[1], 0, +g[1], 0];
@@ -300,7 +299,7 @@ for (let i = 0; i < N; i++){
     if (b.kcal !== undefined) C.ok(near(b.kcal, x.m.kcal, 1e-9), 'budget ≠ kcal de la ligne', () => x.qty + ' ' + x.name);
     // Le bon aliment : celui de la table (le fruit du dessert est « au choix », pas une pomme)
     const st = A.STARCH_ORDER.find(id => A.STARCH[id].name === x.name);
-    const want = x.name === 'fruit' ? 'fruit' : x.name === 'avocat' ? 'avocat' : x.name === 'boîte de thon au naturel' ? 'thon' : st || (BYNAME[x.name] && BYNAME[x.name][1]);
+    const want = x.name === 'fruit' ? 'fruit' : x.name === 'boîte de thon au naturel' ? 'thon' : st || (BYNAME[x.name] && BYNAME[x.name][1]);
     if (want) C.ok(b.id === want, 'achat : mauvais aliment', () => x.name + ' → ' + b.id);
   });
 
@@ -414,7 +413,6 @@ C.ok(({}).polluted === undefined && !('taille' in {}) && !('seances' in {}), 'Ob
       const a = sum[id] || {};
       [l.qty, l.name, l.note || ''].forEach(t => C.ok(!/NaN|undefined|null|Infinity/.test(t) && !/\d (g|kg|kcal)\b/.test(t), 'liste : texte cassé', () => JSON.stringify(l)));
       if (id === 'oeufs') C.ok(+l.qty === a.n && !l.note && l.name === (a.n > 1 ? 'œufs' : 'œuf'), 'liste : œufs', () => JSON.stringify([l, a]));
-      else if (id === 'avocat') C.ok(+l.qty === Math.ceil(Math.round(a.n * 2) / 2) && l.note.startsWith(String(Math.round(a.n * 2))), 'liste : avocats', () => JSON.stringify([l, a]));
       else if (PIECE.includes(id)) C.ok(+l.qty === a.n, 'liste : pièces', () => JSON.stringify([l, a]));
       else if (id === 'encas' || id === 'marge') C.ok(Math.abs(num(l.qty) - Math.round(a.kcal / 10) * 10) < 1e-6, 'liste : budget', () => JSON.stringify([l, a]));
       else C.ok(Math.abs(grams(l.qty) - a.g) <= (a.g >= 1000 ? 5 : 0.5), 'liste : grammes', () => JSON.stringify([l, a]) + ' ' + input());

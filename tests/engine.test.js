@@ -355,15 +355,23 @@ assert(qtyOf(small, 'dej', 'p1') === '130 g' && qtyOf(small, 'pd', 'skyr') === 
 assert.strictEqual(buildDay(day([]), oeufsJambon, {}).secs.find(s => s.id === 'pd').items.find(i => i.key === 'base').note, '2 tranches', 'tranches de pain');
 assert.strictEqual(buildDay(day([longue(2)]), oeufsJambon, {}).secs.find(s => s.id === 'pd').items.find(i => i.key === 'base').note, 'environ 3 tranches', 'tranches de pain, sortie longue');
 assert.strictEqual(qtyOf({ poids: 100 }, 'dej', 'p1'), '250 g', '100 kg : poulet 250 g');
-// Remplacements en note : même énergie que la ligne (½ avocat, œuf dur), quel que soit le poids (corrigé en 3.3.2)
+// Remplacement en note : même énergie que l'œuf dur du thon, quel que soit le poids (corrigé en 3.3.2).
+// Lipides du dîner avec viande blanche ou poisson blanc : 25 g d'amandes fixes, plus d'avocat (3.10.0)
 const thonPoulet = { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'poulet', starch: 'riz' } };
 for (const poids of [45, 72, 110]) {
   const r = composeDay(day([]), thonPoulet, cleanProfile({ poids }), 1);
-  const av = r.secs.find(s => s.id === 'diner').items.find(i => i.key === 'av'), oeuf = r.secs.find(s => s.id === 'dej').items.find(i => i.key === 'p2');
-  assert.strictEqual(av.note, 'ou 25 g d’amandes', `${poids} kg : amandes pour ½ avocat`);
-  assert.strictEqual(oeuf.note, 'ou 20 g de parmesan', `${poids} kg : parmesan pour un œuf dur`);
-  near(FOOD.amandes[0] * 0.25, av.m.kcal, 0.15 * av.m.kcal, 'amandes ≈ ½ avocat');
+  const am = r.secs.find(s => s.id === 'diner').items.find(i => i.key === 'dam'), oeuf = r.secs.find(s => s.id === 'dej').items.find(i => i.key === 'p2');
+  assert(am && am.qty === '25\u00a0g' && am.name === 'amandes' && am.note === 'sur les légumes ou en fin de repas' && am.buy.id === 'amandes' && am.buy.g === 25, `${poids} kg : 25 g d’amandes au dîner`);
+  near(am.m.kcal, FOOD.amandes[0] * 0.25, 1e-9, 'amandes du dîner');
+  assert.strictEqual(oeuf.note, 'ou 20\u00a0g de parmesan', `${poids} kg : parmesan pour un œuf dur`);
   near(FOOD.parmesan[0] * 0.2, oeuf.m.kcal, 0.15 * oeuf.m.kcal, 'parmesan ≈ œuf dur');
+}
+for (const p of PROT_ORDER) {
+  const r = buildDay(day([]), { pdBase: 'avoine', dej: { prot: p, starch: 'riz' }, diner: { prot: p, starch: 'riz' } });
+  const names = r.secs.flatMap(s => s.items).map(i => i.name);
+  assert(!names.some(n => /avocat/.test(n)) && !Object.prototype.hasOwnProperty.call(FOOD, 'avocat'), 'plus d’avocat');
+  assert.strictEqual(r.secs.find(s => s.id === 'diner').items.some(i => i.key === 'dam'), p === 'poulet' || p === 'poisson', `${p} : amandes au dîner seulement avec viande blanche ou poisson blanc`);
+  assert(!r.secs.find(s => s.id === 'dej').items.some(i => i.key === 'dam'), `${p} : pas d’amandes au déjeuner`);
 }
 // Accords : « 1 œuf » (collation, déjeuner), « une demi-tranche » aux plus petites portions (corrigé en 3.3.2)
 const tiny = composeDay(day([]), oeufsJambon, cleanProfile({ poids: 45 }), 0.5);
