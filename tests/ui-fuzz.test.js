@@ -107,10 +107,11 @@ function scan(dom, label){
   type(dom, 'input[data-range="courses"][data-end="to"]', '2026-09-01'); scan(dom, 'courses, période invalide');
 }
 [
-  ['petite corpulence au-dessus de l’objectif', { sexe: 'f', age: 28, taille: 160, poids: 45, deficit: 25, prot: 2.6 }],
+  ['petite corpulence au-dessus de l’objectif', { sexe: 'f', age: 28, taille: 160, poids: 45, deficit: 25, prot: 2.2 }],
   ['objectif de protéines bas', { age: 35, taille: 178, poids: 71, prot: 1.6 }],
   ['130 kg', { age: 35, taille: 190, poids: 130 }],
-  ['protéines sous la fourchette', { age: 35, taille: 178, poids: 71, prot: 3, shaker: 'non' }]
+  ['objectif de protéines au plus haut, sans shaker', { age: 35, taille: 178, poids: 71, prot: 2.2, shaker: 'non' }],
+  ['objectif enregistré avant la 3.11.1 au-dessus de 2,2', { age: 35, taille: 178, poids: 71, prot: 3, shaker: 'non' }]
 ].forEach(([label, prof]) => {
   const dom = open({ [RKEY]: seen()[RKEY], [PKEY]: JSON.stringify(prof), [KEY]: JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'pain', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }) });
   scan(dom, label); click(dom, '#gear'); scan(dom, label + ', réglages');

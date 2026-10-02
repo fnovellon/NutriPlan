@@ -522,28 +522,30 @@ P 172 g (fourchette 144 à 176, facteur 0.79), G 723 g, L 65 g, portions × 1.11
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
-== 72 kg, 2,6 g/kg, thon deux fois, sans shaker (skyr du soir)
+== 72 kg, 2,2 g/kg, salé, thon deux fois, sans shaker (skyr du soir)
 dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1982 kcal (écart 2)
-P 172 g (fourchette 168 à 206, facteur 1.50), G 179 g, L 57 g, portions × 1.000
+P 153 g (fourchette 143 à 174, facteur 1.50), G 192 g, L 59 g, portions × 1.000
   Petit-déjeuner :
-    60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
-    380 g skyr nature  236 kcal
+    80 g pain complet (2 tranches)  192 kcal
+    2 œufs (à la coque, pochés ou brouillés sans matière grasse)  144 kcal
+    45 g jambon blanc (1 tranche)  54 kcal
     125 g fruits rouges (surgelés, c’est parfait)  48 kcal
-    15 g amandes  89 kcal
   Déjeuner :
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
-    80 g riz basmati [≈ 240 g cuit]  282 kcal
+    200 g gnocchis frais  342 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
-    2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
+    100 g skyr nature (à la place des œufs, déjà au menu aujourd’hui)  62 kcal
+    15 g amandes  89 kcal
   Dîner :
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
-    50 g quinoa [≈ 140 g cuit]  179 kcal
+    280 g pommes de terre [≈ 280 g à l’eau, ≈ 210 g au four]  224 kcal
     250 g légumes (minimum, à volonté)  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
+    5 g huile d’olive (en plus, pour tes lipides)  45 kcal
   Soir (pour compléter tes protéines) :
     150 g skyr nature  93 kcal
 

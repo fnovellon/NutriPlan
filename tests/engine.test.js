@@ -223,7 +223,7 @@ assert.strictEqual(saleLong[0].note, 'environ 3 tranches, en version sucrée ava
 const thonSale = { pdBase: 'sale', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'lentilles' } };
 const ts = buildDay(day([]), thonSale);
 assert(ts.tot.p > ts.prot.high && ts.prot.factor === PF_MIN, `thon deux fois et salé : ${Math.round(ts.tot.p)} g, facteur ${ts.prot.factor}`);
-const tsLow = buildDay(day([]), thonSale, { prot: 3, shaker: 'non' });
+const tsLow = buildDay(day([]), { pdBase: 'sale', dej: { prot: 'thon', starch: 'gnocchis' }, diner: { prot: 'thon', starch: 'pdt' } }, { prot: 2.2, shaker: 'non' });
 assert(tsLow.prot.factor === PF_MAX && tsLow.secs.some(sec => sec.id === 'soir'), 'thon deux fois et salé, objectif haut : butée haute et skyr du soir');
 // Salé et sucré ont presque les mêmes lipides au petit-déjeuner (œufs ≈ amandes), le total du jour ne bouge pas
 const fatPd = items => items.reduce((a, i) => a + i.m.f, 0);
@@ -270,7 +270,7 @@ const sameDay = (label, set, ch, prof) => {
 };
 const oil = sameDay('58 kg sans marge', [petite('matin')], DEFAULT_CHOICES[2], { poids: 58, sexe: 'f', shaker: 'non', marge: 0 });
 assert(oil.secs.find(s => s.id === 'diner').items.some(i => i.key === 'gras'), 'cas sans huile de secours : le test ne vérifie plus rien');
-const soir = sameDay('thon deux fois, 2,6 g/kg, sans shaker', [], { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'quinoa' } }, { prot: 2.6, shaker: 'non' });
+const soir = sameDay('thon deux fois, salé, 2,2 g/kg, sans shaker', [], { pdBase: 'sale', dej: { prot: 'thon', starch: 'gnocchis' }, diner: { prot: 'thon', starch: 'pdt' } }, { prot: 2.2, shaker: 'non' });
 assert(soir.secs.some(s => s.id === 'soir'), 'cas sans skyr du soir : le test ne vérifie plus rien');
 for (const [name, set] of Object.entries(SETS)) sameDay(name, set, DEFAULT_CHOICES[6]);
 
@@ -417,18 +417,20 @@ for (const [name, set] of Object.entries(SETS)) {
 // Thon deux fois (boîte fixe) sans shaker et objectif élevé : les portions sont au maximum, le skyr du soir complète
 const thonThon = { pdBase: 'pain', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'riz' } };
 assert(!buildDay(day([]), thonThon, {}).secs.some(s => s.id === 'soir'), 'thon deux fois avec shaker : pas de skyr du soir');
-const lean = buildDay(day([]), thonThon, { shaker: 'non', prot: 2.4 });
+const lean = buildDay(day([]), { pdBase: 'sale', dej: { prot: 'thon', starch: 'gnocchis' }, diner: { prot: 'thon', starch: 'pdt' } }, { shaker: 'non', prot: 2.2 });
 assert(lean.secs.some(s => s.id === 'soir') && lean.prot.factor === PF_MAX && lean.tot.p >= lean.prot.floor - 0.5, 'skyr du soir de secours sans shaker');
 
 // 18. Objectif de protéines en g/kg, à ± 10 % sur la journée : portions de viande, poisson, œufs et skyr ajustées au plus juste
-assert(cleanProfile({}).prot === 2 && cleanProfile({ prot: 2.4 }).prot === 2.4 && cleanProfile({ prot: 5 }).prot === 2 && cleanProfile({ prot: 1 }).prot === 2, 'bornes de l’objectif de protéines');
+assert(cleanProfile({}).prot === 2 && cleanProfile({ prot: 2.2 }).prot === 2.2 && cleanProfile({ prot: 1.6 }).prot === 1.6 && cleanProfile({ prot: 5 }).prot === 2 && cleanProfile({ prot: 1 }).prot === 2, 'bornes de l’objectif de protéines : 1,6 à 2,2');
+// 3.11.1 : un objectif enregistré au-dessus de 2,2 (permis jusqu'à 3,0 avant) devient 2,2, pas la valeur par défaut
+assert(cleanProfile({ prot: 2.4 }).prot === 2.2 && cleanProfile({ prot: 3 }).prot === 2.2 && profileFields({ prot: 2.6 }).prot === 2.2 && cleanProfile({ prot: 3.1 }).prot === 2, 'objectif enregistré au-dessus de 2,2');
 near(protTarget(cleanProfile({})), 144, 1e-9, 'objectif par défaut : 2 × 72 kg');
 near(protTarget(cleanProfile({ poids: 150, prot: 2 })), 2 * 72 * 1.4, 1e-9, 'objectif sur le poids borné');
 const pday = (set, ch, x) => buildDay(day(set), ch || DEFAULT_CHOICES[1], x);
 const pq = (r, sec, key) => r.secs.find(s => s.id === sec).items.find(i => i.key === key).qty;
 // Chaque journée (toutes les journées types) : protéines dans la fourchette objectif ± 10 %, portions au plus près du menu de base
 let npt = 0;
-for (const prot of [2, 2.2, 2.6]) for (const [name, set] of Object.entries(SETS)) for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['pates', 'gnocchis'], ['lentilles', 'quinoa']]) {
+for (const prot of [1.8, 2, 2.2]) for (const [name, set] of Object.entries(SETS)) for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['pates', 'gnocchis'], ['lentilles', 'quinoa']]) {
   const r = pday(set, { pdBase: 'avoine', dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, { prot });
   const combo = `${prot} g/kg/${name}/${p1}+${s1}/${p2}+${s2}`;
   assert(protOk(r), `${combo} : ${Math.round(r.tot.p)} g (${Math.round(r.prot.low)} à ${Math.round(r.prot.high)}, facteur ${r.prot.factor.toFixed(2)})`);
@@ -437,10 +439,10 @@ for (const prot of [2, 2.2, 2.6]) for (const [name, set] of Object.entries(SETS)
   if (r.prot.factor > 1 + 0.02 && r.prot.factor < PF_MAX - 0.02) assert(r.tot.p <= r.prot.target + 1, `${combo} : ${Math.round(r.tot.p)} g, portions augmentées plus que nécessaire`);
   npt++;
 }
-assert.strictEqual(pday([], undefined, { prot: 2.4 }).prot.factor, 1, 'dans la fourchette, le menu de base ne bouge pas');
+assert.strictEqual(pday([], DEFAULT_CHOICES[4], { prot: 2.2 }).prot.factor, 1, 'dans la fourchette, le menu de base ne bouge pas');
 assert.strictEqual(pq(pday([], DEFAULT_CHOICES[1]), 'dej', 'p1'), pq(buildDay(day([], { libre: true }), DEFAULT_CHOICES[1]), 'dej', 'p1'), 'portions changées par le repas libre');
 // Plus d'objectif, plus de viande et moins de féculents ; le total du jour ne bouge pas
-const p20 = pday([], undefined, { prot: 2 }), p26 = pday([], undefined, { prot: 2.6 });
+const p20 = pday([], undefined, { prot: 2 }), p26 = pday([], undefined, { prot: 2.2 });
 assert(parseInt(pq(p26, 'dej', 'p1')) > parseInt(pq(p20, 'dej', 'p1')) && parseInt(pq(p26, 'pd', 'skyr')) > parseInt(pq(p20, 'pd', 'skyr')), 'objectif plus haut, portions plus grandes');
 assert(starchKcal(p26)[0] < starchKcal(p20)[0], 'objectif plus haut, moins de féculents');
 near(p26.tot.kcal, p20.tot.kcal, 30, 'total du jour indépendant de l’objectif de protéines');

@@ -434,8 +434,8 @@ assert.strictEqual(prof().neat, 'debout', 'activité hors sport');
 const pouletQty = () => parseInt([...p.d.querySelectorAll('#day li')].find(li => /viande blanche maigre/.test(li.textContent)).querySelector('.qty').textContent, 10);
 assert(/2,0\sg\/kg/.test(p.$('#out-prot').textContent) && /Environ 140\sg par jour \(2,0 × 70,0\skg\)/.test(p.$('#calc-prot').textContent), 'objectif de protéines par défaut : ' + p.$('#calc-prot').textContent);
 const poulet20 = pouletQty();
-type('prot', 2.4);
-assert(prof().prot === 2.4 && /2,4\sg\/kg/.test(p.$('#out-prot').textContent) && /Environ 168\sg/.test(p.$('#calc-prot').textContent), 'objectif de protéines non enregistré');
+type('prot', 2.2);
+assert(prof().prot === 2.2 && /2,2\sg\/kg/.test(p.$('#out-prot').textContent) && /Environ 154\sg/.test(p.$('#calc-prot').textContent), 'objectif de protéines non enregistré');
 assert(pouletQty() > poulet20 && /Aujourd’hui\s:\s\d+\sg/.test(p.$('#calc-prot').textContent), 'portions non ajustées à l’objectif de protéines');
 type('prot', 2);
 
@@ -546,18 +546,21 @@ mid.choose('dessert', 'dej', 'fruit');
 assert(!dejLines().some(t => /compote/.test(t)) && dejLines().some(t => /pomme, poire/.test(t)), 'deux desserts au déjeuner : ' + dejLines().join(' | '));
 
 // Petite corpulence : portions réduites ; objectif de protéines élevé : conseil si les minimums dépassent l'objectif
-const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 25, prot: 2.6 });
+const light = legacy({ mode: 'auto', sexe: 'f', age: 28, taille: 160, poids: 52, deficit: 25, prot: 2.2 });
 const skyrPd = [...light.d.querySelectorAll('[aria-labelledby="h-pd"] .items li')].find(li => /skyr/.test(li.textContent));
 assert(parseInt(skyrPd.querySelector('.qty').textContent, 10) < 250, '52 kg : skyr du petit-déjeuner ' + skyrPd.querySelector('.qty').textContent);
 assert(/dépassent l’objectif/.test(light.$('#sum-note').textContent) && /baisse la marge cuisine, passe-toi du shaker ou baisse ton objectif de protéines/.test(light.$('#sum-note').textContent), '52 kg : ' + light.$('#sum-note').textContent);
-// Protéines sous la fourchette malgré les portions au maximum (thon deux fois, 3,0 g/kg, sans shaker) : la page le dit
+// Objectif de protéines de 1,6 à 2,2 g/kg (3.11.1) : un objectif enregistré à 3,0 avant est relu comme 2,2 ;
+// même thon midi et soir sans shaker, les protéines restent alors dans la fourchette (le skyr du soir complète au besoin)
 const thon2 = tools(open(ls => {
   ls.setItem(PKEY, JSON.stringify({ mode: 'auto', age: 35, taille: 178, poids: 71, prot: 3, shaker: 'non' }));
   ls.setItem(KEY, JSON.stringify({ plans: {}, choices: { 3: { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } } } }));
 }));
-assert(/Tes protéines restent sous ton objectif \(\d+\sg, pour 192 à 234\sg\)\s: remplace le thon, reprends un shaker ou baisse ton objectif de protéines\./.test(thon2.$('#sum-note').textContent), 'protéines sous la fourchette : ' + thon2.$('#sum-note').textContent);
+assert(thon2.$('#in-prot').max === '2.2' && thon2.$('#in-prot').min === '1.6' && thon2.$('#out-prot').textContent === '2,2\u00a0g/kg', 'curseur des protéines : ' + thon2.$('#out-prot').textContent);
+assert(/de 141 à 172\sg/.test(thon2.$('#calc-prot').textContent) && /Repère en sèche\s: 1,6 à 2,2\sg\/kg, 2,0 par défaut\./.test(thon2.$('#calc-prot').textContent), 'objectif relu à 2,2 : ' + thon2.$('#calc-prot').textContent);
+assert(!/restent sous ton objectif/.test(thon2.$('#sum-note').textContent), 'protéines sous la fourchette à 2,2 g/kg : ' + thon2.$('#sum-note').textContent);
 thon2.choose('pd', null, 'sale');
-assert(/: remplace le thon, prends un petit-déjeuner sucré \(avec du skyr\), reprends un shaker ou baisse ton objectif de protéines\./.test(thon2.$('#sum-note').textContent), 'salé, protéines sous la fourchette : ' + thon2.$('#sum-note').textContent);
+assert(!/restent sous ton objectif/.test(thon2.$('#sum-note').textContent), 'salé, protéines sous la fourchette à 2,2 g/kg : ' + thon2.$('#sum-note').textContent);
 assert(!/restent sous ton objectif/.test(p.$('#sum-note').textContent), 'alerte protéines sans raison');
 // Au-delà de 101 kg (ou sous 47 kg), le calcul des protéines s'arrête à la borne des portions, et la page l'explique
 for (const [poids, re] of [[130, /2,0 × 100,8\skg\)[^]*Au-delà de 100,8\skg, ton objectif et tes portions ne suivent plus ton poids\./], [40, /2,0 × 46,8\skg\)[^]*Sous 46,8\skg, ton objectif et tes portions ne suivent plus ton poids\./]]) {

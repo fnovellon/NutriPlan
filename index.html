@@ -547,7 +547,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
       <p class="warn" id="warn-deficit"></p>
       <div class="range">
         <div class="range-h"><label for="in-prot">Protéines</label><output id="out-prot" for="in-prot"></output></div>
-        <input type="range" id="in-prot" data-key="prot" min="1.6" max="3" step="0.1">
+        <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
       </div>
       <p class="calc" id="calc-prot"></p>
       <div class="range">
@@ -715,7 +715,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.11.0';
+const APP_VERSION = '3.11.1';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -1068,7 +1068,7 @@ function randomChoices(rand, off, bal, k){
 
 /* Profil et dépense énergétique */
 const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], semaine:{jours:{}, libre:6}};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,3]};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,2.2]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
 const KCAL_PER_KG = 7700;
@@ -1084,6 +1084,9 @@ function profileFields(o){
     const v = o[k], r = PROFILE_RANGES[k];
     if (typeof v === 'number' && v >= r[0] && v <= r[1]) out[k] = v;
   });
+  /* Objectif de protéines borné à 2,2 g/kg depuis la 3.11.1 : un objectif enregistré plus haut (jusqu'à 3,0, permis avant)
+     devient 2,2 plutôt que la valeur par défaut */
+  if (typeof o.prot === 'number' && o.prot > PROFILE_RANGES.prot[1] && o.prot <= 3) out.prot = PROFILE_RANGES.prot[1];
   if (Array.isArray(o.off)){ const off = cleanOff(o.off); if (off.length) out.off = off; }
   if (o.semaine && typeof o.semaine === 'object'){ const w = cleanWeek(o.semaine); if (Object.keys(w.jours).length || w.libre !== 6) out.semaine = w; }
   return out;
@@ -1745,7 +1748,7 @@ if (typeof document !== 'undefined'){
       ' Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g' +
       (res.libre ? ' hors repas libre.' : '.') +
       (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
-      ' Repère en sèche' + NB + ': 1,6 à 2,4' + NB + 'g/kg.';
+      ' Repère en sèche' + NB + ': 1,6 à 2,2' + NB + 'g/kg, 2,0 par défaut.';
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
     $('out-marge').textContent = pr.marge + NB + 'kcal';
     [['kcalPetite', {taille:'petite'}], ['kcalMoyenne', {taille:'moyenne'}], ['kcalLongueH', {taille:'longue', duree:1}]].forEach(function(x){

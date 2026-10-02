@@ -25,7 +25,8 @@ function randProfile(){
   if (R.chance(.3)) p.repos = R.int(PR.repos[0], PR.repos[1]);
   if (R.chance(.6)) p.neat = R.pick(['assis', 'mixte', 'debout']);
   if (R.chance(.7)) p.deficit = R.int(0, 25);
-  if (R.chance(.5)) p.prot = R.between(1.6, 3, 0.1);
+  // Objectif de protéines : 1,6 à 2,2 g/kg ; parfois plus haut (enregistré avant la 3.11.1), relu comme 2,2
+  if (R.chance(.5)) p.prot = R.chance(.85) ? R.between(1.6, 2.2, 0.1) : R.between(2.3, 3, 0.1);
   if (R.chance(.4)) p.ravito = R.between(30, 90, 5);
   if (R.chance(.4)) p.shaker = R.pick(['oui', 'non']);
   if (R.chance(.3)){ p.shakerKcal = R.int(100, 160); p.shakerProt = R.between(10, 40, 0.5); }
@@ -191,14 +192,13 @@ for (let i = 0; i < N; i++){
     if (ch.pdBase === 'sale' && long) C.ok(/version sucrée/.test(pd[0].note), 'sortie longue : version sucrée non dite', () => pd[0].note);
   }
 
-  // Lipides : plancher toujours ; plafond (+ 8,4 g par chocolat) avec une marge cuisine d'au plus 150 kcal et un objectif
-  // de protéines dans la fourchette conseillée (jusqu'à 2,4 g/kg, 47 kg et plus : au-delà, saumon, œufs ou halloumi
-  // augmentés peuvent le dépasser d'environ 15 %), sauf si les féculents sont déjà au plancher (la page le dit)
+  // Lipides : plancher toujours ; plafond (+ 8,4 g par chocolat) avec une marge cuisine d'au plus 150 kcal, dès 47 kg
+  // (une marge de 250 kcal peut le dépasser d'environ 15 %), sauf si les féculents sont déjà au plancher (la page le dit)
   if (!plan.libre){
     C.ok(r.tot.f >= A.FAT_MIN * k - 0.5, 'lipides sous le plancher', () => r.tot.f.toFixed(1) + ' < ' + (A.FAT_MIN * k).toFixed(1) + ' ' + input);
     const choc = ['dej', 'diner'].filter(id => ch[id].dessert === 'chocolat').length;
     const huile = items.find(x => x.key === 'gras');
-    if (pr.marge <= 150 && pr.prot <= 2.4 && pr.poids >= 47 && !atFloor(r, ch)) C.ok(r.tot.f <= Math.max(A.FAT_MAX * k, 0.35 * T / 9) + 8.4 * choc + 0.5, 'lipides au-dessus du plafond', () => r.tot.f.toFixed(1) + ' ' + input);
+    if (pr.marge <= 150 && pr.poids >= 47 && !atFloor(r, ch)) C.ok(r.tot.f <= Math.max(A.FAT_MAX * k, 0.35 * T / 9) + 8.4 * choc + 0.5, 'lipides au-dessus du plafond', () => r.tot.f.toFixed(1) + ' ' + input);
     // Huile de secours : seulement s'il manque des lipides sans elle
     if (huile) C.ok(r.tot.f - huile.m.f < A.FAT_MIN * k + 0.5, 'huile de secours inutile', () => r.tot.f.toFixed(1) + ' ' + input);
   }

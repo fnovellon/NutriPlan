@@ -1,5 +1,9 @@
 # Nouveautés
 
+## 3.11.1, 2 octobre 2026
+
+- L'objectif de protéines se règle maintenant de 1,6 à 2,2 g/kg (2,0 par défaut), la fourchette conseillée en sèche. Si tu l'avais mis plus haut, il passe à 2,2 g/kg.
+
 ## 3.11.0, 2 octobre 2026
 
 - Nouvelle carte « Ta semaine type » dans les réglages : indique tes séances habituelles jour par jour (petite, moyenne, longue, et leur moment) et le soir de ton repas libre.
