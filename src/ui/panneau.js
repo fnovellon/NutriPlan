@@ -9,6 +9,7 @@
     pick = {kind:kind, slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'};
     $('sheet-t').textContent = P.title;
     $('sheet-list').hidden = false;
+    $('sheet-list').classList.remove('swap');
     $('sheet-rec').hidden = true;
     $('sheet-list').innerHTML = P.opts.map(function(o){
       return '<button type="button" class="opt" data-action="' + (ctx === 'repas' ? 'rf' : P.action) + '" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +

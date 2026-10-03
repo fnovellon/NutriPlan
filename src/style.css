@@ -336,6 +336,11 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 .b-t{font-size:17px;font-weight:600;line-height:1.3;}
 .b-n{font-family:var(--sans);font-size:14px;color:var(--muted);}
 .b-body{padding:0 14px 14px;}
+.b-swap{margin:2px 0 4px;}
+#courses-msg:empty{margin:0;}
+.opts-list.swap{flex-direction:column;flex-wrap:nowrap;}
+.opts-list.swap .opt{text-align:left;border-radius:16px;}
+.opts-list.swap .rf-l{margin:8px 0 0;}
 .b-body .rec-h:first-child{margin-top:4px;}
 .b-list{margin:8px 0 0;padding:0;list-style:none;}
 .b-list li{display:grid;grid-template-columns:5.6rem minmax(0,1fr);column-gap:12px;align-items:baseline;padding:4px 0;font-size:16px;line-height:1.35;}

@@ -13,6 +13,7 @@
   const renderCourses = function(keepInputs){
     if (!keepInputs && (!isoOk(shop.from) || !isoOk(shop.to) || dayDiff(fromIso(shop.to)) < 0)){ shop.from = isoDate(today); shop.to = isoDate(addDays(today, 6)); }
     const err = fillRange('courses', shop, -21, keepInputs);
+    $('courses-msg').textContent = '';
     if (err){ $('courses-list').innerHTML = ''; $('courses-days').innerHTML = ''; $('courses-batch').innerHTML = ''; return; }
     const days = rangeDays(shop.from, shop.to), res = days.map(dayResult);
     $('courses-batch').innerHTML = batchHTML(days, res);
@@ -40,6 +41,7 @@
     const lead = dayDiff(fromIso(days[0])) <= 0 ? 0 : 1;
     const blocks = batchCook(res.map(function(r){ return {res:r}; }), lead);
     if (!blocks.length) return '';
+    const pr = cleanProfile(prof);
     const li = function(q, name, note){ return '<li><span class="b-q">' + q + '</span><span class="name">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</span></li>'; };
     return '<h2 class="shop-t" id="batch-h">Ton batch cooking</h2>' + blocks.map(function(bl){
       const start = fromIso(days[bl.start]), cook = bl.start === 0 && lead === 0 ? start : addDays(start, -1);
@@ -49,8 +51,11 @@
         (ng ? ' Un plat cuisiné se garde 3' + NB + 'jours au frigo' + NB + ': mets ' + (ng > 1 ? 'les ' + ng + ' boîtes marquées' : 'la boîte marquée') + ' «' + NB + 'congélateur' + NB + '» au congélateur et sors-' + (ng > 1 ? 'les' : 'la') + ' la veille au soir.' : '') + '</p>' +
         bl.recipes.map(function(r){
           const g = r.boxes.filter(function(x){ return !x.fridge; }).length, n = r.boxes.length, x = RECIPES[r.id];
+          const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr)).length;
           return '<details class="batch"><summary><span class="b-s"><span class="b-t">' + r.t + '</span><span class="b-n">' + n + NB + 'boîtes' +
             (g ? ', dont ' + g + ' au congélateur' : '') + '</span></span></summary><div class="b-body">' +
+            (swap ? '<button type="button" class="btn b-swap" id="swap-' + bl.start + '-' + r.id + '" data-action="co-swap" data-value="' + bl.start + '|' + r.id + '">Changer de recette</button>'
+              : '<p class="calc">Aucune autre recette ne va avec ta semaine.</p>') +
             '<h3 class="rec-h">À cuire en tout</h3><ul class="b-list">' + r.totals.map(function(t){ return li(t.qty, t.name, t.note); }).join('') + '</ul>' +
             '<h3 class="rec-h">Les boîtes</h3><ul class="b-list">' + r.boxes.map(function(bx){
               const d = fromIso(days[bx.day]);
@@ -64,6 +69,34 @@
     }).join('');
   };
   /* Actions des courses : ouvrir, cocher une ligne, tout décocher, ouvrir un jour */
+  /* Changer une recette du batch cooking (3.16.0) : les jours de son bloc (7 jours à partir de start dans la période des
+     courses), avec leurs plats et leur repas libre */
+  const swapBlock = function(start, days){
+    const isos = (days || rangeDays(shop.from, shop.to)).slice(start, start + BATCH_BLOCK);
+    return {isos:isos, days:isos.map(function(iso){ return {ch:choicesFor(iso, fromIso(iso).getDay()), libre:planFor(iso).libre}; })};
+  };
+  /* Panneau du bas : « Une autre au hasard », puis les recettes qui vont (même protéine d'abord) */
+  const openSwap = function(start, id, trigger){
+    const pr = cleanProfile(prof), opts = has(RECIPES, id) ? batchSwapOptions(swapBlock(start).days, id, pr.off, scaleOf(pr)) : [];
+    if (!opts.length) return;
+    const same = opts.filter(function(x){ return RECIPES[x].p === RECIPES[id].p; }), other = opts.filter(function(x){ return RECIPES[x].p !== RECIPES[id].p; });
+    const opt = function(v, t, s){ return '<button type="button" class="opt" data-action="co-swap-to" data-value="' + v + '">' + t + '<span class="opt-s">' + s + '</span></button>'; };
+    const list = function(a){ return a.map(function(x){ return opt(x, RECIPES[x].t, RECIPES[x].min + NB + 'min'); }).join(''); };
+    pick = {kind:'swap', start:start, id:id, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'courses'};
+    $('sheet-t').textContent = 'Remplacer «' + NB + RECIPES[id].t + NB + '»';
+    $('sheet-rec').hidden = true;
+    $('sheet-list').hidden = false;
+    $('sheet-list').classList.add('swap');
+    $('sheet-list').innerHTML = opt('*', 'Une autre au hasard', 'parmi celles qui vont avec ta semaine') +
+      (same.length ? '<p class="rf-l">Avec la même protéine</p>' + list(same) : '') +
+      (other.length ? '<p class="rf-l">' + (same.length ? 'Avec une autre protéine' : 'Recettes possibles') + '</p>' + list(other) : '');
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    $(pick.view).setAttribute('inert', '');
+    document.documentElement.style.overflow = 'hidden';
+    $('sheet-list').querySelector('.opt').focus({preventScroll:true});
+  };
   Object.assign(ACTIONS, {
     courses: function(b){ renderCourses(false); openScreen('courses', b); },
     'co-check': function(b, v){
@@ -81,5 +114,34 @@
       render();
       scroller().scrollTop = 0;
       $('title').focus({preventScroll:true});
+    },
+    'co-swap': function(b, v){
+      const p = String(v).split('|');
+      if (!/^\d+$/.test(p[0])) return;
+      openSwap(+p[0], p[1], b);
+    },
+    /* La recette choisie (ou tirée) remplace l'ancienne dans tous ses repas du bloc ; la fiche s'ouvre sur elle */
+    'co-swap-to': function(b, v){
+      if (!pick || pick.kind !== 'swap') return;
+      const s = pick, pr = cleanProfile(prof), k = scaleOf(pr), blk = swapBlock(s.start);
+      const opts = batchSwapOptions(blk.days, s.id, pr.off, k), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k) : v;
+      closePick(false);
+      if (!nid || opts.indexOf(nid) < 0) return;
+      const next = batchSwap(blk.days, s.id, nid, pr.off);
+      let n = 0;
+      blk.isos.forEach(function(iso, j){
+        const d = blk.days[j];
+        n += ['dej', 'diner'].filter(function(sl){ return d.ch[sl].recette === s.id && !(sl === 'diner' && d.libre); }).length;
+        if (JSON.stringify(next[j]) === JSON.stringify(d.ch)) return;
+        const js = fromIso(iso).getDay(), c = cleanCh(next[j], js);
+        writeDay(iso, {ch:c});
+        store.choices[js] = c;
+      });
+      persist();
+      loadSel(); prevQty = new Map(); render();
+      renderCourses(true);
+      $('courses-msg').textContent = '«' + NB + RECIPES[nid].t + NB + '» remplace «' + NB + RECIPES[s.id].t + NB + '» dans tes ' + n + NB + 'boîtes.';
+      const again = $('swap-' + s.start + '-' + nid);
+      if (again){ again.closest('details').open = true; again.focus({preventScroll:true}); }
     }
   });

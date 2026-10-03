@@ -1101,9 +1101,51 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     const sum = [...card.querySelectorAll('.b-list')[1].querySelectorAll('li .name')].reduce((a, n) => a + Number(n.textContent.match(/^\d+/)[0]), 0);
     assert(Math.abs(total - sum) <= (total >= 1000 ? 5 : 0), 'à cuire ≠ somme des boîtes : ' + total + ' / ' + sum);
   });
-  // La page du jour suit : recette choisie à midi
+  // Changer une recette (3.16.0) : bouton dans la fiche, panneau « Une autre au hasard » puis les recettes qui vont ;
+  // Échap ne change rien ; un choix remplace l'ancienne dans toutes ses boîtes, la fiche s'ouvre sur elle, le message le dit
+  {
+    const ids = Object.keys(count), stored0 = JSON.stringify(bt.stored());
+    const btn = cards[0].querySelector('[data-action="co-swap"]'), oldId = btn.dataset.value.split('|')[1], oldT = cards[0].querySelector('.b-t').textContent;
+    assert(btn.dataset.value === '0|' + oldId && ids.includes(oldId) && btn.textContent === 'Changer de recette', 'bouton changer de recette');
+    btn.click();
+    assert(!bt.$('#sheet').hidden && bt.$('#courses').hasAttribute('inert') && bt.$('#sheet-t').textContent === 'Remplacer «\u00a0' + oldT + '\u00a0»' && bt.$('#sheet-list').classList.contains('swap'), 'panneau changer : ' + bt.$('#sheet-t').textContent);
+    const opts = [...bt.d.querySelectorAll('#sheet .opt')];
+    assert(opts[0].dataset.value === '*' && /^Une autre au hasard/.test(opts[0].textContent) && bt.d.activeElement === opts[0], 'au hasard en tête, focus dessus');
+    const prots = ids.filter(x => x !== oldId).map(x => x.split('-')[0]);
+    opts.slice(1).forEach(o => assert(!ids.includes(o.dataset.value) && !prots.includes(o.dataset.value.split('-')[0]) && /\d\u00a0min$/.test(o.querySelector('.opt-s').textContent), 'recette proposée : ' + o.dataset.value));
+    bt.d.dispatchEvent(new bw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    assert(bt.$('#sheet').hidden && JSON.stringify(bt.stored()) === stored0 && bt.d.activeElement === btn && !bt.$('#courses').hasAttribute('inert'), 'Échap : rien ne change, focus rendu');
+    // Une recette de la liste (la dernière : une autre protéine)
+    btn.click();
+    const last = [...bt.d.querySelectorAll('#sheet .opt')].pop(), nid = last.dataset.value;
+    last.click();
+    assert(bt.$('#sheet').hidden && !bt.$('#courses').hasAttribute('inert'), 'panneau fermé après le choix');
+    const st2 = bt.stored(), count2 = {};
+    isos.forEach(iso => { const c = st2.plans[iso].ch; (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).forEach(m => { assert.strictEqual(m.recette, m.prot + '-' + m.starch, 'recette enregistrée'); count2[m.recette] = (count2[m.recette] || 0) + 1; }); });
+    assert(!count2[oldId] && count2[nid] === count[oldId] && ids.filter(x => x !== oldId).every(x => count2[x] === count[x]), 'remplacée dans toutes ses boîtes : ' + JSON.stringify(count2));
+    isos.forEach(iso => { const c = st2.plans[iso].ch, c0 = st.plans[iso].ch; assert(c.dej.prot !== c.diner.prot && c.dej.dessert === c0.dej.dessert, 'même protéine ou dessert changé : ' + iso); });
+    const card2 = bt.$('#swap-0-' + nid).closest('details');
+    assert(card2.open && bt.d.activeElement === bt.$('#swap-0-' + nid) && card2.querySelectorAll('.b-list')[1].querySelectorAll('li').length === count[oldId], 'fiche ouverte sur la remplaçante, focus');
+    assert.strictEqual(bt.$('#courses-msg').textContent, '«\u00a0' + card2.querySelector('.b-t').textContent + '\u00a0» remplace «\u00a0' + oldT + '\u00a0» dans tes ' + count[oldId] + '\u00a0boîtes.');
+    // Au hasard : une autre recette, toujours trois recettes et 13 boîtes
+    bt.$('#swap-0-' + nid).click();
+    bt.click('#sheet .opt[data-value="*"]');
+    const st3 = bt.stored(), count3 = {};
+    isos.forEach(iso => { const c = st3.plans[iso].ch; (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).forEach(m => { count3[m.recette] = (count3[m.recette] || 0) + 1; }); });
+    assert(!count3[nid] && Object.keys(count3).length === 3 && Object.values(count3).reduce((x, y) => x + y, 0) === 13, 'au hasard : ' + JSON.stringify(count3));
+    assert.deepStrictEqual(st3.choices[3], st3.plans['2026-10-07'].ch, 'mémoire du mercredi après le changement');
+  }
+  // La page du jour suit : recette choisie à midi, celle enregistrée pour aujourd'hui
   bt.click('#courses [data-action="fermer"]');
   assert(bt.$('[aria-labelledby="h-dej"] .rec.is-on'), 'recette du batch sur la page');
+  {
+    const id = bt.stored().plans['2026-10-07'].ch.dej.recette;
+    assert.strictEqual(bt.$('[aria-labelledby="h-dej"] .rec-h3').textContent, bt.d.defaultView.eval('RECIPES')[id].t, 'page du jour à jour après le changement : ' + id);
+    // Panneau de choix d'un plat ensuite : la liste reprend sa forme de bulles
+    bt.click('[data-action="open-pick"][data-kind="starch"][data-slot="dej"]');
+    assert(!bt.$('#sheet-list').classList.contains('swap'), 'panneau de choix en bulles');
+    bt.click('#sheet .sheet-x');
+  }
   // Période invalide : pas de batch
   bt.click('#plan-btn');
   const end = bt.$('input[data-range="plan"][data-end="to"]');

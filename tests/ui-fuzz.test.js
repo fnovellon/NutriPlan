@@ -236,6 +236,22 @@ function check(dom, log){
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
   });
 }
+// Batch cooking : changer une recette de la fiche (une de la liste, au hasard, ou panneau fermé sans rien changer)
+function swapRecipe(dom){
+  const d = dom.window.document, sw = R.pick([...d.querySelectorAll('#courses-batch [data-action="co-swap"]')]);
+  if (!sw || d.querySelector('#courses').hidden) return;
+  const before = dom.window.localStorage.getItem(KEY), how = R.pick(['liste', 'hasard', 'échap']);
+  sw.click();
+  if (d.querySelector('#sheet').hidden || !d.querySelector('#courses').hasAttribute('inert')) throw new Error('panneau changer non ouvert');
+  const opts = [...d.querySelectorAll('#sheet .opt')];
+  if (how === 'échap') d.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  else (how === 'hasard' ? opts[0] : R.pick(opts.slice(1))).click();
+  if (!d.querySelector('#sheet').hidden || d.querySelector('#courses').hasAttribute('inert')) throw new Error('panneau changer resté ouvert');
+  if (how === 'échap') C.ok(dom.window.localStorage.getItem(KEY) === before, 'changer : Échap a changé les plats', '');
+  else C.ok(/ remplace /.test(d.querySelector('#courses-msg').textContent) && d.activeElement && d.activeElement.dataset.action === 'co-swap', 'changer : message ou focus', () => d.querySelector('#courses-msg').textContent);
+  swaps++;
+}
+let swaps = 0;
 const ACTIONS = {
   add: dom => { const b = R.pick([...dom.window.document.querySelectorAll('#acts button')]); b.click(); return 'ajoute ' + b.dataset.value; },
   moment: dom => { const b = R.pick([...dom.window.document.querySelectorAll('[data-action="smoment"],[data-action="sduree"]')]); if (!b) return 'moment -'; b.click(); return 'moment ' + b.dataset.value; },
@@ -360,6 +376,7 @@ const ACTIONS = {
       R.pick([...d.querySelectorAll('[data-action="pl-nrec"]')]).click();
       d.querySelector('[data-action="pl-batch"]').click();
       if (!d.querySelector('#plan').hidden) d.querySelector('#plan [data-action="fermer"]').click();
+      for (let i = R.chance(.7) ? R.int(1, 2) : 0; i > 0; i--) swapRecipe(dom);
       C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', 'batch');
       if (!d.querySelector('#courses').hidden && R.chance(.3)) d.querySelector('#courses [data-action="fermer"]').click();
       return 'planifier batch';
@@ -391,6 +408,7 @@ const ACTIONS = {
     const d = dom.window.document;
     if (d.querySelector('#courses').hidden){ if (d.querySelector('#page').hidden) return 'courses -'; d.querySelector('#courses-btn').click(); }
     for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#courses-list .chk')]); if (b) b.click(); }
+    if (R.chance(.5)) swapRecipe(dom);
     if (R.chance(.3)) type(dom, 'input[data-range="courses"][data-end="' + R.pick(['from', 'to']) + '"]', R.pick(['2026-10-10', '2026-10-31', '', '2026-09-01', '2027-06-01']));
     const day = R.pick([...d.querySelectorAll('#courses-days .shop-day')]);
     if (day && R.chance(.4)) day.click(); else d.querySelector('#courses [data-action="fermer"]').click();
@@ -480,4 +498,4 @@ for (let run = 0; run < RUNS; run++){
   }
 }
 C.ok(errors.length === 0, 'erreur JavaScript dans la page', () => errors.slice(0, 3).join(' | '));
-C.done(actions + ' actions au hasard, 9 dates, ' + C.checks + ' vérifications, graine ' + seed);
+C.done(actions + ' actions au hasard (dont ' + swaps + ' sur « Changer de recette »), 9 dates, ' + C.checks + ' vérifications, graine ' + seed);

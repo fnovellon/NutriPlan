@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 3.16.0, 3 octobre 2026
+
+- Batch cooking : une recette ne te plaît pas ? Dans sa fiche (« Ton batch cooking », sur l'écran des courses), « Changer de recette » propose « Une autre au hasard » ou la liste des recettes qui vont avec ta semaine (la même protéine d'abord). La nouvelle prend toutes les boîtes de l'ancienne : quantités, fiche et courses suivent.
+- Seules les recettes qui respectent les règles du batch sont proposées : elles se gardent, avec tes aliments, sans la protéine d'une autre recette de la semaine, sans dépasser la viande rouge ni la charcuterie, et celles qui se congèlent mal seulement si elles sont mangées dans les 3 premiers jours.
+
 ## 3.15.0, 3 octobre 2026
 
 - Nouveau dans les réglages : « Effacer mes données ». « Tout effacer » demande une confirmation, puis supprime de cet appareil ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L'appli repart comme au premier lancement, avec l'accueil.

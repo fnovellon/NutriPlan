@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -692,6 +692,40 @@ for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; se
     const line = r.totals.find(t => t.id === RECIPES[r.id].s);
     assert.strictEqual(line.qty, st < 1000 ? st + ' g' : (Math.round(st / 10) / 100).toLocaleString('fr-FR') + ' kg', `${combo} : féculent à cuire`);
   }
+  // Changer une recette (3.16.0) : chacune peut être remplacée ; la remplaçante prend toutes ses boîtes, rien d'autre ne
+  // bouge, et les règles du batch tiennent (protéines, congélation, viande rouge et charcuterie)
+  const bdays = cs.map((ch, i) => ({ ch, libre: days[i].libre }));
+  for (const id of Object.keys(count)) {
+    const opts = batchSwapOptions(bdays, id, [], k), sw = `${combo}, ${id}`;
+    assert(opts.length > 0, `${sw} : aucune recette de remplacement`);
+    const others = Object.keys(count).filter(x => x !== id);
+    opts.forEach(x => assert(x !== id && RECIPES[x].box && !others.includes(x) && !others.some(o => RECIPES[o].p === RECIPES[x].p), `${sw} : ${x} proposée`));
+    const same = opts.filter(x => RECIPES[x].p === RECIPES[id].p);
+    assert.deepStrictEqual(opts.slice(0, same.length), same, `${sw} : même protéine d'abord`);
+    const pickd = batchSwapPick(bdays, id, [], k, lcg(seed));
+    assert(opts.includes(pickd) && pickd === batchSwapPick(bdays, id, [], k, lcg(seed)), `${sw} : au hasard`);
+    for (const nid of new Set([opts[0], opts[opts.length - 1], pickd])) {
+      const after = batchSwap(bdays, id, nid, []), x = RECIPES[nid], sn = `${sw} → ${nid}`;
+      after.forEach((c, i) => {
+        for (const slot of ['dej', 'diner']) {
+          const was = cs[i][slot];
+          if (was.recette === id) assert(c[slot].recette === nid && c[slot].prot === x.p && c[slot].starch === x.s && c[slot].dessert === was.dessert, `${sn} : repas remplacé`);
+          else assert.deepStrictEqual(plain(c[slot]), plain(was), `${sn} : autre repas changé`);
+        }
+        if (!days[i].libre) assert(c.dej.prot !== c.diner.prot, `${sn} : même protéine midi et soir le jour ${i}`);
+        if (c.pdBase === 'sale') assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', `${sn} : œufs-jambon avec le salé`);
+        assert(c.pdBase === cs[i].pdBase || (x.p === 'oeufs' && cs[i].pdBase === 'sale' && c.pdBase === 'avoine'), `${sn} : petit-déjeuner changé`);
+        if (!x.gel) ['dej', 'diner'].forEach(slot => { if (cs[i][slot].recette === id && !(slot === 'diner' && days[i].libre)) assert(i < FRIDGE_DAYS, `${sn} : se congèle mal, le jour ${i}`); });
+      });
+      const meals = after.flatMap((c, i) => days[i].libre ? [c.dej] : [c.dej, c.diner]);
+      const beef = meals.filter(m => m.prot === 'boeuf').length * Math.round(150 * k / 10) * 10 * 0.75;
+      const ham = meals.filter(m => m.prot === 'oeufs').length * Math.round(90 * k / 5) * 5 + after.filter(c => c.pdBase === 'sale').length * Math.round(45 * k / 5) * 5;
+      if (x.p === 'boeuf') assert(beef <= 500.5, `${sn} : viande rouge ${beef}`);
+      if (x.p === 'oeufs') assert(ham <= 150.5, `${sn} : charcuterie ${ham}`);
+      const fiche = batchCook(after.map((c, i) => ({ res: buildDay({ seances: [], libre: days[i].libre }, c, { poids: 72 * k }) })))[0].recipes;
+      assert(fiche.find(r => r.id === nid).boxes.length === count[id] && !fiche.some(r => r.id === id), `${sn} : boîtes de la remplaçante`);
+    }
+  }
   nb++;
 }
 // Même tirage, même résultat ; aliments retirés jamais proposés ; jour même : boîtes du 4e jour encore au frigo
@@ -710,5 +744,27 @@ assert(tb.length === 2 && tb[1].start === 7 && tb[1].recipes.reduce((a, r) => a 
 const once = buildDay(day([]), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poisson', starch: 'riz', recette: 'poisson-riz' } });
 assert.deepStrictEqual(plain(batchCook([{ res: once }, { res: once }])).map(b => b.recipes.map(r => r.id)), [['poulet-riz']], 'papillote (ne se garde pas) hors de la fiche');
 assert.deepStrictEqual(plain(batchCook([{ res: once }])), [], 'une seule fois : pas de batch');
+// Changer une recette : aliments retirés jamais proposés ; plus rien de possible → liste vide, pas de tirage ; œufs-jambon
+// à la place d'une recette servie un jour au petit-déjeuner salé → petit-déjeuner sucré (la première autre base proposée)
+const offS = ['prot:poulet', 'prot:saumon', 'starch:riz', 'starch:quinoa'], wS = week(7, 5);
+const csS = batchChoices(wS, 4, offS, 1, lcg(8)).map((ch, i) => ({ ch, libre: wS[i].libre }));
+batchSwapOptions(csS, csS[0].ch.dej.recette, offS, 1).forEach(x => assert(!['poulet', 'saumon'].includes(RECIPES[x].p) && !['riz', 'quinoa'].includes(RECIPES[x].s), 'changer : aliment retiré proposé'));
+const solo = ['prot:boeuf', 'prot:poisson', 'prot:saumon', 'prot:crevettes', 'prot:oeufs', 'prot:thon', 'prot:tofu', 'starch:pates', 'starch:pdt', 'starch:patate', 'starch:quinoa', 'starch:semoule', 'starch:boulgour', 'starch:lentilles', 'starch:poischiches', 'starch:gnocchis'];
+const dSolo = [0, 1].map(() => ({ ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' } }, libre: false }));
+assert(batchSwapOptions(dSolo, 'poulet-riz', solo, 1).length === 0 && batchSwapPick(dSolo, 'poulet-riz', solo, 1, lcg(1)) === null, 'changer : rien de possible');
+const dSale = [{ ch: { pdBase: 'sale', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz', dessert: 'fruit' }, diner: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' } }, libre: false },
+  { ch: { pdBase: 'sale', dej: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' }, diner: { prot: 'thon', starch: 'pates' } }, libre: false }];
+assert(batchSwapOptions(dSale, 'tofu-riz', [], 1).includes('oeufs-riz'), 'changer : œufs-jambon possible');
+const sw2 = batchSwap(dSale, 'tofu-riz', 'oeufs-riz', []);
+assert(sw2[0].pdBase === 'avoine' && sw2[1].pdBase === 'sale' && sw2[0].dej.dessert === 'fruit' && sw2[0].diner.recette === 'poisson-pates', 'changer : salé → sucré le jour des œufs-jambon, le reste gardé');
+assert(batchSwap(dSale, 'tofu-riz', 'oeufs-riz', ['pd:avoine'])[0].pdBase === 'pain', 'changer : avoine retirée → pain');
+// Un dîner changé à la main (poisson gras, sans recette) un jour où elle est servie : pas de poisson gras à sa place
+const dHand = [{ ch: { pdBase: 'avoine', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' }, diner: { prot: 'saumon', starch: 'pdt' } }, libre: false },
+  { ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'pates', recette: 'poulet-pates' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' } }, libre: false }];
+const optHand = batchSwapOptions(dHand, 'tofu-riz', [], 1);
+assert(optHand.length > 0 && !optHand.some(x => RECIPES[x].p === 'saumon' || RECIPES[x].p === 'poulet'), 'changer : protéine de l’autre repas du jour exclue');
+// Servie deux fois : deux œufs-jambon font 180 g de jambon, au-delà des 150 g de la semaine
+const dSale2 = [dSale[0], { ch: { pdBase: 'avoine', dej: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' } }, libre: false }];
+assert(!batchSwapOptions(dSale2, 'tofu-riz', [], 1).some(x => RECIPES[x].p === 'oeufs') && batchSwapOptions(dSale2, 'tofu-riz', [], 1).length > 0, 'changer : charcuterie au-delà de 150 g');
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

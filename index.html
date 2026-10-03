@@ -357,6 +357,11 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 .b-t{font-size:17px;font-weight:600;line-height:1.3;}
 .b-n{font-family:var(--sans);font-size:14px;color:var(--muted);}
 .b-body{padding:0 14px 14px;}
+.b-swap{margin:2px 0 4px;}
+#courses-msg:empty{margin:0;}
+.opts-list.swap{flex-direction:column;flex-wrap:nowrap;}
+.opts-list.swap .opt{text-align:left;border-radius:16px;}
+.opts-list.swap .rf-l{margin:8px 0 0;}
 .b-body .rec-h:first-child{margin-top:4px;}
 .b-list{margin:8px 0 0;padding:0;list-style:none;}
 .b-list li{display:grid;grid-template-columns:5.6rem minmax(0,1fr);column-gap:12px;align-items:baseline;padding:4px 0;font-size:16px;line-height:1.35;}
@@ -758,6 +763,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
   </div>
   <p class="calc" id="courses-span"></p>
   <p class="warn" id="courses-err" role="alert"></p>
+  <p class="calc" id="courses-msg" role="status"></p>
   <div id="courses-batch"></div>
   <div id="courses-list"></div>
   <h2 class="shop-t" id="courses-days-t">Jour par jour</h2>
@@ -781,7 +787,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.15.0';
+const APP_VERSION = '3.16.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -2072,6 +2078,83 @@ function batchCook(days, lead){
   }
   return blocks;
 }
+/* Changer une recette du batch cooking (3.16.0). days : les jours d'un bloc, [{ch, libre}] (plats de chaque date, repas
+   libre) ; id : la recette à remplacer, partout où elle est dans le bloc (le dîner d'un repas libre compris). Les autres
+   repas ne bougent pas. Repas servis : comme batchChoices (pas le dîner d'un repas libre). */
+function batchMeals(days){
+  const out = [];
+  days.forEach(function(d, i){ ['dej', 'diner'].forEach(function(slot){ if (!(slot === 'diner' && d.libre)) out.push({i:i, slot:slot, c:d.ch[slot]}); }); });
+  return out;
+}
+/* Plats du bloc avec nid à la place de id : protéine, féculent et recette ; dessert gardé. Un jour où elle devient
+   « Œufs + jambon », le petit-déjeuner salé passe à la première autre base proposée (pas de salé avec les œufs-jambon).
+   @param {{ch:Choices, libre:boolean}[]} days  @param {string} id  @param {string} nid  @param {string[]} [off]  @returns {Choices[]} */
+function batchSwap(days, id, nid, off){
+  const x = RECIPES[nid], sweet = allowed('pd', off).filter(function(b){ return b !== 'sale'; })[0];
+  return days.map(function(d){
+    const c = {pdBase:d.ch.pdBase, dej:Object.assign({}, d.ch.dej), diner:Object.assign({}, d.ch.diner)};
+    let hit = false;
+    ['dej', 'diner'].forEach(function(s){ if (c[s].recette === id){ c[s].prot = x.p; c[s].starch = x.s; c[s].recette = nid; hit = true; } });
+    if (hit && x.p === 'oeufs' && c.pdBase === 'sale' && sweet) c.pdBase = sweet;
+    return c;
+  });
+}
+/* Recettes qui peuvent remplacer id dans le bloc, mêmes règles que le tirage : elles se gardent (sinon toutes), protéine et
+   féculent proposés ; ni une recette déjà dans le bloc, ni la protéine d'une autre recette du bloc, ni la protéine de l'autre
+   repas d'un jour où elle est servie ; bœuf ou « Œufs + jambon » seulement sous 500 g de viande rouge cuite et 150 g de
+   charcuterie sur le bloc après le changement (portions de base × k) ; une recette qui se congèle mal seulement si tous ses
+   repas tombent dans les 3 premiers jours. Celles de la même protéine d'abord, puis dans l'ordre de RECIPES.
+   @returns {string[]} */
+function batchSwapOptions(days, id, off, k){
+  const kk = k || 1, prots = allowed('prot', off), starches = allowed('starch', off);
+  const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
+  const ok = Object.keys(RECIPES).filter(function(x){ return prots.indexOf(RECIPES[x].p) >= 0 && starches.indexOf(RECIPES[x].s) >= 0; });
+  const keep = ok.filter(function(x){ return RECIPES[x].box; }), pool = keep.length ? keep : ok;
+  const meals = batchMeals(days), mine = meals.filter(function(m){ return m.c.recette === id; });
+  const usedR = days.reduce(function(a, d){ return a.concat([d.ch.dej.recette, d.ch.diner.recette]); }, []).filter(function(r){ return r && r !== id; });
+  const usedP = usedR.filter(function(r){ return has(RECIPES, r); }).map(function(r){ return RECIPES[r].p; });
+  const p0 = has(RECIPES, id) ? RECIPES[id].p : null;
+  return pool.filter(function(x){
+    const r = RECIPES[x];
+    if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0) return false;
+    if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !days[m.i].libre && o.recette !== id && o.prot === r.p; })) return false;
+    if (!r.gel && days.length > FRIDGE_DAYS && mine.some(function(m){ return m.i >= FRIDGE_DAYS; })) return false;
+    if (r.p === 'boeuf' || r.p === 'oeufs'){
+      const after = batchSwap(days, id, x, off), lim = {rouge:0, charcuterie:0};
+      after.forEach(function(c, i){
+        if (c.pdBase === 'sale') lim.charcuterie += jambonSale;
+        ['dej', 'diner'].forEach(function(s){
+          if (s === 'diner' && days[i].libre) return;
+          if (c[s].prot === 'boeuf') lim.rouge += boeufCuit;
+          if (c[s].prot === 'oeufs') lim.charcuterie += jambonOeufs;
+        });
+      });
+      if (r.p === 'boeuf' && lim.rouge > WEEK_GOALS.rouge + 0.5) return false;
+      if (r.p === 'oeufs' && lim.charcuterie > WEEK_GOALS.charcuterie + 0.5) return false;
+    }
+    return true;
+  }).sort(function(a, b){ return (RECIPES[a].p === p0 ? 0 : 1) - (RECIPES[b].p === p0 ? 0 : 1); });
+}
+/* « Une autre au hasard » : parmi batchSwapOptions, tirée comme au batch (poisson × 3 tant que le bloc, sans elle, n'a pas
+   2 repas de poisson, saumon × 6 s'il manque le poisson gras ; légumes secs × 3 tant qu'il en manque 2 ; féculent d'une
+   autre recette du bloc × 0,3). null s'il n'y en a aucune. */
+function batchSwapPick(days, id, off, k, rand){
+  const opts = batchSwapOptions(days, id, off, k);
+  if (!opts.length) return null;
+  const others = batchMeals(days).filter(function(m){ return m.c.recette !== id; }), c = {poisson:0, gras:0, legumes:0};
+  others.forEach(function(m){
+    if (FISH.indexOf(m.c.prot) >= 0){ c.poisson++; if (m.c.prot === 'saumon') c.gras++; }
+    if (LEGUMES.indexOf(m.c.starch) >= 0) c.legumes++;
+  });
+  const usedS = others.filter(function(m){ return has(RECIPES, m.c.recette); }).map(function(m){ return RECIPES[m.c.recette].s; });
+  return tieredPick(rand || Math.random, opts, function(x){
+    const r = RECIPES[x];
+    let w = usedS.indexOf(r.s) >= 0 ? 0.3 : 1;
+    if (FISH.indexOf(r.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= r.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
+    if (LEGUMES.indexOf(r.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
+    return w;
+  });
+}
 /* Liste de courses : les achats (buy) de plusieurs journées construites par buildDay, additionnés et rangés par rayon.
    Poids crus, pièces entières, budgets en kcal.
    Renvoie [{title, lines:[{id, qty, name, note}]}], rayons et lignes vides omis. */
@@ -2813,6 +2896,7 @@ if (typeof document !== 'undefined'){
   const renderCourses = function(keepInputs){
     if (!keepInputs && (!isoOk(shop.from) || !isoOk(shop.to) || dayDiff(fromIso(shop.to)) < 0)){ shop.from = isoDate(today); shop.to = isoDate(addDays(today, 6)); }
     const err = fillRange('courses', shop, -21, keepInputs);
+    $('courses-msg').textContent = '';
     if (err){ $('courses-list').innerHTML = ''; $('courses-days').innerHTML = ''; $('courses-batch').innerHTML = ''; return; }
     const days = rangeDays(shop.from, shop.to), res = days.map(dayResult);
     $('courses-batch').innerHTML = batchHTML(days, res);
@@ -2840,6 +2924,7 @@ if (typeof document !== 'undefined'){
     const lead = dayDiff(fromIso(days[0])) <= 0 ? 0 : 1;
     const blocks = batchCook(res.map(function(r){ return {res:r}; }), lead);
     if (!blocks.length) return '';
+    const pr = cleanProfile(prof);
     const li = function(q, name, note){ return '<li><span class="b-q">' + q + '</span><span class="name">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</span></li>'; };
     return '<h2 class="shop-t" id="batch-h">Ton batch cooking</h2>' + blocks.map(function(bl){
       const start = fromIso(days[bl.start]), cook = bl.start === 0 && lead === 0 ? start : addDays(start, -1);
@@ -2849,8 +2934,11 @@ if (typeof document !== 'undefined'){
         (ng ? ' Un plat cuisiné se garde 3' + NB + 'jours au frigo' + NB + ': mets ' + (ng > 1 ? 'les ' + ng + ' boîtes marquées' : 'la boîte marquée') + ' «' + NB + 'congélateur' + NB + '» au congélateur et sors-' + (ng > 1 ? 'les' : 'la') + ' la veille au soir.' : '') + '</p>' +
         bl.recipes.map(function(r){
           const g = r.boxes.filter(function(x){ return !x.fridge; }).length, n = r.boxes.length, x = RECIPES[r.id];
+          const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr)).length;
           return '<details class="batch"><summary><span class="b-s"><span class="b-t">' + r.t + '</span><span class="b-n">' + n + NB + 'boîtes' +
             (g ? ', dont ' + g + ' au congélateur' : '') + '</span></span></summary><div class="b-body">' +
+            (swap ? '<button type="button" class="btn b-swap" id="swap-' + bl.start + '-' + r.id + '" data-action="co-swap" data-value="' + bl.start + '|' + r.id + '">Changer de recette</button>'
+              : '<p class="calc">Aucune autre recette ne va avec ta semaine.</p>') +
             '<h3 class="rec-h">À cuire en tout</h3><ul class="b-list">' + r.totals.map(function(t){ return li(t.qty, t.name, t.note); }).join('') + '</ul>' +
             '<h3 class="rec-h">Les boîtes</h3><ul class="b-list">' + r.boxes.map(function(bx){
               const d = fromIso(days[bx.day]);
@@ -2864,6 +2952,34 @@ if (typeof document !== 'undefined'){
     }).join('');
   };
   /* Actions des courses : ouvrir, cocher une ligne, tout décocher, ouvrir un jour */
+  /* Changer une recette du batch cooking (3.16.0) : les jours de son bloc (7 jours à partir de start dans la période des
+     courses), avec leurs plats et leur repas libre */
+  const swapBlock = function(start, days){
+    const isos = (days || rangeDays(shop.from, shop.to)).slice(start, start + BATCH_BLOCK);
+    return {isos:isos, days:isos.map(function(iso){ return {ch:choicesFor(iso, fromIso(iso).getDay()), libre:planFor(iso).libre}; })};
+  };
+  /* Panneau du bas : « Une autre au hasard », puis les recettes qui vont (même protéine d'abord) */
+  const openSwap = function(start, id, trigger){
+    const pr = cleanProfile(prof), opts = has(RECIPES, id) ? batchSwapOptions(swapBlock(start).days, id, pr.off, scaleOf(pr)) : [];
+    if (!opts.length) return;
+    const same = opts.filter(function(x){ return RECIPES[x].p === RECIPES[id].p; }), other = opts.filter(function(x){ return RECIPES[x].p !== RECIPES[id].p; });
+    const opt = function(v, t, s){ return '<button type="button" class="opt" data-action="co-swap-to" data-value="' + v + '">' + t + '<span class="opt-s">' + s + '</span></button>'; };
+    const list = function(a){ return a.map(function(x){ return opt(x, RECIPES[x].t, RECIPES[x].min + NB + 'min'); }).join(''); };
+    pick = {kind:'swap', start:start, id:id, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'courses'};
+    $('sheet-t').textContent = 'Remplacer «' + NB + RECIPES[id].t + NB + '»';
+    $('sheet-rec').hidden = true;
+    $('sheet-list').hidden = false;
+    $('sheet-list').classList.add('swap');
+    $('sheet-list').innerHTML = opt('*', 'Une autre au hasard', 'parmi celles qui vont avec ta semaine') +
+      (same.length ? '<p class="rf-l">Avec la même protéine</p>' + list(same) : '') +
+      (other.length ? '<p class="rf-l">' + (same.length ? 'Avec une autre protéine' : 'Recettes possibles') + '</p>' + list(other) : '');
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    $(pick.view).setAttribute('inert', '');
+    document.documentElement.style.overflow = 'hidden';
+    $('sheet-list').querySelector('.opt').focus({preventScroll:true});
+  };
   Object.assign(ACTIONS, {
     courses: function(b){ renderCourses(false); openScreen('courses', b); },
     'co-check': function(b, v){
@@ -2881,6 +2997,35 @@ if (typeof document !== 'undefined'){
       render();
       scroller().scrollTop = 0;
       $('title').focus({preventScroll:true});
+    },
+    'co-swap': function(b, v){
+      const p = String(v).split('|');
+      if (!/^\d+$/.test(p[0])) return;
+      openSwap(+p[0], p[1], b);
+    },
+    /* La recette choisie (ou tirée) remplace l'ancienne dans tous ses repas du bloc ; la fiche s'ouvre sur elle */
+    'co-swap-to': function(b, v){
+      if (!pick || pick.kind !== 'swap') return;
+      const s = pick, pr = cleanProfile(prof), k = scaleOf(pr), blk = swapBlock(s.start);
+      const opts = batchSwapOptions(blk.days, s.id, pr.off, k), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k) : v;
+      closePick(false);
+      if (!nid || opts.indexOf(nid) < 0) return;
+      const next = batchSwap(blk.days, s.id, nid, pr.off);
+      let n = 0;
+      blk.isos.forEach(function(iso, j){
+        const d = blk.days[j];
+        n += ['dej', 'diner'].filter(function(sl){ return d.ch[sl].recette === s.id && !(sl === 'diner' && d.libre); }).length;
+        if (JSON.stringify(next[j]) === JSON.stringify(d.ch)) return;
+        const js = fromIso(iso).getDay(), c = cleanCh(next[j], js);
+        writeDay(iso, {ch:c});
+        store.choices[js] = c;
+      });
+      persist();
+      loadSel(); prevQty = new Map(); render();
+      renderCourses(true);
+      $('courses-msg').textContent = '«' + NB + RECIPES[nid].t + NB + '» remplace «' + NB + RECIPES[s.id].t + NB + '» dans tes ' + n + NB + 'boîtes.';
+      const again = $('swap-' + s.start + '-' + nid);
+      if (again){ again.closest('details').open = true; again.focus({preventScroll:true}); }
     }
   });
   /* Panneau de choix d'un plat : fond grisé, page inerte ; se ferme par un choix, le fond, Échap ou le bouton retour */
@@ -2894,6 +3039,7 @@ if (typeof document !== 'undefined'){
     pick = {kind:kind, slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'};
     $('sheet-t').textContent = P.title;
     $('sheet-list').hidden = false;
+    $('sheet-list').classList.remove('swap');
     $('sheet-rec').hidden = true;
     $('sheet-list').innerHTML = P.opts.map(function(o){
       return '<button type="button" class="opt" data-action="' + (ctx === 'repas' ? 'rf' : P.action) + '" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +

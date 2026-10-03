@@ -606,6 +606,38 @@ for (let i = 0; i < N / 3; i++){
       const enough = (bd.length > 3 ? freeGel : free) >= nr;
       if (enough) C.ok(beef * Math.round(150 * k / 10) * 10 * 0.75 <= 500 + 1e-9 && oe * Math.round(90 * k / 5) * 5 <= 150, 'batch : viande rouge ou charcuterie', bshow);
       if (ok('pd').some(x => x !== 'sale') && enough) C.ok(oe * Math.round(90 * k / 5) * 5 + sale * Math.round(45 * k / 5) * 5 <= 150, 'batch : charcuterie avec le salé', bshow);
+      // Changer une recette (3.16.0) : les recettes proposées sont exactement celles qui respectent les règles (recalculées
+      // ici), la remplaçante prend tous les repas de l'ancienne (dîner d'un repas libre compris), rien d'autre ne bouge
+      // Parfois, l'autre repas d'un jour où elle est servie a été changé à la main (sans recette)
+      const id = R.pick(Object.keys(count)), blk2 = blk.map(c => ({ pdBase: c.pdBase, dej: Object.assign({}, c.dej), diner: Object.assign({}, c.diner) }));
+      const hand = served.filter(x => x.c.recette === id && !bd[x.d].libre);
+      if (hand.length && R.chance(.5)){ const h = R.pick(hand), o = blk2[h.d][h.slot === 'dej' ? 'diner' : 'dej']; if (o.recette !== id){ o.prot = R.pick(ok('prot')); o.starch = R.pick(ok('starch')); delete o.recette; } }
+      const bdays = blk2.map((c, d) => ({ ch: c, libre: bd[d].libre }));
+      const opts = A.batchSwapOptions(bdays, id, off, k), sshow = () => bshow() + ' changer ' + id + ' ' + JSON.stringify(blk2);
+      const used = blk2.flatMap(c => [c.dej.recette, c.diner.recette]).filter(x => x && x !== id), usedP = used.map(x => A.RECIPES[x].p);
+      const mine = served.filter(x => x.c.recette === id), sweet = ok('pd').find(p => p !== 'sale');
+      const want = pl.filter(x => {
+        const r = A.RECIPES[x];
+        if (x === id || used.includes(x) || usedP.includes(r.p)) return false;
+        if (mine.some(m => { const o = blk2[m.d][m.slot === 'dej' ? 'diner' : 'dej']; return !bd[m.d].libre && o.recette !== id && o.prot === r.p; })) return false;
+        if (!r.gel && bd.length > 3 && mine.some(m => m.d >= 3)) return false;
+        const after = blk2.map(c => { const hit = [c.dej, c.diner].some(m => m.recette === id); return { pd: hit && r.p === 'oeufs' && c.pdBase === 'sale' && sweet ? sweet : c.pdBase, m: [c.dej, c.diner].map(m => m.recette === id ? r.p : m.prot) }; });
+        const nm = p => after.reduce((a, c, d) => a + c.m.filter((q, j) => q === p && !(j === 1 && bd[d].libre)).length, 0);
+        if (r.p === 'boeuf' && nm('boeuf') * Math.round(150 * k / 10) * 10 * 0.75 > 500.5) return false;
+        if (r.p === 'oeufs' && nm('oeufs') * Math.round(90 * k / 5) * 5 + after.filter(c => c.pd === 'sale').length * Math.round(45 * k / 5) * 5 > 150.5) return false;
+        return true;
+      });
+      C.ok(opts.slice().sort().join() === want.slice().sort().join(), 'changer : recettes proposées', () => sshow() + ' ' + JSON.stringify([opts, want]));
+      const pk = A.batchSwapPick(bdays, id, off, k, R.next);
+      C.ok(opts.length ? opts.includes(pk) : pk === null, 'changer : au hasard', sshow);
+      if (opts.length){
+        const nid = R.pick(opts), after = A.batchSwap(bdays, id, nid, off), x = A.RECIPES[nid];
+        after.forEach((c, d) => ['dej', 'diner'].forEach(sl => {
+          const was = blk2[d][sl];
+          C.ok(was.recette === id ? c[sl].recette === nid && c[sl].prot === x.p && c[sl].starch === x.s && c[sl].dessert === was.dessert : JSON.stringify(c[sl]) === JSON.stringify(was), 'changer : repas', () => sshow() + ' → ' + nid);
+        }));
+        after.forEach((c, d) => { if (!bd[d].libre && blk2[d].dej.prot !== blk2[d].diner.prot) C.ok(c.dej.prot !== c.diner.prot, 'changer : même protéine midi et soir', () => sshow() + ' → ' + nid + ' jour ' + d); });
+      }
     }
     // Fiche : boîtes = repas servis des recettes qui se gardent (deux fois au moins par bloc), totaux = somme des boîtes
     if (i % 3) continue;
