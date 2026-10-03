@@ -14,6 +14,7 @@ function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]
    ex. {raw:'cru', ways:[{g:135, adj:'cuit'}]} ou {raw:'crues', ways:[{g:340, adj:'à l’eau'}, {g:260, adj:'au four'}]} */
 /* Ligne d'un repas. m : kcal et macros ; buy : l'achat pour la liste de courses, {id, g} en grammes, {id, n} en pièces ou
    {id, kcal} pour un budget (pris dans m.buy si absent) */
+/** @returns {Item} */
 function it(key, qty, name, note, m, cook, buy){
   return {key:key, qty:qty, name:name, note:note || null, m:m ? {kcal:m.kcal, p:m.p, c:m.c, f:m.f} : null, cook:cook || null, buy:buy || (m && m.buy) || null};
 }

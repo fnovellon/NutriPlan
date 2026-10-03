@@ -792,6 +792,7 @@ function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]
    ex. {raw:'cru', ways:[{g:135, adj:'cuit'}]} ou {raw:'crues', ways:[{g:340, adj:'à l’eau'}, {g:260, adj:'au four'}]} */
 /* Ligne d'un repas. m : kcal et macros ; buy : l'achat pour la liste de courses, {id, g} en grammes, {id, n} en pièces ou
    {id, kcal} pour un budget (pris dans m.buy si absent) */
+/** @returns {Item} */
 function it(key, qty, name, note, m, cook, buy){
   return {key:key, qty:qty, name:name, note:note || null, m:m ? {kcal:m.kcal, p:m.p, c:m.c, f:m.f} : null, cook:cook || null, buy:buy || (m && m.buy) || null};
 }
@@ -823,6 +824,30 @@ function typo(t){
   return t.replace(/ ([:;?!%])/g, NB + '$1').replace(/(\d) (g|kg|kcal|min|ml|cl|°C)(?![A-Za-zÀ-ÿ])/g, '$1' + NB + '$2')
     .replace(/(\d) c\./g, '$1' + NB + 'c.').replace(/c\. à/g, 'c.' + NB + 'à');
 }
+/** Types des objets du moteur, pour la lecture (commentaires JSDoc, sans effet sur le code).
+ * @typedef {{kcal:number, p:number, c:number, f:number}} Macros  kcal et grammes de protéines, glucides, lipides
+ * @typedef {{id:string, g?:number, n?:number, kcal?:number}} Buy  ce qu'il faut acheter : grammes crus, pièces, ou budget
+ * @typedef {{raw:string, ways:{g:number, adj:string}[]}} Cook  poids cuit estimé par cuisson : {raw:'cru', ways:[{g:135, adj:'cuit'}]}
+ * @typedef {{key:string, qty:string, name:string, note:?string, m:?Macros, cook:?Cook, buy:?Buy, adj?:boolean}} Item
+ *   ligne d'un repas (it). key : base, skyr, fruit, am, miel, oeufs, jambon (petit-déjeuner) ; oe, ban, comp, csk, cam (collation) ;
+ *   p1, p2 (protéine), st (féculent), leg (légumes), v-<légume>, f-<matière grasse>, x-skyr, x-miel (recette), dam, pm (ajout du
+ *   soir), marge, des (dessert), gras (huile de secours) ; shk, fuel, pom, encas, skyr (soir), lib (repas libre).
+ *   adj : portion ajustée à l'objectif de protéines.
+ * @typedef {{id:string, title:string, when:?string, items:Item[], pick?:string, band?:boolean, sub?:?string, libre?:boolean,
+ *   recipe?:?string, suggest?:?string}} Section
+ *   repas (id pd, sw, dej, co, shk, diner, soir) ou bandeau de séance (band0, band1…, band:true) ; recipe : recette choisie,
+ *   suggest : recette proposée pour le couple protéine × féculent ; libre : le repas libre qui remplace le dîner.
+ * @typedef {{taille:('petite'|'moyenne'|'longue'), moment:('matin'|'midi'|'soir'), duree?:number}} Seance
+ * @typedef {{seances:Seance[], libre:boolean}} Plan  plan d'un jour (cleanPlan)
+ * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
+ * @typedef {{prot:string, starch:string, dessert?:string, recette?:string}} MealChoice  plats du déjeuner ou du dîner
+ * @typedef {{pdBase:string, dej:MealChoice, diner:MealChoice}} Choices  plats d'un jour
+ * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off et semaine validés
+ * @typedef {{bmr:number, rest:number, mode:string, restSource:string, cost:number, need:number, deficit:number, target:number,
+ *   kgWeek:number}} Energy  dépense et objectif du jour (energy)
+ * @typedef {{secs:Section[], tot:Macros, libre:?number, energy:Energy, ecart:number, scale:number,
+ *   prot:{target:number, low:number, high:number, floor:number, factor:number}}} Day  journée construite (buildDay)
+ */
 /* Données : aliments. Valeurs pour 100 g (FOOD) ou par pièce (UNIT), féculents (STARCH), rendements de cuisson (YIELD),
    table de référence de l'écran d'aide (REF_GROUPS, refTable). */
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
@@ -1346,6 +1371,8 @@ function recipeItems(id){
     .concat(x.cuis.map(function(c){ return it('f-' + c[0], grams(c[1]), c[2], c[3], mac(c[0], c[1])); }))
     .concat(Object.keys(x.plus).map(function(a){ return it('x-' + a, grams(x.plus[a]), a === 'skyr' ? 'skyr nature' : 'miel', 'pour la sauce', mac(a, x.plus[a])); }));
 }
+/* Séances et plan d'un jour : tailles de séance (SIZES), moments, durées de la sortie longue, jours de la semaine ;
+   séances, plan d'un jour et semaine type relus et validés (cleanSeances, cleanWeek, emptyPlan, cleanPlan, migratePlan). */
 /* Séances par taille. Coût net par défaut = net × poids (MET·h nets ; pour la longue, par heure), réglable dans le profil. */
 const SIZES = {
   petite:{band:'Petite séance', net:4},
@@ -1361,8 +1388,7 @@ const DAYS = [
   {js:4, long:'jeudi'}, {js:5, long:'vendredi'}, {js:6, long:'samedi'},
   {js:0, long:'dimanche'}
 ];
-/* Chaque jour part sans séance ; seul le repas libre du samedi est prévu par défaut */
-/* Séances valides : au plus 4, une seule longue, toujours le matin */
+/* Séances valides : au plus 4, une seule longue, toujours le matin. @returns {Seance[]} */
 function cleanSeances(list){
   const out = [];
   let long = false;
@@ -1393,7 +1419,8 @@ function emptyPlan(js, sem){
   const w = sem || null, l = w && has(w.jours, String(js)) ? w.jours[js] : [];
   return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6)};
 }
-/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type */
+/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type.
+   @param {*} p  @param {number} js jour de la semaine (getDay)  @param {Week} [sem]  @returns {Plan} */
 function cleanPlan(p, js, sem){
   const out = emptyPlan(js, sem);
   if (!p || typeof p !== 'object') return out;
@@ -1411,7 +1438,69 @@ function migratePlan(p){
   if (p.natation && a !== 'longue') list.push({taille:'petite', moment:'midi'});
   return {seances:list, libre:!!p.libre};
 }
-
+function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }
+/* Profil et dépense : profil validé (profileFields, cleanProfile), métabolisme de base, dépense de repos, coût des séances,
+   objectif du jour (energy). Règles : CLAUDE.md, « Dépense et objectif ». */
+/* Profil et dépense énergétique */
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], semaine:{jours:{}, libre:6}};
+const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,2.2]};
+/* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
+const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
+const KCAL_PER_KG = 7700;
+function profileFields(o){
+  const out = {};
+  if (!o || typeof o !== 'object') return out;
+  if (o.mode === 'auto' || o.mode === 'manuel') out.mode = o.mode;
+  if (o.shaker === 'oui' || o.shaker === 'non') out.shaker = o.shaker;
+  if (o.sexe === 'h' || o.sexe === 'f') out.sexe = o.sexe;
+  if (has(NEAT, o.neat)) out.neat = o.neat;
+  Object.keys(PROFILE_RANGES).forEach(function(k){
+    const v = o[k], r = PROFILE_RANGES[k];
+    if (typeof v === 'number' && v >= r[0] && v <= r[1]) out[k] = v;
+  });
+  /* Objectif de protéines borné à 2,2 g/kg depuis la 3.11.1 : un objectif enregistré plus haut (jusqu'à 3,0, permis avant)
+     devient 2,2 plutôt que la valeur par défaut */
+  if (typeof o.prot === 'number' && o.prot > PROFILE_RANGES.prot[1] && o.prot <= 3) out.prot = PROFILE_RANGES.prot[1];
+  if (Array.isArray(o.off)){ const off = cleanOff(o.off); if (off.length) out.off = off; }
+  if (o.semaine && typeof o.semaine === 'object'){ const w = cleanWeek(o.semaine); if (Object.keys(w.jours).length || w.libre !== 6) out.semaine = w; }
+  return out;
+}
+/* Profil complet. Enregistré avant la 1.3.0 (sans mode) : manuel s'il contient une dépense valide, sinon automatique.
+   @param {*} o champs enregistrés  @returns {Profile} */
+function cleanProfile(o){
+  const f = profileFields(o);
+  if (!f.mode) f.mode = has(f, 'repos') ? 'manuel' : 'auto';
+  const out = Object.assign({}, PROFILE_DEFAULT, f);
+  out.off = (f.off || []).slice();
+  out.semaine = cleanWeek(f.semaine);
+  return out;
+}
+/* Métabolisme de base : Cunningham si la masse grasse est connue (plus juste chez les sportifs), sinon Mifflin-St Jeor */
+function bmr(p){
+  if (p.gras !== null) return 500 + 22 * p.poids * (1 - p.gras / 100);
+  return 10 * p.poids + 6.25 * p.taille - 5 * p.age + (p.sexe === 'f' ? -161 : 5);
+}
+/* Dépense d'un jour sans sport : saisie en mode manuel (bornes de PROFILE_RANGES), sinon calculée.
+   En manuel sans dépense valide, le calcul prend le relais. */
+function restSource(p){ return p.mode === 'manuel' && p.repos !== null ? 'saisie' : 'calcul'; }
+function restNeed(p){ return restSource(p) === 'saisie' ? p.repos : bmr(p) * NEAT[p.neat]; }
+/* Coût net d'une séance (le repos est déjà compté) : valeur du profil, sinon net × poids.
+   Petite ≈ 1 h de muscu (5 MET), moyenne ≈ 7 km de course (≈ 0,9 kcal/kg/km), longue ≈ vélo d'endurance (8 MET) par heure. */
+function seanceCost(x, p){
+  if (x.taille === 'petite') return p.kcalPetite !== null ? p.kcalPetite : SIZES.petite.net * p.poids;
+  if (x.taille === 'moyenne') return p.kcalMoyenne !== null ? p.kcalMoyenne : SIZES.moyenne.net * p.poids;
+  return (p.kcalLongueH !== null ? p.kcalLongueH : SIZES.longue.net * p.poids) * x.duree;
+}
+function dayCost(plan, p){ return plan.seances.reduce(function(a, x){ return a + seanceCost(x, p); }, 0); }
+/* Le déficit est un % de la dépense d'un jour sans sport, retiré chaque jour : les séances restent couvertes.
+   @param {Plan} plan  @param {Profile} p  @returns {Energy} */
+function energy(plan, p){
+  const rest = restNeed(p), cost = dayCost(plan, p), deficit = rest * p.deficit / 100;
+  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, deficit:deficit,
+    target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
+}
+/* Choix des plats : aliments proposés ou retirés (cleanOff, allowed, withAllowed), « Décide pour moi » (randomChoices) et
+   tirage pondéré partagé avec le batch cooking (tieredPick). */
 /* Aliments proposés : ceux retirés dans les réglages (profil off, entrées « type:id ») ne sont plus proposés ni tirés au
    hasard. Il en reste toujours au moins un par type ; « Aucun » dessert reste toujours possible. */
 const CHOICE_IDS = {pd:PD_ORDER, prot:PROT_ORDER, starch:STARCH_ORDER, dessert:DESSERT_ORDER.filter(function(d){ return d !== 'aucun'; })};
@@ -1454,42 +1543,6 @@ function withAllowed(c, off){
   };
   return {pdBase:next('pd', c.pdBase), dej:meal(c.dej, dejProt), diner:meal(c.diner, next('prot', c.diner.prot, dejProt))};
 }
-/* Repères de la semaine (Santé publique France, 2019) : poisson 2 fois dont 1 poisson gras, légumes secs au moins 2 fois,
-   viande rouge 500 g cuits au plus, charcuterie 150 g au plus (le jambon blanc en est). Comptés sur des journées construites
-   par buildDay (portions réelles), repas libre exclu ; viande rouge = bœuf cru × rendement de cuisson. */
-const WEEK_GOALS = {poisson:2, gras:1, legumes:2, rouge:500, charcuterie:150};
-const FISH = ['poisson', 'saumon', 'thon'], LEGUMES = ['lentilles', 'poischiches'];
-function weekBalance(days){
-  const b = {poisson:0, gras:0, legumes:0, rouge:0, charcuterie:0};
-  days.forEach(function(r){ r.secs.forEach(function(s){
-    if (s.libre) return;
-    s.items.forEach(function(i){
-      if (!i.buy) return;
-      if ((s.id === 'dej' || s.id === 'diner') && i.key === 'p1' && FISH.indexOf(i.buy.id) >= 0){ b.poisson++; if (i.buy.id === 'saumon') b.gras++; }
-      if (i.key === 'st' && LEGUMES.indexOf(i.buy.id) >= 0) b.legumes++;
-      if (i.buy.id === 'boeuf') b.rouge += i.buy.g * YIELD.boeuf;
-      if (i.buy.id === 'jambon') b.charcuterie += i.buy.g;
-    });
-  }); });
-  return b;
-}
-/* Ce que la semaine demande encore, dans l'ordre d'importance : trop de charcuterie, trop de viande rouge, poisson gras,
-   poisson, légumes secs. [] : semaine équilibrée. */
-function weekNeeds(b){
-  const out = [];
-  if (b.charcuterie > WEEK_GOALS.charcuterie + 0.5) out.push('charcuterie');
-  if (b.rouge > WEEK_GOALS.rouge + 0.5) out.push('rouge');
-  if (b.gras < WEEK_GOALS.gras) out.push('gras');
-  if (b.poisson < WEEK_GOALS.poisson) out.push('poisson');
-  if (b.legumes < WEEK_GOALS.legumes) out.push('legumes');
-  return out;
-}
-/* « Décide pour moi » : chaque choix tiré au hasard parmi les aliments proposés (rand : nombres dans [0, 1[, Math.random par
-   défaut), jamais la même protéine au déjeuner et au dîner (s'il en reste au moins deux), jamais « Œufs + jambon » avec le
-   petit-déjeuner salé (s'il reste autre chose). Avec bal (weekBalance du reste de la semaine) et k, le tirage équilibre :
-   poisson (et poisson gras) et légumes secs trois fois plus probables tant qu'il en manque, bœuf, « Œufs + jambon » et salé
-   écartés s'ils feraient dépasser la viande rouge ou la charcuterie. Sans bal : tirage uniforme. La recette du couple
-   protéine × féculent est choisie d'office (tirée au hasard s'il y en a plusieurs). */
 /* Tirage pondéré (rand : nombres dans [0, 1[). Poids > 0 : tirage pondéré ; 0 : écarté (repères) ; < 0 : écarté d'abord.
    Sans poids positif, tirage parmi les poids nuls, sinon parmi tous. */
 function tieredPick(r, a, w){
@@ -1500,6 +1553,14 @@ function tieredPick(r, a, w){
   for (let i = 0; i < a.length; i++){ if (ws[i] > 0){ x -= ws[i]; if (x < 0) return a[i]; } }
   for (let i = a.length - 1; i >= 0; i--) if (ws[i] > 0) return a[i];
 }
+/* « Décide pour moi » : chaque choix tiré au hasard parmi les aliments proposés (rand : nombres dans [0, 1[, Math.random par
+   défaut), jamais la même protéine au déjeuner et au dîner (s'il en reste au moins deux), jamais « Œufs + jambon » avec le
+   petit-déjeuner salé (s'il reste autre chose). Avec bal (weekBalance du reste de la semaine) et k, le tirage équilibre :
+   poisson (et poisson gras) et légumes secs trois fois plus probables tant qu'il en manque, bœuf, « Œufs + jambon » et salé
+   écartés s'ils feraient dépasser la viande rouge ou la charcuterie. Sans bal : tirage uniforme. La recette du couple
+   protéine × féculent est choisie d'office (tirée au hasard s'il y en a plusieurs).
+   @param {function():number} [rand]  @param {string[]} [off] aliments retirés  @param {Object} [bal] weekBalance du reste de la semaine
+   @param {number} [k] facteur de portions  @returns {Choices} */
 function randomChoices(rand, off, bal, k){
   const r = rand || Math.random, kk = k || 1, c = bal ? Object.assign({}, bal) : null;
   /* 0 : écarté par les repères ; < 0 : écarté d'abord (œufs-jambon avec le salé) */
@@ -1532,222 +1593,40 @@ function randomChoices(rand, off, bal, k){
   const dej = meal(null);
   return {pdBase:pdBase, dej:dej, diner:meal(dej.prot)};
 }
-
-/* Batch cooking (3.13.0) : pour une période (jours consécutifs, par blocs de 7 à partir du premier), quelques recettes qui
-   se gardent (3, 4 ou 5) répétées aux déjeuners et aux dîners, cuisinées en une fois la veille du bloc. Un plat cuisiné se
-   garde 3 jours au frigo (FRIDGE_DAYS) : les boîtes mangées plus tard vont au congélateur. */
-const BATCH_BLOCK = 7, BATCH_N = [3, 4, 5], FRIDGE_DAYS = 3;
-/* Plats d'une période en batch cooking. days : [{libre}] dans l'ordre des dates ; renvoie les choix de chaque jour
-   ({pdBase, dej, diner}, recette comprise ; rand comme randomChoices). Par bloc :
-   - n recettes au plus (au moins deux repas chacune), parmi celles qui se gardent et dont la protéine et le féculent sont
-     proposés ; protéines différentes et féculents variés autant que possible ; poisson, poisson gras et légumes secs
-     favorisés tant que le bloc en manque ; bœuf et « Œufs + jambon » écartés d'abord s'ils feraient dépasser la viande rouge
-     ou la charcuterie (repas du bloc, au nombre de boîtes le plus haut), comme une protéine qui aurait plus de repas que le
-     bloc n'a de jours ; une recette qui se congèle mal seulement si ses boîtes tiennent dans les 3 premiers jours (une par
-     jour au plus, avec les autres qui se congèlent mal, une seule par protéine) et qu'il en reste deux qui se congèlent bien
-     pour la suite ;
-   - boîtes : les moins nombreuses aux recettes servies d'abord (celles qui se congèlent mal, poisson en tête) ; repas
-     répartis dans l'ordre des jours, deux recettes en cours à la fois (celle qui se congèle mal, sinon la plus fournie,
-     d'abord), en alternant ; jamais la
-     même protéine au déjeuner et au dîner si c'est possible (échange avec le repas le plus proche) ;
-   - petit-déjeuner comme randomChoices (pas de salé avec « Œufs + jambon », charcuterie comptée), desserts au hasard ; le
-     dîner d'un repas libre reçoit une recette du bloc d'une autre protéine, sans boîte. */
-function batchChoices(days, n, off, k, rand){
-  const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
-  const pick = function(a, w){ return tieredPick(r, a, w); };
-  const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
-  const prots = allowed('prot', off), starches = allowed('starch', off);
-  const ok = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
-  const keep = ok.filter(function(id){ return RECIPES[id].box; }), pool = keep.length ? keep : ok;
-  const prot = function(e){ return RECIPES[e.id].p; };
+/* Équilibre de la semaine (3.9.0) : repères (WEEK_GOALS), compte d'une semaine (weekBalance), ce qui manque (weekNeeds). */
+/* Repères de la semaine (Santé publique France, 2019) : poisson 2 fois dont 1 poisson gras, légumes secs au moins 2 fois,
+   viande rouge 500 g cuits au plus, charcuterie 150 g au plus (le jambon blanc en est). Comptés sur des journées construites
+   par buildDay (portions réelles), repas libre exclu ; viande rouge = bœuf cru × rendement de cuisson. */
+const WEEK_GOALS = {poisson:2, gras:1, legumes:2, rouge:500, charcuterie:150};
+const FISH = ['poisson', 'saumon', 'thon'], LEGUMES = ['lentilles', 'poischiches'];
+/** @param {Day[]} days  @returns {{poisson:number, gras:number, legumes:number, rouge:number, charcuterie:number}} */
+function weekBalance(days){
+  const b = {poisson:0, gras:0, legumes:0, rouge:0, charcuterie:0};
+  days.forEach(function(r){ r.secs.forEach(function(s){
+    if (s.libre) return;
+    s.items.forEach(function(i){
+      if (!i.buy) return;
+      if ((s.id === 'dej' || s.id === 'diner') && i.key === 'p1' && FISH.indexOf(i.buy.id) >= 0){ b.poisson++; if (i.buy.id === 'saumon') b.gras++; }
+      if (i.key === 'st' && LEGUMES.indexOf(i.buy.id) >= 0) b.legumes++;
+      if (i.buy.id === 'boeuf') b.rouge += i.buy.g * YIELD.boeuf;
+      if (i.buy.id === 'jambon') b.charcuterie += i.buy.g;
+    });
+  }); });
+  return b;
+}
+/* Ce que la semaine demande encore, dans l'ordre d'importance : trop de charcuterie, trop de viande rouge, poisson gras,
+   poisson, légumes secs. [] : semaine équilibrée. */
+function weekNeeds(b){
   const out = [];
-  for (let b = 0; b < days.length; b += BATCH_BLOCK){
-    const block = days.slice(b, b + BATCH_BLOCK), slots = [];
-    block.forEach(function(d, i){ slots.push({i:i, slot:'dej'}); if (!(d && d.libre)) slots.push({i:i, slot:'diner'}); });
-    const m = slots.length, nr = Math.min(nn, m, Math.max(2, Math.floor(m / 2)));
-    const cnt = [];
-    for (let j = 0; j < nr; j++) cnt.push(Math.floor(m / nr) + (j >= nr - m % nr ? 1 : 0));
-    /* Recettes qui se congèlent mal : autant que de boîtes (les moins nombreuses) qui tiennent dans les 3 premiers jours */
-    const fridgeSlots = slots.filter(function(sl){ return sl.i < FRIDGE_DAYS; }).length;
-    let maxNoGel = 0, used = 0;
-    if (block.length <= FRIDGE_DAYS) maxNoGel = nr;
-    else while (maxNoGel < nr - 2 && cnt[maxNoGel] <= FRIDGE_DAYS && used + cnt[maxNoGel] <= fridgeSlots){ used += cnt[maxNoGel]; maxNoGel++; }
-    const ct = cnt[nr - 1], c = {poisson:0, gras:0, legumes:0, rouge:0, charcuterie:0}, chosen = [], perProt = {}, perFresh = {};
-    cnt.forEach(function(){
-      const usedP = chosen.map(function(id){ return RECIPES[id].p; }), usedS = chosen.map(function(id){ return RECIPES[id].s; });
-      const noGel = chosen.filter(function(id){ return !RECIPES[id].gel; }).length, fresh = pool.filter(function(id){ return chosen.indexOf(id) < 0; });
-      const id = pick(fresh.length ? fresh : pool, function(id){
-        const x = RECIPES[id];
-        if (x.p === 'boeuf' && c.rouge + ct * boeufCuit > WEEK_GOALS.rouge) return -1;
-        if (x.p === 'oeufs' && c.charcuterie + ct * jambonOeufs > WEEK_GOALS.charcuterie) return -1;
-        if ((perProt[x.p] || 0) + ct > block.length || (!x.gel && (noGel >= maxNoGel || (perFresh[x.p] || 0) + ct > FRIDGE_DAYS))) return -1;
-        if (usedP.indexOf(x.p) >= 0) return 0;
-        let w = usedS.indexOf(x.s) >= 0 ? 0.3 : 1;
-        if (FISH.indexOf(x.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= x.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
-        if (LEGUMES.indexOf(x.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
-        return w;
-      });
-      const x = RECIPES[id];
-      if (FISH.indexOf(x.p) >= 0){ c.poisson += ct; if (x.p === 'saumon') c.gras += ct; }
-      if (LEGUMES.indexOf(x.s) >= 0) c.legumes += ct;
-      if (x.p === 'boeuf') c.rouge += ct * boeufCuit;
-      if (x.p === 'oeufs') c.charcuterie += ct * jambonOeufs;
-      perProt[x.p] = (perProt[x.p] || 0) + ct;
-      if (!x.gel) perFresh[x.p] = (perFresh[x.p] || 0) + ct;
-      chosen.push(id);
-    });
-    const ent = chosen.map(function(id, j){ return {id:id, j:j, key:(RECIPES[id].gel ? 2 : 0) + (FISH.indexOf(RECIPES[id].p) >= 0 ? 0 : 1)}; })
-      .sort(function(a, x){ return a.key - x.key || a.j - x.j; });
-    ent.forEach(function(e, j){ e.left = cnt[j]; });
-    const at = block.map(function(){ return {}; });
-    let prev = null;
-    slots.forEach(function(sl){
-      const other = sl.slot === 'diner' && at[sl.i].dej ? prot(at[sl.i].dej) : null;
-      const live = ent.filter(function(e){ return e.left > 0; });
-      const okP = function(l){ return l.filter(function(e){ return prot(e) !== other; }); };
-      let cand = okP(live.slice(0, 2));
-      if (!cand.length) cand = okP(live);
-      if (!cand.length) cand = live;
-      /* Celles qui se congèlent mal d'abord, puis la plus fournie ; pas deux fois de suite la même */
-      const score = function(e){ return e.left + (RECIPES[e.id].gel ? 0 : 100) - (e === prev ? 0.5 : 0); };
-      const e = cand.reduce(function(best, x){ return score(x) > score(best) ? x : best; });
-      e.left--; prev = e; at[sl.i][sl.slot] = e;
-    });
-    /* Même protéine midi et soir : le dîner est échangé avec le repas le plus proche qui règle les deux jours, sans repousser
-       après le 3e jour une recette qui se congèle mal */
-    const clash = function(i){ return at[i].dej && at[i].diner && prot(at[i].dej) === prot(at[i].diner); };
-    const fresh = function(e, i){ return RECIPES[e.id].gel || i < FRIDGE_DAYS || block.length <= FRIDGE_DAYS; };
-    block.forEach(function(d, i){
-      if (!clash(i)) return;
-      const others = slots.filter(function(sl){ return sl.i !== i; }).sort(function(a, x){ return Math.abs(a.i - i) - Math.abs(x.i - i); });
-      for (let t = 0; t < others.length; t++){
-        const sl = others[t], a = at[i].diner, x = at[sl.i][sl.slot];
-        if (!fresh(x, i) || !fresh(a, sl.i)) continue;
-        at[i].diner = x; at[sl.i][sl.slot] = a;
-        if (!clash(i) && !clash(sl.i)) return;
-        at[i].diner = a; at[sl.i][sl.slot] = x;
-      }
-    });
-    block.forEach(function(d, i){
-      const dej = at[i].dej, din = at[i].diner || ent.find(function(e){ return prot(e) !== prot(dej); }) || dej;
-      const oe = prot(dej) === 'oeufs' || prot(din) === 'oeufs';
-      const pdBase = pick(allowed('pd', off), function(x){
-        if (x !== 'sale') return 1;
-        if (oe) return -1;
-        return c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1;
-      });
-      if (pdBase === 'sale') c.charcuterie += jambonSale;
-      const meal = function(e){ const x = RECIPES[e.id]; return {prot:x.p, starch:x.s, dessert:pick(allowed('dessert', off)), recette:e.id}; };
-      out.push({pdBase:pdBase, dej:meal(dej), diner:meal(din)});
-    });
-  }
+  if (b.charcuterie > WEEK_GOALS.charcuterie + 0.5) out.push('charcuterie');
+  if (b.rouge > WEEK_GOALS.rouge + 0.5) out.push('rouge');
+  if (b.gras < WEEK_GOALS.gras) out.push('gras');
+  if (b.poisson < WEEK_GOALS.poisson) out.push('poisson');
+  if (b.legumes < WEEK_GOALS.legumes) out.push('legumes');
   return out;
 }
-/* Fiche de batch cooking d'une période : days = [{res}] (résultats de buildDay, dates consécutives), par blocs de 7.
-   Pour chaque recette qui se garde servie à au moins deux repas d'un bloc (repas libre exclu) : ses boîtes (jour depuis le début de la
-   période, repas, frigo si elle est mangée 3 jours au plus après la cuisson de la veille du bloc, sinon congélateur ;
-   protéine et féculent de la boîte) et ce qu'il faut cuire en tout (protéine, féculent, légumes, matière grasse, ajouts :
-   somme des boîtes, valeurs des lignes de buildDay). lead : jours entre la cuisson et le premier jour (1 par défaut, la
-   veille ; 0 si la période commence aujourd'hui), pour le premier bloc seulement.
-   Renvoie [{start, recipes:[{id, t, gel, boxes, totals}]}]. */
-function batchCook(days, lead){
-  const blocks = [];
-  for (let b = 0; b < days.length; b += BATCH_BLOCK){
-    const by = {}, order = [];
-    days.slice(b, b + BATCH_BLOCK).forEach(function(d, i){
-      d.res.secs.forEach(function(sec){
-        if ((sec.id !== 'dej' && sec.id !== 'diner') || sec.libre || !sec.recipe) return;
-        if (!has(by, sec.recipe)){ by[sec.recipe] = []; order.push(sec.recipe); }
-        by[sec.recipe].push({day:b + i, slot:sec.id, after:i + (b === 0 && lead === 0 ? 0 : 1), items:sec.items.filter(function(x){ return /^(p1|p2|st|[vfx]-)/.test(x.key) && x.buy; })});
-      });
-    });
-    const recipes = order.filter(function(id){ return RECIPES[id].box && by[id].length >= 2; }).map(function(id){
-      const x = RECIPES[id], tot = {}, ids = [];
-      by[id].forEach(function(v){ v.items.forEach(function(i){
-        const a = tot[i.buy.id] || (tot[i.buy.id] = {first:i, g:0, n:0, cooked:0});
-        if (ids.indexOf(i.buy.id) < 0) ids.push(i.buy.id);
-        a.g += i.buy.g || 0; a.n += i.buy.n || 0; a.cooked += i.cook && i.cook.ways.length === 1 ? i.cook.ways[0].g : 0;
-      }); });
-      const PLURAL = {oeuf:'œufs', thon:'boîtes de thon au naturel'};
-      const totals = ids.map(function(bid){
-        const a = tot[bid], i = a.first, k = i.key;
-        if (a.n) return {id:bid, qty:String(a.n), name:a.n > 1 && has(PLURAL, bid) ? PLURAL[bid] : i.name, note:null};
-        const note = a.cooked ? '≈' + NB + shopQty(Math.round(a.cooked / 10) * 10) + ' ' + i.cook.ways[0].adj
-          : /^f-/.test(k) ? i.note + ' par boîte' : /^v-/.test(k) ? RFOOD[bid][1] : null;
-        return {id:bid, qty:shopQty(a.g), name:i.name, note:note};
-      });
-      const boxes = by[id].map(function(v){
-        return {day:v.day, slot:v.slot, fridge:v.after <= FRIDGE_DAYS, parts:v.items.filter(function(i){ return /^(p1|p2|st)$/.test(i.key); }).map(function(i){
-          return {qty:i.qty, name:i.name, cooked:i.cook ? i.cook.ways.map(function(w){ return '≈' + NB + grams(w.g) + ' ' + w.adj; }).join(' ou ') : null};
-        })};
-      });
-      return {id:id, t:x.t, gel:x.gel, boxes:boxes, totals:totals};
-    });
-    if (recipes.length) blocks.push({start:b, recipes:recipes});
-  }
-  return blocks;
-}
-
-/* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], semaine:{jours:{}, libre:6}};
-const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,2.2]};
-/* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
-const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
-const KCAL_PER_KG = 7700;
-
-function profileFields(o){
-  const out = {};
-  if (!o || typeof o !== 'object') return out;
-  if (o.mode === 'auto' || o.mode === 'manuel') out.mode = o.mode;
-  if (o.shaker === 'oui' || o.shaker === 'non') out.shaker = o.shaker;
-  if (o.sexe === 'h' || o.sexe === 'f') out.sexe = o.sexe;
-  if (has(NEAT, o.neat)) out.neat = o.neat;
-  Object.keys(PROFILE_RANGES).forEach(function(k){
-    const v = o[k], r = PROFILE_RANGES[k];
-    if (typeof v === 'number' && v >= r[0] && v <= r[1]) out[k] = v;
-  });
-  /* Objectif de protéines borné à 2,2 g/kg depuis la 3.11.1 : un objectif enregistré plus haut (jusqu'à 3,0, permis avant)
-     devient 2,2 plutôt que la valeur par défaut */
-  if (typeof o.prot === 'number' && o.prot > PROFILE_RANGES.prot[1] && o.prot <= 3) out.prot = PROFILE_RANGES.prot[1];
-  if (Array.isArray(o.off)){ const off = cleanOff(o.off); if (off.length) out.off = off; }
-  if (o.semaine && typeof o.semaine === 'object'){ const w = cleanWeek(o.semaine); if (Object.keys(w.jours).length || w.libre !== 6) out.semaine = w; }
-  return out;
-}
-/* Profil complet. Enregistré avant la 1.3.0 (sans mode) : manuel s'il contient une dépense valide, sinon automatique. */
-function cleanProfile(o){
-  const f = profileFields(o);
-  if (!f.mode) f.mode = has(f, 'repos') ? 'manuel' : 'auto';
-  const out = Object.assign({}, PROFILE_DEFAULT, f);
-  out.off = (f.off || []).slice();
-  out.semaine = cleanWeek(f.semaine);
-  return out;
-}
-/* Métabolisme de base : Cunningham si la masse grasse est connue (plus juste chez les sportifs), sinon Mifflin-St Jeor */
-function bmr(p){
-  if (p.gras !== null) return 500 + 22 * p.poids * (1 - p.gras / 100);
-  return 10 * p.poids + 6.25 * p.taille - 5 * p.age + (p.sexe === 'f' ? -161 : 5);
-}
-/* Dépense d'un jour sans sport : saisie en mode manuel (bornes de PROFILE_RANGES), sinon calculée.
-   En manuel sans dépense valide, le calcul prend le relais. */
-function restSource(p){ return p.mode === 'manuel' && p.repos !== null ? 'saisie' : 'calcul'; }
-function restNeed(p){ return restSource(p) === 'saisie' ? p.repos : bmr(p) * NEAT[p.neat]; }
-/* Coût net d'une séance (le repos est déjà compté) : valeur du profil, sinon net × poids.
-   Petite ≈ 1 h de muscu (5 MET), moyenne ≈ 7 km de course (≈ 0,9 kcal/kg/km), longue ≈ vélo d'endurance (8 MET) par heure. */
-function seanceCost(x, p){
-  if (x.taille === 'petite') return p.kcalPetite !== null ? p.kcalPetite : SIZES.petite.net * p.poids;
-  if (x.taille === 'moyenne') return p.kcalMoyenne !== null ? p.kcalMoyenne : SIZES.moyenne.net * p.poids;
-  return (p.kcalLongueH !== null ? p.kcalLongueH : SIZES.longue.net * p.poids) * x.duree;
-}
-function dayCost(plan, p){ return plan.seances.reduce(function(a, x){ return a + seanceCost(x, p); }, 0); }
-/* Le déficit est un % de la dépense d'un jour sans sport, retiré chaque jour : les séances restent couvertes */
-function energy(plan, p){
-  const rest = restNeed(p), cost = dayCost(plan, p), deficit = rest * p.deficit / 100;
-  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, deficit:deficit,
-    target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
-}
-
-function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }
-
+/* Lignes de chaque repas : petit-déjeuner, collation, shaker, goûter, ravito ; déjeuner et dîner (protéine, féculent dosé
+   ensuite, légumes ou recette, ajout du soir). Portions × k (poids), × kp (k × facteur de protéines) pour celles ajustées. */
 /* Petit-déjeuner : menu de sortie longue si longue ; banane dès qu'il y a une séance moyenne ou longue */
 function breakfast(long, banane, base, k, kp){
   const items = [];
@@ -1810,6 +1689,31 @@ function gouterItems(k, kp){
     it('am', grams(am), 'amandes', null, mac('amandes', am))
   ];
 }
+function adj(item){ item.adj = true; return item; }
+/* Féculent dosé en calories : changer de féculent ne change pas le total de la journée */
+function starchItem(id, kcal){
+  const S = STARCH[id];
+  const q = Math.max(S.step, Math.round(kcal / (S.f[0] / 100) / S.step) * S.step);
+  const k = q / 100;
+  return it('st', grams(q), S.name, null, {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k},
+    S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null, {id:id, g:q});
+}
+function dessertOf(choice){ return choice && has(DESSERT, choice.dessert) ? choice.dessert : 'aucun'; }
+/* Repas : protéine, féculent (dosé ensuite), légumes ou ceux de la recette choisie (avec sa matière grasse et ses ajouts),
+   puis l'ajout du soir (amandes, parmesan), avec la note de la recette s'il y en a une */
+function mainItems(slot, choice, k, kp){
+  const P = PROT[choice.prot], rec = recipeOf(choice), extra = P[slot](k);
+  if (rec && RECIPES[rec].soir) extra.forEach(function(i){ i.note = RECIPES[rec].soir; });
+  return P.base(P.fixe ? k : kp).map(function(i){ return P.fixe ? i : adj(i); }).concat([it('st', '', '', null, null)],
+    rec ? recipeItems(rec) : [it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], extra);
+}
+function fuel(d, rate){
+  const g = Math.round(rate * d / 5) * 5;
+  return it('fuel', grams(g), 'glucides pendant l’effort', rate + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0}, null, {id:'ravito', g:g});
+}
+/* La journée : limites (féculents, lipides, protéines), partage des féculents entre déjeuner et dîner, construction de la
+   journée pour un facteur de protéines donné (composeDay) et recherche de ce facteur (buildDay). Règles : CLAUDE.md,
+   « Règles de calcul », « Objectif de protéines », « Portions au poids ». */
 /* Féculent de chaque repas : plancher en énergie (90 kcal à 72 kg, ≈ 20 g de glucides) et plafond en grammes, une
    portion sportive (cap de STARCH, à 72 kg : 120 g de grains crus, 100 g de lentilles, 400 g de pommes de terre ou de
    patate douce, 300 g de gnocchis) ; les deux × k. Au-delà, un budget d'encas (voir composeDay). */
@@ -1825,15 +1729,6 @@ const PROT_BAND = 0.1, PF_MIN = 0.5, PF_MAX = 1.5;
 /* Skyr du petit-déjeuner et du goûter : jamais moins d'un petit pot */
 const SKYR_MIN = 100;
 function protTarget(p){ return p.prot * REF_KG * scaleOf(p); }
-function adj(item){ item.adj = true; return item; }
-/* Féculent dosé en calories : changer de féculent ne change pas le total de la journée */
-function starchItem(id, kcal){
-  const S = STARCH[id];
-  const q = Math.max(S.step, Math.round(kcal / (S.f[0] / 100) / S.step) * S.step);
-  const k = q / 100;
-  return it('st', grams(q), S.name, null, {kcal:S.f[0]*k, p:S.f[1]*k, c:S.f[2]*k, f:S.f[3]*k},
-    S.cook ? {raw:S.raw, ways:S.cook.map(function(w){ return {g:Math.round(q * w[0] / 10) * 10, adj:w[1]}; })} : null, {id:id, g:q});
-}
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond (caps : kcal du plafond de chaque repas).
    off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).
    rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
@@ -1848,23 +1743,10 @@ function splitStarch(budget, share, k, off, caps){
   ka = clampA(avail - kb);
   return {dej:ka, diner:kb, rest:avail - ka - kb};
 }
-function dessertOf(choice){ return choice && has(DESSERT, choice.dessert) ? choice.dessert : 'aucun'; }
-/* Repas : protéine, féculent (dosé ensuite), légumes ou ceux de la recette choisie (avec sa matière grasse et ses ajouts),
-   puis l'ajout du soir (amandes, parmesan), avec la note de la recette s'il y en a une */
-function mainItems(slot, choice, k, kp){
-  const P = PROT[choice.prot], rec = recipeOf(choice), extra = P[slot](k);
-  if (rec && RECIPES[rec].soir) extra.forEach(function(i){ i.note = RECIPES[rec].soir; });
-  return P.base(P.fixe ? k : kp).map(function(i){ return P.fixe ? i : adj(i); }).concat([it('st', '', '', null, null)],
-    rec ? recipeItems(rec) : [it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], extra);
-}
 function setStarch(sec, item){ sec.items = sec.items.map(function(i){ return i.key === 'st' ? item : i; }); }
 function allItems(secs){ return secs.reduce(function(a, s){ return a.concat(s.items); }, []); }
-function fuel(d, rate){
-  const g = Math.round(rate * d / 5) * 5;
-  return it('fuel', grams(g), 'glucides pendant l’effort', rate + NB + 'g par heure' + NB + ': boisson d’effort, gels ou pâtes de fruits', {kcal:g * 4, p:0, c:g, f:0}, null, {id:'ravito', g:g});
-}
-
-/* Construit la journée pour un facteur de protéines pf donné (voir buildDay) */
+/* Construit la journée pour un facteur de protéines pf donné (voir buildDay).
+   @param {Plan} plan  @param {Choices} ch  @param {Profile} pr  @param {number} pf */
 function composeDay(plan, ch, pr, pf){
   const en = energy(plan, pr);
   const S = plan.seances.slice().sort(function(a, b){ return MOMENT_RANK[a.moment] - MOMENT_RANK[b.moment]; });
@@ -2010,7 +1892,8 @@ function composeDay(plan, ch, pr, pf){
 /* Journée complète. Le facteur de protéines pf part de 1 (menu de référence) et ne bouge que si les protéines de la journée
    sortent de la fourchette objectif ± 10 % : il vise alors juste à l'intérieur (à 2 % du bord, pour absorber les arrondis).
    Quelques passes, car les féculents réajustés portent aussi des protéines. Le jour du repas libre, pf est cherché sur
-   la même journée sans repas libre (le repas libre n'a pas de macros connues). */
+   la même journée sans repas libre (le repas libre n'a pas de macros connues).
+   @param {Plan} plan  @param {Choices} ch  @param {*} [profile] champs du profil, validés ici  @returns {Day} */
 function buildDay(plan, ch, profile){
   const pr = cleanProfile(profile), T = protTarget(pr), lo = (1 - PROT_BAND) * T, hi = (1 + PROT_BAND) * T;
   const base = plan.libre ? Object.assign({}, plan, {libre:false}) : plan;
@@ -2032,7 +1915,163 @@ function buildDay(plan, ch, profile){
   delete r.adjP; delete r.soirP;
   return r;
 }
-
+/* Batch cooking (3.13.0) : pour une période (jours consécutifs, par blocs de 7 à partir du premier), quelques recettes qui
+   se gardent (3, 4 ou 5) répétées aux déjeuners et aux dîners, cuisinées en une fois la veille du bloc. Un plat cuisiné se
+   garde 3 jours au frigo (FRIDGE_DAYS) : les boîtes mangées plus tard vont au congélateur. */
+const BATCH_BLOCK = 7, BATCH_N = [3, 4, 5], FRIDGE_DAYS = 3;
+/* Plats d'une période en batch cooking. days : [{libre}] dans l'ordre des dates ; renvoie les choix de chaque jour
+   ({pdBase, dej, diner}, recette comprise ; rand comme randomChoices). Par bloc :
+   - n recettes au plus (au moins deux repas chacune), parmi celles qui se gardent et dont la protéine et le féculent sont
+     proposés ; protéines différentes et féculents variés autant que possible ; poisson, poisson gras et légumes secs
+     favorisés tant que le bloc en manque ; bœuf et « Œufs + jambon » écartés d'abord s'ils feraient dépasser la viande rouge
+     ou la charcuterie (repas du bloc, au nombre de boîtes le plus haut), comme une protéine qui aurait plus de repas que le
+     bloc n'a de jours ; une recette qui se congèle mal seulement si ses boîtes tiennent dans les 3 premiers jours (une par
+     jour au plus, avec les autres qui se congèlent mal, une seule par protéine) et qu'il en reste deux qui se congèlent bien
+     pour la suite ;
+   - boîtes : les moins nombreuses aux recettes servies d'abord (celles qui se congèlent mal, poisson en tête) ; repas
+     répartis dans l'ordre des jours, deux recettes en cours à la fois (celle qui se congèle mal, sinon la plus fournie,
+     d'abord), en alternant ; jamais la
+     même protéine au déjeuner et au dîner si c'est possible (échange avec le repas le plus proche) ;
+   - petit-déjeuner comme randomChoices (pas de salé avec « Œufs + jambon », charcuterie comptée), desserts au hasard ; le
+     dîner d'un repas libre reçoit une recette du bloc d'une autre protéine, sans boîte.
+   @param {{libre:boolean}[]} days  @param {number} n  @param {string[]} [off]  @param {number} [k]  @param {function():number} [rand]
+   @returns {Choices[]} */
+function batchChoices(days, n, off, k, rand){
+  const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
+  const pick = function(a, w){ return tieredPick(r, a, w); };
+  const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
+  const prots = allowed('prot', off), starches = allowed('starch', off);
+  const ok = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
+  const keep = ok.filter(function(id){ return RECIPES[id].box; }), pool = keep.length ? keep : ok;
+  const prot = function(e){ return RECIPES[e.id].p; };
+  const out = [];
+  for (let b = 0; b < days.length; b += BATCH_BLOCK){
+    const block = days.slice(b, b + BATCH_BLOCK), slots = [];
+    block.forEach(function(d, i){ slots.push({i:i, slot:'dej'}); if (!(d && d.libre)) slots.push({i:i, slot:'diner'}); });
+    const m = slots.length, nr = Math.min(nn, m, Math.max(2, Math.floor(m / 2)));
+    const cnt = [];
+    for (let j = 0; j < nr; j++) cnt.push(Math.floor(m / nr) + (j >= nr - m % nr ? 1 : 0));
+    /* Recettes qui se congèlent mal : autant que de boîtes (les moins nombreuses) qui tiennent dans les 3 premiers jours */
+    const fridgeSlots = slots.filter(function(sl){ return sl.i < FRIDGE_DAYS; }).length;
+    let maxNoGel = 0, used = 0;
+    if (block.length <= FRIDGE_DAYS) maxNoGel = nr;
+    else while (maxNoGel < nr - 2 && cnt[maxNoGel] <= FRIDGE_DAYS && used + cnt[maxNoGel] <= fridgeSlots){ used += cnt[maxNoGel]; maxNoGel++; }
+    const ct = cnt[nr - 1], c = {poisson:0, gras:0, legumes:0, rouge:0, charcuterie:0}, chosen = [], perProt = {}, perFresh = {};
+    cnt.forEach(function(){
+      const usedP = chosen.map(function(id){ return RECIPES[id].p; }), usedS = chosen.map(function(id){ return RECIPES[id].s; });
+      const noGel = chosen.filter(function(id){ return !RECIPES[id].gel; }).length, fresh = pool.filter(function(id){ return chosen.indexOf(id) < 0; });
+      const id = pick(fresh.length ? fresh : pool, function(id){
+        const x = RECIPES[id];
+        if (x.p === 'boeuf' && c.rouge + ct * boeufCuit > WEEK_GOALS.rouge) return -1;
+        if (x.p === 'oeufs' && c.charcuterie + ct * jambonOeufs > WEEK_GOALS.charcuterie) return -1;
+        if ((perProt[x.p] || 0) + ct > block.length || (!x.gel && (noGel >= maxNoGel || (perFresh[x.p] || 0) + ct > FRIDGE_DAYS))) return -1;
+        if (usedP.indexOf(x.p) >= 0) return 0;
+        let w = usedS.indexOf(x.s) >= 0 ? 0.3 : 1;
+        if (FISH.indexOf(x.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= x.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
+        if (LEGUMES.indexOf(x.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
+        return w;
+      });
+      const x = RECIPES[id];
+      if (FISH.indexOf(x.p) >= 0){ c.poisson += ct; if (x.p === 'saumon') c.gras += ct; }
+      if (LEGUMES.indexOf(x.s) >= 0) c.legumes += ct;
+      if (x.p === 'boeuf') c.rouge += ct * boeufCuit;
+      if (x.p === 'oeufs') c.charcuterie += ct * jambonOeufs;
+      perProt[x.p] = (perProt[x.p] || 0) + ct;
+      if (!x.gel) perFresh[x.p] = (perFresh[x.p] || 0) + ct;
+      chosen.push(id);
+    });
+    const ent = chosen.map(function(id, j){ return {id:id, j:j, key:(RECIPES[id].gel ? 2 : 0) + (FISH.indexOf(RECIPES[id].p) >= 0 ? 0 : 1)}; })
+      .sort(function(a, x){ return a.key - x.key || a.j - x.j; });
+    ent.forEach(function(e, j){ e.left = cnt[j]; });
+    const at = block.map(function(){ return {}; });
+    let prev = null;
+    slots.forEach(function(sl){
+      const other = sl.slot === 'diner' && at[sl.i].dej ? prot(at[sl.i].dej) : null;
+      const live = ent.filter(function(e){ return e.left > 0; });
+      const okP = function(l){ return l.filter(function(e){ return prot(e) !== other; }); };
+      let cand = okP(live.slice(0, 2));
+      if (!cand.length) cand = okP(live);
+      if (!cand.length) cand = live;
+      /* Celles qui se congèlent mal d'abord, puis la plus fournie ; pas deux fois de suite la même */
+      const score = function(e){ return e.left + (RECIPES[e.id].gel ? 0 : 100) - (e === prev ? 0.5 : 0); };
+      const e = cand.reduce(function(best, x){ return score(x) > score(best) ? x : best; });
+      e.left--; prev = e; at[sl.i][sl.slot] = e;
+    });
+    /* Même protéine midi et soir : le dîner est échangé avec le repas le plus proche qui règle les deux jours, sans repousser
+       après le 3e jour une recette qui se congèle mal */
+    const clash = function(i){ return at[i].dej && at[i].diner && prot(at[i].dej) === prot(at[i].diner); };
+    const fresh = function(e, i){ return RECIPES[e.id].gel || i < FRIDGE_DAYS || block.length <= FRIDGE_DAYS; };
+    block.forEach(function(d, i){
+      if (!clash(i)) return;
+      const others = slots.filter(function(sl){ return sl.i !== i; }).sort(function(a, x){ return Math.abs(a.i - i) - Math.abs(x.i - i); });
+      for (let t = 0; t < others.length; t++){
+        const sl = others[t], a = at[i].diner, x = at[sl.i][sl.slot];
+        if (!fresh(x, i) || !fresh(a, sl.i)) continue;
+        at[i].diner = x; at[sl.i][sl.slot] = a;
+        if (!clash(i) && !clash(sl.i)) return;
+        at[i].diner = a; at[sl.i][sl.slot] = x;
+      }
+    });
+    block.forEach(function(d, i){
+      const dej = at[i].dej, din = at[i].diner || ent.find(function(e){ return prot(e) !== prot(dej); }) || dej;
+      const oe = prot(dej) === 'oeufs' || prot(din) === 'oeufs';
+      const pdBase = pick(allowed('pd', off), function(x){
+        if (x !== 'sale') return 1;
+        if (oe) return -1;
+        return c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1;
+      });
+      if (pdBase === 'sale') c.charcuterie += jambonSale;
+      const meal = function(e){ const x = RECIPES[e.id]; return {prot:x.p, starch:x.s, dessert:pick(allowed('dessert', off)), recette:e.id}; };
+      out.push({pdBase:pdBase, dej:meal(dej), diner:meal(din)});
+    });
+  }
+  return out;
+}
+/* Fiche de batch cooking d'une période : days = [{res}] (résultats de buildDay, dates consécutives), par blocs de 7.
+   Pour chaque recette qui se garde servie à au moins deux repas d'un bloc (repas libre exclu) : ses boîtes (jour depuis le début de la
+   période, repas, frigo si elle est mangée 3 jours au plus après la cuisson de la veille du bloc, sinon congélateur ;
+   protéine et féculent de la boîte) et ce qu'il faut cuire en tout (protéine, féculent, légumes, matière grasse, ajouts :
+   somme des boîtes, valeurs des lignes de buildDay). lead : jours entre la cuisson et le premier jour (1 par défaut, la
+   veille ; 0 si la période commence aujourd'hui), pour le premier bloc seulement.
+   Renvoie [{start, recipes:[{id, t, gel, boxes, totals}]}].
+   @param {{res:Day}[]} days  @param {number} [lead] */
+function batchCook(days, lead){
+  const blocks = [];
+  for (let b = 0; b < days.length; b += BATCH_BLOCK){
+    const by = {}, order = [];
+    days.slice(b, b + BATCH_BLOCK).forEach(function(d, i){
+      d.res.secs.forEach(function(sec){
+        if ((sec.id !== 'dej' && sec.id !== 'diner') || sec.libre || !sec.recipe) return;
+        if (!has(by, sec.recipe)){ by[sec.recipe] = []; order.push(sec.recipe); }
+        by[sec.recipe].push({day:b + i, slot:sec.id, after:i + (b === 0 && lead === 0 ? 0 : 1), items:sec.items.filter(function(x){ return /^(p1|p2|st|[vfx]-)/.test(x.key) && x.buy; })});
+      });
+    });
+    const recipes = order.filter(function(id){ return RECIPES[id].box && by[id].length >= 2; }).map(function(id){
+      const x = RECIPES[id], tot = {}, ids = [];
+      by[id].forEach(function(v){ v.items.forEach(function(i){
+        const a = tot[i.buy.id] || (tot[i.buy.id] = {first:i, g:0, n:0, cooked:0});
+        if (ids.indexOf(i.buy.id) < 0) ids.push(i.buy.id);
+        a.g += i.buy.g || 0; a.n += i.buy.n || 0; a.cooked += i.cook && i.cook.ways.length === 1 ? i.cook.ways[0].g : 0;
+      }); });
+      const PLURAL = {oeuf:'œufs', thon:'boîtes de thon au naturel'};
+      const totals = ids.map(function(bid){
+        const a = tot[bid], i = a.first, k = i.key;
+        if (a.n) return {id:bid, qty:String(a.n), name:a.n > 1 && has(PLURAL, bid) ? PLURAL[bid] : i.name, note:null};
+        const note = a.cooked ? '≈' + NB + shopQty(Math.round(a.cooked / 10) * 10) + ' ' + i.cook.ways[0].adj
+          : /^f-/.test(k) ? i.note + ' par boîte' : /^v-/.test(k) ? RFOOD[bid][1] : null;
+        return {id:bid, qty:shopQty(a.g), name:i.name, note:note};
+      });
+      const boxes = by[id].map(function(v){
+        return {day:v.day, slot:v.slot, fridge:v.after <= FRIDGE_DAYS, parts:v.items.filter(function(i){ return /^(p1|p2|st)$/.test(i.key); }).map(function(i){
+          return {qty:i.qty, name:i.name, cooked:i.cook ? i.cook.ways.map(function(w){ return '≈' + NB + grams(w.g) + ' ' + w.adj; }).join(' ou ') : null};
+        })};
+      });
+      return {id:id, t:x.t, gel:x.gel, boxes:boxes, totals:totals};
+    });
+    if (recipes.length) blocks.push({start:b, recipes:recipes});
+  }
+  return blocks;
+}
 /* Liste de courses : les achats (buy) de plusieurs journées construites par buildDay, additionnés et rangés par rayon.
    Poids crus, pièces entières, budgets en kcal.
    Renvoie [{title, lines:[{id, qty, name, note}]}], rayons et lignes vides omis. */
@@ -2048,6 +2087,7 @@ function shopQty(g){
   if (g < 1000) return grams(Math.round(g));
   return (Math.round(g / 10) / 100).toLocaleString('fr-FR') + NB + 'kg';
 }
+/** @param {Day[]} days  @returns {{title:string, lines:{id:string, qty:string, name:string, note:?string}[]}[]} */
 function shoppingList(days){
   const sum = {};
   days.forEach(function(d){ d.secs.forEach(function(s){ s.items.forEach(function(i){

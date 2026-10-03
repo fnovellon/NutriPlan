@@ -399,10 +399,19 @@
 {{# Moteur (sans DOM) puis interface, recollés dans un seul script. L'ordre compte : une constante lue au chargement d'un }}
 {{# fichier (REF_GROUPS, CHOICE_IDS, SHOP_AISLES…) doit être déclarée dans un fichier précédent. }}
 {{inclure engine/base.js}}
+{{inclure engine/types.js}}
 {{inclure data/aliments.js}}
 {{inclure data/menus.js}}
 {{inclure data/recettes.js}}
-{{inclure engine.js}}
+{{inclure engine/seances.js}}
+{{inclure engine/profil.js}}
+{{inclure engine/choix.js}}
+{{inclure engine/semaine.js}}
+{{inclure engine/repas.js}}
+{{inclure engine/journee.js}}
+{{inclure engine/batch.js}}
+{{inclure engine/courses.js}}
+
 {{inclure ui.js}}
 </script>
 </body>
