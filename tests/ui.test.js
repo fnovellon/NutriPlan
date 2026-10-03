@@ -1112,5 +1112,52 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(!bt.$('#plan').hidden && /La fin doit venir après le début/.test(bt.$('#plan-err').textContent), 'batch refusé sur une période invalide');
 }
 
+// Réglages, « Effacer mes données » (3.15.0) : demander, annuler (rien ne bouge), confirmer (tout ce qui est à l'appli
+// part, l'ancienne v1 comprise, le reste du stockage non), puis l'appli repart comme au premier lancement
+{
+  const full = ls => {
+    ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { seances: [{ taille: 'moyenne', moment: 'soir' }], libre: false, ch: { pdBase: 'pain', dej: { prot: 'boeuf', starch: 'pates', recette: 'boeuf-pates' }, diner: { prot: 'tofu', starch: 'riz' } } } }, choices: { 3: { pdBase: 'pain', dej: { prot: 'boeuf', starch: 'pates' }, diner: { prot: 'tofu', starch: 'riz' } } } }));
+    ls.setItem(OLD_KEY, JSON.stringify({ plans: { '2026-10-07': { activity: 'course', moment: 'soir' } }, choices: {} }));
+    ls.setItem(PKEY, JSON.stringify({ sexe: 'f', age: 30, taille: 165, poids: 58, off: ['prot:thon'], semaine: { jours: { 1: [{ taille: 'petite', moment: 'soir' }] }, libre: 4 } }));
+    ls.setItem('repas-du-jour:courses:v1', JSON.stringify({ from: '2026-10-07', to: '2026-10-09', checked: ['skyr|500 g'] }));
+    ls.setItem('autre-appli:cle', 'garde');
+  };
+  const ef = tools(open(full)), ew = ef.d.defaultView;
+  assert(/Séance moyenne/.test(ef.$('#sess').textContent) && ef.chosen('prot', 'dej') === 'boeuf', 'données de départ');
+  ef.click('#gear');
+  assert(!ef.$('#eff-ask').hidden && ef.$('#eff-confirm').hidden && /Effacer mes données/.test(ef.$('#effacer h2').textContent), 'carte « Effacer mes données »');
+  ef.click('[data-action="eff-ask"]');
+  assert(ef.$('#eff-ask').hidden && !ef.$('#eff-confirm').hidden && ew.document.activeElement === ef.$('#eff-no') && /C’est définitif/.test(ef.$('#eff-q').textContent), 'confirmation demandée, focus sur « Annuler »');
+  ef.click('[data-action="eff-no"]');
+  assert(!ef.$('#eff-ask').hidden && ef.$('#eff-confirm').hidden && ew.document.activeElement === ef.$('#eff-btn') && ew.localStorage.getItem(PKEY) !== null && ew.localStorage.getItem(KEY) !== null, 'annuler : rien n’est effacé');
+  // La confirmation ne reste pas ouverte d'une visite à l'autre
+  ef.click('[data-action="eff-ask"]'); ef.click('#reglages [data-action="fermer"]'); ef.click('#gear');
+  assert(!ef.$('#eff-ask').hidden && ef.$('#eff-confirm').hidden, 'confirmation refermée en revenant dans les réglages');
+  ef.click('[data-action="eff-ask"]');
+  ef.click('[data-action="eff-ok"]');
+  const left = []; for (let i = 0; i < ew.localStorage.length; i++) left.push(ew.localStorage.key(i));
+  assert.deepStrictEqual(left, ['autre-appli:cle'], 'clés restantes : ' + left.join(', '));
+  assert(!ef.$('#accueil').hidden && ef.$('#reglages').hidden && ef.$('#page').hidden && ew.document.activeElement === ef.$('#acc-h1'), 'accueil comme au premier lancement');
+  assert([...ef.d.querySelectorAll('#accueil input[data-acc]')].every(el => el.value === ''), 'accueil vide');
+  // Passer : la page part de zéro (repos, plats par défaut du mercredi, sans recette) et le formulaire des repas s'ouvre
+  ef.click('[data-action="acc-skip"]');
+  assert(!ef.$('#repas').hidden, 'formulaire des repas après l’accueil');
+  ef.click('#repas [data-action="fermer"]');
+  assert(!ef.$('#page').hidden && ef.$('#date').textContent.startsWith('Aujourd’hui') && /Repos/.test(ef.$('#sess').textContent), 'page de zéro');
+  assert(ef.chosen('prot', 'dej') === 'poulet' && ef.chosen('starch', 'dej') === 'riz' && !ef.$('.rec.is-on'), 'plats par défaut');
+  assert(!ew.localStorage.getItem(KEY) || Object.keys(JSON.parse(ew.localStorage.getItem(KEY)).plans).length === 0, 'aucun jour enregistré');
+  assert(ef.$('#alim-list [data-kind="prot"][data-value="thon"]').getAttribute('aria-pressed') === 'true' && !ef.d.querySelector('#alim-list [aria-pressed="false"]'), 'aliments : tous proposés');
+  ef.click('#gear');
+  assert(ef.$('#besoins [data-key="poids"]').value === '' && ef.d.querySelectorAll('#sem-days .dn').length === 7 && [...ef.d.querySelectorAll('#sem-days .dn')].every(x => x.textContent === '–'), 'profil et semaine type remis à zéro');
+  ef.click('#reglages [data-action="fermer"]');
+  // Courses : période par défaut, rien de coché
+  ef.click('#courses-btn');
+  assert(ef.$('#courses-span').textContent.startsWith('7') && !ef.d.querySelector('#courses-list .chk[aria-checked="true"]'), 'courses remises à zéro');
+  // Rechargée : plus d'accueil (le profil vide est enregistré par « Passer »), toujours rien de l'ancienne v1
+  const snap = {}; for (let i = 0; i < ew.localStorage.length; i++) { const k = ew.localStorage.key(i); snap[k] = ew.localStorage.getItem(k); }
+  const again = tools(open(ls => { ls.clear(); Object.entries(snap).forEach(([k, v]) => ls.setItem(k, v)); }, true));
+  assert(again.$('#accueil').hidden && /Repos/.test(again.$('#sess').textContent), 'rechargée après l’effacement');
+}
+
 assert.deepStrictEqual(errors, [], 'erreurs JavaScript : ' + errors.join(' | '));
 console.log('interface OK');

@@ -422,6 +422,27 @@ const ACTIONS = {
     d.querySelector('#reglages [data-action="fermer"]').click();
     return 'aliments ' + done.join(' ');
   },
+  // Réglages, « Effacer mes données » : annuler (rien ne part) ou confirmer (plus aucune clé de l'appli, accueil), puis « Passer »
+  effacer: dom => {
+    const d = dom.window.document, ls = dom.window.localStorage;
+    if (d.querySelector('#page').hidden) return 'effacer -';
+    d.querySelector('#gear').click();
+    d.querySelector('[data-action="eff-ask"]').click();
+    const keys = () => { const o = []; for (let i = 0; i < ls.length; i++) if (ls.key(i).startsWith('repas-du-jour:')) o.push(ls.key(i)); return o; };
+    if (R.chance(.3)){
+      const before = keys().length;
+      d.querySelector('[data-action="eff-no"]').click();
+      C.ok(keys().length === before && d.querySelector('#eff-confirm').hidden, 'effacer : annuler a effacé', '');
+      d.querySelector('#reglages [data-action="fermer"]').click();
+      return 'effacer annulé';
+    }
+    d.querySelector('[data-action="eff-ok"]').click();
+    C.ok(keys().length === 0 && !d.querySelector('#accueil').hidden && d.querySelector('#reglages').hidden, 'effacer : données restées ou pas d’accueil', () => keys().join(', '));
+    d.querySelector('[data-action="acc-skip"]').click();
+    if (!d.querySelector('#repas').hidden) d.querySelector('#repas [data-action="fermer"]').click();
+    C.ok(!d.querySelector('#page').hidden && d.querySelectorAll('#sess .srow').length === 0, 'effacer : page pas de zéro', '');
+    return 'effacer';
+  },
   day: dom => { clock.now += 864e5 * R.pick([1, 1, 2, 7]); dom.window.dispatchEvent(new dom.window.Event('focus')); return 'jour suivant'; },
   accueil: dom => {
     const d = dom.window.document;

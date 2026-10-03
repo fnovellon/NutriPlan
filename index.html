@@ -263,6 +263,11 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .top-btns{display:flex;align-items:center;gap:4px;margin:-10px -10px -10px 0;}
 .top-btns .icon-btn{margin:0;}
 .regl-links{display:flex;flex-wrap:wrap;gap:8px;}
+/* Tout effacer (réglages) : betterave, avec une confirmation */
+.reset.danger{color:var(--beet);border-color:var(--beet);}
+.btn.danger{background:var(--beet);border-color:var(--beet);color:var(--paper);}
+.eff-q{margin:0 0 12px;font-size:16px;line-height:1.45;color:var(--beet);}
+#eff-confirm[hidden],#eff-ask[hidden]{display:none;}
 .aide h2{margin:26px 0 10px;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:19px;line-height:1.25;}
 .guide ol,.guide ul{margin:0;padding-left:1.25em;}
 .guide li{margin:0 0 8px;padding-left:2px;}
@@ -654,6 +659,17 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
     <div class="needs-body" id="alim-list"></div>
     <p class="warn" id="alim-warn" role="status"></p>
   </section>
+  <section class="needs" id="effacer" aria-labelledby="eff-t">
+    <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
+    <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
+    <div class="needs-body">
+      <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
+      <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
+        <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
+        <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
+      </div>
+    </div>
+  </section>
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
@@ -762,7 +778,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.14.0';
+const APP_VERSION = '3.15.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -3080,7 +3096,11 @@ if (typeof document !== 'undefined'){
         msg = 'Repas tirés au hasard' + NB + ': touche un plat pour le changer.';
         break;
       case 'close-pick': closePick(false); return;
-      case 'needs': openScreen('reglages', b); return;
+      case 'needs': effShow(false); openScreen('reglages', b); return;
+      /* Réglages, « Effacer mes données » : demander, confirmer ou annuler */
+      case 'eff-ask': effShow(true); $('eff-no').focus({preventScroll:true}); return;
+      case 'eff-no': effShow(false); $('eff-btn').focus({preventScroll:true}); return;
+      case 'eff-ok': resetAll(); return;
       case 'aide': openScreen('aide', b); return;
       case 'fermer': closeScreen(false); return;
       case 'prot': if (has(PROT, v)){ ch[b.dataset.slot].prot = v; dropRecipes(ch); saveCh(); } break;
@@ -3216,6 +3236,27 @@ if (typeof document !== 'undefined'){
     saveProf();
     render();
   });
+
+  /* Tout effacer (réglages) : toutes les clés de l'appli (repas-du-jour:…, l'ancienne v1 comprise, sinon elle serait reconvertie
+     au prochain chargement), puis l'appli repart comme au premier lancement : accueil, puis formulaire des repas */
+  const effShow = function(on){ $('eff-ask').hidden = on; $('eff-confirm').hidden = !on; };
+  const resetAll = function(){
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if (k && k.indexOf('repas-du-jour:') === 0) keys.push(k); }
+      keys.forEach(function(k){ localStorage.removeItem(k); });
+    } catch (e) {}
+    store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
+    shop = {from:'', to:'', checked:[]}; repasVu = null; draft = null; planner = null; semSel = todayJs;
+    effShow(false);
+    closeAllScreens();
+    selDate = today; loadSel(); prevQty = new Map();
+    $('hint').textContent = ''; $('intro').textContent = ''; $('alim-warn').textContent = '';
+    fillNeeds(); renderAliments(); renderSemaine();
+    render();
+    openAcc({});
+    $('acc-h1').focus();
+  };
 
   /* Si la page reste ouverte d'un jour à l'autre, revenir sur le nouveau jour */
   const refreshToday = function(){

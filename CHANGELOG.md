@@ -1,5 +1,9 @@
 # Nouveautés
 
+## 3.15.0, 3 octobre 2026
+
+- Nouveau dans les réglages : « Effacer mes données ». « Tout effacer » demande une confirmation, puis supprime de cet appareil ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L'appli repart comme au premier lancement, avec l'accueil.
+
 ## 3.14.0, 3 octobre 2026
 
 - Repas avec une recette choisie : ta journée montre d'abord la recette, en tête du repas (titre, temps, calories et macros), à la place de la liste des ingrédients.
