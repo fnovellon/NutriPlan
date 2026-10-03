@@ -20,10 +20,11 @@ function weekBalance(days){
   return b;
 }
 /* Ce que la semaine demande encore, dans l'ordre d'importance : trop de charcuterie, trop de viande rouge, poisson gras,
-   poisson, légumes secs. [] : semaine équilibrée. */
-function weekNeeds(b){
+   poisson, légumes secs. [] : semaine équilibrée. pack : grammes d'un paquet de jambon (4 tranches × k, 3.17.0), toléré
+   au-delà des 150 g (le jambon ne s'achète pas à la tranche). */
+function weekNeeds(b, pack){
   const out = [];
-  if (b.charcuterie > WEEK_GOALS.charcuterie + 0.5) out.push('charcuterie');
+  if (b.charcuterie > Math.max(WEEK_GOALS.charcuterie, pack || 0) + 0.5) out.push('charcuterie');
   if (b.rouge > WEEK_GOALS.rouge + 0.5) out.push('rouge');
   if (b.gras < WEEK_GOALS.gras) out.push('gras');
   if (b.poisson < WEEK_GOALS.poisson) out.push('poisson');

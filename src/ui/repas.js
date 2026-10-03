@@ -22,7 +22,11 @@
   };
   /* Brouillon : les choix actuels du jour */
   const startDraft = function(){
-    const copy = function(c){ const o = {prot:c.prot, starch:c.starch, dessert:dessertOf(c)}; if (recipeOf(c)) o.recette = c.recette; return o; };
+    const copy = function(c){
+      const o = {prot:c.prot, starch:c.starch, dessert:dessertOf(c)};
+      if (recipeOf(c)){ o.recette = c.recette; ['g', 'g2'].forEach(function(f){ if (has(c, f)) o[f] = c[f]; }); }
+      return o;
+    };
     draft = {pdBase:ch.pdBase, dej:copy(ch.dej), diner:copy(ch.diner)};
     renderRepas();
   };

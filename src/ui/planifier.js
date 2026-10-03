@@ -93,9 +93,11 @@
     'pl-batch': function(){
       if (fillRange('plan', planner, 0, true)) return;
       const isos = rangeDays(planner.from, planner.to), pr = cleanProfile(prof);
-      const cs = batchChoices(isos.map(function(iso){ return {libre:planFor(iso).libre}; }), planner.n, pr.off, scaleOf(pr));
+      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), planner.n, pr.off, scaleOf(pr));
+      /* Chiffres ronds : protéine de chaque recette arrondie aux 100 g sur ses boîtes */
+      const rounded = batchRound(isos.map(function(iso, j){ return {plan:planFor(iso), ch:cleanCh(cs[j], fromIso(iso).getDay())}; }), prof);
       isos.forEach(function(iso, j){
-        const js = fromIso(iso).getDay(), c = cleanCh(cs[j], js);
+        const js = fromIso(iso).getDay(), c = cleanCh(rounded[j], js);
         writeDay(iso, {ch:c});
         store.choices[js] = c;
       });

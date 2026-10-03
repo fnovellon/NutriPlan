@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 3.17.0, 3 octobre 2026
+
+- Batch cooking : des chiffres ronds pour les courses. La viande, le poisson, les crevettes, le halloumi et le tofu de chaque recette font un compte rond sur la semaine (par exemple 600 g de saumon plutôt que 570 g), réparti entre ses boîtes. Le féculent de chaque jour compense : ta journée garde le même total. Si un jour risquait de sortir de sa fourchette de protéines, l'arrondi se fait dans l'autre sens.
+- Une boîte prévue garde son poids, même si tu changes tes séances ensuite : seul le féculent du jour s'adapte. Une recette changée est arrondie à son tour.
+- Jambon par paquet : en batch cooking, une semaine compte 0 ou 4 tranches (4 petits-déjeuners salés, ou des œufs-jambon en 2 boîtes), plus jamais une tranche isolée. Pas de petit-déjeuner salé un jour de sortie longue.
+- « Ta semaine » tolère un paquet de 4 tranches (180 g), un peu au-dessus du repère de 150 g de charcuterie, sans alerte.
+
 ## 3.16.0, 3 octobre 2026
 
 - Batch cooking : une recette ne te plaît pas ? Dans sa fiche (« Ton batch cooking », sur l'écran des courses), « Changer de recette » propose « Une autre au hasard » ou la liste des recettes qui vont avec ta semaine (la même protéine d'abord). La nouvelle prend toutes les boîtes de l'ancienne : quantités, fiche et courses suivent.

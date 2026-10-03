@@ -121,6 +121,14 @@ function handEnergy(pr, plan){
 // --- A. Journées au hasard : chaque règle vérifiée -----------------------------------------------------------------
 for (let i = 0; i < N; i++){
   const js = R.int(0, 6), prof = randProfile(), plan = randPlan(js), ch = randChoices();
+  // Poids fixés d'une boîte de batch cooking (3.17.0) : près des portions de base × k (comme les laisse l'arrondi), parfois abîmés
+  ['dej', 'diner'].forEach(sl => {
+    const BASE = { poulet: [180, 0], boeuf: [150, 0], poisson: [200, 0], saumon: [160, 0], crevettes: [120, 60], tofu: [200, 0], oeufs: [0, 90] }[ch[sl].prot];
+    if (!BASE || !R.chance(.25)) return;
+    const k0 = A.scaleOf(A.cleanProfile(prof)), near = (b, st) => Math.max(st, Math.round(b * k0 * R.between(0.75, 1.3) / st) * st);
+    if (BASE[0]) ch[sl].g = R.chance(.9) ? near(BASE[0], 10) : R.pick([175, 0, -10, '150', 5000, null]);
+    if (BASE[1] && R.chance(.7)) ch[sl].g2 = R.chance(.9) ? near(BASE[1], 5) : R.pick([3, 'x', 1e6]);
+  });
   const input = JSON.stringify([prof, plan, ch]), cas = () => input;
   let r;
   try { r = A.buildDay(plan, ch, prof); } catch (e){ C.ok(false, 'exception', e.message + ' ' + input); continue; }
@@ -129,6 +137,16 @@ for (let i = 0; i < N; i++){
   const items = r.secs.flatMap(s => s.items);
   const long = plan.seances.some(x => x.taille === 'longue'), grosse = plan.seances.some(x => x.taille !== 'petite');
   const ids = r.secs.map(s => s.id);
+  // Poids fixés valides : la ligne les reprend et n'est pas ajustée ; sinon ignorés
+  ['dej', 'diner'].forEach(sl => {
+    const sc2 = sec(r, sl), fx = A.fixedGrams(ch[sl]);
+    if (!sc2 || sc2.libre) return;
+    ['p1', 'p2'].forEach((key, j) => {
+      const it = sc2.items.find(x => x.key === key);
+      if (it && fx && fx[j] !== null) C.ok(it.buy.g === fx[j] && !it.adj, 'poids fixé ≠ ligne', cas);
+      else if (it && !A.PROT[ch[sl].prot].fixe) C.ok(it.adj, 'portion ni fixée ni ajustée', cas);
+    });
+  });
 
   // Nombres, totaux, textes
   items.forEach(x => C.ok(x.m && [x.m.kcal, x.m.p, x.m.c, x.m.f].every(v => fin(v) && v >= 0), 'macros invalides', () => x.name + ' ' + JSON.stringify(x.m) + ' ' + input));
@@ -569,11 +587,12 @@ for (let i = 0; i < N / 3; i++){
 
 // --- Batch cooking : périodes, nombres de recettes, aliments retirés et corpulences au hasard ---------------------------
 {
+  let roundSeen = 0, roundMiss = 0;
   const ALL_OFF2 = Object.entries(A.CHOICE_IDS).flatMap(([k, ids]) => ids.map(id => k + ':' + id));
   for (let i = 0; i < N / 3; i++){
     const len = R.chance(.6) ? 7 : R.int(1, 31), n = R.pick([3, 4, 5, 3, 4, 5, 2, 6, 'x']), k = R.pick([0.65, 0.8, 1, 1.2, 1.4]);
     const off = A.cleanOff(ALL_OFF2.filter(() => R.chance(R.pick([0, 0.1, 0.3, 0.6]))));
-    const days = Array.from({ length: len }, () => ({ libre: R.chance(.12) }));
+    const days = Array.from({ length: len }, () => ({ libre: R.chance(.12), long: R.chance(.1) }));
     const cs = A.batchChoices(days, n, off, k, R.next), show = () => JSON.stringify([len, n, k, off, days.map(d => d.libre ? 1 : 0).join('')]);
     if (!C.ok(cs.length === len, 'batch : un choix par jour', show)) continue;
     const ok = kind => A.allowed(kind, off), nn = [3, 4, 5].includes(n) ? n : 4;
@@ -604,8 +623,14 @@ for (let i = 0; i < N / 3; i++){
       // Repères estimés (portions de base) : bœuf et jambon sous leurs limites quand il reste d'autres choix
       const beef = served.filter(x => x.c.prot === 'boeuf').length, oe = served.filter(x => x.c.prot === 'oeufs').length, sale = blk.filter(c => c.pdBase === 'sale').length;
       const enough = (bd.length > 3 ? freeGel : free) >= nr;
-      if (enough) C.ok(beef * Math.round(150 * k / 10) * 10 * 0.75 <= 500 + 1e-9 && oe * Math.round(90 * k / 5) * 5 <= 150, 'batch : viande rouge ou charcuterie', bshow);
-      if (ok('pd').some(x => x !== 'sale') && enough) C.ok(oe * Math.round(90 * k / 5) * 5 + sale * Math.round(45 * k / 5) * 5 <= 150, 'batch : charcuterie avec le salé', bshow);
+      if (enough) C.ok(beef * Math.round(150 * k / 10) * 10 * 0.75 <= 500 + 1e-9, 'batch : viande rouge', bshow);
+      // Jambon par paquet (3.17.0) : 0 ou 4 tranches (salé : 1, boîte d'œufs-jambon : 2) ; pas de salé avec les œufs-jambon
+      // ni un jour de sortie longue (sauf s'il ne reste que le salé)
+      if (ok('pd').some(x => x !== 'sale')){
+        C.ok(oe ? sale === 0 : [0, 4].includes(sale), 'batch : jambon, 0 ou 4 tranches', () => bshow() + ' salés ' + sale + ', œufs-jambon ' + oe);
+        if (enough) C.ok(oe === 0 || oe === 2, 'batch : œufs-jambon, 2 boîtes', bshow);
+        blk.forEach((c, d) => { if (c.pdBase === 'sale') C.ok(!bd[d].long, 'batch : salé un jour de sortie longue', bshow); });
+      }
       // Changer une recette (3.16.0) : les recettes proposées sont exactement celles qui respectent les règles (recalculées
       // ici), la remplaçante prend tous les repas de l'ancienne (dîner d'un repas libre compris), rien d'autre ne bouge
       // Parfois, l'autre repas d'un jour où elle est servie a été changé à la main (sans recette)
@@ -621,10 +646,9 @@ for (let i = 0; i < N / 3; i++){
         if (x === id || used.includes(x) || usedP.includes(r.p)) return false;
         if (mine.some(m => { const o = blk2[m.d][m.slot === 'dej' ? 'diner' : 'dej']; return !bd[m.d].libre && o.recette !== id && o.prot === r.p; })) return false;
         if (!r.gel && bd.length > 3 && mine.some(m => m.d >= 3)) return false;
-        const after = blk2.map(c => { const hit = [c.dej, c.diner].some(m => m.recette === id); return { pd: hit && r.p === 'oeufs' && c.pdBase === 'sale' && sweet ? sweet : c.pdBase, m: [c.dej, c.diner].map(m => m.recette === id ? r.p : m.prot) }; });
-        const nm = p => after.reduce((a, c, d) => a + c.m.filter((q, j) => q === p && !(j === 1 && bd[d].libre)).length, 0);
-        if (r.p === 'boeuf' && nm('boeuf') * Math.round(150 * k / 10) * 10 * 0.75 > 500.5) return false;
-        if (r.p === 'oeufs' && nm('oeufs') * Math.round(90 * k / 5) * 5 + after.filter(c => c.pd === 'sale').length * Math.round(45 * k / 5) * 5 > 150.5) return false;
+        if (r.p === 'oeufs' && (mine.length !== 2 || !sweet)) return false;
+        const nbf = blk2.reduce((a, c, d) => a + [c.dej, c.diner].filter((m, j) => (m.recette === id ? r.p : m.prot) === 'boeuf' && !(j === 1 && bd[d].libre)).length, 0);
+        if (r.p === 'boeuf' && nbf * Math.round(150 * k / 10) * 10 * 0.75 > 500.5) return false;
         return true;
       });
       C.ok(opts.slice().sort().join() === want.slice().sort().join(), 'changer : recettes proposées', () => sshow() + ' ' + JSON.stringify([opts, want]));
@@ -636,14 +660,37 @@ for (let i = 0; i < N / 3; i++){
           const was = blk2[d][sl];
           C.ok(was.recette === id ? c[sl].recette === nid && c[sl].prot === x.p && c[sl].starch === x.s && c[sl].dessert === was.dessert : JSON.stringify(c[sl]) === JSON.stringify(was), 'changer : repas', () => sshow() + ' → ' + nid);
         }));
+        if (x.p === 'oeufs') C.ok(after.every(c => c.pdBase !== 'sale'), 'changer : salé avec les œufs-jambon', () => sshow() + ' → ' + nid);
         after.forEach((c, d) => { if (!bd[d].libre && blk2[d].dej.prot !== blk2[d].diner.prot) C.ok(c.dej.prot !== c.diner.prot, 'changer : même protéine midi et soir', () => sshow() + ' → ' + nid + ' jour ' + d); });
       }
     }
     // Fiche : boîtes = repas servis des recettes qui se gardent (deux fois au moins par bloc), totaux = somme des boîtes
     if (i % 3) continue;
-    const prof = randProfile(), res = cs.map((c, d) => A.buildDay({ seances: [], libre: days[d].libre }, c, prof));
+    // Chiffres ronds (3.17.0), une période sur trois : séances au hasard, protéine de chaque recette arrondie aux 100 g
+    const prof = randProfile(), roundIt = i % 9 === 0;
+    const plansF = days.map((d, j) => A.cleanPlan({ seances: d.long ? [{ taille: 'longue', moment: 'matin', duree: R.pick([1.5, 2, 3]) }] : R.chance(.5) ? [] : [{ taille: R.pick(['petite', 'moyenne']), moment: R.pick(['matin', 'midi', 'soir']) }], libre: d.libre }, j % 7));
+    const chs = roundIt ? A.batchRound(plansF.map((plan, d) => ({ plan, ch: cs[d] })), prof) : cs;
+    const res = chs.map((c, d) => A.buildDay(plansF[d], c, prof));
+    if (roundIt){
+      const strip = c => JSON.stringify(c, (key, v) => key === 'g' || key === 'g2' ? undefined : v);
+      const nrm = (cc, d) => A.buildDay(Object.assign({}, plansF[d], { libre: false }), cc[d], prof);
+      const band = r => Math.max(0, r.prot.low - r.tot.p, r.tot.p - r.prot.high), off3 = r => Math.abs(r.tot.kcal - r.energy.target) / r.energy.target;
+      chs.forEach((c, d) => {
+        C.ok(strip(c) === strip(cs[d]), 'arrondi : plats changés', show);
+        const a = nrm(chs, d), b = nrm(cs, d);
+        C.ok(band(a) <= band(b) + 1e-9 && off3(a) <= Math.max(0.03, off3(b)) + 1e-9, 'arrondi : protéines ou énergie plus loin', () => show() + ' jour ' + d + ' ' + JSON.stringify(prof));
+        ['dej', 'diner'].forEach(sl => { const fx = A.fixedGrams(c[sl]); if (fx) ['p1', 'p2'].forEach((key, j) => { if (fx[j] !== null){ const it = res[d].secs.find(s => s.id === sl).items.find(x => x.key === key); C.ok(!it || (it.buy.g === fx[j] && !it.adj), 'arrondi : poids fixé ≠ ligne', show); } }); });
+      });
+    }
     const lead = R.pick([0, 1]), blocks = A.batchCook(res.map(r => ({ res: r })), lead);
     blocks.forEach(bl => bl.recipes.forEach(r => {
+      // Arrondie : la protéine de toutes ses boîtes fait un compte rond
+      const fixed = chs.slice(bl.start, bl.start + 7).flatMap((c, d) => ['dej', 'diner'].filter(sl => c[sl].recette === r.id && !(sl === 'diner' && days[bl.start + d].libre)).map(sl => c[sl]));
+      if (roundIt && A.RECIPES[r.id].p !== 'oeufs' && fixed.length && fixed.every(m => 'g' in m)){
+        roundSeen++;
+        const t = r.totals.find(z => z.id === A.RECIPES[r.id].p), q = Number(t.qty.replace(/[^\d,]/g, '').replace(',', '.')) * (/kg$/.test(t.qty) ? 1000 : 1);
+        C.ok(q % 100 === 0, 'arrondi : total pas rond', () => show() + ' ' + r.id + ' ' + t.qty);
+      } else if (roundIt && A.BATCH_GRAMS[A.RECIPES[r.id].p] && A.RECIPES[r.id].p !== 'oeufs') roundMiss++;
       const secs = res.slice(bl.start, bl.start + 7).flatMap((x, d) => x.secs.filter(s => s.recipe === r.id && !s.libre).map(s => ({ s, d })));
       C.ok(r.boxes.length === secs.length && secs.length >= 2 && A.RECIPES[r.id].box, 'fiche : boîtes', () => show() + ' ' + r.id);
       r.boxes.forEach((bx, j) => C.ok(bx.day === bl.start + secs[j].d && bx.fridge === (secs[j].d + (bl.start === 0 && lead === 0 ? 0 : 1) <= 3), 'fiche : jour ou frigo', () => show() + ' ' + JSON.stringify(bx)));
@@ -657,6 +704,7 @@ for (let i = 0; i < N / 3; i++){
       });
     }));
   }
+  C.ok(roundSeen >= 0.85 * (roundSeen + roundMiss), 'arrondi : trop peu de recettes arrondies', () => roundSeen + ' sur ' + (roundSeen + roundMiss));
 }
 
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------

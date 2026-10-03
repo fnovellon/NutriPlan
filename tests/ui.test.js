@@ -1101,6 +1101,22 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     const sum = [...card.querySelectorAll('.b-list')[1].querySelectorAll('li .name')].reduce((a, n) => a + Number(n.textContent.match(/^\d+/)[0]), 0);
     assert(Math.abs(total - sum) <= (total >= 1000 ? 5 : 0), 'à cuire ≠ somme des boîtes : ' + total + ' / ' + sum);
   });
+  // Chiffres ronds (3.17.0) : la protéine de chaque recette arrondie aux 100 g (poids fixés dans les plats enregistrés) ;
+  // jambon par paquet : 0 ou 4 tranches (180 g) dans les courses
+  const roundCards = () => [...bt.d.querySelectorAll('#courses-batch details.batch')].forEach(card => {
+    const id = card.querySelector('[data-action="co-swap"]') ? card.querySelector('[data-action="co-swap"]').dataset.value.split('|')[1] : null;
+    if (!id || ['thon', 'oeufs'].includes(id.split('-')[0])) return;
+    const meals = isos.flatMap(iso => { const c = bt.stored().plans[iso].ch; return [c.dej, c.diner]; }).filter(m => m.recette === id);
+    if (!meals.every(m => Number.isInteger(m.g))) return;
+    const q = card.querySelector('.b-list li .b-q').textContent;
+    assert(/^\d+00\u00a0g$|^\d+(,\d)?\u00a0kg$/.test(q) && amount(q) % 100 === 0, 'compte rond : ' + id + ' ' + q);
+    roundN++;
+  });
+  let roundN = 0;
+  roundCards();
+  assert(roundN >= 2, 'recettes arrondies : ' + roundN);
+  const ham = [...bt.d.querySelectorAll('#courses-list .chk')].find(x => /jambon blanc/.test(x.textContent));
+  assert(!ham || ham.querySelector('.q').textContent === '180\u00a0g', 'jambon par paquet : ' + (ham && ham.textContent));
   // Changer une recette (3.16.0) : bouton dans la fiche, panneau « Une autre au hasard » puis les recettes qui vont ;
   // Échap ne change rien ; un choix remplace l'ancienne dans toutes ses boîtes, la fiche s'ouvre sur elle, le message le dit
   {
@@ -1123,6 +1139,8 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     const st2 = bt.stored(), count2 = {};
     isos.forEach(iso => { const c = st2.plans[iso].ch; (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).forEach(m => { assert.strictEqual(m.recette, m.prot + '-' + m.starch, 'recette enregistrée'); count2[m.recette] = (count2[m.recette] || 0) + 1; }); });
     assert(!count2[oldId] && count2[nid] === count[oldId] && ids.filter(x => x !== oldId).every(x => count2[x] === count[x]), 'remplacée dans toutes ses boîtes : ' + JSON.stringify(count2));
+    // Chiffres ronds : la nouvelle recette est arrondie à son tour (poids fixés sur toutes ses boîtes)
+    if (!['thon', 'oeufs'].includes(nid.split('-')[0])) assert(isos.every(iso => { const c = st2.plans[iso].ch; return (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).filter(m => m.recette === nid).every(m => Number.isInteger(m.g)); }), 'recette changée arrondie : ' + nid);
     isos.forEach(iso => { const c = st2.plans[iso].ch, c0 = st.plans[iso].ch; assert(c.dej.prot !== c.diner.prot && c.dej.dessert === c0.dej.dessert, 'même protéine ou dessert changé : ' + iso); });
     const card2 = bt.$('#swap-0-' + nid).closest('details');
     assert(card2.open && bt.d.activeElement === bt.$('#swap-0-' + nid) && card2.querySelectorAll('.b-list')[1].querySelectorAll('li').length === count[oldId], 'fiche ouverte sur la remplaçante, focus');
@@ -1134,9 +1152,30 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     isos.forEach(iso => { const c = st3.plans[iso].ch; (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).forEach(m => { count3[m.recette] = (count3[m.recette] || 0) + 1; }); });
     assert(!count3[nid] && Object.keys(count3).length === 3 && Object.values(count3).reduce((x, y) => x + y, 0) === 13, 'au hasard : ' + JSON.stringify(count3));
     assert.deepStrictEqual(st3.choices[3], st3.plans['2026-10-07'].ch, 'mémoire du mercredi après le changement');
+    // La nouvelle recette est arrondie à son tour, les autres gardent leurs poids
+    roundN = 0;
+    roundCards();
+    assert(roundN >= 2, 'arrondie après le changement : ' + roundN);
   }
   // La page du jour suit : recette choisie à midi, celle enregistrée pour aujourd'hui
   bt.click('#courses [data-action="fermer"]');
+  {
+    // Poids fixés : gardés par le formulaire des repas validé, oubliés avec la recette (Retirer)
+    const today = () => bt.stored().plans['2026-10-07'].ch;
+    const slot = ['dej', 'diner'].find(sl => Number.isInteger(today()[sl].g));
+    if (slot){
+      const g0 = today()[slot].g;
+      bt.click('#open-repas');
+      bt.click('[data-action="repas-ok"]');
+      assert.strictEqual(today()[slot].g, g0, 'formulaire des repas : poids fixé gardé');
+      bt.click('#rec-v-' + slot);
+      assert.strictEqual(bt.$('#sheet-rec .items li .qty').textContent, g0 + '\u00a0g', 'fiche de la recette : poids fixé');
+      bt.click('#sheet .sheet-x');
+      bt.click('#rec-c-' + slot);
+      assert(!('g' in today()[slot]) && !('recette' in today()[slot]), 'recette retirée : poids fixé oublié');
+      bt.click('#rec-c-' + slot);
+    }
+  }
   assert(bt.$('[aria-labelledby="h-dej"] .rec.is-on'), 'recette du batch sur la page');
   {
     const id = bt.stored().plans['2026-10-07'].ch.dej.recette;
@@ -1152,6 +1191,18 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   end.value = '2026-10-01'; end.dispatchEvent(new bw.Event('input', { bubbles: true }));
   bt.click('[data-action="pl-batch"]');
   assert(!bt.$('#plan').hidden && /La fin doit venir après le début/.test(bt.$('#plan-err').textContent), 'batch refusé sur une période invalide');
+}
+
+// « Ta semaine » (3.17.0) : un paquet de jambon (4 petits-déjeuners salés, 180 g) toléré, sans alerte ; 5 (225 g) : alerte
+{
+  // Toute la semaine (lundi → dimanche) prévue, sans œufs-jambon ; n petits-déjeuners salés
+  const week = n => { const plans = {}; ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11'].forEach((iso, i) => { plans[iso] = { ch: { pdBase: i < n ? 'sale' : 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'poisson', starch: 'pates' } } }; }); return plans; };
+  [[4, false], [5, true]].forEach(([n, over]) => {
+    const t = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: week(n), choices: {} }))));
+    const row = [...t.d.querySelectorAll('#wb-list li')].find(li => /Charcuterie/.test(li.textContent));
+    assert.strictEqual(t.$('#wk-bal').classList.contains('is-over'), over, 'charcuterie ' + n + ' tranches : alerte ' + over);
+    assert(over ? /^Trop de charcuterie/.test(t.$('#wb-msg').textContent) && row.className === 'is-over' : /un paquet de 4 tranches/.test(row.textContent) && row.className === 'is-ok', 'charcuterie ' + n + ' tranches : ' + row.textContent + ' / ' + t.$('#wb-msg').textContent);
+  });
 }
 
 // Réglages, « Effacer mes données » (3.15.0) : demander, annuler (rien ne bouge), confirmer (tout ce qui est à l'appli

@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
+const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -678,10 +678,12 @@ for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; se
   assert.strictEqual(new Set(Object.keys(count).map(id => RECIPES[id].p)).size, n, `${combo} : protéines différentes`);
   // Une recette qui se congèle mal est mangée dans les 3 premiers jours
   served.forEach(x => assert(RECIPES[x.id].gel || x.i < FRIDGE_DAYS, `${combo} : ${x.id} (se congèle mal) le jour ${x.i}`));
-  // Repères de la semaine : viande rouge et charcuterie sous leurs limites
+  // Repères de la semaine : viande rouge sous sa limite ; jambon par paquet, 0 ou 4 tranches (une par petit-déjeuner salé,
+  // deux par boîte d'œufs-jambon), jamais de salé avec les œufs-jambon (3.17.0)
   const res = cs.map((c, i) => buildDay({ seances: [], libre: days[i].libre }, c, { poids: 72 * k }));
   const bal = weekBalance(res);
-  assert(bal.rouge <= 500.5 && bal.charcuterie <= 150.5, `${combo} : ${JSON.stringify(bal)}`);
+  const slicesH = cs.filter(c => c.pdBase === 'sale').length + 2 * cs.reduce((a, c, i) => a + [c.dej, c.diner].filter((m, j) => m.prot === 'oeufs' && !(j && days[i].libre)).length, 0);
+  assert(bal.rouge <= 500.5 && [0, HAM_SLICES].includes(slicesH), `${combo} : ${JSON.stringify(bal)}, ${slicesH} tranches`);
   // Fiche : une recette par recette servie, boîtes = repas servis, totaux = somme des boîtes, frigo 3 jours après la veille
   const blocks = batchCook(res.map(r => ({ res: r })));
   assert(blocks.length === 1 && blocks[0].recipes.length === n, `${combo} : fiche`);
@@ -719,9 +721,8 @@ for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; se
       });
       const meals = after.flatMap((c, i) => days[i].libre ? [c.dej] : [c.dej, c.diner]);
       const beef = meals.filter(m => m.prot === 'boeuf').length * Math.round(150 * k / 10) * 10 * 0.75;
-      const ham = meals.filter(m => m.prot === 'oeufs').length * Math.round(90 * k / 5) * 5 + after.filter(c => c.pdBase === 'sale').length * Math.round(45 * k / 5) * 5;
       if (x.p === 'boeuf') assert(beef <= 500.5, `${sn} : viande rouge ${beef}`);
-      if (x.p === 'oeufs') assert(ham <= 150.5, `${sn} : charcuterie ${ham}`);
+      if (x.p === 'oeufs') assert(count[id] === 2 && after.every(c => c.pdBase !== 'sale'), `${sn} : œufs-jambon, ${count[id]} boîtes`);
       const fiche = batchCook(after.map((c, i) => ({ res: buildDay({ seances: [], libre: days[i].libre }, c, { poids: 72 * k }) })))[0].recipes;
       assert(fiche.find(r => r.id === nid).boxes.length === count[id] && !fiche.some(r => r.id === id), `${sn} : boîtes de la remplaçante`);
     }
@@ -753,18 +754,80 @@ const solo = ['prot:boeuf', 'prot:poisson', 'prot:saumon', 'prot:crevettes', 'pr
 const dSolo = [0, 1].map(() => ({ ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' } }, libre: false }));
 assert(batchSwapOptions(dSolo, 'poulet-riz', solo, 1).length === 0 && batchSwapPick(dSolo, 'poulet-riz', solo, 1, lcg(1)) === null, 'changer : rien de possible');
 const dSale = [{ ch: { pdBase: 'sale', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz', dessert: 'fruit' }, diner: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' } }, libre: false },
-  { ch: { pdBase: 'sale', dej: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' }, diner: { prot: 'thon', starch: 'pates' } }, libre: false }];
-assert(batchSwapOptions(dSale, 'tofu-riz', [], 1).includes('oeufs-riz'), 'changer : œufs-jambon possible');
+  { ch: { pdBase: 'sale', dej: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz', g: 150 } }, libre: false },
+  { ch: { pdBase: 'sale', dej: { prot: 'poulet', starch: 'pdt', recette: 'poulet-pdt' }, diner: { prot: 'thon', starch: 'pates' } }, libre: false }];
+assert(batchSwapOptions(dSale, 'tofu-riz', [], 1).includes('oeufs-riz'), 'changer : œufs-jambon possible pour 2 boîtes');
 const sw2 = batchSwap(dSale, 'tofu-riz', 'oeufs-riz', []);
-assert(sw2[0].pdBase === 'avoine' && sw2[1].pdBase === 'sale' && sw2[0].dej.dessert === 'fruit' && sw2[0].diner.recette === 'poisson-pates', 'changer : salé → sucré le jour des œufs-jambon, le reste gardé');
+assert(sw2.every(c => c.pdBase === 'avoine') && sw2[0].dej.dessert === 'fruit' && sw2[0].diner.recette === 'poisson-pates' && !('g' in sw2[1].diner), 'changer : œufs-jambon (4 tranches), plus de salé dans le bloc, poids fixés oubliés, le reste gardé');
 assert(batchSwap(dSale, 'tofu-riz', 'oeufs-riz', ['pd:avoine'])[0].pdBase === 'pain', 'changer : avoine retirée → pain');
-// Un dîner changé à la main (poisson gras, sans recette) un jour où elle est servie : pas de poisson gras à sa place
-const dHand = [{ ch: { pdBase: 'avoine', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' }, diner: { prot: 'saumon', starch: 'pdt' } }, libre: false },
-  { ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'pates', recette: 'poulet-pates' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' } }, libre: false }];
-const optHand = batchSwapOptions(dHand, 'tofu-riz', [], 1);
-assert(optHand.length > 0 && !optHand.some(x => RECIPES[x].p === 'saumon' || RECIPES[x].p === 'poulet'), 'changer : protéine de l’autre repas du jour exclue');
-// Servie deux fois : deux œufs-jambon font 180 g de jambon, au-delà des 150 g de la semaine
-const dSale2 = [dSale[0], { ch: { pdBase: 'avoine', dej: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' } }, libre: false }];
-assert(!batchSwapOptions(dSale2, 'tofu-riz', [], 1).some(x => RECIPES[x].p === 'oeufs') && batchSwapOptions(dSale2, 'tofu-riz', [], 1).length > 0, 'changer : charcuterie au-delà de 150 g');
+// Œufs-jambon pour 3 boîtes : 6 tranches, pas proposé ; ni s'il ne reste que le salé
+const dSale3 = dSale.slice(0, 2).concat([{ ch: { pdBase: 'avoine', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' }, diner: { prot: 'poulet', starch: 'pdt', recette: 'poulet-pdt' } }, libre: false }]);
+assert(!batchSwapOptions(dSale3, 'tofu-riz', [], 1).some(x => RECIPES[x].p === 'oeufs') && batchSwapOptions(dSale3, 'tofu-riz', [], 1).length > 0, 'changer : œufs-jambon pour 3 boîtes');
+assert(!batchSwapOptions(dSale, 'tofu-riz', ['pd:avoine', 'pd:pain'], 1).some(x => RECIPES[x].p === 'oeufs'), 'changer : œufs-jambon sans autre base que le salé');
+
+// 20. Batch cooking, chiffres ronds (3.17.0) : poids fixés d'une boîte (g, g2) et arrondi aux 100 g par recette
+{
+  const base = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' } };
+  const withG = (slot, f) => { const c = plain(base); Object.assign(c[slot], f); return c; };
+  const p1 = (r, slot, key) => r.secs.find(s => s.id === slot).items.find(i => i.key === (key || 'p1'));
+  const r0 = buildDay(day([]), base), r1 = buildDay(day([]), withG('dej', { g: 170 }));
+  assert(p1(r1, 'dej').qty === '170 g' && !p1(r1, 'dej').adj && p1(r0, 'dej').adj, 'poids fixé : la ligne, pas ajustée');
+  assert(Math.abs(r1.tot.kcal - r0.tot.kcal) <= 0.03 * r0.energy.target, 'poids fixé : le féculent compense');
+  // Ignoré : sans recette, au mauvais pas, hors bornes, pas un nombre, protéine qui ne se pèse pas
+  [{ g: 175 }, { g: 0 }, { g: -10 }, { g: 2000 }, { g: '170' }, { g: null }].forEach(f => assert(p1(buildDay(day([]), withG('dej', f)), 'dej').adj, 'poids fixé invalide : ' + JSON.stringify(f)));
+  const noRec = plain(base); delete noRec.dej.recette; noRec.dej.g = 170;
+  assert(p1(buildDay(day([]), noRec), 'dej').adj && fixedGrams(noRec.dej) === null, 'poids fixé sans recette ignoré');
+  assert(fixedGrams({ prot: 'thon', starch: 'riz', recette: 'thon-riz', g: 100 }) === null, 'thon : boîtes, pas de poids fixé');
+  const cr = buildDay(day([]), Object.assign(plain(base), { dej: { prot: 'crevettes', starch: 'riz', recette: 'crevettes-riz', g: 130, g2: 55 } }));
+  assert(p1(cr, 'dej').qty === '130 g' && p1(cr, 'dej', 'p2').qty === '55 g' && !p1(cr, 'dej', 'p2').adj, 'crevettes et halloumi fixés');
+  const oe = buildDay(day([]), Object.assign(plain(base), { dej: { prot: 'oeufs', starch: 'riz', recette: 'oeufs-riz', g: 3, g2: 90 } }));
+  assert(p1(oe, 'dej', 'p2').qty === '90 g' && !p1(oe, 'dej', 'p2').adj && p1(oe, 'dej').adj && /^2 tranches$/.test(p1(oe, 'dej', 'p2').note), 'œufs-jambon : jambon fixé, œufs à l’unité');
+  // Arrondi sur des semaines tirées au hasard, séances variées : un chiffre rond par recette (sauf garde-fous), le reste
+  // inchangé, protéines et énergie jamais plus loin de leur cible, bœuf sous 500 g cuits ; déjà arrondi : ne bouge plus
+  const PL = [[], [{ taille: 'petite', moment: 'soir' }], [{ taille: 'moyenne', moment: 'matin' }], [{ taille: 'longue', moment: 'matin', duree: 2 }], [{ taille: 'petite', moment: 'midi' }, { taille: 'moyenne', moment: 'soir' }]];
+  const strip = c => JSON.stringify(c, (key, v) => key === 'g' || key === 'g2' ? undefined : v);
+  const off3 = r => Math.abs(r.tot.kcal - r.energy.target) / r.energy.target;
+  const band = r => Math.max(0, r.prot.low - r.tot.p, r.tot.p - r.prot.high);
+  let elig = 0, done = 0;
+  for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; seed <= 12; seed++) {
+    const rr = lcg(seed * 7), combo = `arrondi ${n} recettes, k ${k}, graine ${seed}`;
+    const plans = Array.from({ length: 7 }, (_, i) => cleanPlan({ seances: PL[Math.floor(rr() * PL.length)], libre: i === 5 }, i));
+    const cs = batchChoices(plans.map(p => ({ libre: p.libre, long: p.seances.some(x => x.taille === 'longue') })), n, [], k, rr);
+    const prof = { poids: 72 * k, prot: [1.8, 2, 2.2][seed % 3] };
+    const out = batchRound(plans.map((plan, i) => ({ plan, ch: cs[i] })), prof);
+    out.forEach((c, i) => assert.strictEqual(strip(c), strip(cs[i]), `${combo} : jour ${i} changé`));
+    const res = out.map((c, i) => buildDay(plans[i], c, prof)), nat = cs.map((c, i) => buildDay(plans[i], c, prof));
+    const nrm = (chs, i) => buildDay(Object.assign({}, plans[i], { libre: false }), chs[i], prof);
+    out.forEach((c, i) => {
+      const a = nrm(out, i), b = nrm(cs, i);
+      assert(band(a) <= band(b) + 1e-9 && off3(a) <= Math.max(0.03, off3(b)) + 1e-9, `${combo} : jour ${i}, protéines ${Math.round(a.tot.p)} (${Math.round(b.tot.p)}) ou énergie ${(off3(a) * 100).toFixed(1)} %`);
+    });
+    const beef = rs => rs.reduce((t, r) => t + r.secs.filter(s => !s.libre).flatMap(s => s.items).filter(i => i.buy && i.buy.id === 'boeuf').reduce((a, i) => a + i.buy.g, 0), 0) * 0.75;
+    assert(beef(res) <= Math.max(500.5, beef(nat)), `${combo} : bœuf ${beef(res)}`);
+    const fiche = batchCook(res.map(r => ({ res: r })))[0];
+    (fiche ? fiche.recipes : []).forEach(rc => {
+      const x = RECIPES[rc.id], mine = out.flatMap((c, i) => ['dej', 'diner'].filter(sl => c[sl].recette === rc.id && !(sl === 'diner' && plans[i].libre)).map(sl => c[sl]));
+      if (x.p === 'oeufs') return assert(mine.every(m => m.g2 === Math.round(90 * k / 5) * 5 && !('g' in m)), `${combo} : jambon des œufs-jambon`);
+      if (!BATCH_GRAMS[x.p]) return assert(mine.every(m => !('g' in m) && !('g2' in m)), `${combo} : ${rc.id} sans poids fixé`);
+      elig++;
+      const tot = id => { const t = rc.totals.find(z => z.id === id); return Number(t.qty.replace(/[^\d,]/g, '').replace(',', '.')) * (/kg/.test(t.qty) ? 1000 : 1); };
+      if (mine.every(m => 'g' in m)) { done++; assert(tot(x.p) % 100 === 0, `${combo} : ${rc.id} ${tot(x.p)} g`); }
+      if (x.p === 'crevettes' && mine.every(m => 'g2' in m)) assert(tot('halloumi') % 100 === 0, `${combo} : halloumi ${tot('halloumi')} g`);
+      assert(mine.every(m => 'g' in m) || mine.every(m => !('g' in m)), `${combo} : ${rc.id} arrondie en partie`);
+    });
+    assert.strictEqual(JSON.stringify(batchRound(plans.map((plan, i) => ({ plan, ch: out[i] })), prof)), JSON.stringify(out), `${combo} : déjà arrondi, ne bouge plus`);
+    // Après un changement de recette : seule la nouvelle est arrondie, les autres gardent leurs poids
+    const days = out.map((ch, i) => ({ ch, libre: plans[i].libre })), id = out[0].dej.recette, opts = batchSwapOptions(days, id, [], k);
+    if (opts.length) {
+      const nid = opts[opts.length - 1], sw = batchRound(batchSwap(days, id, nid, []).map((ch, i) => ({ plan: plans[i], ch })), prof);
+      sw.forEach((c, i) => ['dej', 'diner'].forEach(sl => {
+        const was = out[i][sl];
+        if (was.recette === id) return;
+        assert(strip(c[sl]) === strip(was) && (!('g' in was) || c[sl].g === was.g) && (!('g2' in was) || c[sl].g2 === was.g2), `${combo} : autre recette changée`);
+      }));
+    }
+  }
+  assert(done >= elig * 0.95, `arrondi : ${done} recettes sur ${elig}`);
+}
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

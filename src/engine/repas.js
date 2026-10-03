@@ -74,10 +74,22 @@ function starchItem(id, kcal){
 function dessertOf(choice){ return choice && has(DESSERT, choice.dessert) ? choice.dessert : 'aucun'; }
 /* Repas : protéine, féculent (dosé ensuite), légumes ou ceux de la recette choisie (avec sa matière grasse et ses ajouts),
    puis l'ajout du soir (amandes, parmesan), avec la note de la recette s'il y en a une */
+/* Batch cooking, chiffres ronds (3.17.0) : poids fixés d'une boîte, choice.g (ligne p1) et choice.g2 (p2), au pas de la
+   portion (0 : pas fixé) ; seulement avec une recette qui va (recipeOf). Crevettes : g2 = halloumi ; œufs-jambon : g2 = jambon
+   (les œufs restent à l'unité). Une portion fixée n'est pas ajustée à l'objectif de protéines (pas adj).
+   @returns {?Array<?number>} [p1, p2], null si rien n'est fixé */
+const BATCH_GRAMS = {poulet:[10, 0], boeuf:[10, 0], poisson:[10, 0], saumon:[10, 0], crevettes:[10, 5], tofu:[10, 0], oeufs:[0, 5]};
+function fixedGrams(choice){
+  if (!choice || !has(BATCH_GRAMS, choice.prot) || !recipeOf(choice)) return null;
+  const st = BATCH_GRAMS[choice.prot];
+  const ok = function(v, s){ return s > 0 && Number.isInteger(v) && v >= s && v <= 1000 && v % s === 0; };
+  const g = [ok(choice.g, st[0]) ? choice.g : null, ok(choice.g2, st[1]) ? choice.g2 : null];
+  return g[0] === null && g[1] === null ? null : g;
+}
 function mainItems(slot, choice, k, kp){
-  const P = PROT[choice.prot], rec = recipeOf(choice), extra = P[slot](k);
+  const P = PROT[choice.prot], rec = recipeOf(choice), extra = P[slot](k), fx = P.fixe ? null : fixedGrams(choice);
   if (rec && RECIPES[rec].soir) extra.forEach(function(i){ i.note = RECIPES[rec].soir; });
-  return P.base(P.fixe ? k : kp).map(function(i){ return P.fixe ? i : adj(i); }).concat([it('st', '', '', null, null)],
+  return P.base(P.fixe ? k : kp, fx).map(function(i){ return P.fixe || (fx && fx[i.key === 'p2' ? 1 : 0] !== null) ? i : adj(i); }).concat([it('st', '', '', null, null)],
     rec ? recipeItems(rec) : [it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], extra);
 }
 function fuel(d, rate){

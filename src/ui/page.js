@@ -201,7 +201,7 @@
       recFocus = slot;
       return '';
     },
-    'rec-off': function(b){ if (!has(REPAS, b.dataset.slot)) return; delete ch[b.dataset.slot].recette; saveCh(); recFocus = b.dataset.slot; return ''; },
+    'rec-off': function(b){ if (!has(REPAS, b.dataset.slot)) return; ['recette', 'g', 'g2'].forEach(function(f){ delete ch[b.dataset.slot][f]; }); saveCh(); recFocus = b.dataset.slot; return ''; },
     /* Calendrier : un jour, la semaine d'avant ou d'après (même jour de la semaine, ou aujourd'hui), retour à aujourd'hui */
     day: function(b, v){
       const d = fromIso(v);

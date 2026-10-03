@@ -127,7 +127,8 @@
       const opts = batchSwapOptions(blk.days, s.id, pr.off, k), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k) : v;
       closePick(false);
       if (!nid || opts.indexOf(nid) < 0) return;
-      const next = batchSwap(blk.days, s.id, nid, pr.off);
+      /* La nouvelle recette, arrondie aux 100 g sur ses boîtes (les autres gardent leurs poids) */
+      const next = batchRound(batchSwap(blk.days, s.id, nid, pr.off).map(function(c, j){ return {plan:planFor(blk.isos[j]), ch:c}; }), prof);
       let n = 0;
       blk.isos.forEach(function(iso, j){
         const d = blk.days[j];

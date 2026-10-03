@@ -69,15 +69,22 @@
           if (has(STARCH, c[s].starch)) out[s].starch = c[s].starch;
           if (has(DESSERT, c[s].dessert)) out[s].dessert = c[s].dessert;
           if (has(RECIPES, c[s].recette)) out[s].recette = c[s].recette; else delete out[s].recette;
+          ['g', 'g2'].forEach(function(f){ if (has(c[s], f)) out[s][f] = c[s][f]; });
         }
       });
     }
-    /* Une recette ne reste que si elle va avec la protéine et le féculent du repas */
-    ['dej', 'diner'].forEach(function(s){ if (!recipeOf(out[s])) delete out[s].recette; });
+    /* Une recette ne reste que si elle va avec la protéine et le féculent du repas ; les poids fixés d'une boîte de batch
+       cooking (g, g2, 3.17.0) que s'ils sont valides, avec elle */
+    ['dej', 'diner'].forEach(function(s){
+      if (!recipeOf(out[s])) delete out[s].recette;
+      const fx = fixedGrams(out[s]);
+      if (!fx || fx[0] === null) delete out[s].g;
+      if (!fx || fx[1] === null) delete out[s].g2;
+    });
     return out;
   };
-  /* Après un changement de protéine ou de féculent : la recette qui ne va plus est retirée */
-  const dropRecipes = function(c){ ['dej', 'diner'].forEach(function(s){ if (has(c[s], 'recette') && !recipeOf(c[s])) delete c[s].recette; }); };
+  /* Après un changement de protéine ou de féculent : la recette qui ne va plus est retirée, avec les poids fixés de sa boîte */
+  const dropRecipes = function(c){ ['dej', 'diner'].forEach(function(s){ if (has(c[s], 'recette') && !recipeOf(c[s])){ delete c[s].recette; delete c[s].g; delete c[s].g2; } }); };
   /* Plats d'une date : les siens (plans[date].ch), sinon les derniers choisis pour ce jour de la semaine, sinon ceux par défaut */
   const choicesFor = function(iso, js){
     const rec = store.plans[iso], mem = withAllowed(cleanCh(store.choices[js], js), cleanProfile(prof).off);
