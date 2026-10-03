@@ -14,7 +14,13 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Architecture
 
-- Tout est dans `index.html` : CSS + JavaScript vanilla, aucune dépendance à l'exécution, aucun build. Polices Google Fonts (Archivo, Newsreader) avec polices de secours.
+- La page publiée est un seul fichier autonome, `index.html` : CSS + JavaScript vanilla en ligne, aucune dépendance à l'exécution. Polices Google Fonts (Archivo, Newsreader) avec polices de secours.
+- Elle est construite à partir de `src/` par `npm run build` (`build.js`, sans dépendance) : **on modifie `src/`, jamais `index.html` à la main**, puis on reconstruit ; `npm test` refuse de tourner si `index.html` n'est pas à jour. Le gabarit `src/page.html` (tête, balisage de tous les écrans) inclut les autres fichiers avec `{{inclure fichier}}` (le fichier sans son dernier saut de ligne, inclusions comprises) et `{{base64 fichier}}` (chemins relatifs à `src/`) :
+  - `src/style.css` : toute la feuille de style ;
+  - `src/engine.js` : le moteur (données, calculs), sans DOM ;
+  - `src/ui.js` : l'interface, dans `if (typeof document !== 'undefined'){ … }` ;
+  - `src/apple-touch-icon.png` : l'icône de l'écran d'accueil de l'iPhone, mise en ligne en base64.
+  Les fichiers JavaScript sont recollés dans un seul `<script>` : leurs déclarations de premier niveau restent communes.
 - Appli installable (PWA, 3.5.0), seuls fichiers à côté de `index.html` (un service worker est forcément un fichier à part ; ouverte seule depuis un fichier, la page marche comme avant) :
   - `manifest.webmanifest` : « Repas du jour », nom court « Repas », `display: standalone`, adresses relatives (`./`, le site est dans un sous-dossier de GitHub Pages), couleurs papier, icônes ;
   - `icons/` : `icon-192.png`, `icon-512.png` (l'icône de la page) et `icon-maskable-512.png` (fond plein, dessin réduit à 80 % pour la zone sûre d'Android), dessinées depuis le SVG de l'icône ;
@@ -160,7 +166,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Version
 
-- Une seule source : `APP_VERSION` dans `index.html`, identique au champ `version` de `package.json` (et de `package-lock.json`, régénéré avec `npm install --package-lock-only`). Affichée en bas de page avec un lien vers `CHANGELOG.md`.
+- Une seule source : `APP_VERSION` dans `src/engine.js` (donc dans `index.html`), identique au champ `version` de `package.json` (et de `package-lock.json`, régénéré avec `npm install --package-lock-only`). Affichée en bas de page avec un lien vers `CHANGELOG.md`.
 - Semver : correctif → patch (1.2.1), nouveauté → mineure (1.3.0), changement incompatible (refonte des calculs, format de stockage) → majeure (2.0.0).
 - À chaque changement visible : nouvelle version et entrée en tête de `CHANGELOG.md` (en français, pour l'utilisateur), dans le même commit. Les tests vérifient que les trois concordent.
 
@@ -183,7 +189,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Commandes
 
-- Voir l'appli : ouvrir `index.html` dans un navigateur. Pour l'appli installable (service worker), la servir en http : `python3 -m http.server` puis `http://localhost:8000/` ; dans Chromium, `Page.getInstallabilityErrors` (CDP) doit être vide et la page doit se recharger hors connexion.
+- Construire la page : `npm run build` (après chaque modification de `src/`). Voir l'appli : ouvrir `index.html` dans un navigateur. Pour l'appli installable (service worker), la servir en http : `python3 -m http.server` puis `http://localhost:8000/` ; dans Chromium, `Page.getInstallabilityErrors` (CDP) doit être vide et la page doit se recharger hors connexion.
 - Tests : `npm install` puis `npm test` (moins d'une minute : `tests/run.js` lance les fichiers en parallèle, un par cœur, et affiche leurs résultats dans l'ordre). Les lancer après chaque modification. Sept fichiers :
   - `tests/engine.test.js` : le moteur, règle par règle (plus de 140 000 journées, une quinzaine de secondes ; batch cooking sur 360 semaines) ;
   - `tests/golden.test.js` : 28 journées de référence (dont trois au petit-déjeuner salé et deux avec recettes) écrites en clair dans `tests/golden.txt`. Tout changement de portion le fait échouer et montre les lignes qui changent ; si le changement est voulu, `npm run golden` réécrit le fichier, relire son diff avant de committer ;

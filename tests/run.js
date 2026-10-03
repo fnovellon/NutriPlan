@@ -1,11 +1,16 @@
 // Lance les fichiers de test en parallèle (un processus chacun, autant à la fois que de cœurs) et affiche leurs
-// résultats dans l'ordre de la liste ; échoue si l'un d'eux échoue.
+// résultats dans l'ordre de la liste ; échoue si l'un d'eux échoue, ou si index.html n'est pas à jour avec src/.
 //   node tests/run.js        : npm test
 //   node tests/run.js deep   : npm run test:deep (tests de fond beaucoup plus longs)
 const { spawn } = require('child_process');
 const os = require('os');
 const path = require('path');
 
+// index.html est construit à partir de src/ : il doit être à jour avant de le tester
+if (!require('../build').upToDate()){
+  console.error('index.html n’est pas à jour avec src/ : lance npm run build (on modifie src/, jamais index.html à la main)');
+  process.exit(1);
+}
 const deep = process.argv[2] === 'deep';
 const JOBS = deep
   ? [['fuzz.test.js', '20'], ['ui-fuzz.test.js', '10'], ['diff.test.js', '10']]
