@@ -190,12 +190,13 @@ function check(dom, log){
   if (!$('#courses').hidden) d.querySelectorAll('#courses-list .chk').forEach(b => C.ok(/\d/.test(b.querySelector('.q').textContent) && ['true', 'false'].includes(b.getAttribute('aria-checked')), 'courses : ligne sans quantité', where));
   if ($('#page').hidden) return;
   // Total affiché = somme des lignes (arrondies), chaque repas aussi
-  const lis = [...d.querySelectorAll('#day li')];
+  // Lignes des aliments et cartes des recettes choisies (leurs ingrédients sont dans la fiche, leurs macros sur la carte)
+  const lis = [...d.querySelectorAll('#day li, #day .rec-k')];
   const total = num($('#sum-text strong').textContent), sum = lis.reduce((a, li) => a + lineKcal(li), 0);
   C.ok(Math.abs(sum - total) <= 10 + lis.length * 0.5, 'total affiché ≠ somme des aliments', () => total + ' / ' + sum + ' : ' + where());
   d.querySelectorAll('#day .meal').forEach(meal => {
     const head = meal.querySelector('.kcal'); if (!head) return;
-    const items = [...meal.querySelectorAll('li')], s = items.reduce((a, li) => a + lineKcal(li), 0);
+    const items = [...meal.querySelectorAll('li, .rec-k')], s = items.reduce((a, li) => a + lineKcal(li), 0);
     C.ok(Math.abs(s - num(head.textContent)) <= 5 + items.length * 0.5, 'total du repas ≠ somme de ses aliments', () => num(head.textContent) + ' / ' + s + ' : ' + where());
   });
   const leg = [...d.querySelectorAll('#legend b')].map(b => num(b.textContent));
@@ -231,7 +232,7 @@ function check(dom, log){
     const meal = $('[aria-labelledby="h-' + sl + '"]'); if (!meal) return;
     const box = meal.querySelector('.rec'), names = [...meal.querySelectorAll('.items .name')].map(n => n.childNodes[0].textContent);
     C.ok(!!box === !(sl === 'diner' && libre), 'recette proposée', () => sl + ' ' + where());
-    if (box && box.classList.contains('is-on')) C.ok(!names.includes('légumes') && !names.includes('kcal pour la cuisine') && /^Recette/.test(box.textContent), 'recette choisie : lignes de base restées', () => names.join(', ') + ' ' + where());
+    if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
   });
 }

@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.14.0, 3 octobre 2026
+
+- Repas avec une recette choisie : ta journée montre d'abord la recette, en tête du repas (titre, temps, calories et macros), à la place de la liste des ingrédients.
+- Les ingrédients, avec tes quantités du jour et leurs macros, sont dans la fiche de la recette (« Voir la recette »), avec les étapes.
+- Le dessert, et la compote après une séance à midi, restent affichés sous la recette.
+
 ## 3.13.0, 2 octobre 2026
 
 - Batch cooking : dans « Planifier », choisis 3, 4 ou 5 recettes puis « Décide pour moi, en batch cooking ». L'appli prend des recettes qui se gardent, variées et équilibrées sur la semaine (poisson, légumes secs, pas trop de viande rouge ni de charcuterie), et les répète aux déjeuners et aux dîners de toute la période. Jamais la même protéine midi et soir (sauf si tes aliments retirés ne laissent pas le choix), rien pour le repas libre.

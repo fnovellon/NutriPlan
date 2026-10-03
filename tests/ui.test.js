@@ -317,25 +317,43 @@ assert(d.querySelectorAll('#sheet-rec .rec-steps li').length === 3 && /bœuf hac
 assert(!/kcal pour la cuisine|chocolat/.test(fiche) && /En tout\s:\s*[\d\s]+kcal/.test($('#sheet-rec .rec-tot').textContent), 'fiche : sans marge ni dessert, total du repas');
 d.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 assert($('#sheet').hidden && d.activeElement === $('#rec-v-diner') && !recBox('diner').classList.contains('is-on') && !('recette' in stored().choices[3].diner), 'Échap : fiche fermée sans rien choisir');
-// Choisir depuis la fiche : les lignes de la recette remplacent « légumes » et la marge, le total ne bouge pas
+// Choisir depuis la fiche : la recette passe en tête du repas, à la place de ses ingrédients (3.14.0 : ils sont dans sa fiche) ;
+// ses calories et macros restent affichées, le total ne bouge pas
 click('#rec-v-diner'); click('#sheet-rec [data-action="rec-on"]');
-assert($('#sheet').hidden && recBox('diner').classList.contains('is-on') && /^Recette\s:\sPâtes à la bolognaise/.test(recBox('diner').textContent), 'recette choisie');
+assert($('#sheet').hidden && recBox('diner').classList.contains('is-on') && recBox('diner').querySelector('h3').textContent === 'Pâtes à la bolognaise', 'recette choisie');
 assert.strictEqual(d.activeElement, $('#rec-v-diner'), 'focus rendu au bouton de la fiche');
 assert(stored().plans['2026-10-07'].ch.diner.recette === 'boeuf-pates' && stored().choices[3].diner.recette === 'boeuf-pates', 'recette enregistrée');
-assert(['oignon', 'carottes', 'pulpe de tomate', 'huile d’olive'].every(n => dinerNames().includes(n)) && !dinerNames().includes('légumes') && !dinerNames().includes('kcal pour la cuisine'), 'lignes de la recette : ' + dinerNames().join(', '));
+{
+  const meal = $('[aria-labelledby="h-diner"]'), picks = meal.querySelector('.picks');
+  assert(picks.nextElementSibling === recBox('diner') && !meal.querySelector('.items') && dinerNames().length === 0, 'recette en tête du repas, sans ingrédients : ' + dinerNames().join(', '));
+  assert(/kcal\s*P\s\d+\sg\s*G\s\d+\sg\s*L\s\d+\sg/.test(recBox('diner').querySelector('.rec-k').textContent) && Math.abs(kcalOf(recBox('diner').querySelector('.rec-k .mac > span')) - kcalOf(meal.querySelector('.kcal'))) <= 5, 'macros de la recette = le repas');
+  assert(/35\smin, se garde/.test(recBox('diner').textContent) && $('#rec-v-diner').classList.contains('is-main') && $('#rec-c-diner').textContent === 'Retirer', 'temps et boutons de la recette choisie');
+}
 assert(Math.abs(kcalOf($('#sum-text strong')) - totalR0) <= 20, 'la recette change le total : ' + totalR0 + ' → ' + kcalOf($('#sum-text strong')));
+// Les ingrédients, avec leurs quantités et macros, dans la fiche
+click('#rec-v-diner');
+{
+  const names = [...d.querySelectorAll('#sheet-rec .items li .name')].map(n => n.childNodes[0].textContent);
+  assert(['bœuf haché 5\u00a0%', 'pâtes', 'oignon', 'carottes', 'pulpe de tomate', 'huile d’olive', 'parmesan'].every(n => names.includes(n)) && !names.includes('légumes') && !names.includes('kcal pour la cuisine'), 'ingrédients de la recette dans la fiche : ' + names.join(', '));
+  assert(d.querySelectorAll('#sheet-rec .items li').length === d.querySelectorAll('#sheet-rec .items .mac').length, 'fiche : macros de chaque ingrédient');
+}
+click('#sheet .sheet-x');
+// Le dessert n'est pas un ingrédient de la recette : il reste une ligne, sous la recette
+choose('dessert', 'diner', 'chocolat');
+assert.deepStrictEqual(dinerNames(), ['chocolat noir'], 'dessert sous la recette');
 {
   const meal = $('[aria-labelledby="h-diner"]');
-  const shown = [...meal.querySelectorAll('.items .mac > span:first-child')].reduce((a, e) => a + kcalOf(e), 0);
-  assert(Math.abs(shown - kcalOf(meal.querySelector('.kcal'))) <= 10 && meal.querySelectorAll('.items li').length === meal.querySelectorAll('.items .mac').length, 'recette : macros de chaque ligne');
+  const shown = [...meal.querySelectorAll('.mac > span:first-child')].reduce((a, e) => a + kcalOf(e), 0);
+  assert(Math.abs(shown - kcalOf(meal.querySelector('.kcal'))) <= 10, 'recette et dessert : kcal du repas');
 }
+choose('dessert', 'diner', 'aucun');
 // Retirer, puis choisir depuis la page : le focus reste sur le bouton
 click('#rec-c-diner');
 assert(!recBox('diner').classList.contains('is-on') && dinerNames().includes('légumes') && !('recette' in stored().choices[3].diner) && d.activeElement === $('#rec-c-diner') && $('#rec-c-diner').textContent === 'Choisir', 'recette retirée');
 click('#rec-c-diner');
 assert(recBox('diner').classList.contains('is-on') && d.activeElement === $('#rec-c-diner') && $('#rec-c-diner').textContent === 'Retirer', 'recette choisie depuis la page');
 click('#rec-v-diner');
-assert($('#sheet-rec [data-action="rec-off"]') && /Choisie pour ce dîner/.test($('#sheet-rec .rec-meta').textContent), 'fiche d’une recette choisie');
+assert($('#sheet-rec [data-action="rec-off"]') && /Choisie pour ce dîner/.test($('#sheet-rec .rec-meta').textContent) && d.querySelectorAll('#sheet-rec .rec-steps li').length === 3, 'fiche d’une recette choisie : ingrédients et étapes');
 click('#sheet .sheet-x');
 // Changer de féculent : la recette est oubliée, celle du nouveau couple est proposée
 choose('starch', 'diner', 'riz');
@@ -754,7 +772,11 @@ assert.deepStrictEqual(aisles, ['Viandes et poissons', 'Crèmerie, œufs et tofu
 const shopLine = name => [...c.d.querySelectorAll('#courses-list .chk')].find(b => b.querySelector('.name').childNodes[0].textContent === name);
 assert(shopLine('repas libre') && shopLine('doses de shaker').querySelector('.q').textContent === '3', 'repas libre et shaker comptés');
 // La liste est la somme des jours : le skyr des trois jours, relu sur chaque page du jour
-const skyrOf = t => [...t.d.querySelectorAll('#day li')].filter(li => /skyr nature/.test(li.textContent)).reduce((a, li) => a + parseInt(li.querySelector('.qty').textContent, 10), 0);
+// Skyr de la page, et celui des recettes choisies (dans leur fiche, 3.14.0)
+const skyrIn = (t, sel) => [...t.d.querySelectorAll(sel)].filter(li => /skyr nature/.test(li.textContent)).reduce((a, li) => a + parseInt(li.querySelector('.qty').textContent, 10), 0);
+const skyrOf = t => skyrIn(t, '#day li') + [...t.d.querySelectorAll('#day .rec.is-on [data-action="rec-view"]')].reduce((a, b) => {
+  b.click(); const x = skyrIn(t, '#sheet-rec .items li'); t.click('#sheet .sheet-x'); return a + x;
+}, 0);
 let skyrSum = 0;
 for (const iso of ['2026-10-08', '2026-10-09', '2026-10-10']) {
   const t = tools(open(ls => { ls.setItem(KEY, JSON.stringify(cs)); }));

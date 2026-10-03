@@ -168,6 +168,12 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .rec-m{margin:2px 0 0;font-size:14px;font-style:italic;color:var(--muted);}
 .rec-b{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .rec-b .reset{margin-top:0;}
+/* Recette choisie : en tête du repas, à la place des ingrédients (dans sa fiche) ; ses calories et macros toujours visibles */
+.meal .rec.is-on{margin-top:12px;}
+.rec-h3{margin:0;font-family:var(--serif);font-weight:600;font-size:20px;line-height:1.25;}
+.rec-k{margin:6px 0 0;}
+.rec-k .mac{margin-top:0;font-size:14px;}
+.rec + .items{margin-top:10px;}
 .reset.is-main{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
 /* Fiche d'une recette, dans le panneau du bas */
 .rec-body[hidden],.opts-list[hidden]{display:none;}
@@ -670,7 +676,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
       <li>Les féculents complètent jusqu’à ton objectif, surtout au repas qui suit une séance, sans dépasser une portion sportive (à 72&nbsp;kg&nbsp;: 120&nbsp;g de riz ou de pâtes crus, 100&nbsp;g de lentilles, 400&nbsp;g de pommes de terre). Au-delà, les grosses journées, un encas s’ajoute. Changer de féculent garde les mêmes calories.</li>
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
-      <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
+      <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», «&nbsp;Décide pour moi, en batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Tes courses montrent alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large.</li>
     </ul>
@@ -756,7 +762,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 'use strict';
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.13.0';
+const APP_VERSION = '3.14.0';
 
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
@@ -2215,26 +2221,36 @@ if (typeof document !== 'undefined'){
     return '<li>' + q + '<span class="name">' + i.name + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
       (i.m && i.key !== 'lib' && i.key !== 'marge' && i.key !== 'encas' ? macHTML(i.m) : '') + '</span></li>';
   };
-  /* Sous le déjeuner et le dîner : la recette proposée pour la protéine et le féculent (« Choisir »), ou celle choisie
-     (« Retirer ») ; « Voir la recette » ouvre sa fiche. Rien pour le repas libre. */
-  const recHTML = function(s){
-    const id = s.recipe || s.suggest;
-    if (s.libre || !id) return '';
-    const x = RECIPES[id], on = !!s.recipe, of = REPAS[s.id];
-    return '<div class="rec' + (on ? ' is-on' : '') + '"><p class="rec-t">' + (on ? 'Recette' : 'Suggestion') + NB + ': <span class="rec-n">' + x.t + '</span></p>' +
-      '<p class="rec-m">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '</p>' +
-      '<div class="rec-b"><button type="button" class="reset" id="rec-v-' + s.id + '" data-action="rec-view" data-slot="' + s.id + '" aria-haspopup="dialog" aria-label="Voir la recette ' + of + '">Voir la recette</button>' +
+  /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et
+     « Choisir ». Choisie (3.14.0) : en tête du repas, à la place de ses ingrédients (détaillés dans sa fiche) : titre, temps,
+     calories et macros de la recette (tout le repas sauf dessert et compote), « Voir la recette » et « Retirer ». */
+  const RECIPE_OUT = ['des', 'comp'];
+  const recipePart = function(s){ return s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) < 0; }); };
+  const recBtns = function(s, on){
+    const of = REPAS[s.id];
+    return '<div class="rec-b"><button type="button" class="reset' + (on ? ' is-main' : '') + '" id="rec-v-' + s.id + '" data-action="rec-view" data-slot="' + s.id + '" aria-haspopup="dialog" aria-label="Voir la recette ' + of + '">Voir la recette</button>' +
       '<button type="button" class="reset' + (on ? '' : ' is-main') + '" id="rec-c-' + s.id + '" data-action="' + (on ? 'rec-off' : 'rec-on') + '" data-slot="' + s.id + '"' +
-      ' aria-label="' + (on ? 'Retirer la recette ' : 'Choisir la recette ') + of + '">' + (on ? 'Retirer' : 'Choisir') + '</button></div></div>';
+      ' aria-label="' + (on ? 'Retirer la recette ' : 'Choisir la recette ') + of + '">' + (on ? 'Retirer' : 'Choisir') + '</button></div>';
+  };
+  const recMeta = function(x){ return '<p class="rec-m">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '</p>'; };
+  const recHTML = function(s){
+    if (s.libre || s.recipe || !s.suggest) return '';
+    const x = RECIPES[s.suggest];
+    return '<div class="rec"><p class="rec-t">Suggestion' + NB + ': <span class="rec-n">' + x.t + '</span></p>' + recMeta(x) + recBtns(s, false) + '</div>';
+  };
+  const recCardHTML = function(s){
+    const x = RECIPES[s.recipe];
+    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' + recBtns(s, true) + '</div>';
   };
   const mealHTML = function(s, next){
     let picks = '';
     if (s.pick === 'pd') picks = '<div class="picks">' + pickRow('pd', null) + '</div>';
     else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) + '</div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
+    const card = s.recipe && !s.libre, shown = card ? s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) >= 0; }) : s.items;
     return '<section class="meal" aria-labelledby="h-' + s.id + '"><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
-      (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2>' + kc + '</div>' + picks +
-      '<ul class="items">' + s.items.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' + recHTML(s) + '</section>';
+      (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2>' + kc + '</div>' + picks + (card ? recCardHTML(s) : '') +
+      (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) + '</section>';
   };
   const bandHTML = function(s, next){
     return '<div class="band"><p class="band-t">' + s.title + '</p>' + (s.sub ? '<p class="band-s">' + s.sub + '</p>' : '') +
@@ -2731,7 +2747,7 @@ if (typeof document !== 'undefined'){
     const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel);
     withRec[slot].recette = id;
     const sec = buildDay(Object.assign({}, plan, {libre:false}), withRec, prof).secs.find(function(z){ return z.id === slot; });
-    const items = sec.items.filter(function(i){ return i.key !== 'des' && i.key !== 'comp'; }), t = total(items), none = new Map();
+    const items = recipePart(sec), t = total(items), none = new Map();
     pick = {kind:'recette', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'};
     $('sheet-t').textContent = x.t;
     $('sheet-list').hidden = true;
