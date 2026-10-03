@@ -1,6 +1,7 @@
 // Construit index.html, la page publiée (une seule page autonome : style et script en ligne, aucune dépendance), à
 // partir de src/. src/page.html est le gabarit : {{inclure fichier}} y est remplacé par le fichier (sans son dernier saut
-// de ligne, inclusions comprises), {{base64 fichier}} par son contenu en base64 ; chemins relatifs à src/.
+// de ligne, inclusions comprises), {{base64 fichier}} par son contenu en base64 ; chemins relatifs à src/. Une ligne
+// {{# …}} du gabarit est un commentaire, retiré de la page.
 //   node build.js          : écrit index.html (npm run build)
 //   node build.js --check  : vérifie seulement qu'index.html est à jour (lancé par npm test)
 const fs = require('fs');
@@ -15,7 +16,7 @@ function build(){
     if (seen.includes(f)) throw new Error('inclusion en boucle : ' + seen.concat(f).join(' → '));
     return expand(read(f).toString('utf8').replace(/\n$/, ''), seen.concat(f));
   });
-  return expand(read('page.html').toString('utf8'), ['page.html']);
+  return expand(read('page.html').toString('utf8').replace(/^[ \t]*\{\{#[^\n]*\}\}[ \t]*\n/gm, ''), ['page.html']);
 }
 const upToDate = () => fs.existsSync(OUT) && fs.readFileSync(OUT, 'utf8') === build();
 

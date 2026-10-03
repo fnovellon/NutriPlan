@@ -17,10 +17,10 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 - La page publiée est un seul fichier autonome, `index.html` : CSS + JavaScript vanilla en ligne, aucune dépendance à l'exécution. Polices Google Fonts (Archivo, Newsreader) avec polices de secours.
 - Elle est construite à partir de `src/` par `npm run build` (`build.js`, sans dépendance) : **on modifie `src/`, jamais `index.html` à la main**, puis on reconstruit ; `npm test` refuse de tourner si `index.html` n'est pas à jour. Le gabarit `src/page.html` (tête, balisage de tous les écrans) inclut les autres fichiers avec `{{inclure fichier}}` (le fichier sans son dernier saut de ligne, inclusions comprises) et `{{base64 fichier}}` (chemins relatifs à `src/`) :
   - `src/style.css` : toute la feuille de style ;
-  - `src/engine.js` : le moteur (données, calculs), sans DOM ;
+  - le moteur, sans DOM : `src/engine/base.js` (outils communs, `'use strict'`, en tête du script), les données (`src/data/aliments.js` : `FOOD`, `UNIT`, `STARCH`, `YIELD`, `REF_GROUPS` ; `src/data/menus.js` : `DESSERT`, `PD`, `PROT`, `DEFAULT_CHOICES` ; `src/data/recettes.js` : `RFOOD`, `VEG_IDS`, `RECIPES` et leurs accès), puis les calculs (`src/engine.js`) ;
   - `src/ui.js` : l'interface, dans `if (typeof document !== 'undefined'){ … }` ;
   - `src/apple-touch-icon.png` : l'icône de l'écran d'accueil de l'iPhone, mise en ligne en base64.
-  Les fichiers JavaScript sont recollés dans un seul `<script>` : leurs déclarations de premier niveau restent communes.
+  Les fichiers JavaScript sont recollés dans un seul `<script>`, dans l'ordre du gabarit : leurs déclarations de premier niveau restent communes, et une constante lue au chargement d'un fichier doit être déclarée dans un fichier précédent. Une ligne `{{# …}}` du gabarit est un commentaire, retiré de la page.
 - Appli installable (PWA, 3.5.0), seuls fichiers à côté de `index.html` (un service worker est forcément un fichier à part ; ouverte seule depuis un fichier, la page marche comme avant) :
   - `manifest.webmanifest` : « Repas du jour », nom court « Repas », `display: standalone`, adresses relatives (`./`, le site est dans un sous-dossier de GitHub Pages), couleurs papier, icônes ;
   - `icons/` : `icon-192.png`, `icon-512.png` (l'icône de la page) et `icon-maskable-512.png` (fond plein, dessin réduit à 80 % pour la zone sûre d'Android), dessinées depuis le SVG de l'icône ;
@@ -166,7 +166,7 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 
 ## Version
 
-- Une seule source : `APP_VERSION` dans `src/engine.js` (donc dans `index.html`), identique au champ `version` de `package.json` (et de `package-lock.json`, régénéré avec `npm install --package-lock-only`). Affichée en bas de page avec un lien vers `CHANGELOG.md`.
+- Une seule source : `APP_VERSION` dans `src/engine/base.js` (donc dans `index.html`), identique au champ `version` de `package.json` (et de `package-lock.json`, régénéré avec `npm install --package-lock-only`). Affichée en bas de page avec un lien vers `CHANGELOG.md`.
 - Semver : correctif → patch (1.2.1), nouveauté → mineure (1.3.0), changement incompatible (refonte des calculs, format de stockage) → majeure (2.0.0).
 - À chaque changement visible : nouvelle version et entrée en tête de `CHANGELOG.md` (en français, pour l'utilisateur), dans le même commit. Les tests vérifient que les trois concordent.
 

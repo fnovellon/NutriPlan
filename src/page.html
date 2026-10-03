@@ -396,6 +396,12 @@
 </div>
 
 <script>
+{{# Moteur (sans DOM) puis interface, recollés dans un seul script. L'ordre compte : une constante lue au chargement d'un }}
+{{# fichier (REF_GROUPS, CHOICE_IDS, SHOP_AISLES…) doit être déclarée dans un fichier précédent. }}
+{{inclure engine/base.js}}
+{{inclure data/aliments.js}}
+{{inclure data/menus.js}}
+{{inclure data/recettes.js}}
 {{inclure engine.js}}
 {{inclure ui.js}}
 </script>

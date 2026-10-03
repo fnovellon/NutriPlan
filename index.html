@@ -777,10 +777,54 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 
 <script>
 'use strict';
+/* Moteur, outils communs : version, lignes d'un repas (it) et leurs valeurs (mac, unitMac), portions au poids (scaleOf, sc,
+   pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
 const APP_VERSION = '3.15.0';
 
+function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
+function grams(n){ return n + NB + 'g'; }
+/* Valeurs d'une quantité ; buy : ce qu'il faut acheter (voir it) */
+function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k, buy:{id:food, g:g}}; }
+function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n, buy:{id:u, n:n}}; }
+/* cook : poids cuit estimé par mode de cuisson, affiché sous la quantité crue,
+   ex. {raw:'cru', ways:[{g:135, adj:'cuit'}]} ou {raw:'crues', ways:[{g:340, adj:'à l’eau'}, {g:260, adj:'au four'}]} */
+/* Ligne d'un repas. m : kcal et macros ; buy : l'achat pour la liste de courses, {id, g} en grammes, {id, n} en pièces ou
+   {id, kcal} pour un budget (pris dans m.buy si absent) */
+function it(key, qty, name, note, m, cook, buy){
+  return {key:key, qty:qty, name:name, note:note || null, m:m ? {kcal:m.kcal, p:m.p, c:m.c, f:m.f} : null, cook:cook || null, buy:buy || (m && m.buy) || null};
+}
+
+/* Portions : menu de référence pour 72 kg, mis à l'échelle du poids (k = poids / 72, borné à 0,65-1,4 ≈ 47 à 101 kg) */
+const REF_KG = 72, SCALE_MIN = 0.65, SCALE_MAX = 1.4;
+function scaleOf(p){ return Math.min(SCALE_MAX, Math.max(SCALE_MIN, p.poids / REF_KG)); }
+/* Quantité de référence g mise à l'échelle k, arrondie au pas (jamais moins d'un pas) ; pièces arrondies à l'unité, au moins 1 */
+function sc(g, step, k){ return Math.max(step, Math.round(g * k / step) * step); }
+function pieces(n, k){ return Math.max(1, Math.round(n * k)); }
+/* Nombre de tranches (pain 40 g, jambon 45 g la tranche), à la demi-tranche près */
+function slices(g, per){
+  const t = Math.round(g / per * 2) / 2;
+  return (t === g / per ? '' : 'environ ') + (t === 0.5 ? 'une demi-tranche' : t.toLocaleString('fr-FR') + ' tranche' + (t >= 2 ? 's' : ''));
+}
+function meat(g, name, note, food){
+  return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', ways:[{g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'}]});
+}
+function total(items){
+  const t = {kcal:0, p:0, c:0, f:0};
+  items.forEach(function(i){ if (i.m){ t.kcal += i.m.kcal; t.p += i.m.p; t.c += i.m.c; t.f += i.m.f; } });
+  return t;
+}
+function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
+
+/* Typographie française des textes écrits avec des espaces simples : espace insécable avant « : ; ? ! % » et entre un
+   nombre et son unité (« 8 min », « 200 °C », « 1 c. à café ») */
+function typo(t){
+  return t.replace(/ ([:;?!%])/g, NB + '$1').replace(/(\d) (g|kg|kcal|min|ml|cl|°C)(?![A-Za-zÀ-ÿ])/g, '$1' + NB + '$2')
+    .replace(/(\d) c\./g, '$1' + NB + 'c.').replace(/c\. à/g, 'c.' + NB + 'à');
+}
+/* Données : aliments. Valeurs pour 100 g (FOOD) ou par pièce (UNIT), féculents (STARCH), rendements de cuisson (YIELD),
+   table de référence de l'écran d'aide (REF_GROUPS, refTable). */
 /* Valeurs pour 100 g : kcal, protéines, glucides, lipides. Table Ciqual de l'Anses (vérifiée en 3.3.1), arrondie ;
    glucides disponibles (sans les fibres). Skyr, halloumi : moyenne des étiquettes. Légumes : moyenne de légumes verts
    (haricots verts, brocoli, courgette, poivron, carotte). */
@@ -822,22 +866,7 @@ const STARCH = {
   gnocchis:{cap:300, label:'Gnocchis', f:[171,4.7,35,1.4], step:10, name:'gnocchis frais'}
 };
 const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour','lentilles','poischiches','gnocchis'];
-/* Desserts du déjeuner et du dîner : quantités fixes (pas mises à l'échelle du poids), calories prises sur le féculent du même repas */
-const DESSERT = {
-  aucun:{label:'Aucun'},
-  fruit:{label:'Fruit', item:function(){ return it('des', '1', 'fruit', 'pomme, poire, orange, 2 kiwis…', unitMac('pomme', 1), null, {id:'fruit', n:1}); }},
-  compote:{label:'Compote', item:function(){ return it('des', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)); }},
-  fruitsSecs:{label:'Fruits secs', sub:'abricots, pruneaux, figues', item:function(){ return it('des', grams(30), 'fruits secs', 'abricots, pruneaux ou figues', mac('fruitsSecs', 30)); }},
-  chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
-};
-const DESSERT_ORDER = ['aucun','fruit','compote','fruitsSecs','chocolat'];
-/* Base du petit-déjeuner : avoine (ou muesli sans sucre ajouté, valeurs proches), pain complet, ou salé (pain, œufs, jambon) */
-const PD = {
-  avoine:{label:'Flocons d’avoine', sub:'ou muesli sans sucre ajouté'},
-  pain:{label:'Pain complet'},
-  sale:{label:'Salé', sub:'pain complet, œufs, jambon'}
-};
-const PD_ORDER = ['avoine','pain','sale'];
+
 /* Table de référence des aliments (écran « Comment ça marche ») : chaque valeur de FOOD, UNIT et STARCH y figure une fois */
 const REF_GROUPS = [
   {title:'Viandes, poissons, laitages', per:'pour 100' + NB + 'g', src:'food', rows:[['poulet','Viande blanche maigre (poulet, dinde, filet mignon de porc)'],['boeuf','Bœuf haché 5' + NB + '%'],['poisson','Poisson blanc'],['saumon','Poisson gras (saumon, maquereau, sardines à l’huile)'],['crevettes','Crevettes cuites'],['thon','Thon au naturel, égoutté'],['jambon','Jambon blanc'],['halloumi','Halloumi'],['tofu','Tofu ferme, nature'],['parmesan','Parmesan'],['skyr','Skyr nature']]},
@@ -859,40 +888,26 @@ function refTable(){
   });
 }
 
-function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
-function grams(n){ return n + NB + 'g'; }
-/* Valeurs d'une quantité ; buy : ce qu'il faut acheter (voir it) */
-function mac(food, g){ const f = FOOD[food], k = g / 100; return {kcal:f[0]*k, p:f[1]*k, c:f[2]*k, f:f[3]*k, buy:{id:food, g:g}}; }
-function unitMac(u, n){ const f = UNIT[u]; return {kcal:f[0]*n, p:f[1]*n, c:f[2]*n, f:f[3]*n, buy:{id:u, n:n}}; }
-/* cook : poids cuit estimé par mode de cuisson, affiché sous la quantité crue,
-   ex. {raw:'cru', ways:[{g:135, adj:'cuit'}]} ou {raw:'crues', ways:[{g:340, adj:'à l’eau'}, {g:260, adj:'au four'}]} */
-/* Ligne d'un repas. m : kcal et macros ; buy : l'achat pour la liste de courses, {id, g} en grammes, {id, n} en pièces ou
-   {id, kcal} pour un budget (pris dans m.buy si absent) */
-function it(key, qty, name, note, m, cook, buy){
-  return {key:key, qty:qty, name:name, note:note || null, m:m ? {kcal:m.kcal, p:m.p, c:m.c, f:m.f} : null, cook:cook || null, buy:buy || (m && m.buy) || null};
-}
 /* Rendement de cuisson de la viande et du poisson (poids cuit / poids cru, ≈ table USDA des rendements de cuisson, 2012) */
 const YIELD = {poulet:0.75, boeuf:0.75, poisson:0.8, saumon:0.8};
-/* Portions : menu de référence pour 72 kg, mis à l'échelle du poids (k = poids / 72, borné à 0,65-1,4 ≈ 47 à 101 kg) */
-const REF_KG = 72, SCALE_MIN = 0.65, SCALE_MAX = 1.4;
-function scaleOf(p){ return Math.min(SCALE_MAX, Math.max(SCALE_MIN, p.poids / REF_KG)); }
-/* Quantité de référence g mise à l'échelle k, arrondie au pas (jamais moins d'un pas) ; pièces arrondies à l'unité, au moins 1 */
-function sc(g, step, k){ return Math.max(step, Math.round(g * k / step) * step); }
-function pieces(n, k){ return Math.max(1, Math.round(n * k)); }
-/* Nombre de tranches (pain 40 g, jambon 45 g la tranche), à la demi-tranche près */
-function slices(g, per){
-  const t = Math.round(g / per * 2) / 2;
-  return (t === g / per ? '' : 'environ ') + (t === 0.5 ? 'une demi-tranche' : t.toLocaleString('fr-FR') + ' tranche' + (t >= 2 ? 's' : ''));
-}
-function meat(g, name, note, food){
-  return it('p1', grams(g), name, note, mac(food, g), {raw:'cru', ways:[{g:Math.round(g * YIELD[food] / 5) * 5, adj:'cuit'}]});
-}
-function total(items){
-  const t = {kcal:0, p:0, c:0, f:0};
-  items.forEach(function(i){ if (i.m){ t.kcal += i.m.kcal; t.p += i.m.p; t.c += i.m.c; t.f += i.m.f; } });
-  return t;
-}
-function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
+/* Données : ce qu'on choisit aux repas. Desserts (DESSERT), bases du petit-déjeuner (PD), protéines du déjeuner et du dîner
+   avec leurs portions de référence à 72 kg (PROT), plats par défaut de chaque jour de la semaine (DEFAULT_CHOICES). */
+/* Desserts du déjeuner et du dîner : quantités fixes (pas mises à l'échelle du poids), calories prises sur le féculent du même repas */
+const DESSERT = {
+  aucun:{label:'Aucun'},
+  fruit:{label:'Fruit', item:function(){ return it('des', '1', 'fruit', 'pomme, poire, orange, 2 kiwis…', unitMac('pomme', 1), null, {id:'fruit', n:1}); }},
+  compote:{label:'Compote', item:function(){ return it('des', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)); }},
+  fruitsSecs:{label:'Fruits secs', sub:'abricots, pruneaux, figues', item:function(){ return it('des', grams(30), 'fruits secs', 'abricots, pruneaux ou figues', mac('fruitsSecs', 30)); }},
+  chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
+};
+const DESSERT_ORDER = ['aucun','fruit','compote','fruitsSecs','chocolat'];
+/* Base du petit-déjeuner : avoine (ou muesli sans sucre ajouté, valeurs proches), pain complet, ou salé (pain, œufs, jambon) */
+const PD = {
+  avoine:{label:'Flocons d’avoine', sub:'ou muesli sans sucre ajouté'},
+  pain:{label:'Pain complet'},
+  sale:{label:'Salé', sub:'pain complet, œufs, jambon'}
+};
+const PD_ORDER = ['avoine','pain','sale'];
 
 /* Protéines du déjeuner et du dîner, avec leur matière grasse : portions de référence (72 kg) mises à l'échelle k.
    Restent fixes : les amandes du dîner (comme l'était le demi-avocat) et la boîte de thon (on ne coupe pas une boîte). */
@@ -944,12 +959,17 @@ const PROT = {
 };
 const PROT_ORDER = ['poulet','boeuf','poisson','saumon','crevettes','oeufs','thon','tofu'];
 
-/* Typographie française des textes écrits avec des espaces simples : espace insécable avant « : ; ? ! % » et entre un
-   nombre et son unité (« 8 min », « 200 °C », « 1 c. à café ») */
-function typo(t){
-  return t.replace(/ ([:;?!%])/g, NB + '$1').replace(/(\d) (g|kg|kcal|min|ml|cl|°C)(?![A-Za-zÀ-ÿ])/g, '$1' + NB + '$2')
-    .replace(/(\d) c\./g, '$1' + NB + 'c.').replace(/c\. à/g, 'c.' + NB + 'à');
-}
+const DEFAULT_CHOICES = {
+  0:{pdBase:'pain', dej:{prot:'poulet', starch:'pdt'}, diner:{prot:'oeufs', starch:'riz'}},
+  1:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'crevettes', starch:'quinoa'}},
+  2:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'boeuf', starch:'pates'}},
+  3:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'poisson', starch:'lentilles'}},
+  4:{pdBase:'avoine', dej:{prot:'boeuf', starch:'riz'}, diner:{prot:'saumon', starch:'riz'}},
+  5:{pdBase:'avoine', dej:{prot:'boeuf', starch:'riz'}, diner:{prot:'poulet', starch:'patate'}},
+  6:{pdBase:'avoine', dej:{prot:'thon', starch:'pates'}, diner:{prot:'saumon', starch:'pdt'}}
+};
+/* Données : recettes (3.12.0), une par couple protéine × féculent, avec leurs légumes et matières grasses (RFOOD, VEG_IDS),
+   et l'accès à la recette d'un repas (recipesFor, recipeOf, recipeItems). */
 /* Légumes et matières grasses des recettes : nom sur la ligne du repas et dans les courses, précision */
 const RFOOD = {
   oignon:['oignon', 'ou échalote'], tomate:['tomates', 'ou tomates cerises'], pulpe:['pulpe de tomate', 'en conserve'], poivron:['poivron', null],
@@ -1326,7 +1346,6 @@ function recipeItems(id){
     .concat(x.cuis.map(function(c){ return it('f-' + c[0], grams(c[1]), c[2], c[3], mac(c[0], c[1])); }))
     .concat(Object.keys(x.plus).map(function(a){ return it('x-' + a, grams(x.plus[a]), a === 'skyr' ? 'skyr nature' : 'miel', 'pour la sauce', mac(a, x.plus[a])); }));
 }
-
 /* Séances par taille. Coût net par défaut = net × poids (MET·h nets ; pour la longue, par heure), réglable dans le profil. */
 const SIZES = {
   petite:{band:'Petite séance', net:4},
@@ -1392,15 +1411,7 @@ function migratePlan(p){
   if (p.natation && a !== 'longue') list.push({taille:'petite', moment:'midi'});
   return {seances:list, libre:!!p.libre};
 }
-const DEFAULT_CHOICES = {
-  0:{pdBase:'pain', dej:{prot:'poulet', starch:'pdt'}, diner:{prot:'oeufs', starch:'riz'}},
-  1:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'crevettes', starch:'quinoa'}},
-  2:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'boeuf', starch:'pates'}},
-  3:{pdBase:'avoine', dej:{prot:'poulet', starch:'riz'}, diner:{prot:'poisson', starch:'lentilles'}},
-  4:{pdBase:'avoine', dej:{prot:'boeuf', starch:'riz'}, diner:{prot:'saumon', starch:'riz'}},
-  5:{pdBase:'avoine', dej:{prot:'boeuf', starch:'riz'}, diner:{prot:'poulet', starch:'patate'}},
-  6:{pdBase:'avoine', dej:{prot:'thon', starch:'pates'}, diner:{prot:'saumon', starch:'pdt'}}
-};
+
 /* Aliments proposés : ceux retirés dans les réglages (profil off, entrées « type:id ») ne sont plus proposés ni tirés au
    hasard. Il en reste toujours au moins un par type ; « Aucun » dessert reste toujours possible. */
 const CHOICE_IDS = {pd:PD_ORDER, prot:PROT_ORDER, starch:STARCH_ORDER, dessert:DESSERT_ORDER.filter(function(d){ return d !== 'aucun'; })};
