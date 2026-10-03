@@ -5,14 +5,15 @@
 //   - interface : les deux pages côte à côte (jsdom, même horloge, même hasard), les mêmes actions au hasard sur chacune
 //     (boutons, champs, retour du téléphone, Échap, jour suivant, rechargement), puis écran, focus, champs, historique,
 //     stockage et erreurs comparés après chaque action.
-// REF=<commit> : autre référence (par défaut la 3.15.0, avant la restructuration). FUZZ, SEED : comme les tests de fond.
+// npm run test:ref ; REF=<commit> : autre référence (par défaut HEAD, le dernier commit ; la restructuration de la 3.15.0 a été
+// vérifiée contre REF=9f47bbc). FUZZ, SEED : comme les tests de fond.
 process.env.TZ = 'Europe/Paris';
 const path = require('path');
 const vm = require('vm');
 const { execFileSync } = require('child_process');
 const { html, rng, settings, checker, openPage } = require('./lib');
 
-const REF = process.env.REF || '9f47bbc3e60ab37b0e1ef629056bb1fb61585ebe';
+const REF = process.env.REF || 'HEAD';
 let refHtml;
 try {
   refHtml = execFileSync('git', ['show', REF + ':index.html'], { cwd: path.join(__dirname, '..'), encoding: 'utf8', maxBuffer: 64 << 20, stdio: ['ignore', 'pipe', 'ignore'] });
