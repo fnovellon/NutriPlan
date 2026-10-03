@@ -6,10 +6,10 @@ const vm = require('vm');
 // APP_HTML : tester une autre copie de la page (par exemple une copie volontairement cassée, pour vérifier que les tests la repèrent)
 const html = fs.readFileSync(process.env.APP_HTML || path.join(__dirname, '..', 'index.html'), 'utf8');
 
-// Moteur hors navigateur : le script de index.html dans un contexte isolé (la partie DOM ne s'exécute pas).
+// Moteur hors navigateur : le script de index.html (ou de la copie page) dans un contexte isolé (la partie DOM ne s'exécute pas).
 // Toute déclaration de premier niveau (const, let, function) est lisible par son nom : A.buildDay, A.PF_MIN…
-function loadEngine(){
-  const m = html.match(/<script>([\s\S]*?)<\/script>/);
+function loadEngine(page){
+  const m = (page || html).match(/<script>([\s\S]*?)<\/script>/);
   if (!m) throw new Error('script introuvable dans index.html');
   const ctx = {};
   vm.createContext(ctx);
@@ -84,7 +84,8 @@ function checker(name){
   };
 }
 
-// Page simulée (jsdom) à une horloge donnée ; storage : clés du localStorage enregistrées avant le chargement
+// Page simulée (jsdom) à une horloge donnée ; storage : clés du localStorage enregistrées avant le chargement ;
+// html : une autre copie de la page ; setup(win) : appelé avant le script de la page (par exemple pour fixer Math.random)
 function openPage(opts){
   const { JSDOM, VirtualConsole } = require('jsdom');
   const o = opts || {};
@@ -92,7 +93,7 @@ function openPage(opts){
   const vc = new VirtualConsole();
   vc.on('jsdomError', e => errors.push((e && e.message) || String(e)));
   const clock = o.clock || { now: new Date(2026, 9, 7, 9).getTime() };
-  return new JSDOM(html, {
+  return new JSDOM(o.html || html, {
     runScripts: 'dangerously', url: 'https://example.org/', virtualConsole: vc,
     beforeParse: win => {
       const R = win.Date;
@@ -102,6 +103,7 @@ function openPage(opts){
       }
       win.Date = D;
       for (const [k, v] of Object.entries(o.storage || {})) win.localStorage.setItem(k, v);
+      if (o.setup) o.setup(win);
     }
   });
 }
