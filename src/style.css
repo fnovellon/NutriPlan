@@ -181,6 +181,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .regl-top{margin:0 0 8px;}
 .icon-btn.back{margin:0 0 0 -12px;}
 .needs{margin:6px 0 0;padding-top:18px;border-top:1px solid var(--line);}
+/* Onglets des réglages (3.18.0) : collés en haut de l'écran quand on descend */
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:2px;margin:2px -4px 4px;padding:calc(6px + env(safe-area-inset-top,0px)) 4px 6px;background:var(--paper);}
+.tabs [role="tab"]{flex:1;min-width:0;min-height:44px;padding:0 4px;border:1px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.2;color:var(--ink);}
+.tabs [role="tab"][aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.tab-pan[hidden]{display:none;}
+.tab-pan:focus{outline:none;}
+.tab-pan > .needs:first-child{border-top:0;padding-top:8px;}
 .needs-t{margin:0;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
 .needs-s{margin:2px 0 16px;font-size:15px;color:var(--muted);}
 .needs-body{padding:2px 0 22px;}
@@ -313,7 +320,9 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .sem-days{margin-bottom:6px;}
 .sem-days .dn{font-size:13px;font-weight:600;line-height:1.3;}
 h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
-#sem-lib .opt{min-width:44px;}
+#sem-lib .opt,#acs-lib .opt{min-width:44px;}
+#acs-lib{margin-bottom:18px;}
+h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17px;}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
 /* Planifier : raccourcis, dates, puis un jour par étape */

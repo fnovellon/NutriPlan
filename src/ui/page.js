@@ -128,13 +128,14 @@
     const t = res.tot, en = res.energy;
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
       (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.');
-    let note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
+    let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
     if (!res.libre && res.ecart > en.target * 0.03){
       const pr = cleanProfile(prof), tips = [];
       if (pr.marge > 0) tips.push('baisse la marge cuisine');
       if (pr.shaker === 'oui') tips.push('passe-toi du shaker');
       if (dessertOf(ch.dej) !== 'aucun' || dessertOf(ch.diner) !== 'aucun') tips.push('retire un dessert');
       if (res.prot.factor > PF_MIN + 0.02) tips.push('baisse ton objectif de protéines');
+      if (pr.marge > 0 || pr.shaker === 'oui') tab = 'repas';
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
         (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
@@ -143,13 +144,14 @@
       const pr = cleanProfile(prof), tips = [];
       if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
       if (ch.pdBase === 'sale' && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner sucré (avec du skyr)');
-      if (pr.shaker === 'non') tips.push('reprends un shaker');
+      if (pr.shaker === 'non'){ tips.push('reprends un shaker'); tab = 'repas'; }
       tips.push('baisse ton objectif de protéines');
       note += ' Tes protéines restent sous ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g)' + NB +
         ': ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.';
     }
-    if (incomplete()) note += ' Complète ton profil pour un calcul juste.';
-    $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs">Régler</button>';
+    if (incomplete()){ note += ' Complète ton profil pour un calcul juste.'; tab = 'profil'; }
+    /* « Régler » ouvre l'onglet des réglages de ce que propose la note (shaker, marge cuisine : Repas ; sinon Profil) */
+    $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs" data-value="' + tab + '">Régler</button>';
     $('bar-p').style.flexGrow = String(t.p * 4);
     $('bar-c').style.flexGrow = String(t.c * 4);
     $('bar-f').style.flexGrow = String(t.f * 9);

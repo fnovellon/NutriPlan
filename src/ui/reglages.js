@@ -75,37 +75,7 @@
   };
   renderAliments();
 
-  /* Réglages, « Ta semaine type » : un jour à la fois, ses séances avec les mêmes boutons que la page */
-  let semSel = todayJs;
-  const SHORT = {0:'dim.', 1:'lun.', 2:'mar.', 3:'mer.', 4:'jeu.', 5:'ven.', 6:'sam.'};
-  const renderSemaine = function(){
-    const w = semOf(), list = w.jours[semSel] || [];
-    $('sem-days').innerHTML = DAYS.map(function(d){
-      const n = (w.jours[d.js] || []).length;
-      return '<button type="button" data-action="sem-day" data-value="' + d.js + '" aria-pressed="' + (d.js === semSel) + '" aria-label="' + d.long + NB + ': ' +
-        (n ? n + ' séance' + (n > 1 ? 's' : '') : 'repos') + '"><span class="wd">' + SHORT[d.js] + '</span><span class="dn">' + (n || '–') + '</span></button>';
-    }).join('');
-    $('sem-h').textContent = cap(DAYS.find(function(d){ return d.js === semSel; }).long);
-    $('sem-sess').innerHTML = sessHTML(list, 'sem-');
-    $('sem-acts').querySelectorAll('button').forEach(function(b){ b.disabled = addDisabled(b.dataset.value, list); });
-    $('sem-lib').innerHTML = DAYS.map(function(d){
-      return '<button type="button" class="opt" data-action="sem-lib" data-value="' + d.js + '" aria-pressed="' + (w.libre === d.js) + '" aria-label="' + d.long + '">' + SHORT[d.js] + '</button>';
-    }).join('');
-  };
-  /* Enregistrée dans le profil, seulement si elle diffère de la semaine par défaut (aucune séance, repas libre le samedi) */
-  const saveWeek = function(w){
-    const c = cleanWeek(w);
-    if (Object.keys(c.jours).length || c.libre !== 6) prof.semaine = c; else delete prof.semaine;
-    saveProf();
-  };
-  /* Après un changement, le focus revient sur le même bouton (sinon sur « + Petite ») */
-  const semFocus = function(b){
-    const same = [...$('semaine').querySelectorAll('[data-action="' + b.dataset.action + '"]')].find(function(x){
-      return x.dataset.value === b.dataset.value && x.dataset.index === b.dataset.index;
-    });
-    const el = same && !same.disabled ? same : $('sem-acts').querySelector('button:not(:disabled)') || $('sem-days').querySelector('[aria-pressed="true"]');
-    if (el) el.focus({preventScroll:true});
-  };
+  /* Réglages, « Ta semaine type » : l'éditeur partagé avec l'accueil (ui/semtype.js) */
   renderSemaine();
 
   /* Champs du profil : enregistrés à chaque saisie valide, vidés = valeur par défaut */
@@ -165,33 +135,44 @@
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    shop = {from:'', to:'', checked:[]}; repasVu = null; draft = null; planner = null; semSel = todayJs;
+    shop = {from:'', to:'', checked:[]}; repasVu = null; draft = null; planner = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();
     $('hint').textContent = ''; $('intro').textContent = ''; $('alim-warn').textContent = '';
-    fillNeeds(); renderAliments(); renderSemaine();
+    fillNeeds(); renderAliments(); renderSemaine(); showTab('profil');
     render();
     openAcc({});
     $('acc-h1').focus();
   };
-  const semAction = function(b, v){
-    const w = semOf(), list = (w.jours[semSel] || []).map(function(x){ return Object.assign({}, x); }), i = +b.dataset.index, act = b.dataset.action;
-    if (act === 'sem-add'){ if (!has(SIZES, v) || addDisabled(v, list)) return; list.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2}); }
-    else if (act === 'sem-rm'){ if (!list[i]) return; list.splice(i, 1); }
-    else if (act === 'sem-smoment'){ if (!list[i] || !has(MOMENT_RANK, v)) return; list[i].moment = v; }
-    else if (act === 'sem-sduree'){ if (!list[i]) return; list[i].duree = parseFloat(v); }
-    else { if (!/^[0-6]$/.test(v || '')) return; w.libre = +v; }
-    w.jours[semSel] = list;
-    saveWeek(w);
-    renderSemaine();
-    semFocus(b);
-    loadSel(); prevQty = new Map();
-    return '';
+  /* Onglets (3.18.0) : Profil, Sport, Repas, Appli ; un seul panneau visible, le dernier ouvert gardé tant que l'appli reste
+     ouverte. Flèches gauche et droite, début et fin : onglet voisin, premier, dernier (le focus suit). Changer d'onglet
+     remonte la page jusqu'aux onglets si elle était plus bas. */
+  const TABS = ['profil', 'sport', 'repas', 'appli'];
+  let reglTab = 'profil';
+  const showTab = function(t, focus){
+    reglTab = TABS.indexOf(t) >= 0 ? t : 'profil';
+    TABS.forEach(function(x){
+      const on = x === reglTab, b = $('tab-' + x);
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+      $('pan-' + x).hidden = !on;
+    });
+    const list = $('besoins').querySelector('[role="tablist"]');
+    if (scroller().scrollTop > list.offsetTop) scroller().scrollTop = list.offsetTop;
+    if (focus) $('tab-' + reglTab).focus({preventScroll:true});
   };
-  /* Actions des réglages : profil, aliments proposés, semaine type, effacer mes données */
+  $('besoins').querySelector('[role="tablist"]').addEventListener('keydown', function(e){
+    const i = TABS.indexOf(reglTab), n = {ArrowRight:i + 1, ArrowLeft:i - 1, Home:0, End:TABS.length - 1}[e.key];
+    if (n === undefined) return;
+    e.preventDefault();
+    showTab(TABS[(n + TABS.length) % TABS.length], true);
+  });
+  /* Actions des réglages : onglets, profil, aliments proposés, effacer mes données (semaine type : ui/semtype.js).
+     needs : la roue dentée (le dernier onglet) ou « Régler » de la note du total (l'onglet de ce qu'elle propose) */
   Object.assign(ACTIONS, {
-    needs: function(b){ effShow(false); openScreen('reglages', b); },
+    needs: function(b, v){ effShow(false); showTab(TABS.indexOf(v) >= 0 ? v : reglTab); openScreen('reglages', b); },
+    tab: function(b, v){ showTab(v); },
     prof: function(b, v){
       const o = {};
       o[b.dataset.key] = v;
@@ -217,9 +198,6 @@
       loadSel();
       return '';
     },
-    /* « Ta semaine type » : un jour, ses séances, le soir du repas libre */
-    'sem-day': function(b, v){ if (!/^[0-6]$/.test(v || '')) return; semSel = +v; renderSemaine(); semFocus(b); },
-    'sem-add': semAction, 'sem-rm': semAction, 'sem-smoment': semAction, 'sem-sduree': semAction, 'sem-lib': semAction,
     /* « Effacer mes données » : demander, confirmer ou annuler */
     'eff-ask': function(){ effShow(true); $('eff-no').focus({preventScroll:true}); },
     'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); },

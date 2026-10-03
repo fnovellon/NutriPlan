@@ -25,7 +25,7 @@
 <body>
 <main class="app acc" id="accueil" hidden>
   <div class="acc-top">
-    <div class="acc-bar" id="acc-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-label="Étape 1 sur 3"><span></span><span></span><span></span></div>
+    <div class="acc-bar" id="acc-bar" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" aria-label="Étape 1 sur 4"><span></span><span></span><span></span><span></span></div>
     <button type="button" class="skip" data-action="acc-skip">Passer</button>
   </div>
 
@@ -90,6 +90,21 @@
       </div>
     </div>
     <p class="calc">Pour ta matière grasse de cuisson et ce que tu ajoutes&nbsp;: huile, sauce, fromage râpé. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent, ton total ne bouge pas.</p>
+  </section>
+
+  <section data-step="4" id="acs" aria-labelledby="acc-h4" hidden>
+    <h1 id="acc-h4" tabindex="-1">Ta semaine</h1>
+    <p class="acc-p">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles rempliront toutes seules tes journées, que tu pourras toujours changer un jour donné. Facultatif&nbsp;: sans séance, chaque jour part au repos.</p>
+    <div class="week sem-days" id="acs-days" role="group" aria-label="Jour de ta semaine type"></div>
+    <h2 class="rf-l sem-h" id="acs-h"></h2>
+    <div class="sess" id="acs-sess"></div>
+    <div class="acts" id="acs-acts" role="group" aria-label="Ajouter une séance à ce jour">
+      <button type="button" data-action="acs-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
+      <button type="button" data-action="acs-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
+      <button type="button" data-action="acs-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
+    </div>
+    <p class="rf-l" id="acs-lib-l">Repas libre, le soir</p>
+    <div class="opts-list" id="acs-lib" role="group" aria-labelledby="acs-lib-l"></div>
     <p class="calc">Tu pourras tout changer dans les réglages, avec la roue dentée en haut de la page.</p>
   </section>
 
@@ -167,130 +182,164 @@
 <main class="app regl" id="reglages" hidden>
   <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <h1 id="regl-h" tabindex="-1">Réglages</h1>
-  <section class="needs" id="besoins" aria-labelledby="needs-t">
-    <h2 class="needs-t" id="needs-t">Tes besoins</h2>
-    <p class="needs-s" id="needs-sum"></p>
-    <div class="needs-body">
-      <div class="opt-row">
-        <span class="lbl" id="lbl-mode">Besoin</span>
-        <div class="seg" role="group" aria-labelledby="lbl-mode">
-          <button type="button" data-action="prof" data-key="mode" data-value="auto">Automatique</button>
-          <button type="button" data-action="prof" data-key="mode" data-value="manuel">Manuel</button>
-        </div>
-      </div>
-      <p class="calc" id="mode-hint"></p>
-      <p class="warn" id="needs-hint"></p>
-      <div class="opt-row" data-mode="auto">
-        <span class="lbl" id="lbl-sexe">Sexe</span>
-        <div class="seg" role="group" aria-labelledby="lbl-sexe">
-          <button type="button" data-action="prof" data-key="sexe" data-value="h">Homme</button>
-          <button type="button" data-action="prof" data-key="sexe" data-value="f">Femme</button>
-        </div>
-      </div>
-      <div data-mode="manuel">
-        <label class="field wide"><span>Ta dépense totale un jour sans sport</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1200" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
-        <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
-        <p class="warn" id="warn-repos"></p>
-      </div>
-      <div class="fields">
-        <label class="field" data-mode="auto"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
-        <label class="field" data-mode="auto"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
-        <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
-        <label class="field" data-mode="auto"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
-      </div>
-      <div class="opt-row" data-mode="auto">
-        <span class="lbl" id="lbl-neat">Hors sport</span>
-        <div class="seg" role="group" aria-labelledby="lbl-neat">
-          <button type="button" data-action="prof" data-key="neat" data-value="assis">Assis</button>
-          <button type="button" data-action="prof" data-key="neat" data-value="mixte">Mixte</button>
-          <button type="button" data-action="prof" data-key="neat" data-value="debout">Debout</button>
-        </div>
-      </div>
-      <p class="calc" data-mode="auto">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
-      <p class="calc" id="calc-rest"></p>
-      <div class="range">
-        <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
-        <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
-      </div>
-      <p class="calc" id="calc-deficit"></p>
-      <p class="warn" id="warn-deficit"></p>
-      <div class="range">
-        <div class="range-h"><label for="in-prot">Protéines</label><output id="out-prot" for="in-prot"></output></div>
-        <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
-      </div>
-      <p class="calc" id="calc-prot"></p>
-      <div class="range">
-        <div class="range-h"><label for="in-ravito">Ravito des sorties longues</label><output id="out-ravito" for="in-ravito"></output></div>
-        <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
-      </div>
-      <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
-      <div class="range">
-        <div class="range-h"><label for="in-marge">Marge cuisine</label><output id="out-marge" for="in-marge"></output></div>
-        <input type="range" id="in-marge" data-key="marge" min="0" max="300" step="25">
-      </div>
-      <p class="calc">Réservée chaque jour pour ta matière grasse de cuisson et ce que tu ajoutes (huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner, comptée en lipides. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent&nbsp;: ton total ne bouge pas.</p>
-      <p class="blk">Tes séances</p>
-      <div class="fields">
-        <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
-        <label class="field"><span>Moyenne</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalMoyenne" min="150" max="1500" step="10"><span class="unit">kcal</span></span></label>
-        <label class="field"><span>Longue, par heure</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalLongueH" min="200" max="1200" step="10"><span class="unit">kcal</span></span></label>
-      </div>
-      <p class="calc" id="calc-seances"></p>
-      <p class="blk">Shaker de protéines</p>
-      <div class="opt-row">
-        <span class="lbl" id="lbl-shaker">Tous les jours</span>
-        <div class="seg" role="group" aria-labelledby="lbl-shaker">
-          <button type="button" data-action="prof" data-key="shaker" data-value="oui">Oui</button>
-          <button type="button" data-action="prof" data-key="shaker" data-value="non">Non</button>
-        </div>
-      </div>
-      <div class="fields" id="shaker-dose">
-        <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-key="shakerKcal" min="100" max="160" step="1"><span class="unit">kcal</span></span></label>
-        <label class="field"><span>Protéines par dose</span><span class="inp"><input type="number" inputmode="decimal" data-key="shakerProt" min="10" max="40" step="0.5"><span class="unit">g</span></span></label>
-      </div>
-      <p class="calc" id="calc-shaker"></p>
-      <p class="warn" id="warn-shaker"></p>
-      <p class="calc">Ton profil reste sur cet appareil.</p>
-      <div class="regl-links">
-        <button type="button" class="reset" data-action="aide" id="help-regl">Comment ça marche</button>
-        <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
-        <button type="button" class="reset" id="install" data-action="installer" hidden>Installer l’appli</button>
-      </div>
+  <div id="besoins">
+    <div class="tabs" role="tablist" aria-label="Rubriques des réglages">
+      <button type="button" role="tab" id="tab-profil" aria-controls="pan-profil" aria-selected="true" tabindex="0" data-action="tab" data-value="profil">Profil</button>
+      <button type="button" role="tab" id="tab-sport" aria-controls="pan-sport" aria-selected="false" tabindex="-1" data-action="tab" data-value="sport">Sport</button>
+      <button type="button" role="tab" id="tab-repas" aria-controls="pan-repas" aria-selected="false" tabindex="-1" data-action="tab" data-value="repas">Repas</button>
+      <button type="button" role="tab" id="tab-appli" aria-controls="pan-appli" aria-selected="false" tabindex="-1" data-action="tab" data-value="appli">Appli</button>
     </div>
-  </section>
-  <section class="needs" id="semaine" aria-labelledby="sem-t">
-    <h2 class="needs-t" id="sem-t">Ta semaine type</h2>
-    <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
-    <div class="needs-body">
-      <div class="week sem-days" id="sem-days" role="group" aria-label="Jour de la semaine type"></div>
-      <h3 class="rf-l sem-h" id="sem-h"></h3>
-      <div class="sess" id="sem-sess"></div>
-      <div class="acts" id="sem-acts" role="group" aria-label="Ajouter une séance à ce jour">
-        <button type="button" data-action="sem-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
-        <button type="button" data-action="sem-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
-        <button type="button" data-action="sem-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
-      </div>
-      <p class="rf-l" id="sem-lib-l">Repas libre, le soir</p>
-      <div class="opts-list" id="sem-lib" role="group" aria-labelledby="sem-lib-l"></div>
+    <div class="tab-pan" role="tabpanel" id="pan-profil" aria-labelledby="tab-profil" tabindex="-1">
+      <section class="needs" aria-labelledby="needs-t">
+        <h2 class="needs-t" id="needs-t">Tes besoins</h2>
+        <p class="needs-s" id="needs-sum"></p>
+        <div class="needs-body">
+          <div class="opt-row">
+            <span class="lbl" id="lbl-mode">Besoin</span>
+            <div class="seg" role="group" aria-labelledby="lbl-mode">
+              <button type="button" data-action="prof" data-key="mode" data-value="auto">Automatique</button>
+              <button type="button" data-action="prof" data-key="mode" data-value="manuel">Manuel</button>
+            </div>
+          </div>
+          <p class="calc" id="mode-hint"></p>
+          <p class="warn" id="needs-hint"></p>
+          <div class="opt-row" data-mode="auto">
+            <span class="lbl" id="lbl-sexe">Sexe</span>
+            <div class="seg" role="group" aria-labelledby="lbl-sexe">
+              <button type="button" data-action="prof" data-key="sexe" data-value="h">Homme</button>
+              <button type="button" data-action="prof" data-key="sexe" data-value="f">Femme</button>
+            </div>
+          </div>
+          <div data-mode="manuel">
+            <label class="field wide"><span>Ta dépense totale un jour sans sport</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1200" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
+            <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
+            <p class="warn" id="warn-repos"></p>
+          </div>
+          <div class="fields">
+            <label class="field" data-mode="auto"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
+            <label class="field" data-mode="auto"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
+            <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
+            <label class="field" data-mode="auto"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
+          </div>
+          <div class="opt-row" data-mode="auto">
+            <span class="lbl" id="lbl-neat">Hors sport</span>
+            <div class="seg" role="group" aria-labelledby="lbl-neat">
+              <button type="button" data-action="prof" data-key="neat" data-value="assis">Assis</button>
+              <button type="button" data-action="prof" data-key="neat" data-value="mixte">Mixte</button>
+              <button type="button" data-action="prof" data-key="neat" data-value="debout">Debout</button>
+            </div>
+          </div>
+          <p class="calc" data-mode="auto">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
+          <p class="calc" id="calc-rest"></p>
+          <div class="range">
+            <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
+            <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
+          </div>
+          <p class="calc" id="calc-deficit"></p>
+          <p class="warn" id="warn-deficit"></p>
+          <div class="range">
+            <div class="range-h"><label for="in-prot">Protéines</label><output id="out-prot" for="in-prot"></output></div>
+            <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
+          </div>
+          <p class="calc" id="calc-prot"></p>
+          <p class="calc">Ton profil reste sur cet appareil.</p>
+        </div>
+      </section>
     </div>
-  </section>
-  <section class="needs" id="aliments" aria-labelledby="alim-t">
-    <h2 class="needs-t" id="alim-t">Tes aliments</h2>
-    <p class="needs-s">Touche un aliment pour ne plus te le proposer&nbsp;: il disparaît des choix et de «&nbsp;Décide pour moi&nbsp;». Les jours où il est déjà choisi le gardent.</p>
-    <div class="needs-body" id="alim-list"></div>
-    <p class="warn" id="alim-warn" role="status"></p>
-  </section>
-  <section class="needs" id="effacer" aria-labelledby="eff-t">
-    <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
-    <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
-    <div class="needs-body">
-      <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
-      <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
-        <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
-        <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
-      </div>
+    <div class="tab-pan" role="tabpanel" id="pan-sport" aria-labelledby="tab-sport" tabindex="-1" hidden>
+      <section class="needs" id="semaine" aria-labelledby="sem-t">
+        <h2 class="needs-t" id="sem-t">Ta semaine type</h2>
+        <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
+        <div class="needs-body">
+          <div class="week sem-days" id="sem-days" role="group" aria-label="Jour de la semaine type"></div>
+          <h3 class="rf-l sem-h" id="sem-h"></h3>
+          <div class="sess" id="sem-sess"></div>
+          <div class="acts" id="sem-acts" role="group" aria-label="Ajouter une séance à ce jour">
+            <button type="button" data-action="sem-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
+            <button type="button" data-action="sem-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
+            <button type="button" data-action="sem-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
+          </div>
+          <p class="rf-l" id="sem-lib-l">Repas libre, le soir</p>
+          <div class="opts-list" id="sem-lib" role="group" aria-labelledby="sem-lib-l"></div>
+        </div>
+      </section>
+      <section class="needs" aria-labelledby="seances-t">
+        <h2 class="needs-t" id="seances-t">Tes séances</h2>
+        <div class="needs-body">
+          <div class="fields">
+            <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
+            <label class="field"><span>Moyenne</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalMoyenne" min="150" max="1500" step="10"><span class="unit">kcal</span></span></label>
+            <label class="field"><span>Longue, par heure</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalLongueH" min="200" max="1200" step="10"><span class="unit">kcal</span></span></label>
+          </div>
+          <p class="calc" id="calc-seances"></p>
+          <div class="range">
+            <div class="range-h"><label for="in-ravito">Ravito des sorties longues</label><output id="out-ravito" for="in-ravito"></output></div>
+            <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
+          </div>
+          <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
+        </div>
+      </section>
     </div>
-  </section>
+    <div class="tab-pan" role="tabpanel" id="pan-repas" aria-labelledby="tab-repas" tabindex="-1" hidden>
+      <section class="needs" id="aliments" aria-labelledby="alim-t">
+        <h2 class="needs-t" id="alim-t">Tes aliments</h2>
+        <p class="needs-s">Touche un aliment pour ne plus te le proposer&nbsp;: il disparaît des choix et de «&nbsp;Décide pour moi&nbsp;». Les jours où il est déjà choisi le gardent.</p>
+        <div class="needs-body" id="alim-list"></div>
+        <p class="warn" id="alim-warn" role="status"></p>
+      </section>
+      <section class="needs" aria-labelledby="shaker-t">
+        <h2 class="needs-t" id="shaker-t">Shaker de protéines</h2>
+        <div class="needs-body">
+          <div class="opt-row">
+            <span class="lbl" id="lbl-shaker">Tous les jours</span>
+            <div class="seg" role="group" aria-labelledby="lbl-shaker">
+              <button type="button" data-action="prof" data-key="shaker" data-value="oui">Oui</button>
+              <button type="button" data-action="prof" data-key="shaker" data-value="non">Non</button>
+            </div>
+          </div>
+          <div class="fields" id="shaker-dose">
+            <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-key="shakerKcal" min="100" max="160" step="1"><span class="unit">kcal</span></span></label>
+            <label class="field"><span>Protéines par dose</span><span class="inp"><input type="number" inputmode="decimal" data-key="shakerProt" min="10" max="40" step="0.5"><span class="unit">g</span></span></label>
+          </div>
+          <p class="calc" id="calc-shaker"></p>
+          <p class="warn" id="warn-shaker"></p>
+        </div>
+      </section>
+      <section class="needs" aria-labelledby="cuisine-t">
+        <h2 class="needs-t" id="cuisine-t">Cuisine</h2>
+        <div class="needs-body">
+          <div class="range">
+            <div class="range-h"><label for="in-marge">Marge cuisine</label><output id="out-marge" for="in-marge"></output></div>
+            <input type="range" id="in-marge" data-key="marge" min="0" max="300" step="25">
+          </div>
+          <p class="calc">Réservée chaque jour pour ta matière grasse de cuisson et ce que tu ajoutes (huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner, comptée en lipides. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent&nbsp;: ton total ne bouge pas.</p>
+        </div>
+      </section>
+    </div>
+    <div class="tab-pan" role="tabpanel" id="pan-appli" aria-labelledby="tab-appli" tabindex="-1" hidden>
+      <section class="needs" aria-labelledby="appli-t">
+        <h2 class="needs-t" id="appli-t">L’appli</h2>
+        <div class="needs-body">
+          <div class="regl-links">
+            <button type="button" class="reset" data-action="aide" id="help-regl">Comment ça marche</button>
+            <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
+            <button type="button" class="reset" id="install" data-action="installer" hidden>Installer l’appli</button>
+          </div>
+        </div>
+      </section>
+      <section class="needs" id="effacer" aria-labelledby="eff-t">
+        <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
+        <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
+        <div class="needs-body">
+          <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
+          <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
+            <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
+            <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
@@ -425,6 +474,7 @@ if (typeof document !== 'undefined'){
 {{inclure ui/semaine.js}}
 {{inclure ui/courses.js}}
 {{inclure ui/panneau.js}}
+{{inclure ui/semtype.js}}
 {{inclure ui/accueil.js}}
 {{inclure ui/actions.js}}
 {{inclure ui/reglages.js}}

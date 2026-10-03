@@ -62,6 +62,8 @@ function scan(dom, label){
   click(dom, '#accueil [data-key="deficit"][data-value="0"]'); scan(dom, 'accueil, étape 2, maintenir');
   click(dom, '#acc-next'); scan(dom, 'accueil, étape 3');
   click(dom, '#accueil [data-key="shaker"][data-value="non"]'); scan(dom, 'accueil, étape 3, sans shaker');
+  click(dom, '#acc-next'); scan(dom, 'accueil, étape 4');
+  click(dom, '#acs-acts [data-value="petite"]'); click(dom, '#acs-acts [data-value="longue"]'); click(dom, '#acs-lib [data-value="2"]'); scan(dom, 'accueil, étape 4, séances');
   click(dom, '#acc-next'); scan(dom, 'formulaire des repas après l’accueil');
   click(dom, '[data-action="repas-ok"]'); scan(dom, 'page après l’accueil');
 }
@@ -80,6 +82,7 @@ function scan(dom, label){
   click(dom, '#repas-form .sel[data-kind="prot"][data-slot="dej"]'); scan(dom, 'formulaire des repas, panneau de choix');
   click(dom, '#sheet [data-value="thon"]'); click(dom, '[data-action="repas-ok"]');
   click(dom, '#gear'); scan(dom, 'réglages');
+  ['sport', 'repas', 'appli', 'profil'].forEach(t => { click(dom, '#tab-' + t); scan(dom, 'réglages, onglet ' + t); });
   click(dom, '[data-action="prof"][data-key="mode"][data-value="manuel"]'); scan(dom, 'réglages, manuel');
   type(dom, '#besoins input[data-key="repos"]', 900); scan(dom, 'réglages, dépense hors bornes'); type(dom, '#besoins input[data-key="repos"]', 2500);
   click(dom, '[data-action="prof"][data-key="shaker"][data-value="non"]'); scan(dom, 'réglages, sans shaker');
@@ -461,11 +464,28 @@ const ACTIONS = {
     C.ok(!d.querySelector('#page').hidden && d.querySelectorAll('#sess .srow').length === 0, 'effacer : page pas de zéro', '');
     return 'effacer';
   },
+  // Réglages : onglets au doigt ou au clavier, puis retour ; le bon panneau seul visible, l'onglet choisi marqué
+  onglets: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'onglets -';
+    d.querySelector('#gear').click();
+    const done = [];
+    for (let i = R.int(1, 4); i > 0; i--){
+      if (R.chance(.5)){ const t = R.pick([...d.querySelectorAll('#besoins [role="tab"]')]); t.click(); done.push(t.dataset.value); }
+      else { const k = R.pick(['ArrowRight', 'ArrowLeft', 'Home', 'End']); d.querySelector('#besoins [role="tab"][aria-selected="true"]').focus(); d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown', { key: k, bubbles: true })); done.push(k); }
+      const on = [...d.querySelectorAll('#besoins [role="tab"]')].filter(t => t.getAttribute('aria-selected') === 'true'), vis = [...d.querySelectorAll('#besoins [role="tabpanel"]')].filter(x => !x.hidden);
+      C.ok(on.length === 1 && vis.length === 1 && on[0].getAttribute('aria-controls') === vis[0].id && on[0].tabIndex === 0, 'onglets : panneau ou onglet', () => done.join(' '));
+    }
+    d.querySelector('#reglages > [data-action="fermer"]').click();
+    return 'onglets ' + done.join(' ');
+  },
   day: dom => { clock.now += 864e5 * R.pick([1, 1, 2, 7]); dom.window.dispatchEvent(new dom.window.Event('focus')); return 'jour suivant'; },
   accueil: dom => {
     const d = dom.window.document;
     d.querySelector('[data-action="accueil"]').click();
-    for (let i = R.int(0, 2); i > 0; i--) d.querySelector('#acc-next').click();
+    for (let i = R.int(0, 3); i > 0; i--) d.querySelector('#acc-next').click();
+    // Dernière étape : quelques boutons de la semaine type
+    if (!d.querySelector('#acs').hidden) for (let i = R.int(0, 4); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#acs button:not(:disabled)')]); if (b) b.click(); }
     d.querySelector(R.pick(['[data-action="acc-skip"]', '#acc-next'])).click();
     if (!d.querySelector('#accueil').hidden) d.querySelector('[data-action="acc-skip"]').click();
     return 'accueil';

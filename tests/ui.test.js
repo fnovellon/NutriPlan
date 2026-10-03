@@ -516,7 +516,12 @@ assert(prof().prot === 2.2 && /2,2\sg\/kg/.test(p.$('#out-prot').textContent) &&
 assert(pouletQty() > poulet20 && /Aujourd’hui\s:\s\d+\sg/.test(p.$('#calc-prot').textContent), 'portions non ajustées à l’objectif de protéines');
 type('prot', 2);
 
-// Shaker : composition réglable, reprise dans la journée
+// Onglets des réglages (3.18.0) : Profil, Sport, Repas, Appli ; un seul panneau visible, l'onglet choisi marqué
+const tabState = () => ['profil', 'sport', 'repas', 'appli'].map(t => (p.$('#tab-' + t).getAttribute('aria-selected') === 'true' ? '+' : '-') + (p.$('#pan-' + t).hidden ? 'h' : 'v') + p.$('#tab-' + t).tabIndex).join(' ');
+assert.strictEqual(tabState(), '+v0 -h-1 -h-1 -h-1', 'onglet Profil au départ');
+p.click('#tab-repas');
+assert.strictEqual(tabState(), '-h-1 -h-1 +v0 -h-1', 'onglet Repas');
+// Shaker : composition réglable, reprise dans la journée (onglet Repas)
 type('shakerKcal', 150); type('shakerProt', 30);
 assert(prof().shakerKcal === 150 && prof().shakerProt === 30, 'shaker non enregistré');
 const pShaker = () => [...pw.document.querySelectorAll('#day li')].find(li => /shaker de protéines/.test(li.textContent)).querySelector('.mac').textContent;
@@ -537,7 +542,9 @@ assert(!shown('shakerKcal') && /skyr/.test(p.$('#calc-shaker').textContent), 'do
 p.click('[data-action="prof"][data-key="shaker"][data-value="oui"]');
 assert(shakerShown() && shown('shakerKcal') && prof().shakerKcal === 100, 'shaker réactivé');
 
-// Calories des séances : placeholder d'après le poids, valeur saisie reprise
+// Calories des séances : placeholder d'après le poids, valeur saisie reprise (onglet Sport)
+p.click('#tab-sport');
+assert(shown('kcalMoyenne') && !shown('shakerKcal') && !shown('age'), 'onglet Sport');
 assert.strictEqual(field('kcalMoyenne').placeholder, String(Math.round(6.3 * 70 / 10) * 10), 'calories par défaut d’une moyenne');
 p.add('moyenne');
 const needMoy = () => Number(note().match(/Dépense estimée\s:\s([\d\s]+)kcal/)[1].replace(/\D/g, ''));
@@ -546,7 +553,9 @@ type('kcalMoyenne', 700);
 assert(prof().kcalMoyenne === 700 && needMoy() > beforeMoy, 'calories de la moyenne non prises en compte');
 p.rm(0);
 
-// Marge cuisine : curseur enregistré, lignes reprises
+// Marge cuisine : curseur enregistré, lignes reprises (onglet Repas)
+p.click('#tab-repas');
+assert(!p.$('#in-marge').closest('[hidden]'), 'marge dans l’onglet Repas');
 type('marge', 200);
 assert(prof().marge === 200 && /200\skcal/.test(p.$('#out-marge').textContent), 'marge non enregistrée');
 assert(/≈\s100/.test([...p.d.querySelectorAll('[aria-labelledby="h-dej"] .items li')].find(li => /pour la cuisine/.test(li.textContent)).textContent), 'marge du déjeuner non reprise');
@@ -831,13 +840,13 @@ assert(al.d.querySelectorAll('#alim-list .opt').length === 25 && !al.$('#alim-li
 assert.strictEqual(alim('prot', 'saumon').querySelector('.opt-s').textContent, 'saumon, maquereau, sardines à l’huile', 'détail du groupe');
 assert(!al.$('#alim-list [data-value="aucun"]'), '« Aucun » ne se retire pas');
 // Aujourd'hui (mercredi) a un plat choisi : il le garde ; les autres jours, le poulet est remplacé par le suivant proposé
-al.click('#aliments ~ [data-action="fermer"]');
+al.click('#reglages > [data-action="fermer"]');
 al.choose('starch', 'dej', 'pates');
 al.click('#gear');
 al.click('#alim-list [data-kind="prot"][data-value="poulet"]');
 assert(alim('prot', 'poulet').getAttribute('aria-pressed') === 'false' && aw.document.activeElement === alim('prot', 'poulet'), 'poulet retiré, focus gardé');
 assert.deepStrictEqual(aprof().off, ['prot:poulet'], 'retrait enregistré');
-al.click('#aliments ~ [data-action="fermer"]');
+al.click('#reglages > [data-action="fermer"]');
 assert.strictEqual(al.chosen('prot', 'dej'), 'poulet', 'plat déjà choisi aujourd’hui perdu');
 assert.deepStrictEqual(sheetVals('#sel-prot-dej'), ['poulet', 'boeuf', 'poisson', 'saumon', 'crevettes', 'oeufs', 'thon', 'tofu'], 'le plat choisi reste dans les choix');
 assert(!sheetVals('#sel-prot-diner').includes('poulet'), 'poulet encore proposé au dîner');
@@ -858,7 +867,7 @@ assert(/Garde au moins une base pour le petit-déjeuner\./.test(al.$('#alim-warn
 assert.deepStrictEqual(aprof().off, ['prot:poulet', 'pd:avoine', 'pd:sale'], 'retraits enregistrés');
 ['fruit', 'compote', 'fruitsSecs', 'chocolat'].forEach(v => al.click(`#alim-list [data-kind="dessert"][data-value="${v}"]`));
 assert(!al.$('#alim-warn').textContent && al.d.querySelectorAll('#alim-list [data-kind="dessert"][aria-pressed="false"]').length === 4, 'tous les desserts peuvent être retirés');
-al.click('#aliments ~ [data-action="fermer"]');
+al.click('#reglages > [data-action="fermer"]');
 assert.deepStrictEqual(sheetVals('#sel-dessert-dej'), ['aucun'], 'desserts proposés');
 aw.Math.random = () => 0.999;
 al.click('#open-repas');
@@ -1012,7 +1021,7 @@ f.click('#accueil [data-key="deficit"][data-value="0"]');
 assert(/garder ton poids/.test(f.$('#acc-prev').textContent) && /1\s830\skcal\./.test(f.$('#acc-prev').textContent), 'aperçu sans déficit : ' + f.$('#acc-prev').textContent);
 f.click('#accueil [data-key="deficit"][data-value="20"]');
 f.click('#acc-next');
-assert(step(f) === '3' && f.$('#acc-next').textContent === 'Voir mes repas', 'étape 3');
+assert(step(f) === '3' && f.$('#acc-next').textContent === 'Continuer' && f.$('#acc-bar').getAttribute('aria-label') === 'Étape 3 sur 4', 'étape 3');
 f.click('#acc-back');
 assert(step(f) === '2' && accPressed(f, 'deficit').value === '20', 'retour à l’étape 2');
 f.click('#acc-next');
@@ -1022,17 +1031,33 @@ f.click('#accueil [data-key="shaker"][data-value="non"]');
 assert(f.$('#acc-dose').hidden && /skyr/.test(f.$('#acc-shaker-t').textContent), 'dose visible sans shaker');
 f.click('#accueil [data-key="marge"][data-value="250"]');
 f.click('#acc-next');
-assert.deepStrictEqual(fprof(), { mode: 'auto', sexe: 'f', age: 30, taille: 165, poids: 58.5, deficit: 20, shaker: 'non', marge: 250 }, 'profil de l’accueil');
+// Ta semaine (3.18.0) : facultative, le même éditeur que les réglages, aujourd'hui (mercredi) choisi, rien d'enregistré avant la fin
+assert(step(f) === '4' && f.$('#acc-next').textContent === 'Voir mes repas' && f.$('#acc-bar').getAttribute('aria-valuenow') === '4' && fdom.window.document.activeElement === f.$('#acc-h4'), 'étape 4');
+assert(f.$('#acs-days [aria-pressed="true"]').dataset.value === '3' && /Mercredi/.test(f.$('#acs-h').textContent) && f.$('#acs-sess .rest-t') && f.$('#acs-lib [aria-pressed="true"]').dataset.value === '6', 'semaine vide au départ');
+f.click('#acs-acts [data-value="moyenne"]');
+f.click('#acs-sess [data-action="acs-smoment"][data-value="matin"]');
+assert(f.$('#acs-days [data-value="3"] .dn').textContent === '1' && /Séance moyenne/.test(f.$('#acs-sess').textContent) && fdom.window.document.activeElement.dataset.action === 'acs-smoment', 'séance ajoutée, focus gardé');
+f.click('#acs-days [data-value="6"]');
+f.click('#acs-acts [data-value="longue"]');
+assert(f.$('#acs-acts [data-value="longue"]').disabled, 'une seule sortie longue par jour');
+f.click('#acs-lib [data-value="0"]');
+assert.strictEqual(fw.localStorage.getItem(PKEY), null, 'semaine enregistrée avant la fin');
+f.click('#acc-next');
+assert.deepStrictEqual(fprof(), { mode: 'auto', sexe: 'f', age: 30, taille: 165, poids: 58.5, deficit: 20, shaker: 'non', marge: 250,
+  semaine: { jours: { 3: [{ taille: 'moyenne', moment: 'matin' }], 6: [{ taille: 'longue', moment: 'matin', duree: 2 }] }, libre: 0 } }, 'profil de l’accueil');
+// La semaine type remplit aujourd'hui (mercredi : une moyenne le matin) et les réglages la montrent
+assert(f.$('#sem-days [data-value="3"] .dn').textContent === '1' && f.$('#sem-lib [aria-pressed="true"]').dataset.value === '0', 'réglages : semaine de l’accueil');
 // Puis le formulaire des repas du jour, puis la page
 assert(f.$('#accueil').hidden && !f.$('#repas').hidden && fdom.window.document.activeElement === f.$('#repas-h'), 'formulaire des repas après l’accueil');
 f.click('[data-action="repas-ok"]');
 assert(f.$('#accueil').hidden && f.$('#repas').hidden && !f.$('#page').hidden && /Ajoute tes séances/.test(f.$('#intro').textContent), 'page du jour après l’accueil');
-assert(!/Complète/.test(f.$('#sum-note').textContent) && /1\s830/.test(f.$('#sum-note').textContent), 'profil de l’accueil non utilisé : ' + f.$('#sum-note').textContent);
+assert(/1\s830/.test(f.$('#calc-rest').textContent) && !/Complète/.test(f.$('#sum-note').textContent), 'profil de l’accueil non utilisé : ' + f.$('#sum-note').textContent);
+assert.deepStrictEqual(f.sess(), ['Séance moyenne'], 'semaine type de l’accueil pas reprise aujourd’hui');
 assert(![...f.d.querySelectorAll('#day li')].some(li => /shaker de protéines/.test(li.textContent)), 'shaker affiché après l’avoir refusé');
 assert(f.$('#besoins input[data-key="age"]').value === '30' && f.$('#besoins input[data-key="deficit"]').value === '20', 'besoins non remplis après l’accueil');
 assert.strictEqual(fdom.window.document.activeElement, f.$('#title'), 'focus sur le titre après l’accueil');
 f.add('petite');
-assert(!f.$('#intro').textContent && f.sess().length === 1, 'message d’accueil resté affiché');
+assert(!f.$('#intro').textContent && f.sess().length === 2, 'message d’accueil resté affiché');
 // Refaire l'accueil : prérempli, les changements sont enregistrés à la fin
 f.click('[data-action="accueil"]');
 assert(!f.$('#accueil').hidden && step(f) === '1' && accPressed(f, 'sexe').value === 'f' && f.$('#accueil input[data-acc="poids"]').value === '58.5', 'accueil non prérempli');
@@ -1046,9 +1071,18 @@ f.click('#acc-next');
 assert(step(f) === '3' && /Vérifie les calories par dose \(100 à 160\skcal\)/.test(f.$('#acc-err').textContent), 'dose hors bornes : ' + f.$('#acc-err').textContent);
 accType(f, fw, 'shakerKcal', 130);
 f.click('#acc-next');
+// Semaine préremplie avec celle du profil ; vidée ici, elle part aussi du profil
+assert(step(f) === '4' && f.$('#acs-days [data-value="3"] .dn').textContent === '1' && f.$('#acs-lib [aria-pressed="true"]').dataset.value === '0', 'semaine non préremplie');
+f.click('#acs-days [data-value="3"]');
+f.click('#acs-sess [data-action="acs-rm"]');
+f.click('#acs-days [data-value="6"]');
+f.click('#acs-sess [data-action="acs-rm"]');
+f.click('#acs-lib [data-value="6"]');
+f.click('#acc-next');
+assert(!('semaine' in fprof()), 'semaine vidée gardée : ' + JSON.stringify(fprof()));
 assert(fprof().deficit === 10 && fprof().shaker === 'oui' && fprof().shakerKcal === 130 && fprof().marge === 250 && f.$('#accueil').hidden, 'accueil refait : ' + JSON.stringify(fprof()));
 assert(f.$('#repas').hidden && !f.$('#page').hidden, 'formulaire des repas rouvert le même jour');
-assert.deepStrictEqual(f.sess(), ['Petite séance'], 'séances perdues en refaisant l’accueil');
+assert.deepStrictEqual(f.sess(), ['Séance moyenne', 'Petite séance'], 'séances perdues en refaisant l’accueil');
 // Passer : garde ce qui est déjà saisi, le reste prend les valeurs par défaut
 const sk = tools(open(null, true));
 accType(sk, sk.d.defaultView, 'age', 25);
@@ -1191,6 +1225,51 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   end.value = '2026-10-01'; end.dispatchEvent(new bw.Event('input', { bubbles: true }));
   bt.click('[data-action="pl-batch"]');
   assert(!bt.$('#plan').hidden && /La fin doit venir après le début/.test(bt.$('#plan-err').textContent), 'batch refusé sur une période invalide');
+}
+
+// Onglets des réglages (3.18.0) : flèches, début et fin (le focus suit) ; le dernier onglet gardé à la réouverture par la
+// roue dentée ; « Régler » de la note du total ouvre Repas quand elle propose le shaker ou la marge cuisine, sinon Profil
+{
+  const t = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72 })))), tw = t.d.defaultView;
+  const sel = () => [...t.d.querySelectorAll('#besoins [role="tab"]')].filter(x => x.getAttribute('aria-selected') === 'true').map(x => x.id).join();
+  const panes = () => [...t.d.querySelectorAll('#besoins [role="tabpanel"]')].filter(x => !x.hidden).map(x => x.id).join();
+  const key = k => t.d.activeElement.dispatchEvent(new tw.KeyboardEvent('keydown', { key: k, bubbles: true }));
+  t.click('#gear');
+  assert(sel() === 'tab-profil' && panes() === 'pan-profil', 'Profil à la première ouverture');
+  assert.deepStrictEqual([...t.d.querySelectorAll('#besoins [role="tab"]')].map(x => x.textContent), ['Profil', 'Sport', 'Repas', 'Appli'], 'onglets');
+  [...t.d.querySelectorAll('#besoins [role="tabpanel"]')].forEach(x => assert(t.$('#' + x.getAttribute('aria-labelledby')).getAttribute('aria-controls') === x.id, 'onglet ↔ panneau'));
+  t.$('#tab-profil').focus();
+  key('ArrowRight');
+  assert(sel() === 'tab-sport' && panes() === 'pan-sport' && t.d.activeElement === t.$('#tab-sport'), 'flèche droite');
+  key('End');
+  assert(sel() === 'tab-appli' && t.d.activeElement === t.$('#tab-appli'), 'fin');
+  key('ArrowRight');
+  assert(sel() === 'tab-profil', 'flèche droite après le dernier : le premier');
+  key('ArrowLeft');
+  assert(sel() === 'tab-appli', 'flèche gauche avant le premier : le dernier');
+  key('Home');
+  assert(sel() === 'tab-profil', 'début');
+  t.click('#tab-repas');
+  t.click('#reglages > [data-action="fermer"]');
+  t.click('#gear');
+  assert(sel() === 'tab-repas' && panes() === 'pan-repas', 'dernier onglet gardé : ' + sel());
+  t.click('#reglages > [data-action="fermer"]');
+  // « Régler » : profil complet et rien à proposer → Profil ; trop d'apport avec shaker et marge → Repas
+  assert.strictEqual(t.$('#sum-note [data-action="needs"]').dataset.value, 'profil', 'Régler : Profil');
+  t.click('#sum-note [data-action="needs"]');
+  assert(sel() === 'tab-profil' && !t.$('#reglages').hidden, 'Régler ouvre Profil');
+  t.click('#reglages > [data-action="fermer"]');
+  const lw = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ sexe: 'f', age: 28, taille: 160, poids: 45, deficit: 25, prot: 2.2 }))));
+  assert(/dépassent l’objectif/.test(lw.$('#sum-note').textContent) && lw.$('#sum-note [data-action="needs"]').dataset.value === 'repas', 'Régler : Repas quand la note propose le shaker ou la marge');
+  lw.click('#sum-note [data-action="needs"]');
+  assert(lw.$('#tab-repas').getAttribute('aria-selected') === 'true' && !lw.$('#pan-repas').hidden, 'Régler ouvre Repas');
+  // Effacer mes données (onglet Appli) : la prochaine ouverture repart sur Profil
+  t.click('#gear'); t.click('#tab-appli');
+  t.click('[data-action="eff-ask"]'); t.click('[data-action="eff-ok"]');
+  t.click('[data-action="acc-skip"]');
+  if (!t.$('#repas').hidden) t.click('#repas [data-action="fermer"]');
+  t.click('#gear');
+  assert.strictEqual(sel(), 'tab-profil', 'après effacement : Profil');
 }
 
 // « Ta semaine » (3.17.0) : un paquet de jambon (4 petits-déjeuners salés, 180 g) toléré, sans alerte ; 5 (225 g) : alerte

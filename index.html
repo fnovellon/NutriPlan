@@ -202,6 +202,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .regl-top{margin:0 0 8px;}
 .icon-btn.back{margin:0 0 0 -12px;}
 .needs{margin:6px 0 0;padding-top:18px;border-top:1px solid var(--line);}
+/* Onglets des réglages (3.18.0) : collés en haut de l'écran quand on descend */
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:2px;margin:2px -4px 4px;padding:calc(6px + env(safe-area-inset-top,0px)) 4px 6px;background:var(--paper);}
+.tabs [role="tab"]{flex:1;min-width:0;min-height:44px;padding:0 4px;border:1px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.2;color:var(--ink);}
+.tabs [role="tab"][aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.tab-pan[hidden]{display:none;}
+.tab-pan:focus{outline:none;}
+.tab-pan > .needs:first-child{border-top:0;padding-top:8px;}
 .needs-t{margin:0;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
 .needs-s{margin:2px 0 16px;font-size:15px;color:var(--muted);}
 .needs-body{padding:2px 0 22px;}
@@ -334,7 +341,9 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .sem-days{margin-bottom:6px;}
 .sem-days .dn{font-size:13px;font-weight:600;line-height:1.3;}
 h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
-#sem-lib .opt{min-width:44px;}
+#sem-lib .opt,#acs-lib .opt{min-width:44px;}
+#acs-lib{margin-bottom:18px;}
+h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17px;}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
 /* Planifier : raccourcis, dates, puis un jour par étape */
@@ -410,7 +419,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 <body>
 <main class="app acc" id="accueil" hidden>
   <div class="acc-top">
-    <div class="acc-bar" id="acc-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-label="Étape 1 sur 3"><span></span><span></span><span></span></div>
+    <div class="acc-bar" id="acc-bar" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" aria-label="Étape 1 sur 4"><span></span><span></span><span></span><span></span></div>
     <button type="button" class="skip" data-action="acc-skip">Passer</button>
   </div>
 
@@ -475,6 +484,21 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
       </div>
     </div>
     <p class="calc">Pour ta matière grasse de cuisson et ce que tu ajoutes&nbsp;: huile, sauce, fromage râpé. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent, ton total ne bouge pas.</p>
+  </section>
+
+  <section data-step="4" id="acs" aria-labelledby="acc-h4" hidden>
+    <h1 id="acc-h4" tabindex="-1">Ta semaine</h1>
+    <p class="acc-p">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles rempliront toutes seules tes journées, que tu pourras toujours changer un jour donné. Facultatif&nbsp;: sans séance, chaque jour part au repos.</p>
+    <div class="week sem-days" id="acs-days" role="group" aria-label="Jour de ta semaine type"></div>
+    <h2 class="rf-l sem-h" id="acs-h"></h2>
+    <div class="sess" id="acs-sess"></div>
+    <div class="acts" id="acs-acts" role="group" aria-label="Ajouter une séance à ce jour">
+      <button type="button" data-action="acs-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
+      <button type="button" data-action="acs-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
+      <button type="button" data-action="acs-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
+    </div>
+    <p class="rf-l" id="acs-lib-l">Repas libre, le soir</p>
+    <div class="opts-list" id="acs-lib" role="group" aria-labelledby="acs-lib-l"></div>
     <p class="calc">Tu pourras tout changer dans les réglages, avec la roue dentée en haut de la page.</p>
   </section>
 
@@ -552,130 +576,164 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 <main class="app regl" id="reglages" hidden>
   <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <h1 id="regl-h" tabindex="-1">Réglages</h1>
-  <section class="needs" id="besoins" aria-labelledby="needs-t">
-    <h2 class="needs-t" id="needs-t">Tes besoins</h2>
-    <p class="needs-s" id="needs-sum"></p>
-    <div class="needs-body">
-      <div class="opt-row">
-        <span class="lbl" id="lbl-mode">Besoin</span>
-        <div class="seg" role="group" aria-labelledby="lbl-mode">
-          <button type="button" data-action="prof" data-key="mode" data-value="auto">Automatique</button>
-          <button type="button" data-action="prof" data-key="mode" data-value="manuel">Manuel</button>
-        </div>
-      </div>
-      <p class="calc" id="mode-hint"></p>
-      <p class="warn" id="needs-hint"></p>
-      <div class="opt-row" data-mode="auto">
-        <span class="lbl" id="lbl-sexe">Sexe</span>
-        <div class="seg" role="group" aria-labelledby="lbl-sexe">
-          <button type="button" data-action="prof" data-key="sexe" data-value="h">Homme</button>
-          <button type="button" data-action="prof" data-key="sexe" data-value="f">Femme</button>
-        </div>
-      </div>
-      <div data-mode="manuel">
-        <label class="field wide"><span>Ta dépense totale un jour sans sport</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1200" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
-        <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
-        <p class="warn" id="warn-repos"></p>
-      </div>
-      <div class="fields">
-        <label class="field" data-mode="auto"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
-        <label class="field" data-mode="auto"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
-        <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
-        <label class="field" data-mode="auto"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
-      </div>
-      <div class="opt-row" data-mode="auto">
-        <span class="lbl" id="lbl-neat">Hors sport</span>
-        <div class="seg" role="group" aria-labelledby="lbl-neat">
-          <button type="button" data-action="prof" data-key="neat" data-value="assis">Assis</button>
-          <button type="button" data-action="prof" data-key="neat" data-value="mixte">Mixte</button>
-          <button type="button" data-action="prof" data-key="neat" data-value="debout">Debout</button>
-        </div>
-      </div>
-      <p class="calc" data-mode="auto">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
-      <p class="calc" id="calc-rest"></p>
-      <div class="range">
-        <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
-        <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
-      </div>
-      <p class="calc" id="calc-deficit"></p>
-      <p class="warn" id="warn-deficit"></p>
-      <div class="range">
-        <div class="range-h"><label for="in-prot">Protéines</label><output id="out-prot" for="in-prot"></output></div>
-        <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
-      </div>
-      <p class="calc" id="calc-prot"></p>
-      <div class="range">
-        <div class="range-h"><label for="in-ravito">Ravito des sorties longues</label><output id="out-ravito" for="in-ravito"></output></div>
-        <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
-      </div>
-      <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
-      <div class="range">
-        <div class="range-h"><label for="in-marge">Marge cuisine</label><output id="out-marge" for="in-marge"></output></div>
-        <input type="range" id="in-marge" data-key="marge" min="0" max="300" step="25">
-      </div>
-      <p class="calc">Réservée chaque jour pour ta matière grasse de cuisson et ce que tu ajoutes (huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner, comptée en lipides. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent&nbsp;: ton total ne bouge pas.</p>
-      <p class="blk">Tes séances</p>
-      <div class="fields">
-        <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
-        <label class="field"><span>Moyenne</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalMoyenne" min="150" max="1500" step="10"><span class="unit">kcal</span></span></label>
-        <label class="field"><span>Longue, par heure</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalLongueH" min="200" max="1200" step="10"><span class="unit">kcal</span></span></label>
-      </div>
-      <p class="calc" id="calc-seances"></p>
-      <p class="blk">Shaker de protéines</p>
-      <div class="opt-row">
-        <span class="lbl" id="lbl-shaker">Tous les jours</span>
-        <div class="seg" role="group" aria-labelledby="lbl-shaker">
-          <button type="button" data-action="prof" data-key="shaker" data-value="oui">Oui</button>
-          <button type="button" data-action="prof" data-key="shaker" data-value="non">Non</button>
-        </div>
-      </div>
-      <div class="fields" id="shaker-dose">
-        <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-key="shakerKcal" min="100" max="160" step="1"><span class="unit">kcal</span></span></label>
-        <label class="field"><span>Protéines par dose</span><span class="inp"><input type="number" inputmode="decimal" data-key="shakerProt" min="10" max="40" step="0.5"><span class="unit">g</span></span></label>
-      </div>
-      <p class="calc" id="calc-shaker"></p>
-      <p class="warn" id="warn-shaker"></p>
-      <p class="calc">Ton profil reste sur cet appareil.</p>
-      <div class="regl-links">
-        <button type="button" class="reset" data-action="aide" id="help-regl">Comment ça marche</button>
-        <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
-        <button type="button" class="reset" id="install" data-action="installer" hidden>Installer l’appli</button>
-      </div>
+  <div id="besoins">
+    <div class="tabs" role="tablist" aria-label="Rubriques des réglages">
+      <button type="button" role="tab" id="tab-profil" aria-controls="pan-profil" aria-selected="true" tabindex="0" data-action="tab" data-value="profil">Profil</button>
+      <button type="button" role="tab" id="tab-sport" aria-controls="pan-sport" aria-selected="false" tabindex="-1" data-action="tab" data-value="sport">Sport</button>
+      <button type="button" role="tab" id="tab-repas" aria-controls="pan-repas" aria-selected="false" tabindex="-1" data-action="tab" data-value="repas">Repas</button>
+      <button type="button" role="tab" id="tab-appli" aria-controls="pan-appli" aria-selected="false" tabindex="-1" data-action="tab" data-value="appli">Appli</button>
     </div>
-  </section>
-  <section class="needs" id="semaine" aria-labelledby="sem-t">
-    <h2 class="needs-t" id="sem-t">Ta semaine type</h2>
-    <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
-    <div class="needs-body">
-      <div class="week sem-days" id="sem-days" role="group" aria-label="Jour de la semaine type"></div>
-      <h3 class="rf-l sem-h" id="sem-h"></h3>
-      <div class="sess" id="sem-sess"></div>
-      <div class="acts" id="sem-acts" role="group" aria-label="Ajouter une séance à ce jour">
-        <button type="button" data-action="sem-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
-        <button type="button" data-action="sem-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
-        <button type="button" data-action="sem-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
-      </div>
-      <p class="rf-l" id="sem-lib-l">Repas libre, le soir</p>
-      <div class="opts-list" id="sem-lib" role="group" aria-labelledby="sem-lib-l"></div>
+    <div class="tab-pan" role="tabpanel" id="pan-profil" aria-labelledby="tab-profil" tabindex="-1">
+      <section class="needs" aria-labelledby="needs-t">
+        <h2 class="needs-t" id="needs-t">Tes besoins</h2>
+        <p class="needs-s" id="needs-sum"></p>
+        <div class="needs-body">
+          <div class="opt-row">
+            <span class="lbl" id="lbl-mode">Besoin</span>
+            <div class="seg" role="group" aria-labelledby="lbl-mode">
+              <button type="button" data-action="prof" data-key="mode" data-value="auto">Automatique</button>
+              <button type="button" data-action="prof" data-key="mode" data-value="manuel">Manuel</button>
+            </div>
+          </div>
+          <p class="calc" id="mode-hint"></p>
+          <p class="warn" id="needs-hint"></p>
+          <div class="opt-row" data-mode="auto">
+            <span class="lbl" id="lbl-sexe">Sexe</span>
+            <div class="seg" role="group" aria-labelledby="lbl-sexe">
+              <button type="button" data-action="prof" data-key="sexe" data-value="h">Homme</button>
+              <button type="button" data-action="prof" data-key="sexe" data-value="f">Femme</button>
+            </div>
+          </div>
+          <div data-mode="manuel">
+            <label class="field wide"><span>Ta dépense totale un jour sans sport</span><span class="inp"><input type="number" inputmode="numeric" data-key="repos" min="1200" max="6000" step="10" aria-describedby="warn-repos"><span class="unit">kcal</span></span></label>
+            <p class="calc">Le total de la journée donné par ta montre ou ton appli, pas les calories actives.</p>
+            <p class="warn" id="warn-repos"></p>
+          </div>
+          <div class="fields">
+            <label class="field" data-mode="auto"><span>Âge</span><span class="inp"><input type="number" inputmode="numeric" data-key="age" min="14" max="99" step="1"><span class="unit">ans</span></span></label>
+            <label class="field" data-mode="auto"><span>Taille</span><span class="inp"><input type="number" inputmode="numeric" data-key="taille" min="120" max="230" step="1"><span class="unit">cm</span></span></label>
+            <label class="field"><span>Poids</span><span class="inp"><input type="number" inputmode="decimal" data-key="poids" min="35" max="250" step="0.1"><span class="unit">kg</span></span></label>
+            <label class="field" data-mode="auto"><span>Masse grasse</span><span class="inp"><input type="number" inputmode="decimal" data-key="gras" min="3" max="60" step="0.5"><span class="unit">%</span></span></label>
+          </div>
+          <div class="opt-row" data-mode="auto">
+            <span class="lbl" id="lbl-neat">Hors sport</span>
+            <div class="seg" role="group" aria-labelledby="lbl-neat">
+              <button type="button" data-action="prof" data-key="neat" data-value="assis">Assis</button>
+              <button type="button" data-action="prof" data-key="neat" data-value="mixte">Mixte</button>
+              <button type="button" data-action="prof" data-key="neat" data-value="debout">Debout</button>
+            </div>
+          </div>
+          <p class="calc" data-mode="auto">Assis&nbsp;: bureau, peu de marche. Mixte&nbsp;: tu marches ou pédales tous les jours. Debout&nbsp;: métier physique. La masse grasse est facultative.</p>
+          <p class="calc" id="calc-rest"></p>
+          <div class="range">
+            <div class="range-h"><label for="in-deficit">Déficit</label><output id="out-deficit" for="in-deficit"></output></div>
+            <input type="range" id="in-deficit" data-key="deficit" min="0" max="25" step="1">
+          </div>
+          <p class="calc" id="calc-deficit"></p>
+          <p class="warn" id="warn-deficit"></p>
+          <div class="range">
+            <div class="range-h"><label for="in-prot">Protéines</label><output id="out-prot" for="in-prot"></output></div>
+            <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
+          </div>
+          <p class="calc" id="calc-prot"></p>
+          <p class="calc">Ton profil reste sur cet appareil.</p>
+        </div>
+      </section>
     </div>
-  </section>
-  <section class="needs" id="aliments" aria-labelledby="alim-t">
-    <h2 class="needs-t" id="alim-t">Tes aliments</h2>
-    <p class="needs-s">Touche un aliment pour ne plus te le proposer&nbsp;: il disparaît des choix et de «&nbsp;Décide pour moi&nbsp;». Les jours où il est déjà choisi le gardent.</p>
-    <div class="needs-body" id="alim-list"></div>
-    <p class="warn" id="alim-warn" role="status"></p>
-  </section>
-  <section class="needs" id="effacer" aria-labelledby="eff-t">
-    <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
-    <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
-    <div class="needs-body">
-      <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
-      <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
-        <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
-        <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
-      </div>
+    <div class="tab-pan" role="tabpanel" id="pan-sport" aria-labelledby="tab-sport" tabindex="-1" hidden>
+      <section class="needs" id="semaine" aria-labelledby="sem-t">
+        <h2 class="needs-t" id="sem-t">Ta semaine type</h2>
+        <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
+        <div class="needs-body">
+          <div class="week sem-days" id="sem-days" role="group" aria-label="Jour de la semaine type"></div>
+          <h3 class="rf-l sem-h" id="sem-h"></h3>
+          <div class="sess" id="sem-sess"></div>
+          <div class="acts" id="sem-acts" role="group" aria-label="Ajouter une séance à ce jour">
+            <button type="button" data-action="sem-add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
+            <button type="button" data-action="sem-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
+            <button type="button" data-action="sem-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
+          </div>
+          <p class="rf-l" id="sem-lib-l">Repas libre, le soir</p>
+          <div class="opts-list" id="sem-lib" role="group" aria-labelledby="sem-lib-l"></div>
+        </div>
+      </section>
+      <section class="needs" aria-labelledby="seances-t">
+        <h2 class="needs-t" id="seances-t">Tes séances</h2>
+        <div class="needs-body">
+          <div class="fields">
+            <label class="field"><span>Petite</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalPetite" min="100" max="1000" step="10"><span class="unit">kcal</span></span></label>
+            <label class="field"><span>Moyenne</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalMoyenne" min="150" max="1500" step="10"><span class="unit">kcal</span></span></label>
+            <label class="field"><span>Longue, par heure</span><span class="inp"><input type="number" inputmode="numeric" data-key="kcalLongueH" min="200" max="1200" step="10"><span class="unit">kcal</span></span></label>
+          </div>
+          <p class="calc" id="calc-seances"></p>
+          <div class="range">
+            <div class="range-h"><label for="in-ravito">Ravito des sorties longues</label><output id="out-ravito" for="in-ravito"></output></div>
+            <input type="range" id="in-ravito" data-key="ravito" min="30" max="90" step="5">
+          </div>
+          <p class="calc">Repère&nbsp;: 30 à 60&nbsp;g par heure jusqu’à 2h30, jusqu’à 90&nbsp;g au-delà si ton ventre le supporte.</p>
+        </div>
+      </section>
     </div>
-  </section>
+    <div class="tab-pan" role="tabpanel" id="pan-repas" aria-labelledby="tab-repas" tabindex="-1" hidden>
+      <section class="needs" id="aliments" aria-labelledby="alim-t">
+        <h2 class="needs-t" id="alim-t">Tes aliments</h2>
+        <p class="needs-s">Touche un aliment pour ne plus te le proposer&nbsp;: il disparaît des choix et de «&nbsp;Décide pour moi&nbsp;». Les jours où il est déjà choisi le gardent.</p>
+        <div class="needs-body" id="alim-list"></div>
+        <p class="warn" id="alim-warn" role="status"></p>
+      </section>
+      <section class="needs" aria-labelledby="shaker-t">
+        <h2 class="needs-t" id="shaker-t">Shaker de protéines</h2>
+        <div class="needs-body">
+          <div class="opt-row">
+            <span class="lbl" id="lbl-shaker">Tous les jours</span>
+            <div class="seg" role="group" aria-labelledby="lbl-shaker">
+              <button type="button" data-action="prof" data-key="shaker" data-value="oui">Oui</button>
+              <button type="button" data-action="prof" data-key="shaker" data-value="non">Non</button>
+            </div>
+          </div>
+          <div class="fields" id="shaker-dose">
+            <label class="field"><span>Calories par dose</span><span class="inp"><input type="number" inputmode="numeric" data-key="shakerKcal" min="100" max="160" step="1"><span class="unit">kcal</span></span></label>
+            <label class="field"><span>Protéines par dose</span><span class="inp"><input type="number" inputmode="decimal" data-key="shakerProt" min="10" max="40" step="0.5"><span class="unit">g</span></span></label>
+          </div>
+          <p class="calc" id="calc-shaker"></p>
+          <p class="warn" id="warn-shaker"></p>
+        </div>
+      </section>
+      <section class="needs" aria-labelledby="cuisine-t">
+        <h2 class="needs-t" id="cuisine-t">Cuisine</h2>
+        <div class="needs-body">
+          <div class="range">
+            <div class="range-h"><label for="in-marge">Marge cuisine</label><output id="out-marge" for="in-marge"></output></div>
+            <input type="range" id="in-marge" data-key="marge" min="0" max="300" step="25">
+          </div>
+          <p class="calc">Réservée chaque jour pour ta matière grasse de cuisson et ce que tu ajoutes (huile, sauce, fromage râpé…), moitié au déjeuner, moitié au dîner, comptée en lipides. 150&nbsp;kcal, c’est environ une cuillère à soupe rase d’huile par repas. Les féculents s’ajustent&nbsp;: ton total ne bouge pas.</p>
+        </div>
+      </section>
+    </div>
+    <div class="tab-pan" role="tabpanel" id="pan-appli" aria-labelledby="tab-appli" tabindex="-1" hidden>
+      <section class="needs" aria-labelledby="appli-t">
+        <h2 class="needs-t" id="appli-t">L’appli</h2>
+        <div class="needs-body">
+          <div class="regl-links">
+            <button type="button" class="reset" data-action="aide" id="help-regl">Comment ça marche</button>
+            <button type="button" class="reset" data-action="accueil">Refaire l’accueil</button>
+            <button type="button" class="reset" id="install" data-action="installer" hidden>Installer l’appli</button>
+          </div>
+        </div>
+      </section>
+      <section class="needs" id="effacer" aria-labelledby="eff-t">
+        <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
+        <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
+        <div class="needs-body">
+          <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
+          <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
+            <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
+            <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
@@ -787,7 +845,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.17.0';
+const APP_VERSION = '3.18.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -2578,13 +2636,14 @@ if (typeof document !== 'undefined'){
     const t = res.tot, en = res.energy;
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
       (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.');
-    let note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
+    let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
     if (!res.libre && res.ecart > en.target * 0.03){
       const pr = cleanProfile(prof), tips = [];
       if (pr.marge > 0) tips.push('baisse la marge cuisine');
       if (pr.shaker === 'oui') tips.push('passe-toi du shaker');
       if (dessertOf(ch.dej) !== 'aucun' || dessertOf(ch.diner) !== 'aucun') tips.push('retire un dessert');
       if (res.prot.factor > PF_MIN + 0.02) tips.push('baisse ton objectif de protéines');
+      if (pr.marge > 0 || pr.shaker === 'oui') tab = 'repas';
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
         (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
@@ -2593,13 +2652,14 @@ if (typeof document !== 'undefined'){
       const pr = cleanProfile(prof), tips = [];
       if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
       if (ch.pdBase === 'sale' && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner sucré (avec du skyr)');
-      if (pr.shaker === 'non') tips.push('reprends un shaker');
+      if (pr.shaker === 'non'){ tips.push('reprends un shaker'); tab = 'repas'; }
       tips.push('baisse ton objectif de protéines');
       note += ' Tes protéines restent sous ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g)' + NB +
         ': ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.';
     }
-    if (incomplete()) note += ' Complète ton profil pour un calcul juste.';
-    $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs">Régler</button>';
+    if (incomplete()){ note += ' Complète ton profil pour un calcul juste.'; tab = 'profil'; }
+    /* « Régler » ouvre l'onglet des réglages de ce que propose la note (shaker, marge cuisine : Repas ; sinon Profil) */
+    $('sum-note').innerHTML = note + ' <button type="button" class="link" data-action="needs" data-value="' + tab + '">Régler</button>';
     $('bar-p').style.flexGrow = String(t.p * 4);
     $('bar-c').style.flexGrow = String(t.c * 4);
     $('bar-f').style.flexGrow = String(t.f * 9);
@@ -3230,8 +3290,76 @@ if (typeof document !== 'undefined'){
     'open-pick': function(b){ openPick(b.dataset.kind, b.dataset.slot || null, b.dataset.ctx || 'page', b); },
     'close-pick': function(){ closePick(false); }
   });
-  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Les réponses restent
-     dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
+  /* Éditeur de semaine type (3.18.0), le même dans les réglages (préfixe sem, onglet « Sport ») et à l'accueil (préfixe acs,
+     dernière étape) : un jour à la fois, ses séances avec les mêmes boutons que la page, le soir du repas libre. Identifiants
+     et actions préfixés (sem-days, sem-add… ; acs-days, acs-add…). get / set : la semaine du profil, enregistrée tout de
+     suite, ou celle du brouillon de l'accueil, enregistrée à la fin ; sel : le jour affiché. */
+  const SHORT = {0:'dim.', 1:'lun.', 2:'mar.', 3:'mer.', 4:'jeu.', 5:'ven.', 6:'sam.'};
+  /* Enregistrée dans le profil, seulement si elle diffère de la semaine par défaut (aucune séance, repas libre le samedi) */
+  const saveWeek = function(w){
+    const c = cleanWeek(w);
+    if (Object.keys(c.jours).length || c.libre !== 6) prof.semaine = c; else delete prof.semaine;
+    saveProf();
+  };
+  const WEEK_ED = {
+    sem:{sel:todayJs, get:function(){ return semOf(); }, set:function(w){ saveWeek(w); loadSel(); prevQty = new Map(); }},
+    acs:{sel:todayJs, get:function(){ return cleanWeek(acc ? acc.draft.semaine : null); }, set:function(w){ acc.draft.semaine = cleanWeek(w); }}
+  };
+  const renderWeekEd = function(pre){
+    const E = WEEK_ED[pre], w = E.get(), list = w.jours[E.sel] || [];
+    $(pre + '-days').innerHTML = DAYS.map(function(d){
+      const n = (w.jours[d.js] || []).length;
+      return '<button type="button" data-action="' + pre + '-day" data-value="' + d.js + '" aria-pressed="' + (d.js === E.sel) + '" aria-label="' + d.long + NB + ': ' +
+        (n ? n + ' séance' + (n > 1 ? 's' : '') : 'repos') + '"><span class="wd">' + SHORT[d.js] + '</span><span class="dn">' + (n || '–') + '</span></button>';
+    }).join('');
+    $(pre + '-h').textContent = cap(DAYS.find(function(d){ return d.js === E.sel; }).long);
+    $(pre + '-sess').innerHTML = sessHTML(list, pre + '-');
+    $(pre + '-acts').querySelectorAll('button').forEach(function(b){ b.disabled = addDisabled(b.dataset.value, list); });
+    $(pre + '-lib').innerHTML = DAYS.map(function(d){
+      return '<button type="button" class="opt" data-action="' + pre + '-lib" data-value="' + d.js + '" aria-pressed="' + (w.libre === d.js) + '" aria-label="' + d.long + '">' + SHORT[d.js] + '</button>';
+    }).join('');
+  };
+  const renderSemaine = function(){ renderWeekEd('sem'); };
+  /* Après un changement, le focus revient sur le même bouton (sinon sur « + Petite », sinon sur le jour) */
+  const weekFocus = function(pre, b){
+    const box = $(pre + '-days').closest('section');
+    const same = [...box.querySelectorAll('[data-action="' + b.dataset.action + '"]')].find(function(x){
+      return x.dataset.value === b.dataset.value && x.dataset.index === b.dataset.index;
+    });
+    const el = same && !same.disabled ? same : $(pre + '-acts').querySelector('button:not(:disabled)') || $(pre + '-days').querySelector('[aria-pressed="true"]');
+    if (el) el.focus({preventScroll:true});
+  };
+  /* Une séance ajoutée, déplacée ou retirée, le soir du repas libre ; dans les réglages, la page suit (message vide) */
+  const weekAction = function(b, v){
+    const pre = b.dataset.action.slice(0, 3), act = b.dataset.action.slice(4), E = WEEK_ED[pre];
+    if (pre === 'acs' && !acc) return;
+    const w = E.get(), list = (w.jours[E.sel] || []).map(function(x){ return Object.assign({}, x); }), i = +b.dataset.index;
+    if (act === 'add'){ if (!has(SIZES, v) || addDisabled(v, list)) return; list.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2}); }
+    else if (act === 'rm'){ if (!list[i]) return; list.splice(i, 1); }
+    else if (act === 'smoment'){ if (!list[i] || !has(MOMENT_RANK, v)) return; list[i].moment = v; }
+    else if (act === 'sduree'){ if (!list[i]) return; list[i].duree = parseFloat(v); }
+    else { if (!/^[0-6]$/.test(v || '')) return; w.libre = +v; }
+    w.jours[E.sel] = list;
+    E.set(w);
+    renderWeekEd(pre);
+    weekFocus(pre, b);
+    return pre === 'sem' ? '' : undefined;
+  };
+  const weekDay = function(b, v){
+    const pre = b.dataset.action.slice(0, 3);
+    if (!/^[0-6]$/.test(v || '') || (pre === 'acs' && !acc)) return;
+    WEEK_ED[pre].sel = +v;
+    renderWeekEd(pre);
+    weekFocus(pre, b);
+  };
+  ['sem', 'acs'].forEach(function(pre){
+    ACTIONS[pre + '-day'] = weekDay;
+    ['add', 'rm', 'smoment', 'sduree', 'lib'].forEach(function(a){ ACTIONS[pre + '-' + a] = weekAction; });
+  });
+  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Quatre étapes : bienvenue (profil),
+     objectif, habitudes, semaine type (3.18.0, facultative, l'éditeur de ui/semtype.js sur le brouillon). Les réponses
+     restent dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
+  const ACC_STEPS = 4;
   let acc = null;
   const ACC_UNITS = {age:'ans', taille:'cm', poids:'kg', shakerKcal:'kcal', shakerProt:'g'};
   const ACC_NAMES = {age:'ton âge', taille:'ta taille', poids:'ton poids', shakerKcal:'les calories par dose', shakerProt:'les protéines par dose'};
@@ -3239,6 +3367,7 @@ if (typeof document !== 'undefined'){
   const accInputs = function(step){ return $('accueil').querySelectorAll('[data-step="' + step + '"] input[data-acc]'); };
   const openAcc = function(draft){
     acc = {step:1, draft:draft};
+    WEEK_ED.acs.sel = todayJs;
     $('accueil').querySelectorAll('input[data-acc]').forEach(function(el){
       const k = el.dataset.acc;
       el.value = has(draft, k) ? String(draft[k]) : '';
@@ -3254,13 +3383,14 @@ if (typeof document !== 'undefined'){
     $('accueil').querySelectorAll('[data-step]').forEach(function(el){ el.hidden = +el.dataset.step !== acc.step; });
     $('acc-bar').querySelectorAll('span').forEach(function(s, i){ s.classList.toggle('on', i < acc.step); });
     $('acc-bar').setAttribute('aria-valuenow', String(acc.step));
-    $('acc-bar').setAttribute('aria-label', 'Étape ' + acc.step + ' sur 3');
+    $('acc-bar').setAttribute('aria-label', 'Étape ' + acc.step + ' sur ' + ACC_STEPS);
     $('accueil').querySelectorAll('[data-action="acc"]').forEach(function(b){
       const k = b.dataset.key, v = k === 'sexe' ? d.sexe : pr[k];
       b.setAttribute('aria-pressed', String(String(v) === b.dataset.value));
     });
     $('acc-back').hidden = acc.step === 1;
-    $('acc-next').textContent = acc.step === 3 ? 'Voir mes repas' : 'Continuer';
+    $('acc-next').textContent = acc.step === ACC_STEPS ? 'Voir mes repas' : 'Continuer';
+    if (acc.step === 4) renderWeekEd('acs');
     const en = energy(emptyPlan(todayJs), pr);
     $('acc-prev').innerHTML = 'Un jour sans sport, tu dépenses environ ' + r10(en.rest) + NB + 'kcal. ' + (pr.deficit > 0
       ? 'Tu viseras environ <strong>' + fmtInt(en.target) + NB + 'kcal</strong>, soit ≈' + NB + '−' +
@@ -3296,11 +3426,14 @@ if (typeof document !== 'undefined'){
   const finishAcc = function(){
     const d = profileFields(acc.draft);
     Object.keys(d).forEach(function(k){ prof[k] = d[k]; });
+    /* Semaine type vidée dans l'accueil : celle du profil part aussi */
+    if (has(acc.draft, 'semaine') && !has(d, 'semaine')) delete prof.semaine;
     if (!has(prof, 'mode')) prof.mode = cleanProfile(prof).mode;
     saveProf();
     acc = null;
     closeAllScreens();
-    fillNeeds();
+    fillNeeds(); renderSemaine();
+    loadSel();
     $('intro').textContent = 'C’est prêt. Ajoute tes séances du jour, tes repas s’adaptent. Sans séance, c’est une journée de repos.';
     prevQty = new Map();
     renderAcc();
@@ -3340,7 +3473,7 @@ if (typeof document !== 'undefined'){
     'acc-back': function(){ accStep(acc.step - 1); },
     'acc-next': function(){
       if (!accCheck()) return;
-      if (acc.step < 3) accStep(acc.step + 1); else finishAcc();
+      if (acc.step < ACC_STEPS) accStep(acc.step + 1); else finishAcc();
     },
     'acc-skip': function(){ finishAcc(); },
     accueil: function(){ openAcc(profileFields(prof)); $('acc-h1').focus(); }
@@ -3453,37 +3586,7 @@ if (typeof document !== 'undefined'){
   };
   renderAliments();
 
-  /* Réglages, « Ta semaine type » : un jour à la fois, ses séances avec les mêmes boutons que la page */
-  let semSel = todayJs;
-  const SHORT = {0:'dim.', 1:'lun.', 2:'mar.', 3:'mer.', 4:'jeu.', 5:'ven.', 6:'sam.'};
-  const renderSemaine = function(){
-    const w = semOf(), list = w.jours[semSel] || [];
-    $('sem-days').innerHTML = DAYS.map(function(d){
-      const n = (w.jours[d.js] || []).length;
-      return '<button type="button" data-action="sem-day" data-value="' + d.js + '" aria-pressed="' + (d.js === semSel) + '" aria-label="' + d.long + NB + ': ' +
-        (n ? n + ' séance' + (n > 1 ? 's' : '') : 'repos') + '"><span class="wd">' + SHORT[d.js] + '</span><span class="dn">' + (n || '–') + '</span></button>';
-    }).join('');
-    $('sem-h').textContent = cap(DAYS.find(function(d){ return d.js === semSel; }).long);
-    $('sem-sess').innerHTML = sessHTML(list, 'sem-');
-    $('sem-acts').querySelectorAll('button').forEach(function(b){ b.disabled = addDisabled(b.dataset.value, list); });
-    $('sem-lib').innerHTML = DAYS.map(function(d){
-      return '<button type="button" class="opt" data-action="sem-lib" data-value="' + d.js + '" aria-pressed="' + (w.libre === d.js) + '" aria-label="' + d.long + '">' + SHORT[d.js] + '</button>';
-    }).join('');
-  };
-  /* Enregistrée dans le profil, seulement si elle diffère de la semaine par défaut (aucune séance, repas libre le samedi) */
-  const saveWeek = function(w){
-    const c = cleanWeek(w);
-    if (Object.keys(c.jours).length || c.libre !== 6) prof.semaine = c; else delete prof.semaine;
-    saveProf();
-  };
-  /* Après un changement, le focus revient sur le même bouton (sinon sur « + Petite ») */
-  const semFocus = function(b){
-    const same = [...$('semaine').querySelectorAll('[data-action="' + b.dataset.action + '"]')].find(function(x){
-      return x.dataset.value === b.dataset.value && x.dataset.index === b.dataset.index;
-    });
-    const el = same && !same.disabled ? same : $('sem-acts').querySelector('button:not(:disabled)') || $('sem-days').querySelector('[aria-pressed="true"]');
-    if (el) el.focus({preventScroll:true});
-  };
+  /* Réglages, « Ta semaine type » : l'éditeur partagé avec l'accueil (ui/semtype.js) */
   renderSemaine();
 
   /* Champs du profil : enregistrés à chaque saisie valide, vidés = valeur par défaut */
@@ -3543,33 +3646,44 @@ if (typeof document !== 'undefined'){
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    shop = {from:'', to:'', checked:[]}; repasVu = null; draft = null; planner = null; semSel = todayJs;
+    shop = {from:'', to:'', checked:[]}; repasVu = null; draft = null; planner = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();
     $('hint').textContent = ''; $('intro').textContent = ''; $('alim-warn').textContent = '';
-    fillNeeds(); renderAliments(); renderSemaine();
+    fillNeeds(); renderAliments(); renderSemaine(); showTab('profil');
     render();
     openAcc({});
     $('acc-h1').focus();
   };
-  const semAction = function(b, v){
-    const w = semOf(), list = (w.jours[semSel] || []).map(function(x){ return Object.assign({}, x); }), i = +b.dataset.index, act = b.dataset.action;
-    if (act === 'sem-add'){ if (!has(SIZES, v) || addDisabled(v, list)) return; list.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2}); }
-    else if (act === 'sem-rm'){ if (!list[i]) return; list.splice(i, 1); }
-    else if (act === 'sem-smoment'){ if (!list[i] || !has(MOMENT_RANK, v)) return; list[i].moment = v; }
-    else if (act === 'sem-sduree'){ if (!list[i]) return; list[i].duree = parseFloat(v); }
-    else { if (!/^[0-6]$/.test(v || '')) return; w.libre = +v; }
-    w.jours[semSel] = list;
-    saveWeek(w);
-    renderSemaine();
-    semFocus(b);
-    loadSel(); prevQty = new Map();
-    return '';
+  /* Onglets (3.18.0) : Profil, Sport, Repas, Appli ; un seul panneau visible, le dernier ouvert gardé tant que l'appli reste
+     ouverte. Flèches gauche et droite, début et fin : onglet voisin, premier, dernier (le focus suit). Changer d'onglet
+     remonte la page jusqu'aux onglets si elle était plus bas. */
+  const TABS = ['profil', 'sport', 'repas', 'appli'];
+  let reglTab = 'profil';
+  const showTab = function(t, focus){
+    reglTab = TABS.indexOf(t) >= 0 ? t : 'profil';
+    TABS.forEach(function(x){
+      const on = x === reglTab, b = $('tab-' + x);
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+      $('pan-' + x).hidden = !on;
+    });
+    const list = $('besoins').querySelector('[role="tablist"]');
+    if (scroller().scrollTop > list.offsetTop) scroller().scrollTop = list.offsetTop;
+    if (focus) $('tab-' + reglTab).focus({preventScroll:true});
   };
-  /* Actions des réglages : profil, aliments proposés, semaine type, effacer mes données */
+  $('besoins').querySelector('[role="tablist"]').addEventListener('keydown', function(e){
+    const i = TABS.indexOf(reglTab), n = {ArrowRight:i + 1, ArrowLeft:i - 1, Home:0, End:TABS.length - 1}[e.key];
+    if (n === undefined) return;
+    e.preventDefault();
+    showTab(TABS[(n + TABS.length) % TABS.length], true);
+  });
+  /* Actions des réglages : onglets, profil, aliments proposés, effacer mes données (semaine type : ui/semtype.js).
+     needs : la roue dentée (le dernier onglet) ou « Régler » de la note du total (l'onglet de ce qu'elle propose) */
   Object.assign(ACTIONS, {
-    needs: function(b){ effShow(false); openScreen('reglages', b); },
+    needs: function(b, v){ effShow(false); showTab(TABS.indexOf(v) >= 0 ? v : reglTab); openScreen('reglages', b); },
+    tab: function(b, v){ showTab(v); },
     prof: function(b, v){
       const o = {};
       o[b.dataset.key] = v;
@@ -3595,9 +3709,6 @@ if (typeof document !== 'undefined'){
       loadSel();
       return '';
     },
-    /* « Ta semaine type » : un jour, ses séances, le soir du repas libre */
-    'sem-day': function(b, v){ if (!/^[0-6]$/.test(v || '')) return; semSel = +v; renderSemaine(); semFocus(b); },
-    'sem-add': semAction, 'sem-rm': semAction, 'sem-smoment': semAction, 'sem-sduree': semAction, 'sem-lib': semAction,
     /* « Effacer mes données » : demander, confirmer ou annuler */
     'eff-ask': function(){ effShow(true); $('eff-no').focus({preventScroll:true}); },
     'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); },

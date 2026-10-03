@@ -1,5 +1,7 @@
-  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Les réponses restent
-     dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
+  /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Quatre étapes : bienvenue (profil),
+     objectif, habitudes, semaine type (3.18.0, facultative, l'éditeur de ui/semtype.js sur le brouillon). Les réponses
+     restent dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
+  const ACC_STEPS = 4;
   let acc = null;
   const ACC_UNITS = {age:'ans', taille:'cm', poids:'kg', shakerKcal:'kcal', shakerProt:'g'};
   const ACC_NAMES = {age:'ton âge', taille:'ta taille', poids:'ton poids', shakerKcal:'les calories par dose', shakerProt:'les protéines par dose'};
@@ -7,6 +9,7 @@
   const accInputs = function(step){ return $('accueil').querySelectorAll('[data-step="' + step + '"] input[data-acc]'); };
   const openAcc = function(draft){
     acc = {step:1, draft:draft};
+    WEEK_ED.acs.sel = todayJs;
     $('accueil').querySelectorAll('input[data-acc]').forEach(function(el){
       const k = el.dataset.acc;
       el.value = has(draft, k) ? String(draft[k]) : '';
@@ -22,13 +25,14 @@
     $('accueil').querySelectorAll('[data-step]').forEach(function(el){ el.hidden = +el.dataset.step !== acc.step; });
     $('acc-bar').querySelectorAll('span').forEach(function(s, i){ s.classList.toggle('on', i < acc.step); });
     $('acc-bar').setAttribute('aria-valuenow', String(acc.step));
-    $('acc-bar').setAttribute('aria-label', 'Étape ' + acc.step + ' sur 3');
+    $('acc-bar').setAttribute('aria-label', 'Étape ' + acc.step + ' sur ' + ACC_STEPS);
     $('accueil').querySelectorAll('[data-action="acc"]').forEach(function(b){
       const k = b.dataset.key, v = k === 'sexe' ? d.sexe : pr[k];
       b.setAttribute('aria-pressed', String(String(v) === b.dataset.value));
     });
     $('acc-back').hidden = acc.step === 1;
-    $('acc-next').textContent = acc.step === 3 ? 'Voir mes repas' : 'Continuer';
+    $('acc-next').textContent = acc.step === ACC_STEPS ? 'Voir mes repas' : 'Continuer';
+    if (acc.step === 4) renderWeekEd('acs');
     const en = energy(emptyPlan(todayJs), pr);
     $('acc-prev').innerHTML = 'Un jour sans sport, tu dépenses environ ' + r10(en.rest) + NB + 'kcal. ' + (pr.deficit > 0
       ? 'Tu viseras environ <strong>' + fmtInt(en.target) + NB + 'kcal</strong>, soit ≈' + NB + '−' +
@@ -64,11 +68,14 @@
   const finishAcc = function(){
     const d = profileFields(acc.draft);
     Object.keys(d).forEach(function(k){ prof[k] = d[k]; });
+    /* Semaine type vidée dans l'accueil : celle du profil part aussi */
+    if (has(acc.draft, 'semaine') && !has(d, 'semaine')) delete prof.semaine;
     if (!has(prof, 'mode')) prof.mode = cleanProfile(prof).mode;
     saveProf();
     acc = null;
     closeAllScreens();
-    fillNeeds();
+    fillNeeds(); renderSemaine();
+    loadSel();
     $('intro').textContent = 'C’est prêt. Ajoute tes séances du jour, tes repas s’adaptent. Sans séance, c’est une journée de repos.';
     prevQty = new Map();
     renderAcc();
@@ -108,7 +115,7 @@
     'acc-back': function(){ accStep(acc.step - 1); },
     'acc-next': function(){
       if (!accCheck()) return;
-      if (acc.step < 3) accStep(acc.step + 1); else finishAcc();
+      if (acc.step < ACC_STEPS) accStep(acc.step + 1); else finishAcc();
     },
     'acc-skip': function(){ finishAcc(); },
     accueil: function(){ openAcc(profileFields(prof)); $('acc-h1').focus(); }

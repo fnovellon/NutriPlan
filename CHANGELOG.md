@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.18.0, 3 octobre 2026
+
+- Réglages rangés en quatre onglets : Profil (toi, ta dépense, ton déficit, tes protéines), Sport (ta semaine type, les calories de tes séances, le ravito), Repas (tes aliments, le shaker, la marge cuisine) et Appli (aide, refaire l'accueil, installer, effacer tes données). Les onglets restent en haut de l'écran quand tu descends, et l'appli se souvient du dernier ouvert.
+- « Régler », sous le total de ta journée, ouvre directement le bon onglet.
+- Accueil : une quatrième étape, facultative, pour ta semaine type (tes séances habituelles et le soir de ton repas libre). Elle remplit toute seule tes journées dès le premier jour.
+
 ## 3.17.0, 3 octobre 2026
 
 - Batch cooking : des chiffres ronds pour les courses. La viande, le poisson, les crevettes, le halloumi et le tofu de chaque recette font un compte rond sur la semaine (par exemple 600 g de saumon plutôt que 570 g), réparti entre ses boîtes. Le féculent de chaque jour compense : ta journée garde le même total. Si un jour risquait de sortir de sa fourchette de protéines, l'arrondi se fait dans l'autre sens.
