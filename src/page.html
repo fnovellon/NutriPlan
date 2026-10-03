@@ -412,7 +412,23 @@
 {{inclure engine/batch.js}}
 {{inclure engine/courses.js}}
 
-{{inclure ui.js}}
+{{# Interface : seulement dans un navigateur (le moteur reste testable sans DOM). Un fichier par écran ; chacun ajoute les }}
+{{# actions de ses boutons à ACTIONS (déclaré dans ui/etat.js, le clic est traité dans ui/actions.js). }}
+if (typeof document !== 'undefined'){
+{{inclure ui/etat.js}}
+{{inclure ui/page.js}}
+{{inclure ui/ecrans.js}}
+{{inclure ui/repas.js}}
+{{inclure ui/periodes.js}}
+{{inclure ui/planifier.js}}
+{{inclure ui/semaine.js}}
+{{inclure ui/courses.js}}
+{{inclure ui/panneau.js}}
+{{inclure ui/accueil.js}}
+{{inclure ui/actions.js}}
+{{inclure ui/reglages.js}}
+{{inclure ui/demarrage.js}}
+}
 </script>
 </body>
 </html>

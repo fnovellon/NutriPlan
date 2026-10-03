@@ -2128,6 +2128,8 @@ function shoppingList(days){
 }
 
 if (typeof document !== 'undefined'){
+  /* Interface (tout ce fichier et les suivants sont dans if (typeof document !== 'undefined'){ … }, voir src/page.html).
+     État : stockage, profil, dates, jour affiché, plats et plan d'un jour, enregistrement. */
   /* Stockage v2 (séances). Au premier chargement, la v1 (activité par sport) est convertie et laissée intacte. */
   const KEY = 'repas-du-jour:v2', OLD_KEY = 'repas-du-jour:v1';
   const readObj = function(k){
@@ -2244,7 +2246,12 @@ if (typeof document !== 'undefined'){
     if (!moved.length) return '';
     return 'Un seul repas libre par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' + moved.join(' et de ') + ' sont retirés.' : 'celui de ' + moved[0] + ' est retiré.');
   };
-
+  /* Actions des boutons (data-action) : chaque écran ajoute les siennes à côté de son code (Object.assign(ACTIONS, {…})),
+     le clic est traité dans ui/actions.js. Une action reçoit le bouton et sa valeur (data-value) ; elle renvoie un message
+     (même vide) pour que la page soit redessinée ensuite (message sous les séances, repères de la semaine, focus gardé),
+     rien si elle a fini. */
+  const ACTIONS = {};
+  /* Page du jour : choix des plats en bulles, lignes des repas, recettes, séances, total et note, dessin de la page (render). */
   /* Choix des plats : seule la sélection est affichée, dans une bulle ; la toucher ouvre le panneau des choix */
   const REPAS = {dej:'du déjeuner', diner:'du dîner'};
   /* Choix possibles d'une rangée ; src : les choix affichés (ceux du jour, ou le brouillon du formulaire des repas) */
@@ -2404,66 +2411,6 @@ if (typeof document !== 'undefined'){
       '<li class="f">Lipides <b>' + Math.round(t.f) + NB + 'g</b></li>' +
       (res.libre ? '<li class="x">hors repas libre</li>' : '');
   };
-  const renderNeeds = function(res){
-    const pr = cleanProfile(prof), en = res.energy;
-    document.querySelectorAll('#besoins [data-action="prof"]').forEach(function(b){ b.setAttribute('aria-pressed', String(pr[b.dataset.key] === b.dataset.value)); });
-    $('besoins').querySelector('[data-key="repos"]').placeholder = String(Math.round(bmr(pr) * NEAT[pr.neat] / 10) * 10);
-    document.querySelectorAll('#besoins [data-mode]').forEach(function(el){ el.hidden = el.dataset.mode !== pr.mode; });
-    $('needs-sum').textContent = r10(en.rest) + NB + 'kcal un jour sans sport (' + (en.restSource === 'saisie' ? 'saisie' : 'automatique') + '), déficit de ' + pr.deficit + NB + '%';
-    $('mode-hint').textContent = pr.mode === 'manuel'
-      ? 'Tu indiques ta dépense d’un jour sans sport, l’appli ajoute le coût de chaque séance, calculé avec ton poids.'
-      : 'Ta dépense est calculée à partir de ton profil.';
-    let hint = '';
-    if (pr.mode === 'auto' && incomplete()) hint = 'Indique ton âge, ta taille et ton poids' + NB + ': en attendant, le calcul utilise les valeurs grisées.';
-    else if (pr.mode === 'manuel' && en.restSource !== 'saisie') hint = 'Indique ta dépense d’un jour sans sport' + NB + ': en attendant, le calcul automatique est utilisé (' + r10(en.rest) + NB + 'kcal).';
-    else if (pr.mode === 'manuel' && incomplete()) hint = 'Indique ton poids' + NB + ': il sert à calculer tes séances.';
-    $('needs-hint').textContent = hint;
-    $('calc-rest').textContent = en.restSource === 'saisie'
-      ? 'Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, celle que tu as saisie. Chaque séance s’y ajoute.'
-      : 'Métabolisme de base' + NB + ': ' + r10(en.bmr) + NB + 'kcal (formule de ' + (pr.gras !== null ? 'Cunningham, à partir de ta masse maigre' : 'Mifflin-St' + NB + 'Jeor') +
-        '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, calculée. Chaque séance s’y ajoute.';
-    $('out-deficit').textContent = pr.deficit + NB + '%';
-    $('calc-deficit').textContent = pr.deficit > 0
-      ? pr.deficit + NB + '% de ta dépense d’un jour sans sport, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
-        en.kgWeek.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}) + NB + 'kg par semaine. Tes séances restent couvertes.'
-      : 'Pas de déficit' + NB + ': tu manges ce que tu dépenses.';
-    const warn = [];
-    if (pr.deficit > 20) warn.push('Au-delà de 20' + NB + '%, tu perds plus vite mais tu risques de perdre du muscle et de la forme à l’entraînement.');
-    if (pr.mode === 'auto' && pr.gras !== null){
-      const ea = (en.rest - en.deficit) / (pr.poids * (1 - pr.gras / 100));
-      if (ea < 30) warn.push('Il te reste environ ' + Math.round(ea) + NB + 'kcal par kilo de masse maigre une fois tes séances payées, sous le seuil de 30' + NB + ': baisse le déficit.');
-    }
-    $('warn-deficit').textContent = warn.join(' ');
-    const dec = function(n){ return n.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}); };
-    $('out-prot').textContent = dec(pr.prot) + NB + 'g/kg';
-    /* Poids de calcul borné comme les portions (47 à 101 kg environ) */
-    const protKg = res.prot.target / pr.prot;
-    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(protKg) + NB + 'kg), à 10' + NB + '% près' + NB + ': de ' +
-      Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g.' +
-      (pr.poids > protKg + 0.05 ? ' Au-delà de ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
-      (pr.poids < protKg - 0.05 ? ' Sous ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
-      ' Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g' +
-      (res.libre ? ' hors repas libre.' : '.') +
-      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
-      ' Repère en sèche' + NB + ': 1,6 à 2,2' + NB + 'g/kg, 2,0 par défaut.';
-    $('out-ravito').textContent = pr.ravito + NB + 'g/h';
-    $('out-marge').textContent = pr.marge + NB + 'kcal';
-    [['kcalPetite', {taille:'petite'}], ['kcalMoyenne', {taille:'moyenne'}], ['kcalLongueH', {taille:'longue', duree:1}]].forEach(function(x){
-      $('besoins').querySelector('[data-key="' + x[0] + '"]').placeholder = String(Math.round(seanceCost(x[1], Object.assign({}, pr, {kcalPetite:null, kcalMoyenne:null, kcalLongueH:null})) / 10) * 10);
-    });
-    $('calc-seances').textContent = 'Calories en plus de ta journée pour chaque séance. Par défaut, d’après ton poids' + NB + ': petite ' +
-      r10(SIZES.petite.net * pr.poids) + NB + 'kcal (1' + NB + 'h de muscu), moyenne ' + r10(SIZES.moyenne.net * pr.poids) + NB + 'kcal (≈ 7' + NB + 'km de course), longue ' +
-      r10(SIZES.longue.net * pr.poids) + NB + 'kcal par heure. Tu peux mettre les tiennes, par exemple les calories actives de ta montre pour cette séance.';
-    const sm = shakerMac(pr), withShaker = pr.shaker === 'oui';
-    $('shaker-dose').hidden = !withShaker;
-    $('calc-shaker').textContent = withShaker
-      ? 'Tous les jours, juste après ta dernière séance (l’après-midi les jours de repos). Une dose à l’eau' + NB + ': ' +
-        pr.shakerKcal + NB + 'kcal, ' + Math.round(sm.p) + NB + 'g de protéines, environ ' + Math.round(sm.c) + NB + 'g de glucides et ' + Math.round(sm.f) + NB + 'g de lipides.'
-      : 'Pas de shaker' + NB + ': si tes protéines passent sous ' + Math.round(res.prot.floor) + NB + 'g, un skyr s’ajoute le soir.';
-    $('warn-shaker').textContent = withShaker && pr.shakerProt > sm.p
-      ? 'Avec ' + pr.shakerKcal + NB + 'kcal, une dose ne peut pas dépasser ' + Math.round(sm.p) + NB + 'g de protéines' + NB + ': le calcul en compte ' + Math.round(sm.p) + NB + 'g.'
-      : '';
-  };
   const render = function(){
     renderControls();
     const res = buildDay(plan, ch, prof);
@@ -2475,7 +2422,65 @@ if (typeof document !== 'undefined'){
     prevQty = next;
     if (planner && planner.i >= 0 && topScreen() === 'plan') renderPlan();
   };
-
+  /* Actions de la page du jour : séances, repas libre, plats, recettes, calendrier, plan de base */
+  Object.assign(ACTIONS, {
+    add: function(b, v){
+      $('intro').textContent = '';
+      plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
+      plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances});
+      return '';
+    },
+    smoment: function(b, v){ if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].moment = v; plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); return ''; },
+    sduree: function(b, v){ if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].duree = parseFloat(v); plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); return ''; },
+    rm: function(b){ if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan({seances:plan.seances}); return ''; },
+    toggle: function(b){
+      if (b.dataset.key !== 'libre') return;
+      let msg = '';
+      plan.libre = !plan.libre;
+      if (plan.libre) msg = clearOtherLibre();
+      savePlan({libre:plan.libre});
+      return msg;
+    },
+    pd: function(b, v){ if (has(PD, v)){ ch.pdBase = v; saveCh(); } return ''; },
+    prot: function(b, v){ if (has(PROT, v)){ ch[b.dataset.slot].prot = v; dropRecipes(ch); saveCh(); } return ''; },
+    starch: function(b, v){ if (has(STARCH, v)){ ch[b.dataset.slot].starch = v; dropRecipes(ch); saveCh(); } return ''; },
+    dessert: function(b, v){ if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } return ''; },
+    /* Recette d'un repas : voir sa fiche, la choisir (celle proposée pour sa protéine et son féculent) ou la retirer */
+    'rec-view': function(b){ if (!has(REPAS, b.dataset.slot)) return; openRecipe(b.dataset.slot, b); },
+    'rec-on': function(b){
+      const slot = b.dataset.slot, id = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch)[0] : null;
+      if (!id) return;
+      ch[slot].recette = id; saveCh();
+      recFocus = slot;
+      return '';
+    },
+    'rec-off': function(b){ if (!has(REPAS, b.dataset.slot)) return; delete ch[b.dataset.slot].recette; saveCh(); recFocus = b.dataset.slot; return ''; },
+    /* Calendrier : un jour, la semaine d'avant ou d'après (même jour de la semaine, ou aujourd'hui), retour à aujourd'hui */
+    day: function(b, v){
+      const d = fromIso(v);
+      if (!d || dayDiff(d) < -21 || dayDiff(d) > 365) return;
+      selDate = d; loadSel(); prevQty = new Map();
+      return '';
+    },
+    week: function(b, v){
+      let d = addDays(selDate, 7 * (parseInt(v, 10) < 0 ? -1 : 1));
+      if (weekOf(d).some(function(x){ return dayDiff(x) === 0; })) d = today;
+      if (dayDiff(d) < -21 || dayDiff(d) > 365) return;
+      selDate = d; loadSel(); prevQty = new Map();
+      return '';
+    },
+    today: function(){ selDate = today; loadSel(); prevQty = new Map(); $('title').focus(); return ''; },
+    /* « Revenir au plan de base » : la date et la mémoire de ce jour de la semaine effacées */
+    reset: function(){
+      let msg = '';
+      delete store.plans[selIso()];
+      delete store.choices[sel];
+      loadSel();
+      if (plan.libre) msg = clearOtherLibre();
+      persist(); prevQty = new Map();
+      return msg;
+    }
+  });
   /* Écrans, un seul visible : accueil, page du jour, réglages (roue dentée) et aide (point d'interrogation).
      Réglages et aide s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du
      téléphone revient d'un cran) et la position dans la page est rétablie au retour. */
@@ -2516,7 +2521,10 @@ if (typeof document !== 'undefined'){
     try { history.replaceState({screen:name}, ''); } catch (e) {}
     showTop();
   };
-
+  Object.assign(ACTIONS, {
+    aide: function(b){ openScreen('aide', b); },
+    fermer: function(){ closeScreen(false); }
+  });
   /* Formulaire des repas du jour : tous les choix visibles, sur un brouillon ; « Voir ma journée » l'enregistre,
      « Décide pour moi » tire tout au hasard ; la flèche ou le bouton retour ferment sans rien changer.
      S'ouvre tout seul à la première ouverture de chaque jour (date gardée dans RKEY ; sans stockage, jamais tout seul). */
@@ -2560,7 +2568,28 @@ if (typeof document !== 'undefined'){
     try { localStorage.setItem(RKEY, iso); } catch (e) {}
     if (topScreen() === 'repas') startDraft(); else openRepas({id:'title'});
   };
-
+  /* Actions du formulaire des repas : l'ouvrir, un choix dans le brouillon, valider ou tirer au hasard */
+  Object.assign(ACTIONS, {
+    repas: function(b){ openRepas(b); },
+    rf: function(b, v){
+      const slot = b.dataset.slot, kind = b.dataset.kind;
+      if (!draft) return;
+      if (kind === 'pd' && has(PD, v)) draft.pdBase = v;
+      else if (kind === 'prot' && has(PROT, v)) draft[slot].prot = v;
+      else if (kind === 'starch' && has(STARCH, v)) draft[slot].starch = v;
+      else if (kind === 'dessert' && has(DESSERT, v)) draft[slot].dessert = v;
+      else return;
+      dropRecipes(draft);
+      renderRepas();
+      if (pick && b.closest('#sheet')) closePick(false);
+    },
+    'repas-ok': function(){ if (!draft) return; applyRepas(draft); return ''; },
+    'repas-hasard': function(){
+      if (!draft) return;
+      applyRepas(drawFor(selIso()));
+      return 'Repas tirés au hasard' + NB + ': touche un plat pour le changer.';
+    }
+  });
   /* Périodes (assistant et courses) : dates AAAA-MM-JJ, 31 jours au plus */
   const MAX_DAYS = 31;
   const isoOk = function(v){ return typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) && fromIso(v) !== null && isoDate(fromIso(v)) === v; };
@@ -2594,7 +2623,20 @@ if (typeof document !== 'undefined'){
     $(which + '-span').textContent = err ? '' : spanText(st.from, st.to);
     return err;
   };
-
+  /* Champs Du / Au de l'assistant et des courses */
+  const rangeInput = function(e){
+    const el = e.target;
+    if (!el.dataset || !el.dataset.range) return;
+    const st = el.dataset.range === 'plan' ? planner : shop;
+    if (!st) return;
+    st[el.dataset.end] = isoOk(el.value) ? el.value : '';
+    if (el.dataset.range === 'plan'){
+      fillRange('plan', planner, 0, true);
+      $('plan').querySelectorAll('[data-action="pl-preset"]').forEach(function(b){ const r = presetRange(b.dataset.value); b.setAttribute('aria-pressed', String(isoDate(r[0]) === planner.from && isoDate(r[1]) === planner.to)); });
+    } else { saveShop(); renderCourses(true); }
+  };
+  document.addEventListener('input', rangeInput);
+  document.addEventListener('change', rangeInput);
   /* Planifier : les jours choisis, puis un jour par étape (séances, repas libre, plats), puis les courses.
      Chaque changement est enregistré tout de suite pour sa date ; en partant, la page revient sur le jour affiché avant. */
   let planner = null;
@@ -2667,19 +2709,58 @@ if (typeof document !== 'undefined'){
     replaceScreen('courses');
     renderCourses(false);
   };
-
-  /* Courses : période (gardée), liste additionnée par rayon, lignes cochées (gardées tant que leur quantité ne change pas) */
-  const SKEY = 'repas-du-jour:courses:v1';
-  let shop = {from:'', to:'', checked:[]};
-  try {
-    const o = JSON.parse(localStorage.getItem(SKEY) || 'null');
-    if (o && typeof o === 'object' && !Array.isArray(o)){
-      if (isoOk(o.from)) shop.from = o.from;
-      if (isoOk(o.to)) shop.to = o.to;
-      if (Array.isArray(o.checked)) shop.checked = o.checked.filter(function(x){ return typeof x === 'string'; }).slice(0, 500);
+  /* Actions de l'assistant : jours, étapes, hasard pour ce jour ou pour tous les jours restants, batch cooking. Seulement
+     pendant l'assistant, à la bonne étape (voir ui/actions.js) */
+  Object.assign(ACTIONS, {
+    plan: function(b){
+      planner = {i:-1, from:isoDate(today), to:isoDate(addDays(today, 6)), back:selDate, msg:'', n:4};
+      renderPlan();
+      openScreen('plan', b);
+    },
+    'pl-preset': function(b, v){
+      const r = presetRange(v);
+      planner.from = isoDate(r[0]); planner.to = isoDate(r[1]);
+      renderPlan();
+    },
+    'pl-start': function(){ if (!fillRange('plan', planner, 0, true)) planGo(0); },
+    /* Batch cooking : nombre de recettes, puis tous les plats de la période tirés d'un coup, et les courses */
+    'pl-nrec': function(b, v){
+      if (BATCH_N.indexOf(+v) < 0) return;
+      planner.n = +v; renderPlan();
+      $('plan-body').querySelector('[data-action="pl-nrec"][data-value="' + v + '"]').focus({preventScroll:true});
+    },
+    'pl-batch': function(){
+      if (fillRange('plan', planner, 0, true)) return;
+      const isos = rangeDays(planner.from, planner.to), pr = cleanProfile(prof);
+      const cs = batchChoices(isos.map(function(iso){ return {libre:planFor(iso).libre}; }), planner.n, pr.off, scaleOf(pr));
+      isos.forEach(function(iso, j){
+        const js = fromIso(iso).getDay(), c = cleanCh(cs[j], js);
+        writeDay(iso, {ch:c});
+        store.choices[js] = c;
+      });
+      persist();
+      finishPlan();
+    },
+    'pl-prev': function(){ planGo(planner.i - 1); },
+    'pl-next': function(){
+      if (planner.i < rangeDays(planner.from, planner.to).length - 1) planGo(planner.i + 1); else finishPlan();
+    },
+    'pl-hasard': function(){
+      ch = cleanCh(drawFor(selIso()), sel); saveCh();
+      planner.msg = 'Plats tirés au hasard' + NB + ': touche un plat pour le changer.';
+      return '';
+    },
+    'pl-hasard-tous': function(){
+      rangeDays(planner.from, planner.to).slice(planner.i).forEach(function(iso){
+        const js = fromIso(iso).getDay(), c = cleanCh(drawFor(iso), js);
+        writeDay(iso, {ch:c});
+        store.choices[js] = c;
+      });
+      persist();
+      finishPlan();
     }
-  } catch (e) {}
-  const saveShop = function(){ try { localStorage.setItem(SKEY, JSON.stringify(shop)); } catch (e) {} };
+  });
+  /* « Ta semaine » (page) et tirages équilibrés : repères du reste de la semaine d'une date, phrase, alerte d'un choix. */
   const dayResult = function(iso){ return buildDay(planFor(iso), choicesFor(iso, fromIso(iso).getDay()), prof); };
   /* Repères de la semaine (lundi → dimanche) d'une date, sans le jour skip (celui qu'on tire au hasard) */
   const weekBal = function(d, skip){ return weekBalance(weekOf(d).map(isoDate).filter(function(iso){ return iso !== skip; }).map(dayResult)); };
@@ -2717,6 +2798,18 @@ if (typeof document !== 'undefined'){
       return 'Ça fait ' + gr(after.rouge) + ' de viande rouge cuite cette semaine, 500' + NB + 'g au plus' + NB + ': alterne avec la volaille, le poisson ou le tofu.';
     return '';
   };
+  /* Courses : période (gardée), liste additionnée par rayon, lignes cochées (gardées tant que leur quantité ne change pas) */
+  const SKEY = 'repas-du-jour:courses:v1';
+  let shop = {from:'', to:'', checked:[]};
+  try {
+    const o = JSON.parse(localStorage.getItem(SKEY) || 'null');
+    if (o && typeof o === 'object' && !Array.isArray(o)){
+      if (isoOk(o.from)) shop.from = o.from;
+      if (isoOk(o.to)) shop.to = o.to;
+      if (Array.isArray(o.checked)) shop.checked = o.checked.filter(function(x){ return typeof x === 'string'; }).slice(0, 500);
+    }
+  } catch (e) {}
+  const saveShop = function(){ try { localStorage.setItem(SKEY, JSON.stringify(shop)); } catch (e) {} };
   const renderCourses = function(keepInputs){
     if (!keepInputs && (!isoOk(shop.from) || !isoOk(shop.to) || dayDiff(fromIso(shop.to)) < 0)){ shop.from = isoDate(today); shop.to = isoDate(addDays(today, 6)); }
     const err = fillRange('courses', shop, -21, keepInputs);
@@ -2770,20 +2863,26 @@ if (typeof document !== 'undefined'){
         }).join('');
     }).join('');
   };
-  /* Champs Du / Au de l'assistant et des courses */
-  const rangeInput = function(e){
-    const el = e.target;
-    if (!el.dataset || !el.dataset.range) return;
-    const st = el.dataset.range === 'plan' ? planner : shop;
-    if (!st) return;
-    st[el.dataset.end] = isoOk(el.value) ? el.value : '';
-    if (el.dataset.range === 'plan'){
-      fillRange('plan', planner, 0, true);
-      $('plan').querySelectorAll('[data-action="pl-preset"]').forEach(function(b){ const r = presetRange(b.dataset.value); b.setAttribute('aria-pressed', String(isoDate(r[0]) === planner.from && isoDate(r[1]) === planner.to)); });
-    } else { saveShop(); renderCourses(true); }
-  };
-  document.addEventListener('input', rangeInput);
-  document.addEventListener('change', rangeInput);
+  /* Actions des courses : ouvrir, cocher une ligne, tout décocher, ouvrir un jour */
+  Object.assign(ACTIONS, {
+    courses: function(b){ renderCourses(false); openScreen('courses', b); },
+    'co-check': function(b, v){
+      const k = shop.checked.indexOf(v);
+      if (k >= 0) shop.checked.splice(k, 1); else shop.checked.push(v);
+      saveShop();
+      b.setAttribute('aria-checked', String(k < 0));
+    },
+    'co-uncheck': function(){ shop.checked = []; saveShop(); renderCourses(true); },
+    'co-day': function(b, v){
+      const d = fromIso(v);
+      if (!d) return;
+      closeAllScreens();
+      selDate = d; loadSel(); prevQty = new Map();
+      render();
+      scroller().scrollTop = 0;
+      $('title').focus({preventScroll:true});
+    }
+  });
   /* Panneau de choix d'un plat : fond grisé, page inerte ; se ferme par un choix, le fond, Échap ou le bouton retour */
   let pick = null;
   /* ctx « repas » : le choix va dans le brouillon du formulaire (action rf), sinon il est enregistré tout de suite */
@@ -2856,7 +2955,10 @@ if (typeof document !== 'undefined'){
     const want = st.screen || null;
     while (stack.length && topScreen() !== want) closeScreen(true);
   });
-
+  Object.assign(ACTIONS, {
+    'open-pick': function(b){ openPick(b.dataset.kind, b.dataset.slot || null, b.dataset.ctx || 'page', b); },
+    'close-pick': function(){ closePick(false); }
+  });
   /* Accueil : au premier lancement (aucun profil enregistré), ou depuis les réglages. Les réponses restent
      dans un brouillon, validé par profileFields, et ne sont enregistrées qu'à la fin (ou avec « Passer »). */
   let acc = null;
@@ -2955,228 +3057,37 @@ if (typeof document !== 'undefined'){
     const el = e.target, k = el.dataset && el.dataset.acc;
     if (k && acc && el.value.trim() !== '' && !has(acc.draft, k)) el.setAttribute('aria-invalid', 'true');
   });
-
+  /* Actions de l'accueil : une réponse, étape précédente ou suivante, passer ; « Refaire l'accueil » des réglages */
+  Object.assign(ACTIONS, {
+    acc: function(b, v){
+      const k = b.dataset.key, o = {};
+      o[k] = k === 'deficit' || k === 'marge' ? Number(v) : v;
+      if (has(profileFields(o), k)) acc.draft[k] = o[k];
+      $('acc-err').textContent = '';
+      renderAcc();
+    },
+    'acc-back': function(){ accStep(acc.step - 1); },
+    'acc-next': function(){
+      if (!accCheck()) return;
+      if (acc.step < 3) accStep(acc.step + 1); else finishAcc();
+    },
+    'acc-skip': function(){ finishAcc(); },
+    accueil: function(){ openAcc(profileFields(prof)); $('acc-h1').focus(); }
+  });
   /* Recette choisie ou retirée depuis la page : le focus reste sur son bouton */
   let recFocus = null;
+  /* Un bouton touché : son action (ACTIONS, ajoutées par chaque écran) ; si elle renvoie un message, la page est redessinée */
   document.addEventListener('click', function(e){
     const b = e.target.closest('[data-action]');
     if (!b) return;
     const v = b.dataset.value;
-    let msg = '';
     /* Choix de plats : repères de la semaine avant, pour dire tout de suite si un choix fait dépasser une limite */
     const wb0 = /^(pd|prot|starch|repas-ok)$/.test(b.dataset.action) && b.closest('#page, #plan, #repas, #sheet') ? weekBal(selDate) : null;
     /* Boutons de l'assistant : seulement pendant l'assistant, à la bonne étape (choix des jours ou un jour) */
     if (/^pl-/.test(b.dataset.action) && (!planner || (['pl-preset', 'pl-start', 'pl-nrec', 'pl-batch'].indexOf(b.dataset.action) >= 0) !== (planner.i < 0))) return;
-    switch (b.dataset.action){
-      case 'acc': {
-        const k = b.dataset.key, o = {};
-        o[k] = k === 'deficit' || k === 'marge' ? Number(v) : v;
-        if (has(profileFields(o), k)) acc.draft[k] = o[k];
-        $('acc-err').textContent = '';
-        renderAcc();
-        return;
-      }
-      case 'acc-back': accStep(acc.step - 1); return;
-      case 'acc-next':
-        if (!accCheck()) return;
-        if (acc.step < 3) accStep(acc.step + 1); else finishAcc();
-        return;
-      case 'acc-skip': finishAcc(); return;
-      case 'accueil': openAcc(profileFields(prof)); $('acc-h1').focus(); return;
-      case 'add':
-        $('intro').textContent = '';
-        plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
-        plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances});
-        break;
-      case 'smoment': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].moment = v; plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); break;
-      case 'sduree': if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].duree = parseFloat(v); plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); break;
-      case 'rm': if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan({seances:plan.seances}); break;
-      case 'toggle':
-        if (b.dataset.key !== 'libre') return;
-        plan.libre = !plan.libre;
-        if (plan.libre) msg = clearOtherLibre();
-        savePlan({libre:plan.libre});
-        break;
-      case 'pd': if (has(PD, v)){ ch.pdBase = v; saveCh(); } break;
-      case 'prof': {
-        const o = {};
-        o[b.dataset.key] = v;
-        if (has(profileFields(o), b.dataset.key)){ prof[b.dataset.key] = v; saveProf(); }
-        break;
-      }
-      /* Réglages, « Tes aliments » : proposer ou non un aliment (au moins un gardé par type, sauf les desserts) */
-      case 'aliment': {
-        const kind = b.dataset.kind, key = kind + ':' + v, off = cleanProfile(prof).off;
-        if (!has(CHOICE_IDS, kind) || CHOICE_IDS[kind].indexOf(v) < 0) return;
-        const i = off.indexOf(key);
-        if (i >= 0) off.splice(i, 1);
-        else if (kind !== 'dessert' && allowed(kind, off).length <= 1){
-          $('alim-warn').textContent = 'Garde au moins ' + {pd:'une base pour le petit-déjeuner', prot:'une protéine', starch:'un féculent'}[kind] + '.';
-          return;
-        } else off.push(key);
-        if (off.length) prof.off = off; else delete prof.off;
-        saveProf();
-        $('alim-warn').textContent = '';
-        renderAliments();
-        const again = $('alim-list').querySelector('[data-kind="' + kind + '"][data-value="' + v + '"]');
-        if (again) again.focus({preventScroll:true});
-        loadSel();
-        break;
-      }
-      case 'sem-day': if (!/^[0-6]$/.test(v || '')) return; semSel = +v; renderSemaine(); semFocus(b); return;
-      case 'sem-add': case 'sem-rm': case 'sem-smoment': case 'sem-sduree': case 'sem-lib': {
-        const w = semOf(), list = (w.jours[semSel] || []).map(function(x){ return Object.assign({}, x); }), i = +b.dataset.index, act = b.dataset.action;
-        if (act === 'sem-add'){ if (!has(SIZES, v) || addDisabled(v, list)) return; list.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2}); }
-        else if (act === 'sem-rm'){ if (!list[i]) return; list.splice(i, 1); }
-        else if (act === 'sem-smoment'){ if (!list[i] || !has(MOMENT_RANK, v)) return; list[i].moment = v; }
-        else if (act === 'sem-sduree'){ if (!list[i]) return; list[i].duree = parseFloat(v); }
-        else { if (!/^[0-6]$/.test(v || '')) return; w.libre = +v; }
-        w.jours[semSel] = list;
-        saveWeek(w);
-        renderSemaine();
-        semFocus(b);
-        loadSel(); prevQty = new Map();
-        break;
-      }
-      case 'open-pick': openPick(b.dataset.kind, b.dataset.slot || null, b.dataset.ctx || 'page', b); return;
-      case 'repas': openRepas(b); return;
-      /* Calendrier : un jour, la semaine d'avant ou d'après (même jour de la semaine, ou aujourd'hui), retour à aujourd'hui */
-      case 'day': {
-        const d = fromIso(v);
-        if (!d || dayDiff(d) < -21 || dayDiff(d) > 365) return;
-        selDate = d; loadSel(); prevQty = new Map();
-        break;
-      }
-      case 'week': {
-        let d = addDays(selDate, 7 * (parseInt(v, 10) < 0 ? -1 : 1));
-        if (weekOf(d).some(function(x){ return dayDiff(x) === 0; })) d = today;
-        if (dayDiff(d) < -21 || dayDiff(d) > 365) return;
-        selDate = d; loadSel(); prevQty = new Map();
-        break;
-      }
-      case 'today': selDate = today; loadSel(); prevQty = new Map(); $('title').focus(); break;
-      /* Planifier : jours, étapes, hasard pour ce jour ou pour tous les jours restants */
-      case 'plan':
-        planner = {i:-1, from:isoDate(today), to:isoDate(addDays(today, 6)), back:selDate, msg:'', n:4};
-        renderPlan();
-        openScreen('plan', b);
-        return;
-      case 'pl-preset': {
-        const r = presetRange(v);
-        planner.from = isoDate(r[0]); planner.to = isoDate(r[1]);
-        renderPlan();
-        return;
-      }
-      case 'pl-start': if (!fillRange('plan', planner, 0, true)) planGo(0); return;
-      /* Batch cooking : nombre de recettes, puis tous les plats de la période tirés d'un coup, et les courses */
-      case 'pl-nrec':
-        if (BATCH_N.indexOf(+v) < 0) return;
-        planner.n = +v; renderPlan();
-        $('plan-body').querySelector('[data-action="pl-nrec"][data-value="' + v + '"]').focus({preventScroll:true});
-        return;
-      case 'pl-batch': {
-        if (fillRange('plan', planner, 0, true)) return;
-        const isos = rangeDays(planner.from, planner.to), pr = cleanProfile(prof);
-        const cs = batchChoices(isos.map(function(iso){ return {libre:planFor(iso).libre}; }), planner.n, pr.off, scaleOf(pr));
-        isos.forEach(function(iso, j){
-          const js = fromIso(iso).getDay(), c = cleanCh(cs[j], js);
-          writeDay(iso, {ch:c});
-          store.choices[js] = c;
-        });
-        persist();
-        finishPlan();
-        return;
-      }
-      case 'pl-prev': planGo(planner.i - 1); return;
-      case 'pl-next':
-        if (planner.i < rangeDays(planner.from, planner.to).length - 1) planGo(planner.i + 1); else finishPlan();
-        return;
-      case 'pl-hasard':
-        ch = cleanCh(drawFor(selIso()), sel); saveCh();
-        planner.msg = 'Plats tirés au hasard' + NB + ': touche un plat pour le changer.';
-        break;
-      case 'pl-hasard-tous':
-        rangeDays(planner.from, planner.to).slice(planner.i).forEach(function(iso){
-          const js = fromIso(iso).getDay(), c = cleanCh(drawFor(iso), js);
-          writeDay(iso, {ch:c});
-          store.choices[js] = c;
-        });
-        persist();
-        finishPlan();
-        return;
-      /* Courses : cocher une ligne, tout décocher, ouvrir un jour */
-      case 'courses': renderCourses(false); openScreen('courses', b); return;
-      case 'co-check': {
-        const k = shop.checked.indexOf(v);
-        if (k >= 0) shop.checked.splice(k, 1); else shop.checked.push(v);
-        saveShop();
-        b.setAttribute('aria-checked', String(k < 0));
-        return;
-      }
-      case 'co-uncheck': shop.checked = []; saveShop(); renderCourses(true); return;
-      case 'co-day': {
-        const d = fromIso(v);
-        if (!d) return;
-        closeAllScreens();
-        selDate = d; loadSel(); prevQty = new Map();
-        render();
-        scroller().scrollTop = 0;
-        $('title').focus({preventScroll:true});
-        return;
-      }
-      case 'installer':
-        if (installEvt){ installEvt.prompt(); installEvt = null; }
-        $('install').hidden = true;
-        return;
-      case 'rf': {
-        const slot = b.dataset.slot, kind = b.dataset.kind;
-        if (!draft) return;
-        if (kind === 'pd' && has(PD, v)) draft.pdBase = v;
-        else if (kind === 'prot' && has(PROT, v)) draft[slot].prot = v;
-        else if (kind === 'starch' && has(STARCH, v)) draft[slot].starch = v;
-        else if (kind === 'dessert' && has(DESSERT, v)) draft[slot].dessert = v;
-        else return;
-        dropRecipes(draft);
-        renderRepas();
-        if (pick && b.closest('#sheet')) closePick(false);
-        return;
-      }
-      case 'repas-ok': if (!draft) return; applyRepas(draft); break;
-      case 'repas-hasard':
-        if (!draft) return;
-        applyRepas(drawFor(selIso()));
-        msg = 'Repas tirés au hasard' + NB + ': touche un plat pour le changer.';
-        break;
-      case 'close-pick': closePick(false); return;
-      case 'needs': effShow(false); openScreen('reglages', b); return;
-      /* Réglages, « Effacer mes données » : demander, confirmer ou annuler */
-      case 'eff-ask': effShow(true); $('eff-no').focus({preventScroll:true}); return;
-      case 'eff-no': effShow(false); $('eff-btn').focus({preventScroll:true}); return;
-      case 'eff-ok': resetAll(); return;
-      case 'aide': openScreen('aide', b); return;
-      case 'fermer': closeScreen(false); return;
-      case 'prot': if (has(PROT, v)){ ch[b.dataset.slot].prot = v; dropRecipes(ch); saveCh(); } break;
-      case 'starch': if (has(STARCH, v)){ ch[b.dataset.slot].starch = v; dropRecipes(ch); saveCh(); } break;
-      /* Recette d'un repas : voir sa fiche, la choisir (celle proposée pour sa protéine et son féculent) ou la retirer */
-      case 'rec-view': if (!has(REPAS, b.dataset.slot)) return; openRecipe(b.dataset.slot, b); return;
-      case 'rec-on': {
-        const slot = b.dataset.slot, id = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch)[0] : null;
-        if (!id) return;
-        ch[slot].recette = id; saveCh();
-        recFocus = slot;
-        break;
-      }
-      case 'rec-off': if (!has(REPAS, b.dataset.slot)) return; delete ch[b.dataset.slot].recette; saveCh(); recFocus = b.dataset.slot; break;
-      case 'dessert': if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } break;
-      case 'reset':
-        delete store.plans[selIso()];
-        delete store.choices[sel];
-        loadSel();
-        if (plan.libre) msg = clearOtherLibre();
-        persist(); prevQty = new Map();
-        break;
-      default: return;
-    }
+    if (!has(ACTIONS, b.dataset.action)) return;
+    let msg = ACTIONS[b.dataset.action](b, v);
+    if (msg === undefined) return;
     if (wb0 && !msg) msg = crossMsg(wb0, weekBal(selDate));
     $('hint').textContent = msg;
     if (planner && (b.closest('#plan') || (b.closest('#sheet') && topScreen() === 'plan')) && b.dataset.action !== 'pl-hasard') planner.msg = msg;
@@ -3194,6 +3105,68 @@ if (typeof document !== 'undefined'){
     else if (recFocus && $('rec-c-' + recFocus)) $('rec-c-' + recFocus).focus({preventScroll:true});
     recFocus = null;
   });
+  /* Réglages : carte « Tes besoins » (renderNeeds, dessinée avec la page), « Tes aliments », « Ta semaine type », champs du
+     profil, « Effacer mes données ». */
+  const renderNeeds = function(res){
+    const pr = cleanProfile(prof), en = res.energy;
+    document.querySelectorAll('#besoins [data-action="prof"]').forEach(function(b){ b.setAttribute('aria-pressed', String(pr[b.dataset.key] === b.dataset.value)); });
+    $('besoins').querySelector('[data-key="repos"]').placeholder = String(Math.round(bmr(pr) * NEAT[pr.neat] / 10) * 10);
+    document.querySelectorAll('#besoins [data-mode]').forEach(function(el){ el.hidden = el.dataset.mode !== pr.mode; });
+    $('needs-sum').textContent = r10(en.rest) + NB + 'kcal un jour sans sport (' + (en.restSource === 'saisie' ? 'saisie' : 'automatique') + '), déficit de ' + pr.deficit + NB + '%';
+    $('mode-hint').textContent = pr.mode === 'manuel'
+      ? 'Tu indiques ta dépense d’un jour sans sport, l’appli ajoute le coût de chaque séance, calculé avec ton poids.'
+      : 'Ta dépense est calculée à partir de ton profil.';
+    let hint = '';
+    if (pr.mode === 'auto' && incomplete()) hint = 'Indique ton âge, ta taille et ton poids' + NB + ': en attendant, le calcul utilise les valeurs grisées.';
+    else if (pr.mode === 'manuel' && en.restSource !== 'saisie') hint = 'Indique ta dépense d’un jour sans sport' + NB + ': en attendant, le calcul automatique est utilisé (' + r10(en.rest) + NB + 'kcal).';
+    else if (pr.mode === 'manuel' && incomplete()) hint = 'Indique ton poids' + NB + ': il sert à calculer tes séances.';
+    $('needs-hint').textContent = hint;
+    $('calc-rest').textContent = en.restSource === 'saisie'
+      ? 'Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, celle que tu as saisie. Chaque séance s’y ajoute.'
+      : 'Métabolisme de base' + NB + ': ' + r10(en.bmr) + NB + 'kcal (formule de ' + (pr.gras !== null ? 'Cunningham, à partir de ta masse maigre' : 'Mifflin-St' + NB + 'Jeor') +
+        '). Dépense un jour de repos' + NB + ': ' + r10(en.rest) + NB + 'kcal, calculée. Chaque séance s’y ajoute.';
+    $('out-deficit').textContent = pr.deficit + NB + '%';
+    $('calc-deficit').textContent = pr.deficit > 0
+      ? pr.deficit + NB + '% de ta dépense d’un jour sans sport, soit ' + r10(en.deficit) + NB + 'kcal de moins chaque jour' + NB + ': environ −' +
+        en.kgWeek.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}) + NB + 'kg par semaine. Tes séances restent couvertes.'
+      : 'Pas de déficit' + NB + ': tu manges ce que tu dépenses.';
+    const warn = [];
+    if (pr.deficit > 20) warn.push('Au-delà de 20' + NB + '%, tu perds plus vite mais tu risques de perdre du muscle et de la forme à l’entraînement.');
+    if (pr.mode === 'auto' && pr.gras !== null){
+      const ea = (en.rest - en.deficit) / (pr.poids * (1 - pr.gras / 100));
+      if (ea < 30) warn.push('Il te reste environ ' + Math.round(ea) + NB + 'kcal par kilo de masse maigre une fois tes séances payées, sous le seuil de 30' + NB + ': baisse le déficit.');
+    }
+    $('warn-deficit').textContent = warn.join(' ');
+    const dec = function(n){ return n.toLocaleString('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1}); };
+    $('out-prot').textContent = dec(pr.prot) + NB + 'g/kg';
+    /* Poids de calcul borné comme les portions (47 à 101 kg environ) */
+    const protKg = res.prot.target / pr.prot;
+    $('calc-prot').textContent = 'Environ ' + Math.round(res.prot.target) + NB + 'g par jour (' + dec(pr.prot) + ' × ' + dec(protKg) + NB + 'kg), à 10' + NB + '% près' + NB + ': de ' +
+      Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g.' +
+      (pr.poids > protKg + 0.05 ? ' Au-delà de ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
+      (pr.poids < protKg - 0.05 ? ' Sous ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
+      ' Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g' +
+      (res.libre ? ' hors repas libre.' : '.') +
+      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
+      ' Repère en sèche' + NB + ': 1,6 à 2,2' + NB + 'g/kg, 2,0 par défaut.';
+    $('out-ravito').textContent = pr.ravito + NB + 'g/h';
+    $('out-marge').textContent = pr.marge + NB + 'kcal';
+    [['kcalPetite', {taille:'petite'}], ['kcalMoyenne', {taille:'moyenne'}], ['kcalLongueH', {taille:'longue', duree:1}]].forEach(function(x){
+      $('besoins').querySelector('[data-key="' + x[0] + '"]').placeholder = String(Math.round(seanceCost(x[1], Object.assign({}, pr, {kcalPetite:null, kcalMoyenne:null, kcalLongueH:null})) / 10) * 10);
+    });
+    $('calc-seances').textContent = 'Calories en plus de ta journée pour chaque séance. Par défaut, d’après ton poids' + NB + ': petite ' +
+      r10(SIZES.petite.net * pr.poids) + NB + 'kcal (1' + NB + 'h de muscu), moyenne ' + r10(SIZES.moyenne.net * pr.poids) + NB + 'kcal (≈ 7' + NB + 'km de course), longue ' +
+      r10(SIZES.longue.net * pr.poids) + NB + 'kcal par heure. Tu peux mettre les tiennes, par exemple les calories actives de ta montre pour cette séance.';
+    const sm = shakerMac(pr), withShaker = pr.shaker === 'oui';
+    $('shaker-dose').hidden = !withShaker;
+    $('calc-shaker').textContent = withShaker
+      ? 'Tous les jours, juste après ta dernière séance (l’après-midi les jours de repos). Une dose à l’eau' + NB + ': ' +
+        pr.shakerKcal + NB + 'kcal, ' + Math.round(sm.p) + NB + 'g de protéines, environ ' + Math.round(sm.c) + NB + 'g de glucides et ' + Math.round(sm.f) + NB + 'g de lipides.'
+      : 'Pas de shaker' + NB + ': si tes protéines passent sous ' + Math.round(res.prot.floor) + NB + 'g, un skyr s’ajoute le soir.';
+    $('warn-shaker').textContent = withShaker && pr.shakerProt > sm.p
+      ? 'Avec ' + pr.shakerKcal + NB + 'kcal, une dose ne peut pas dépasser ' + Math.round(sm.p) + NB + 'g de protéines' + NB + ': le calcul en compte ' + Math.round(sm.p) + NB + 'g.'
+      : '';
+  };
 
   /* Réglages, « Tes aliments » : tous les choix, proposés (encre) ou non (barrés) */
   const renderAliments = function(){
@@ -3309,7 +3282,56 @@ if (typeof document !== 'undefined'){
     openAcc({});
     $('acc-h1').focus();
   };
-
+  const semAction = function(b, v){
+    const w = semOf(), list = (w.jours[semSel] || []).map(function(x){ return Object.assign({}, x); }), i = +b.dataset.index, act = b.dataset.action;
+    if (act === 'sem-add'){ if (!has(SIZES, v) || addDisabled(v, list)) return; list.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2}); }
+    else if (act === 'sem-rm'){ if (!list[i]) return; list.splice(i, 1); }
+    else if (act === 'sem-smoment'){ if (!list[i] || !has(MOMENT_RANK, v)) return; list[i].moment = v; }
+    else if (act === 'sem-sduree'){ if (!list[i]) return; list[i].duree = parseFloat(v); }
+    else { if (!/^[0-6]$/.test(v || '')) return; w.libre = +v; }
+    w.jours[semSel] = list;
+    saveWeek(w);
+    renderSemaine();
+    semFocus(b);
+    loadSel(); prevQty = new Map();
+    return '';
+  };
+  /* Actions des réglages : profil, aliments proposés, semaine type, effacer mes données */
+  Object.assign(ACTIONS, {
+    needs: function(b){ effShow(false); openScreen('reglages', b); },
+    prof: function(b, v){
+      const o = {};
+      o[b.dataset.key] = v;
+      if (has(profileFields(o), b.dataset.key)){ prof[b.dataset.key] = v; saveProf(); }
+      return '';
+    },
+    /* « Tes aliments » : proposer ou non un aliment (au moins un gardé par type, sauf les desserts) */
+    aliment: function(b, v){
+      const kind = b.dataset.kind, key = kind + ':' + v, off = cleanProfile(prof).off;
+      if (!has(CHOICE_IDS, kind) || CHOICE_IDS[kind].indexOf(v) < 0) return;
+      const i = off.indexOf(key);
+      if (i >= 0) off.splice(i, 1);
+      else if (kind !== 'dessert' && allowed(kind, off).length <= 1){
+        $('alim-warn').textContent = 'Garde au moins ' + {pd:'une base pour le petit-déjeuner', prot:'une protéine', starch:'un féculent'}[kind] + '.';
+        return;
+      } else off.push(key);
+      if (off.length) prof.off = off; else delete prof.off;
+      saveProf();
+      $('alim-warn').textContent = '';
+      renderAliments();
+      const again = $('alim-list').querySelector('[data-kind="' + kind + '"][data-value="' + v + '"]');
+      if (again) again.focus({preventScroll:true});
+      loadSel();
+      return '';
+    },
+    /* « Ta semaine type » : un jour, ses séances, le soir du repas libre */
+    'sem-day': function(b, v){ if (!/^[0-6]$/.test(v || '')) return; semSel = +v; renderSemaine(); semFocus(b); },
+    'sem-add': semAction, 'sem-rm': semAction, 'sem-smoment': semAction, 'sem-sduree': semAction, 'sem-lib': semAction,
+    /* « Effacer mes données » : demander, confirmer ou annuler */
+    'eff-ask': function(){ effShow(true); $('eff-no').focus({preventScroll:true}); },
+    'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); },
+    'eff-ok': function(){ resetAll(); }
+  });
   /* Si la page reste ouverte d'un jour à l'autre, revenir sur le nouveau jour */
   const refreshToday = function(){
     const n = noon();
@@ -3353,6 +3375,12 @@ if (typeof document !== 'undefined'){
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
     window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
   }
+  Object.assign(ACTIONS, {
+    installer: function(){
+      if (installEvt){ installEvt.prompt(); installEvt = null; }
+      $('install').hidden = true;
+    }
+  });
 }
 </script>
 </body>
