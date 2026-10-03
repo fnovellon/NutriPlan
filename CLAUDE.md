@@ -1,7 +1,5 @@
 # Repas du jour
 
-# Repas du jour
-
 Appli web d'une seule page, pensée pour une sèche et partagée avec des amis : au premier lancement, un accueil demande le profil et l'objectif ; ensuite on indique les séances du jour et elle affiche tous les repas de la journée avec les quantités. Un calendrier permet de prévoir plusieurs jours et d'en tirer la liste de courses. Utilisée surtout sur téléphone. Interface en français, tutoiement.
 
 ## Comment travailler ici
