@@ -86,19 +86,19 @@
     $('sheet-t').textContent = 'Remplacer «' + NB + RECIPES[id].t + NB + '»';
     $('sheet-rec').hidden = true;
     $('sheet-list').hidden = false;
-    $('sheet-list').classList.add('swap');
+    $('sheet-list').className = 'opts-list swap';
     $('sheet-list').innerHTML = opt('*', 'Une autre au hasard', 'parmi celles qui vont avec ta semaine') +
       (same.length ? '<p class="rf-l">Avec la même protéine</p>' + list(same) : '') +
       (other.length ? '<p class="rf-l">' + (same.length ? 'Avec une autre protéine' : 'Recettes possibles') + '</p>' + list(other) : '');
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
     $('sheet').querySelector('.panel').scrollTop = 0;
-    $(pick.view).setAttribute('inert', '');
+    setInert(pick.view, true);
     document.documentElement.style.overflow = 'hidden';
     $('sheet-list').querySelector('.opt').focus({preventScroll:true});
   };
   Object.assign(ACTIONS, {
-    courses: function(b){ renderCourses(false); openScreen('courses', b); },
+    courses: function(b){ if (topScreen() === 'courses') return; renderCourses(false); navTo('courses', b); },
     'co-check': function(b, v){
       const k = shop.checked.indexOf(v);
       if (k >= 0) shop.checked.splice(k, 1); else shop.checked.push(v);

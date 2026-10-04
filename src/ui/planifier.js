@@ -74,9 +74,10 @@
      pendant l'assistant, à la bonne étape (voir ui/actions.js) */
   Object.assign(ACTIONS, {
     plan: function(b){
+      if (topScreen() === 'plan') return;
       planner = {i:-1, from:isoDate(today), to:isoDate(addDays(today, 6)), back:selDate, msg:'', n:4};
       renderPlan();
-      openScreen('plan', b);
+      navTo('plan', b);
     },
     'pl-preset': function(b, v){
       const r = presetRange(v);

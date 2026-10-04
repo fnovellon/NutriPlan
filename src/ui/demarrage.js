@@ -3,7 +3,7 @@
     const n = noon();
     if (isoDate(n) === isoDate(today)) return;
     today = n; todayJs = n.getDay(); selDate = today;
-    purge(); loadSel(); prevQty = new Map();
+    purge(); loadSel(); prevQty = new Map(); fsel = null;
     $('hint').textContent = '';
     if (topScreen() === 'repas') startDraft();
     render();

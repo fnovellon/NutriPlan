@@ -76,7 +76,7 @@ function composeDay(plan, ch, pr, pf){
   /* Un bandeau par séance, à son moment */
   const bands = function(list){
     list.forEach(function(x){
-      const b = {band:true, id:'band' + (nb++), title:SIZES[x.taille].band, sub:null, items:[]};
+      const b = {band:true, id:'band' + (nb++), title:SIZES[x.taille].band, moment:x.moment, kcal:seanceCost(x, pr), sub:null, items:[]};
       if (x.taille === 'longue'){ b.sub = 'Vélo ou course, ' + dureeLabel(x.duree) + '.'; b.items = [fuel(x.duree, pr.ravito)]; }
       secs.push(b);
     });

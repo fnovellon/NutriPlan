@@ -171,7 +171,7 @@
   /* Actions des réglages : onglets, profil, aliments proposés, effacer mes données (semaine type : ui/semtype.js).
      needs : la roue dentée (le dernier onglet) ou « Régler » de la note du total (l'onglet de ce qu'elle propose) */
   Object.assign(ACTIONS, {
-    needs: function(b, v){ effShow(false); showTab(TABS.indexOf(v) >= 0 ? v : reglTab); openScreen('reglages', b); },
+    needs: function(b, v){ effShow(false); showTab(TABS.indexOf(v) >= 0 ? v : reglTab); navTo('reglages', b); },
     tab: function(b, v){ showTab(v); },
     prof: function(b, v){
       const o = {};

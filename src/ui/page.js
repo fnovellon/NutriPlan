@@ -1,4 +1,5 @@
-  /* Page du jour : choix des plats en bulles, lignes des repas, recettes, séances, total et note, dessin de la page (render). */
+  /* Page du jour : choix des plats en bulles, lignes des repas, recettes, séances en pastilles, frise et carte du repas
+     affiché, total et note, dessin de la page (render). */
   /* Choix des plats : seule la sélection est affichée, dans une bulle ; la toucher ouvre le panneau des choix */
   const REPAS = {dej:'du déjeuner', diner:'du dîner'};
   /* Choix possibles d'une rangée ; src : les choix affichés (ceux du jour, ou le brouillon du formulaire des repas) */
@@ -17,15 +18,18 @@
     return {label:LABEL[kind], title:kind === 'pd' ? 'Base du petit-déjeuner' : LABEL[kind] + ' ' + REPAS[slot], action:kind, current:cur, opts:opts};
   };
   const CHEVRON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-  /* Une ligne de choix : le libellé, la sélection dans une bulle ; la toucher ouvre le panneau des choix.
+  /* Un choix : la sélection dans une bulle (les bulles d'un repas côte à côte, 3.20.0 ; le libellé n'est lu que par le
+     lecteur d'écran) ; la toucher ouvre le panneau des choix.
      ctx : page (choix du jour affiché), repas (brouillon du formulaire), plan (assistant, choix enregistrés tout de suite) */
   const PFX = {page:'', repas:'r', plan:'p'};
   const selRow = function(kind, slot, src, ctx){
     const P = pickDef(kind, slot, src), id = PFX[ctx] + kind + (slot ? '-' + slot : '');
     const cur = P.opts.find(function(o){ return o[0] === P.current; });
-    return '<div class="pick"><span class="pick-l" id="l-' + id + '">' + P.label + '</span>' +
-      '<button type="button" class="sel" id="sel-' + id + '" data-action="open-pick" data-ctx="' + ctx + '" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +
-      ' data-value="' + P.current + '" aria-haspopup="dialog" aria-labelledby="l-' + id + ' sel-' + id + '"><span>' + cur[1] + '</span>' + CHEVRON + '</button></div>';
+    /* Sans dessert : une bulle en contour, « + Dessert » */
+    const none = kind === 'dessert' && P.current === 'aucun';
+    return '<div class="pick"><span class="pick-l sr" id="l-' + id + '">' + P.label + '</span>' +
+      '<button type="button" class="sel' + (none ? ' empty' : '') + '" id="sel-' + id + '" data-action="open-pick" data-ctx="' + ctx + '" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +
+      ' data-value="' + P.current + '" aria-haspopup="dialog"' + (none ? ' aria-label="Dessert' + NB + ': aucun"><span>+' + NB + 'Dessert</span>' : ' aria-labelledby="l-' + id + ' sel-' + id + '"><span>' + cur[1] + '</span>' + CHEVRON) + '</button></div>';
   };
   const pickRow = function(kind, slot){ return selRow(kind, slot, ch, 'page'); };
   /* Calories et macros d'un aliment, en petit sous son nom */
@@ -64,20 +68,77 @@
     const x = RECIPES[s.recipe];
     return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' + recBtns(s, true) + '</div>';
   };
+  /* Une carte par repas et par séance, toutes dessinées, une seule visible (celle choisie dans la frise, 3.20.0) */
+  const WHEN = {matin:'le matin', midi:'à midi', soir:'le soir'};
+  const panelAttrs = function(s){ return ' id="sec-' + s.id + '" role="tabpanel" aria-labelledby="h-' + s.id + '"' + (s.id === fsel ? '' : ' hidden'); };
   const mealHTML = function(s, next){
     let picks = '';
     if (s.pick === 'pd') picks = '<div class="picks">' + pickRow('pd', null) + '</div>';
     else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) + '</div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
     const card = s.recipe && !s.libre, shown = card ? s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) >= 0; }) : s.items;
-    return '<section class="meal" aria-labelledby="h-' + s.id + '"><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
-      (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2>' + kc + '</div>' + picks + (card ? recCardHTML(s) : '') +
+    /* Repas libre : un interrupteur dans la carte du dîner (et dans celle du repas libre, qui le remplace) */
+    const lib = s.id === 'diner' ? '<button type="button" class="switch" role="switch" id="sw-lib" aria-checked="' + !!s.libre + '" data-action="toggle" data-key="libre">' +
+      '<span>Repas libre ' + (dayDiff(selDate) === 0 ? 'ce soir' : 'le soir') + '</span><span class="knob" aria-hidden="true"></span></button>' : '';
+    return '<section class="meal"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
+      (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2>' + kc + '</div>' + lib + picks + (card ? recCardHTML(s) : '') +
       (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) + '</section>';
   };
   const bandHTML = function(s, next){
-    return '<div class="band"><p class="band-t">' + s.title + '</p>' + (s.sub ? '<p class="band-s">' + s.sub + '</p>' : '') +
-      (s.items.length ? '<ul class="items">' + s.items.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + '</div>';
+    return '<section class="band"' + panelAttrs(s) + '><h2 class="band-t" id="h-' + s.id + '">' + s.title + '<span class="when">' + WHEN[s.moment] + '</span></h2>' +
+      (s.sub ? '<p class="band-s">' + s.sub + '</p>' : '') +
+      '<p class="band-s">Environ ' + r10(s.kcal) + NB + 'kcal dépensées, comptées dans ta journée.</p>' +
+      (s.items.length ? '<ul class="items">' + s.items.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + '</section>';
   };
+  /* Frise (3.20.0) : un point et un nom court par repas, un repère betterave par séance (son nom au survol ou au focus) ;
+     la toucher affiche la carte. Repas affiché à l'ouverture : celui du moment aujourd'hui (selon l'heure), le
+     petit-déjeuner un autre jour ; il reste en changeant de jour tant qu'il existe. */
+  let fsel = null;
+  const SEC_SHORT = {pd:'Petit-déj', sw:'Avant', dej:'Déjeuner', shk:'Shaker', diner:'Dîner', soir:'Soir'};
+  const SEC_TINY = {pd:'P.-déj', sw:'Avant', dej:'Déj.', co:'Coll.', shk:'Shaker', diner:'Dîner', soir:'Soir'};
+  const autoSec = function(){
+    if (dayDiff(selDate) !== 0) return 'pd';
+    const h = new Date().getHours();
+    return h < 10 ? 'pd' : h < 14 ? 'dej' : h < 18 ? 'co' : 'diner';
+  };
+  const friseHTML = function(secs){
+    return secs.map(function(s, i){
+      const on = s.id === fsel, a = ' role="tab" id="ft-' + s.id + '" data-action="frise" data-value="' + s.id + '" aria-controls="sec-' + s.id + '"' +
+        ' aria-selected="' + on + '" tabindex="' + (on ? '0' : '-1') + '"';
+      if (s.band){
+        const tip = s.title + ', ' + WHEN[s.moment];
+        return '<button type="button" class="f-s' + (i < secs.length / 2 ? '' : ' tip-r') + '"' + a + ' aria-label="' + tip + '"><span class="tip" aria-hidden="true">' + tip + '</span></button>';
+      }
+      const tiny = s.libre ? 'Libre' : s.title === 'Goûter' ? 'Goûter' : SEC_TINY[s.id];
+      return '<button type="button" class="f-m"' + a + ' aria-label="' + s.title + '"><span class="f-d" aria-hidden="true"></span><span class="f-l" aria-hidden="true">' + (s.libre ? 'Repas libre' : SEC_SHORT[s.id] || s.title) + '</span>' +
+        '<span class="f-l f-t" aria-hidden="true">' + tiny + '</span></button>';
+    }).join('');
+  };
+  /* Les noms complets ne tiennent pas (beaucoup de repas et de séances, petit écran) : les noms courts (« Déj. », « Coll. ») */
+  const fitFrise = function(){
+    const f = $('frise');
+    f.classList.remove('tiny');
+    if (f.scrollWidth > f.clientWidth + 1) f.classList.add('tiny');
+  };
+  window.addEventListener('resize', fitFrise);
+  try { document.fonts.ready.then(fitFrise); } catch (e) {}
+  const showSec = function(id, focus){
+    fsel = id;
+    $('frise').querySelectorAll('[role="tab"]').forEach(function(t){
+      const on = t.dataset.value === id;
+      t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus();
+    });
+    $('day').querySelectorAll('[role="tabpanel"]').forEach(function(x){ x.hidden = x.id !== 'sec-' + id; });
+  };
+  /* Flèches gauche et droite (en boucle), début et fin : repère voisin, premier, dernier */
+  $('frise').addEventListener('keydown', function(e){
+    const tabs = [...$('frise').querySelectorAll('[role="tab"]')], i = tabs.findIndex(function(t){ return t.dataset.value === fsel; });
+    const j = {ArrowRight:i + 1, ArrowLeft:i - 1, Home:0, End:tabs.length - 1}[e.key];
+    if (j === undefined || i < 0) return;
+    e.preventDefault();
+    showSec(tabs[(j + tabs.length) % tabs.length].dataset.value, true);
+  });
 
   /* Séances du jour affiché : une ligne par séance (moment ou durée, bouton pour la retirer), boutons d'ajout */
   const sessHTML = function(list, pre){
@@ -96,12 +157,62 @@
     }).join('') : '<p class="rest-t">Repos, pas de séance.</p>';
   };
   const addDisabled = function(taille, list){ const l = list || plan.seances; return l.length >= MAX_SEANCES || (taille === 'longue' && l.some(function(x){ return x.taille === 'longue'; })); };
+  /* Séances de la page (3.20.0) : une pastille par séance, dans l'ordre de la journée (« Petite, midi », « Longue, 2h30 ») ;
+     la toucher ouvre le panneau pour changer son moment (ou sa durée) ou la retirer ; « + Séance » ouvre le panneau d'ajout */
+  const sessChips = function(){
+    const l = plan.seances, order = l.map(function(x, i){ return i; }).sort(function(a, b){ return MOMENT_RANK[l[a].moment] - MOMENT_RANK[l[b].moment] || a - b; });
+    return (l.length ? order.map(function(i){
+      const x = l[i], long = x.taille === 'longue';
+      return '<button type="button" class="chip" id="sess-' + i + '" data-action="sess" data-index="' + i + '" aria-haspopup="dialog"' +
+        ' aria-label="' + SIZES[x.taille].band + ', ' + (long ? dureeLabel(x.duree) + ', le matin' : WHEN[x.moment]) + '">' + cap(x.taille) + ', ' + (long ? dureeLabel(x.duree) : x.moment) + '</button>';
+    }).join('') : '<span class="rest-t">Repos, pas de séance</span>') +
+      '<button type="button" class="chip add" id="sess-add" data-action="sess-add" aria-haspopup="dialog"' + (addDisabled('petite') ? ' disabled' : '') + '>+' + NB + 'Séance</button>';
+  };
+  /* Panneau des séances (même panneau que les choix de plats) : ajouter en un toucher (taille et moment, ou durée de la
+     sortie longue), ou changer une séance (moment ou durée) et la retirer ; le panneau se ferme après le choix */
+  const SESS_ADD = [['petite', 'muscu, footing court'], ['moyenne', 'sortie ≈' + NB + '7' + NB + 'km'], ['longue', '1h30 et plus, le matin']];
+  const openSess = function(i, trigger){
+    const x = i === null ? null : plan.seances[i];
+    if (i !== null && !x) return;
+    const opt = function(attrs, label, aria, pressed, dis){
+      return '<button type="button" class="opt"' + attrs + ' aria-label="' + aria + '"' + (pressed === null ? '' : ' aria-pressed="' + pressed + '"') + (dis ? ' disabled' : '') + '>' + label + '</button>';
+    };
+    const row = function(id, title, sub, opts){ return '<div class="ss-row"><p class="ss-t" id="ss-' + id + '">' + title + (sub ? '<span class="ss-s">' + sub + '</span>' : '') + '</p><div class="opts-list" role="group" aria-labelledby="ss-' + id + '">' + opts + '</div></div>'; };
+    let html;
+    if (!x){
+      html = SESS_ADD.map(function(t){
+        const dis = addDisabled(t[0]), name = SIZES[t[0]].band;
+        return row(t[0], name, t[1], t[0] === 'longue'
+          ? DUREES.map(function(d){ return opt(' data-action="add" data-value="longue" data-duree="' + d[0] + '"', d[1], name + ', ' + d[1], null, dis); }).join('')
+          : MOMENTS.map(function(m){ return opt(' data-action="add" data-value="' + t[0] + '" data-moment="' + m[0] + '"', m[1], name + ', ' + WHEN[m[0]], null, dis); }).join(''));
+      }).join('');
+    } else {
+      const long = x.taille === 'longue';
+      html = row('m', long ? 'Durée' : 'Moment', long ? 'toujours le matin' : null, long
+        ? DUREES.map(function(d){ return opt(' data-action="sduree" data-index="' + i + '" data-value="' + d[0] + '"', d[1], d[1], d[0] === x.duree, false); }).join('')
+        : MOMENTS.map(function(m){ return opt(' data-action="smoment" data-index="' + i + '" data-value="' + m[0] + '"', m[1], m[1], m[0] === x.moment, false); }).join('')) +
+        '<button type="button" class="reset danger ss-rm" data-action="rm" data-index="' + i + '">Retirer cette séance</button>';
+    }
+    /* Après l'ajout d'une 4e séance, « + Séance » est désactivé : le focus va sur la nouvelle */
+    pick = {kind:'seance', slot:null, trigger:trigger && trigger.id ? trigger.id : null, back:x ? 'sess-add' : 'sess-' + plan.seances.length, view:'page'};
+    $('sheet-t').textContent = x ? SIZES[x.taille].band + ', ' + (x.taille === 'longue' ? 'le matin' : WHEN[x.moment]) : 'Ajouter une séance';
+    $('sheet-list').className = 'opts-list sess-sheet';
+    $('sheet-list').hidden = false;
+    $('sheet-rec').hidden = true;
+    $('sheet-list').innerHTML = html;
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    setInert('page', true);
+    document.documentElement.style.overflow = 'hidden';
+    const first = $('sheet-list').querySelector('[aria-pressed="true"]') || $('sheet-list').querySelector('button:not([disabled])');
+    if (first) first.focus({preventScroll:true});
+  };
   const renderControls = function(){
     /* Jour affiché : « Aujourd'hui, jeudi 1er octobre », « Demain, … », sinon « Jeudi 8 octobre » */
     const diff = dayDiff(selDate), rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
     $('date').textContent = rel ? rel + ', ' + dayLabel(selDate) : cap(dayLabel(selDate));
     $('title').textContent = (diff === 0 ? 'Qu’est-ce que tu fais aujourd’hui' : diff < 0 ? 'Qu’est-ce que tu as fait ' + dayRel(selDate) : 'Qu’est-ce que tu prévois ' + dayRel(selDate)) + NB + '?';
-    $('sw-lib-t').textContent = diff === 0 ? 'Repas libre ce soir' : 'Repas libre le soir';
     $('today-btn').hidden = diff === 0;
     /* Bandeau de la semaine du jour affiché : un point sous les jours déjà planifiés */
     const wk = weekOf(selDate), short = function(d){ return d.toLocaleDateString('fr-FR', {month:'short'}); };
@@ -115,9 +226,7 @@
         ' class="' + (isToday ? 'is-today' : '') + (planned ? ' is-planned' : '') + '"' + (dayDiff(d) < -21 ? ' disabled' : '') + '>' +
         '<span class="wd">' + d.toLocaleDateString('fr-FR', {weekday:'short'}) + '</span><span class="dn">' + d.getDate() + '</span></button>';
     }).join('');
-    $('sess').innerHTML = sessHTML();
-    $('acts').querySelectorAll('button').forEach(function(b){ b.disabled = addDisabled(b.dataset.value); });
-    $('sw-lib').setAttribute('aria-checked', String(plan.libre));
+    $('sess').innerHTML = sessChips();
   };
   const r10 = function(n){ return fmtInt(Math.round(n / 10) * 10); };
   const incomplete = function(){
@@ -167,21 +276,31 @@
     renderNeeds(res);
     renderWeek();
     const next = new Map();
+    if (!res.secs.some(function(s){ return s.id === fsel; })) fsel = autoSec();
+    $('frise').innerHTML = friseHTML(res.secs);
+    fitFrise();
     $('day').innerHTML = res.secs.map(function(s){ return s.band ? bandHTML(s, next) : mealHTML(s, next); }).join('');
     prevQty = next;
     if (planner && planner.i >= 0 && topScreen() === 'plan') renderPlan();
   };
   /* Actions de la page du jour : séances, repas libre, plats, recettes, calendrier, plan de base */
   Object.assign(ACTIONS, {
+    /* Une séance ajoutée : moment (data-moment) ou durée (data-duree) du panneau d'ajout, sinon le soir (longue : 2 h) */
     add: function(b, v){
+      if (!has(SIZES, v) || addDisabled(v)) return;
       $('intro').textContent = '';
-      plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : 'soir', duree:2});
+      const d = parseFloat(b.dataset.duree);
+      plan.seances.push({taille:v, moment:v === 'longue' ? 'matin' : has(MOMENT_RANK, b.dataset.moment) ? b.dataset.moment : 'soir', duree:DUREES.some(function(x){ return x[0] === d; }) ? d : 2});
       plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances});
       return '';
     },
     smoment: function(b, v){ if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].moment = v; plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); return ''; },
     sduree: function(b, v){ if (!plan.seances[+b.dataset.index]) return; plan.seances[+b.dataset.index].duree = parseFloat(v); plan.seances = cleanSeances(plan.seances); savePlan({seances:plan.seances}); return ''; },
     rm: function(b){ if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan({seances:plan.seances}); return ''; },
+    sess: function(b){ openSess(+b.dataset.index, b); },
+    'sess-add': function(b){ if (!addDisabled('petite')) openSess(null, b); },
+    /* Frise : la carte d'un repas ou d'une séance */
+    frise: function(b, v){ if ($('sec-' + v)) showSec(v, false); },
     toggle: function(b){
       if (b.dataset.key !== 'libre') return;
       let msg = '';

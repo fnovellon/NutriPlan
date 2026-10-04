@@ -15,6 +15,8 @@ const open = storage => openPage({ clock, storage, errors });
 const seen = () => { const x = new Date(clock.now); return { [RKEY]: x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0') }; };
 const num = s => Number(String(s).replace(/[^\d,-]/g, '').replace(',', '.'));
 const click = (dom, s) => { const e = dom.window.document.querySelector(s); if (!e) throw new Error('introuvable : ' + s); e.click(); };
+// Séance ajoutée par le panneau (3.20.0) : taille, puis moment (durée pour la longue)
+const addSess = (dom, size, how) => { click(dom, '#sess-add'); click(dom, '#sheet [data-action="add"][data-value="' + size + '"]' + (size === 'longue' ? '[data-duree="' + (how || 2) + '"]' : '[data-moment="' + (how || 'soir') + '"]')); };
 const type = (dom, s, v, change) => {
   const w = dom.window, e = w.document.querySelector(s);
   e.value = String(v);
@@ -70,12 +72,16 @@ function scan(dom, label){
 {
   // Page chargée : séances, repas libre, desserts, panneau de choix, réglages dans tous leurs états, aide
   const dom = open(Object.assign(seen(), { [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) }));
-  ['petite', 'moyenne', 'longue'].forEach(a => click(dom, '[data-action="add"][data-value="' + a + '"]'));
+  addSess(dom, 'petite', 'midi'); addSess(dom, 'moyenne'); addSess(dom, 'longue', 3);
   scan(dom, 'page, trois séances');
   dom.window.document.querySelector('#wk-bal').open = true; scan(dom, 'page, carte de la semaine ouverte');
-  C.ok(dom.window.document.querySelector('#acts [data-value="longue"]').disabled, '« + Longue » actif avec une sortie longue', '');
-  click(dom, '[data-action="add"][data-value="petite"]'); scan(dom, 'page, quatre séances');
-  C.ok([...dom.window.document.querySelectorAll('#acts button')].every(b => b.disabled), 'bouton d’ajout actif à 4 séances', '');
+  click(dom, '#sess-add'); scan(dom, 'panneau d’ajout d’une séance');
+  C.ok([...dom.window.document.querySelectorAll('#sheet [data-value="longue"]')].every(b => b.disabled), '« Sortie longue » active avec une sortie longue', '');
+  click(dom, '#sheet .sheet-x');
+  click(dom, '#sess-1'); scan(dom, 'panneau d’une séance'); click(dom, '#sheet .sheet-x');
+  [...dom.window.document.querySelectorAll('#frise [role="tab"]')].forEach(t => { t.click(); scan(dom, 'page, carte ' + t.dataset.value); });
+  addSess(dom, 'petite'); scan(dom, 'page, quatre séances');
+  C.ok(dom.window.document.querySelector('#sess-add').disabled, '« + Séance » actif à 4 séances', '');
   click(dom, '[data-action="toggle"][data-key="libre"]'); scan(dom, 'page, repas libre');
   click(dom, '[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]'); scan(dom, 'panneau de choix'); click(dom, '#sheet [data-value="chocolat"]');
   click(dom, '#open-repas'); scan(dom, 'formulaire des repas, repas libre');
@@ -204,10 +210,16 @@ function check(dom, log){
   });
   const leg = [...d.querySelectorAll('#legend b')].map(b => num(b.textContent));
   C.ok(leg.length === 3 && leg.every(x => x >= 0), 'légende des macros', () => leg.join() + ' : ' + where());
-  // Boutons d'ajout : désactivés à 4 séances, « + Longue » s'il y en a déjà une
-  const n = d.querySelectorAll('#sess .srow').length, hasLong = [...d.querySelectorAll('#sess .s-t')].some(e => /Sortie longue/.test(e.textContent));
-  d.querySelectorAll('#acts button').forEach(b => C.ok(b.disabled === (n >= 4 || (b.dataset.value === 'longue' && hasLong)), 'bouton d’ajout', () => b.dataset.value + ' ' + b.disabled + ' : ' + where()));
+  // « + Séance » désactivé à 4 séances ; une carte par séance
+  const n = d.querySelectorAll('#sess .chip[data-action="sess"]').length;
+  C.ok($('#sess-add').disabled === (n >= 4), '« + Séance »', where);
   C.ok(d.querySelectorAll('#day .band').length === n, 'un bandeau par séance', where);
+  // Frise (3.20.0) : un repère par carte, dans le même ordre, un seul choisi, sa carte seule visible
+  const tabs = [...d.querySelectorAll('#frise [role="tab"]')], panels = [...d.querySelectorAll('#day [role="tabpanel"]')];
+  const onTabs = tabs.filter(t => t.getAttribute('aria-selected') === 'true'), shown = panels.filter(x => !x.hidden);
+  C.ok(tabs.length === panels.length && tabs.every((t, i) => t.getAttribute('aria-controls') === panels[i].id), 'frise : un repère par carte', where);
+  C.ok(onTabs.length === 1 && shown.length === 1 && onTabs[0].getAttribute('aria-controls') === shown[0].id && onTabs[0].tabIndex === 0, 'frise : repère choisi ≠ carte affichée', where);
+  C.ok(d.querySelectorAll('#frise .f-s').length === n, 'frise : un repère par séance', where);
   // Jour dont les séances n'ont jamais été modifiées : celles de la semaine type (aucune sans elle)
   try {
     const iso = ($('#week [aria-pressed="true"]') || { dataset: {} }).dataset.value, st = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{}}');
@@ -256,9 +268,41 @@ function swapRecipe(dom){
 }
 let swaps = 0;
 const ACTIONS = {
-  add: dom => { const b = R.pick([...dom.window.document.querySelectorAll('#acts button')]); b.click(); return 'ajoute ' + b.dataset.value; },
-  moment: dom => { const b = R.pick([...dom.window.document.querySelectorAll('[data-action="smoment"],[data-action="sduree"]')]); if (!b) return 'moment -'; b.click(); return 'moment ' + b.dataset.value; },
-  rm: dom => { const b = R.pick([...dom.window.document.querySelectorAll('[data-action="rm"]')]); if (!b) return 'retire -'; b.click(); return 'retire'; },
+  // Séances (3.20.0) : « + Séance » puis une taille et un moment ; une pastille puis son moment, sa durée ou « Retirer »
+  add: dom => {
+    const d = dom.window.document;
+    if (d.querySelector('#page').hidden || d.querySelector('#sess-add').disabled) return 'ajoute -';
+    d.querySelector('#sess-add').click();
+    const b = R.pick([...d.querySelectorAll('#sheet [data-action="add"]:not(:disabled)')]);
+    b.click();
+    if (!d.querySelector('#sheet').hidden) throw new Error('panneau d’ajout resté ouvert');
+    return 'ajoute ' + b.dataset.value + ' ' + (b.dataset.moment || b.dataset.duree);
+  },
+  moment: dom => {
+    const d = dom.window.document, c = R.pick([...d.querySelectorAll('#sess .chip[data-action="sess"]')]);
+    if (!c || d.querySelector('#page').hidden) return 'moment -';
+    c.click();
+    const b = R.pick([...d.querySelectorAll('#sheet [data-action="smoment"], #sheet [data-action="sduree"]')]);
+    b.click();
+    if (!d.querySelector('#sheet').hidden) throw new Error('panneau d’une séance resté ouvert');
+    return 'moment ' + b.dataset.value;
+  },
+  rm: dom => {
+    const d = dom.window.document, c = R.pick([...d.querySelectorAll('#sess .chip[data-action="sess"]')]);
+    if (!c || d.querySelector('#page').hidden) return 'retire -';
+    c.click(); d.querySelector('#sheet [data-action="rm"]').click();
+    return 'retire';
+  },
+  // Frise : un repère au doigt ou au clavier (flèches, début, fin)
+  frise: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'frise -';
+    if (R.chance(.5)){ const t = R.pick([...d.querySelectorAll('#frise [role="tab"]')]); t.click(); return 'frise ' + t.dataset.value; }
+    const k = R.pick(['ArrowRight', 'ArrowLeft', 'Home', 'End']);
+    d.querySelector('#frise [aria-selected="true"]').focus(); d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown', { key: k, bubbles: true }));
+    C.ok(d.activeElement.getAttribute('aria-selected') === 'true', 'frise : focus pas sur le repère choisi', k);
+    return 'frise ' + k;
+  },
   libre: dom => { dom.window.document.querySelector('#sw-lib').click(); return 'repas libre'; },
   choose: dom => {
     const d = dom.window.document, b = R.pick([...d.querySelectorAll('#day .sel')]);
@@ -309,8 +353,15 @@ const ACTIONS = {
   },
   screens: dom => {
     const d = dom.window.document, w = dom.window;
-    const seq = R.pick([['#gear', '#reglages [data-action="fermer"]'], ['#help', '#aide [data-action="fermer"]'], ['#gear', '#help-regl', '#aide .btn.wide', '#reglages .btn.wide'], ['#gear', 'retour'], ['#help', 'retour']]);
+    // Menu (3.20.0) : un écran du menu remplace celui du dessus, « Journée » ou le retour ramènent à la page
+    const seq = R.pick([['#gear', '#reglages [data-action="fermer"]'], ['#help', '#aide [data-action="fermer"]'], ['#gear', '#help-regl', '#aide .btn.wide', '#reglages .btn.wide'], ['#gear', 'retour'], ['#help', 'retour'],
+      ['#gear', '#courses-btn', 'retour'], ['#help', '#gear', '#nav-jour'], ['#courses-btn', '#help', '#nav-jour'], ['#gear', '#help-regl', '#gear', 'retour']]);
     seq.forEach(s => { if (s === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null })); else { const e = d.querySelector(s); if (e && !e.closest('[hidden]')) e.click(); } });
+    const cur = [...d.querySelectorAll('#nav [aria-current="page"]')], vis = ['page', 'reglages', 'aide', 'courses'].filter(id => !d.getElementById(id).hidden);
+    C.ok(cur.length === 1 && vis.length === 1 && cur[0].id === { page: 'nav-jour', reglages: 'gear', aide: 'help', courses: 'courses-btn' }[vis[0]], 'menu : écran surligné', () => seq.join(' ') + ' : ' + vis + ' / ' + cur.map(x => x.id));
+    if (!d.getElementById('page').hidden) return 'écrans ' + seq.join(' ');
+    d.getElementById('nav-jour').click();
+    C.ok(!d.getElementById('page').hidden, 'menu : « Journée » ne ramène pas à la page', () => seq.join(' '));
     return 'écrans ' + seq.join(' ');
   },
   prof: dom => { const b = R.pick([...dom.window.document.querySelectorAll('#besoins [data-action="prof"]')]); b.click(); return 'réglage ' + b.dataset.key + '=' + b.dataset.value; },
@@ -327,7 +378,7 @@ const ACTIONS = {
     const bubbles = () => [...d.querySelectorAll('#day .sel')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
     if (d.querySelector('#repas').hidden){
       if (d.querySelector('#page').hidden) return 'repas -';
-      d.querySelector(R.pick(['#open-repas', '#repas-btn'])).click();
+      d.querySelector('#open-repas').click();
     }
     const before = bubbles();
     for (let i = R.int(0, 4); i > 0; i--){
@@ -337,10 +388,11 @@ const ACTIONS = {
       if (!d.querySelector('#sheet').hidden || d.querySelector('#repas').hasAttribute('inert')) throw new Error('panneau du formulaire resté ouvert');
     }
     const want = [...d.querySelectorAll('#repas-form .sel')].map(b => b.dataset.kind + (b.dataset.slot || '') + '=' + b.dataset.value);
-    const how = R.pick(['valide', 'hasard', 'flèche', 'retour']);
+    const how = R.pick(['valide', 'hasard', 'annule', 'menu', 'retour']);
     if (how === 'valide') d.querySelector('[data-action="repas-ok"]').click();
     else if (how === 'hasard') d.querySelector('[data-action="repas-hasard"]').click();
-    else if (how === 'flèche') d.querySelector('#repas [data-action="fermer"]').click();
+    else if (how === 'annule') d.querySelector('#repas [data-action="fermer"]').click();
+    else if (how === 'menu') d.querySelector('#nav-jour').click();
     else w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
     C.ok(d.querySelector('#repas').hidden, 'formulaire resté ouvert', how);
     const after = bubbles();
@@ -378,7 +430,7 @@ const ACTIONS = {
       if (R.chance(.8)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
       R.pick([...d.querySelectorAll('[data-action="pl-nrec"]')]).click();
       d.querySelector('[data-action="pl-batch"]').click();
-      if (!d.querySelector('#plan').hidden) d.querySelector('#plan [data-action="fermer"]').click();
+      if (!d.querySelector('#plan').hidden) d.querySelector('#nav-jour').click();
       for (let i = R.chance(.7) ? R.int(1, 2) : 0; i > 0; i--) swapRecipe(dom);
       C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', 'batch');
       if (!d.querySelector('#courses').hidden && R.chance(.3)) d.querySelector('#courses [data-action="fermer"]').click();
@@ -397,11 +449,11 @@ const ACTIONS = {
       }
       R.pick(['pl-next', 'pl-next', 'pl-prev', 'pl-hasard']).split().forEach(a => { const b = d.querySelector('[data-action="' + a + '"]'); if (b) b.click(); });
     }
-    const end = R.pick(['courses', 'tous', 'flèche', 'retour']);
+    const end = R.pick(['courses', 'tous', 'menu', 'retour']);
     if (end === 'courses') while (!d.querySelector('#plan').hidden && d.querySelector('[data-action="pl-next"]')) d.querySelector('[data-action="pl-next"]').click();
     else if (end === 'tous' && d.querySelector('[data-action="pl-hasard-tous"]')) d.querySelector('[data-action="pl-hasard-tous"]').click();
     else if (end === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
-    if (!d.querySelector('#plan').hidden) d.querySelector('#plan [data-action="fermer"]').click();
+    if (!d.querySelector('#plan').hidden) d.querySelector('#nav-jour').click();
     C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', end);
     if (!d.querySelector('#courses').hidden && R.chance(.5)) d.querySelector('#courses [data-action="fermer"]').click();
     return 'planifier ' + end;
@@ -461,7 +513,7 @@ const ACTIONS = {
     C.ok(keys().length === 0 && !d.querySelector('#accueil').hidden && d.querySelector('#reglages').hidden, 'effacer : données restées ou pas d’accueil', () => keys().join(', '));
     d.querySelector('[data-action="acc-skip"]').click();
     if (!d.querySelector('#repas').hidden) d.querySelector('#repas [data-action="fermer"]').click();
-    C.ok(!d.querySelector('#page').hidden && d.querySelectorAll('#sess .srow').length === 0, 'effacer : page pas de zéro', '');
+    C.ok(!d.querySelector('#page').hidden && d.querySelectorAll('#sess .chip[data-action="sess"]').length === 0, 'effacer : page pas de zéro', '');
     return 'effacer';
   },
   // Réglages : onglets au doigt ou au clavier, puis retour ; le bon panneau seul visible, l'onglet choisi marqué
@@ -506,13 +558,15 @@ for (let run = 0; run < RUNS; run++){
     // Rechargement : même page (séances, choix, profil relus du stockage)
     if (step % 30 === 29){
       const was = dom.window.document;
-      const before = was.querySelector('#day').innerHTML.replace(/ bump/g, ''), sumText = was.querySelector('#sum-text').textContent;
+      // La carte affichée peut changer au rechargement (repas du moment), pas le contenu des cartes
+      const dayHTML = doc => doc.querySelector('#day').innerHTML.replace(/ bump/g, '').replace(/ hidden=""/g, '');
+      const before = dayHTML(was), sumText = was.querySelector('#sum-text').textContent;
       // Au chargement, la page montre aujourd'hui : comparable seulement si elle montrait aujourd'hui
       const onPage = !was.querySelector('#page').hidden && was.querySelector('#date').textContent.startsWith('Aujourd’hui');
       dom = open(snapshot(dom.window));
       const d2 = dom.window.document;
       if (onPage && !d2.querySelector('#page').hidden)
-        C.ok(d2.querySelector('#day').innerHTML.replace(/ bump/g, '') === before && d2.querySelector('#sum-text').textContent === sumText, 'rechargement : page différente', () => log.slice(-5).join(' › '));
+        C.ok(dayHTML(d2) === before && d2.querySelector('#sum-text').textContent === sumText, 'rechargement : page différente', () => log.slice(-5).join(' › '));
       log.push('rechargement');
     }
   }

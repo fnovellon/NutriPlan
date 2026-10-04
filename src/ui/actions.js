@@ -15,7 +15,7 @@
     if (wb0 && !msg) msg = crossMsg(wb0, weekBal(selDate));
     $('hint').textContent = msg;
     if (planner && (b.closest('#plan') || (b.closest('#sheet') && topScreen() === 'plan')) && b.dataset.action !== 'pl-hasard') planner.msg = msg;
-    const inPlan = b.closest('#plan') ? b : null;
+    const inPlan = b.closest('#plan') ? b : null, keep = b.id && b.closest('#day') ? b.id : null;
     render();
     /* Assistant redessiné : le focus revient sur le même bouton */
     if (inPlan && topScreen() === 'plan'){
@@ -27,5 +27,7 @@
     /* Un choix dans le panneau le valide et le ferme */
     if (pick && b.closest('#sheet')) closePick(false);
     else if (recFocus && $('rec-c-' + recFocus)) $('rec-c-' + recFocus).focus({preventScroll:true});
+    /* Bouton d'une carte redessinée (repas libre) : le focus reste dessus */
+    else if (keep && $(keep)) $(keep).focus({preventScroll:true});
     recFocus = null;
   });

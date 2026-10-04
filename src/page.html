@@ -115,15 +115,16 @@
   </div>
 </main>
 
+<nav class="nav" id="nav" aria-label="Menu">
+  <button type="button" id="nav-jour" data-action="jour"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M19 21V3c-2.5 1.5-4 4.5-4 9 0 1.5 1 2.5 4 2.5"/></svg></span><span class="nav-l">Journée</span></button>
+  <button type="button" id="plan-btn" data-action="plan"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg></span><span class="nav-l">Planifier</span></button>
+  <button type="button" id="courses-btn" data-action="courses"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20.5" r="1.5"/><circle cx="18" cy="20.5" r="1.5"/><path d="M1.5 2.5h3l2.7 12.4a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.5l1.7-7.5H6"/></svg></span><span class="nav-l">Courses</span></button>
+  <button type="button" id="help" data-action="aide"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span class="nav-l">Aide</span></button>
+  <button type="button" id="gear" data-action="needs"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-l">Réglages</span></button>
+</nav>
+
 <main class="app" id="page">
-  <div class="top">
-    <p class="date" id="date"></p>
-    <div class="top-btns">
-      <button type="button" class="icon-btn" id="repas-btn" data-action="repas" aria-label="Choisir mes repas"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M19 21V3c-2.5 1.5-4 4.5-4 9 0 1.5 1 2.5 4 2.5"/></svg></button>
-      <button type="button" class="icon-btn" id="help" data-action="aide" aria-label="Comment ça marche"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
-      <button type="button" class="icon-btn" id="gear" data-action="needs" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-    </div>
-  </div>
+  <p class="date" id="date"></p>
   <div class="cal">
     <div class="cal-h">
       <button type="button" class="icon-btn" id="wk-prev" data-action="week" data-value="-1" aria-label="Semaine précédente"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -132,8 +133,6 @@
     </div>
     <div class="week" id="week" role="group" aria-label="Jours de la semaine"></div>
     <div class="cal-acts">
-      <button type="button" class="reset" id="plan-btn" data-action="plan">Planifier</button>
-      <button type="button" class="reset" id="courses-btn" data-action="courses">Mes courses</button>
       <button type="button" class="reset" id="today-btn" data-action="today" hidden>Revenir à aujourd’hui</button>
     </div>
     <details class="wb" id="wk-bal">
@@ -144,19 +143,7 @@
   </div>
   <h1 id="title" tabindex="-1">Qu’est-ce que tu fais aujourd’hui&nbsp;?</h1>
   <p class="intro" id="intro" role="status"></p>
-  <div class="sess" id="sess"></div>
-  <div class="acts" id="acts" role="group" aria-label="Ajouter une séance">
-    <button type="button" data-action="add" data-value="petite"><span class="a-t">+&nbsp;Petite</span><span class="a-s">muscu, footing court</span></button>
-    <button type="button" data-action="add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
-    <button type="button" data-action="add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
-  </div>
-
-  <div class="opts">
-    <div class="switches">
-      <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggle" data-key="libre" id="sw-lib"><span id="sw-lib-t">Repas libre ce soir</span><span class="knob" aria-hidden="true"></span></button>
-    </div>
-    <p class="hint" id="hint" role="status"></p>
-  </div>
+  <div class="schips" id="sess" role="group" aria-label="Séances du jour"></div>
 
   <section class="sum" aria-label="Total de la journée">
     <p id="sum-text" aria-live="polite"></p>
@@ -166,6 +153,8 @@
   </section>
 
   <div class="day-top"><button type="button" class="reset" id="open-repas" data-action="repas">Choisir mes repas</button></div>
+  <div class="frise" id="frise" role="tablist" aria-label="Repas et séances de la journée"></div>
+  <p class="hint" id="hint" role="status"></p>
   <div class="day" id="day"></div>
 
   <footer class="notes">
@@ -180,7 +169,6 @@
 </main>
 
 <main class="app regl" id="reglages" hidden>
-  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <h1 id="regl-h" tabindex="-1">Réglages</h1>
   <div id="besoins">
     <div class="tabs" role="tablist" aria-label="Rubriques des réglages">
@@ -344,12 +332,11 @@
 </main>
 
 <main class="app aide" id="aide" hidden>
-  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <h1 id="aide-h" tabindex="-1">Comment ça marche</h1>
   <section class="guide" aria-labelledby="g1">
     <h2 id="g1">Ta journée en trois temps</h2>
     <ol>
-      <li><strong>Tu ajoutes tes séances</strong> du jour&nbsp;: petite (muscu, footing court), moyenne (sortie d’environ 7&nbsp;km) ou longue (1h30 et plus), et quand tu les fais.</li>
+      <li><strong>Tu ajoutes tes séances</strong> du jour avec «&nbsp;+&nbsp;Séance&nbsp;»&nbsp;: petite (muscu, footing court), moyenne (sortie d’environ 7&nbsp;km) ou longue (1h30 et plus), et quand tu les fais. Touche une séance pour changer son moment ou la retirer.</li>
       <li><strong>L’appli calcule ta dépense</strong>&nbsp;: ce que tu dépenses un jour sans sport, d’après ton profil, plus le coût de chaque séance.</li>
       <li><strong>Elle retire ton déficit</strong> (15&nbsp;% par défaut, pris sur un jour sans sport)&nbsp;: c’est ton objectif du jour. Tes séances restent toujours couvertes.</li>
     </ol>
@@ -364,7 +351,7 @@
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», «&nbsp;Décide pour moi, en batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Tes courses montrent alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
-      <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large.</li>
+      <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
     </ul>
     <h2>Manger équilibré sur la semaine</h2>
     <ul>
@@ -374,6 +361,7 @@
     </ul>
     <h2>Lire les quantités</h2>
     <ul>
+      <li>Sous le total, la frise montre ta journée dans l’ordre&nbsp;: un point par repas, un repère rose par séance (son nom au survol). Touche-en un pour afficher sa carte.</li>
       <li>Le poids en gros est celui à peser <strong>cru</strong>. Le poids cuit, en dessous, est une estimation.</li>
       <li>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</li>
       <li>Les portions suivent ton poids&nbsp;: le menu est écrit pour 72&nbsp;kg.</li>
@@ -381,13 +369,13 @@
     <h2>Prévoir plusieurs jours</h2>
     <ul>
       <li>Le calendrier, en haut de ta journée, montre la semaine&nbsp;: touche un jour pour voir ou changer ses séances et ses plats. Un point marque les jours déjà prévus.</li>
-      <li><strong>Planifier</strong>&nbsp;: choisis les jours (31 au plus), puis, jour par jour, tes séances et tes plats, ou «&nbsp;Décide pour tous les jours restants&nbsp;».</li>
+      <li><strong>Planifier</strong>, dans le menu en haut&nbsp;: choisis les jours (31 au plus), puis, jour par jour, tes séances et tes plats, ou «&nbsp;Décide pour tous les jours restants&nbsp;».</li>
       <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas libre. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
-      <li><strong>Mes courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
+      <li><strong>Courses</strong>, dans le menu&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
     </ul>
     <h2>Installer l’appli sur ton téléphone</h2>
     <ul>
-      <li><strong>Android</strong> (Chrome)&nbsp;: menu ⋮ puis «&nbsp;Installer l’application&nbsp;», ou le bouton «&nbsp;Installer l’appli&nbsp;» en bas des réglages quand il apparaît.</li>
+      <li><strong>Android</strong> (Chrome)&nbsp;: menu ⋮ puis «&nbsp;Installer l’application&nbsp;», ou le bouton «&nbsp;Installer l’appli&nbsp;» des réglages (onglet Appli) quand il apparaît.</li>
       <li><strong>iPhone</strong> (Safari)&nbsp;: bouton Partager, puis «&nbsp;Sur l’écran d’accueil&nbsp;». Sur iPhone, l’appli installée garde ses propres données, à part de Safari&nbsp;: refais l’accueil une fois dedans.</li>
       <li>Installée, elle s’ouvre en plein écran et marche même sans connexion. Les nouvelles versions arrivent toutes seules quand tu es connecté.</li>
     </ul>
@@ -403,23 +391,20 @@
 </main>
 
 <main class="app repas" id="repas" hidden>
-  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée, sans rien changer"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <h1 id="repas-h" tabindex="-1">Tes repas du jour</h1>
   <p class="repas-p">Choisis pour chaque repas, ou laisse l’appli décider. Tu pourras toujours changer un plat depuis ta journée.</p>
   <button type="button" class="btn hasard" data-action="repas-hasard">Décide pour moi</button>
   <div id="repas-form"></div>
-  <button type="button" class="btn main wide" data-action="repas-ok">Voir ma journée</button>
+  <div class="acc-nav"><button type="button" class="btn" data-action="fermer">Annuler</button><button type="button" class="btn main" data-action="repas-ok">Voir ma journée</button></div>
 </main>
 
 <main class="app plan" id="plan" hidden>
-  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <p class="plan-step" id="plan-step"></p>
   <h1 id="plan-h" tabindex="-1">Planifier</h1>
   <div id="plan-body"></div>
 </main>
 
 <main class="app courses" id="courses" hidden>
-  <div class="regl-top"><button type="button" class="icon-btn back" data-action="fermer" aria-label="Retour à ta journée"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
   <h1 id="courses-h" tabindex="-1">Tes courses</h1>
   <div class="fields">
     <label class="field"><span>Du</span><span class="inp"><input type="date" data-range="courses" data-end="from"></span></label>

@@ -110,9 +110,10 @@ Appli web d'une seule page, pensée pour une sèche et partagée avec des amis :
 ## Design (écran par écran : `docs/ecrans.md`)
 
 - Icône : `link rel="icon"` en SVG (données en ligne) : assiette, fourchette et couteau couleur papier sur un carré betterave arrondi. `apple-touch-icon` en PNG 180 px (base64, carré plein, iOS arrondit lui-même) pour l'écran d'accueil du téléphone. `theme-color` papier en clair, `#121915` en sombre.
-- Palette : papier `#EEF1EB`, encre `#1A2620`, betterave `#8A2657` (bandeau de séance, focus, alertes), protéines `#2E5C8A`, glucides `#B37E17`, lipides `#667624`. Mode sombre via `prefers-color-scheme` et l'attribut `data-theme`.
+- Palette : papier `#EEF1EB`, encre `#1A2620`, betterave `#8A2657` (séances : pastilles, repères de la frise, carte ; focus, alertes), protéines `#2E5C8A`, glucides `#B37E17`, lipides `#667624`. Mode sombre via `prefers-color-scheme` et l'attribut `data-theme`.
 - Typographie : Archivo pour les titres et les grammes (chiffres larges et gras, c'est l'élément signature), Newsreader pour les noms d'aliments.
-- Timeline verticale des repas, bandeau betterave pour chaque séance (« Petite séance », « Séance moyenne », « Sortie longue »).
+- Menu en haut de chaque écran (3.20.0) : Journée, Planifier (calendrier), Courses (caddie), Aide, Réglages, l'écran affiché surligné.
+- Page du jour (3.20.0) : séances en pastilles betterave sur une ligne (« + Séance » et les changements dans le panneau du bas) ; sous le total, une frise de la journée (un point par repas, un repère betterave par séance, son nom au survol) au-dessus d'une seule carte, celle du repère choisi (repas, ou séance en betterave : « Petite séance », « Séance moyenne », « Sortie longue ») ; choix d'un repas en bulles côte à côte ; repas libre activé dans la carte du dîner.
 - À éviter : labels en capitales, surtitres, séparateurs à point médian, cartes identiques avec ombre.
 - Mobile d'abord : `viewport-fit=cover` et marges safe-area, jamais de défilement horizontal de la page, focus visible, `prefers-reduced-motion` respecté.
 - Typographie française : espace insécable avant `: ? %` et entre un nombre et son unité.

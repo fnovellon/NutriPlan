@@ -1,4 +1,5 @@
-  /* Panneau de choix d'un plat : fond grisé, page inerte ; se ferme par un choix, le fond, Échap ou le bouton retour */
+  /* Panneau de choix d'un plat (aussi pour les séances de la page, voir openSess) : fond grisé, page et menu inertes ; se
+     ferme par un choix, le fond, Échap ou le bouton retour */
   let pick = null;
   /* ctx « repas » : le choix va dans le brouillon du formulaire (action rf), sinon il est enregistré tout de suite */
   const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses'];
@@ -9,7 +10,7 @@
     pick = {kind:kind, slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'};
     $('sheet-t').textContent = P.title;
     $('sheet-list').hidden = false;
-    $('sheet-list').classList.remove('swap');
+    $('sheet-list').className = 'opts-list';
     $('sheet-rec').hidden = true;
     $('sheet-list').innerHTML = P.opts.map(function(o){
       return '<button type="button" class="opt" data-action="' + (ctx === 'repas' ? 'rf' : P.action) + '" data-kind="' + kind + '"' + (slot ? ' data-slot="' + slot + '"' : '') +
@@ -17,7 +18,7 @@
     }).join('');
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
-    $(pick.view).setAttribute('inert', '');
+    setInert(pick.view, true);
     document.documentElement.style.overflow = 'hidden';
     const on = $('sheet-list').querySelector('[aria-pressed="true"]');
     if (on) on.focus({preventScroll:true});
@@ -47,19 +48,20 @@
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
     $('sheet').querySelector('.panel').scrollTop = 0;
-    $(pick.view).setAttribute('inert', '');
+    setInert(pick.view, true);
     document.documentElement.style.overflow = 'hidden';
     $('sheet-rec').querySelector('.btn').focus({preventScroll:true});
   };
   const closePick = function(fromHistory){
     if (!pick) return;
-    const id = pick.trigger, view = pick.view;
+    const id = pick.trigger, view = pick.view, back = pick.back;
     pick = null;
     $('sheet').hidden = true;
-    $(view).removeAttribute('inert');
+    setInert(view, false);
     document.documentElement.style.overflow = '';
     if (!fromHistory){ try { if (history.state && history.state.pick) history.back(); } catch (e) {} }
-    const trigger = id ? $(id) : null;
+    /* Focus rendu au bouton qui a ouvert le panneau ; s'il n'est plus là (séance retirée), à back */
+    const trigger = [id, back].map(function(x){ return x ? $(x) : null; }).find(function(x){ return x && !x.disabled; });
     if (trigger) trigger.focus({preventScroll:true});
   };
   document.addEventListener('keydown', function(e){ if (pick && e.key === 'Escape') closePick(false); });

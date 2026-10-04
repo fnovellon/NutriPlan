@@ -49,6 +49,20 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .acts .a-t{font-size:16px;font-stretch:100%;white-space:nowrap;}
 .acts .a-s{font-size:13.5px;}
 .sess{margin:0;}
+/* Séances de la page (3.20.0) : une pastille betterave par séance, « + Séance » en contour */
+.schips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 13px;border:1.5px solid var(--beet);border-radius:999px;background:var(--beet-wash);color:var(--beet);font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;}
+.chip.add{border-color:var(--line);background:transparent;color:var(--ink);}
+.chip:disabled{opacity:.4;cursor:default;}
+.schips .rest-t{margin-right:4px;font-size:17px;font-style:italic;color:var(--muted);}
+/* Panneau des séances : une rangée par taille (ajout) ou le moment et « Retirer » (une séance) */
+.opts-list.sess-sheet{display:block;}
+.ss-row{margin:0 0 16px;}
+.ss-t{margin:0 0 8px;font-family:var(--sans);font-weight:700;font-size:16px;line-height:1.3;}
+.ss-s{margin-left:8px;font-family:var(--serif);font-weight:400;font-style:italic;font-size:14.5px;color:var(--muted);}
+.ss-row .opts-list .opt{min-width:4.4em;}
+.opt:disabled{opacity:.4;cursor:default;}
+.ss-rm{margin-top:4px;}
 .sess .rest-t{margin:0;font-size:17px;color:var(--muted);font-style:italic;}
 .srow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:10px 0;border-bottom:1px solid var(--line);}
 .srow:first-child{border-top:1px solid var(--line);}
@@ -56,7 +70,6 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .s-t{font-family:var(--sans);font-weight:700;font-stretch:108%;font-size:18px;line-height:1.2;}
 .rm{width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;font-family:var(--sans);font-size:20px;line-height:1;}
 
-.opts{margin-top:18px;}
 .opt-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 14px;}
 .opt-row[hidden]{display:none;}
 .lbl{min-width:4.2em;font-size:15px;color:var(--muted);}
@@ -67,6 +80,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .switch:last-child{border-bottom:1px solid var(--line);}
 .switch[hidden]{display:none;}
 .hint{margin:10px 0 0;font-size:15px;color:var(--beet);}
+#hint{margin:0 0 12px;}
 .hint:empty{display:none;}
 .knob{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--line);transition:background .2s ease;}
 .knob::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--paper);transition:transform .2s ease;}
@@ -90,19 +104,20 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .legend .x::before{display:none;}
 .legend b{font-family:var(--sans);font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
 
-.meal{position:relative;margin-left:6px;padding:2px 0 28px 22px;border-left:2px solid var(--line);}
-.meal::before{content:"";position:absolute;left:-8px;top:8px;width:14px;height:14px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);}
-.meal:last-child{border-left-color:transparent;padding-bottom:8px;}
+/* Carte du repas ou de la séance choisi dans la frise (3.20.0) : une seule visible */
+.meal{margin:0;padding:14px 14px 18px;border:1.5px solid var(--line);border-radius:16px;}
+.meal[hidden],.band[hidden]{display:none;}
+.meal .switch{margin-top:10px;padding:9px 0;border-bottom:1px solid var(--line);}
 .meal-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
 .meal h2{margin:0;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
 .when{display:block;margin-top:2px;font-family:var(--serif);font-weight:400;font-style:italic;font-stretch:100%;font-size:15px;color:var(--muted);}
 .kcal{flex:none;font-family:var(--sans);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.picks{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
-.pick{display:flex;align-items:center;gap:10px;min-width:0;}
-.pick-l{flex:none;min-width:4.6em;font-size:14px;color:var(--muted);}
-.sel{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;padding:7px 11px 7px 14px;border:1px solid var(--ink);border-radius:999px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-weight:600;font-size:14.5px;line-height:1.2;text-align:left;}
+.picks{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.pick{display:flex;min-width:0;max-width:100%;}
+.sel{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;padding:7px 10px 7px 13px;border:1px solid var(--ink);border-radius:999px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-weight:600;font-size:14px;line-height:1.2;text-align:left;}
+.sel.empty{padding-right:13px;border-color:var(--line);background:transparent;color:var(--ink);}
 .sel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sel svg{flex:none;width:14px;height:14px;opacity:.8;}
+.sel svg{flex:none;width:13px;height:13px;opacity:.8;}
 
 /* Choix d'un plat : fond grisé, panneau par le bas avec les choix */
 .sheet{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end;}
@@ -166,20 +181,43 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .rec-steps li{margin:0 0 6px;padding-left:2px;}
 .rec-body .btn{margin-top:20px;}
 
-.band{margin:0 0 28px 5px;padding:12px 16px 12px 22px;border-left:5px solid var(--beet);border-radius:0 12px 12px 0;background:var(--beet-wash);}
-.band-t{margin:0;font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:17px;color:var(--beet);}
-.band-s{margin:0;font-size:15px;}
-.band .items{margin-top:6px;}
+.band{margin:0;padding:14px 16px 16px 18px;border-left:5px solid var(--beet);border-radius:0 16px 16px 0;background:var(--beet-wash);}
+.band-t{margin:0;font-family:var(--sans);font-weight:800;font-stretch:112%;font-size:19px;line-height:1.2;color:var(--beet);}
+.band-s{margin:8px 0 0;font-size:15px;}
+.band .items{margin-top:8px;}
+
+/* Frise des repas (3.20.0) : points des repas reliés par un trait (le choisi plein), repères betterave des séances avec
+   leur nom au survol ou au focus */
+.frise{position:relative;display:flex;align-items:flex-start;justify-content:space-between;margin:4px -6px 12px;}
+.frise::before{content:"";position:absolute;left:24px;right:24px;top:16px;height:2px;background:var(--line);}
+.f-m{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 3px 4px;border:0;border-radius:10px;background:none;font-family:var(--sans);}
+.f-d{width:14px;height:14px;margin:3px 0;border:2px solid var(--ink);border-radius:50%;background:var(--paper);}
+.f-l{font-size:12.5px;font-weight:600;font-stretch:88%;line-height:1.2;color:var(--muted);white-space:nowrap;}
+.f-m[aria-selected="true"] .f-d{width:20px;height:20px;margin:0;background:var(--ink);}
+.f-m[aria-selected="true"] .f-l{color:var(--ink);font-weight:800;}
+.f-l.f-t,.frise.tiny .f-l{display:none;}
+.frise.tiny .f-l.f-t{display:block;}
+.f-s{position:relative;flex:none;width:22px;height:34px;padding:0;border:0;border-radius:8px;background:none;}
+.f-s::before{content:"";position:absolute;left:7px;top:7px;width:8px;height:20px;border-radius:4px;background:var(--beet);}
+.f-s[aria-selected="true"]::before{left:5px;width:12px;box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--beet);}
+.tip{position:absolute;bottom:calc(100% + 2px);left:-6px;z-index:6;padding:5px 9px;border-radius:8px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-weight:600;font-size:13px;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease;}
+.tip-r .tip{left:auto;right:-6px;}
+.f-s:hover .tip,.f-s:focus-visible .tip{opacity:1;}
 
 .sum p.sum-note{margin:14px 0 0;font-size:15px;line-height:1.45;color:var(--muted);}
 .link{padding:0;border:0;background:none;color:var(--beet);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;}
 
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;}
-.top .date{margin:0;}
+/* Menu (3.20.0) : en haut de tous les écrans sauf l'accueil, l'écran affiché surligné */
+.nav{display:flex;max-width:36rem;margin:0 auto;padding:8px 8px 7px;border-bottom:1px solid var(--line);}
+.nav[hidden]{display:none;}
+.nav button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:3px 0;border:0;border-radius:12px;background:none;font-family:var(--sans);font-weight:600;font-size:12.5px;line-height:1.2;color:var(--muted);}
+.nav .ic{display:flex;align-items:center;justify-content:center;width:54px;height:32px;border-radius:999px;color:var(--ink);transition:background .2s ease;}
+.nav svg{width:22px;height:22px;}
+.nav [aria-current="page"]{color:var(--ink);font-weight:800;}
+.nav [aria-current="page"] .ic{background:var(--ink);color:var(--on-ink);}
+.nav:not([hidden]) ~ .app{padding-top:16px;}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);}
 .icon-btn svg{width:24px;height:24px;}
-.regl-top{margin:0 0 8px;}
-.icon-btn.back{margin:0 0 0 -12px;}
 .needs{margin:6px 0 0;padding-top:18px;border-top:1px solid var(--line);}
 /* Onglets des réglages (3.18.0) : collés en haut de l'écran quand on descend */
 .tabs{position:sticky;top:0;z-index:5;display:flex;gap:2px;margin:2px -4px 4px;padding:calc(6px + env(safe-area-inset-top,0px)) 4px 6px;background:var(--paper);}
@@ -247,8 +285,6 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .btn{min-height:52px;padding:0 22px;border:1.5px solid var(--line);border-radius:999px;background:transparent;font-family:var(--sans);font-weight:700;font-size:17px;}
 .btn.main{flex:1;background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
 
-.top-btns{display:flex;align-items:center;gap:4px;margin:-10px -10px -10px 0;}
-.top-btns .icon-btn{margin:0;}
 .regl-links{display:flex;flex-wrap:wrap;gap:8px;}
 /* Tout effacer (réglages) : betterave, avec une confirmation */
 .reset.danger{color:var(--beet);border-color:var(--beet);}
@@ -381,7 +417,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .courses .regl-links{margin-bottom:18px;}
 
 /* Formulaire des repas du jour : tous les choix visibles, un par rangée */
-.day-top{margin:-4px 0 18px;}
+.day-top{margin:-4px 0 16px;}
 .day-top .reset{margin:0;}
 .repas-p{margin:0 0 14px;font-size:18px;line-height:1.45;}
 .btn.hasard{margin:0 0 6px;}
@@ -389,7 +425,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .rf h2{margin:0;font-family:var(--sans);font-weight:800;font-stretch:108%;font-size:21px;line-height:1.2;}
 .rf .calc{margin:4px 0 0;}
 .rf-l{margin:14px 0 8px;font-size:15px;color:var(--muted);}
-.repas .btn.main.wide{margin-top:26px;}
+.repas .acc-nav{margin-top:26px;}
 
-@media (min-width:640px){.app{padding-top:36px;}}
+@media (min-width:640px){.app{padding-top:36px;}.nav:not([hidden]) ~ .app{padding-top:24px;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}

@@ -52,15 +52,24 @@ const tools = dom => {
       assert($('#sheet').hidden, 'panneau de choix resté ouvert : ' + kind);
     },
     chosen: (kind, slot) => $(`[data-action="open-pick"][data-kind="${kind}"]` + (slot ? `[data-slot="${slot}"]` : '')).dataset.value,
-    sess: () => [...d.querySelectorAll('#sess .srow .s-t')].map(e => e.childNodes[0].textContent),
-    add: size => click(`[data-action="add"][data-value="${size}"]`),
-    at: (i, m) => click(`[data-action="smoment"][data-index="${i}"][data-value="${m}"]`),
-    rm: i => click(`[data-action="rm"][data-index="${i}"]`)
+    // Séances de la page (3.20.0) : une pastille par séance (nom complet dans son aria-label), dans l'ordre de la journée ;
+    // ajout, moment, durée et retrait par le panneau du bas
+    sess: () => [...d.querySelectorAll('#sess .chip[data-action="sess"]')].sort((a, b) => a.dataset.index - b.dataset.index).map(e => e.getAttribute('aria-label').split(',')[0]),
+    chips: () => [...d.querySelectorAll('#sess .chip[data-action="sess"]')].map(e => e.textContent),
+    add: (size, how) => {
+      click('#sess-add');
+      assert(!$('#sheet').hidden, 'panneau d’ajout non ouvert');
+      click(`#sheet [data-action="add"][data-value="${size}"]` + (size === 'longue' ? `[data-duree="${how || 2}"]` : `[data-moment="${how || 'soir'}"]`));
+      assert($('#sheet').hidden, 'panneau d’ajout resté ouvert');
+    },
+    at: (i, m) => { click(`#sess-${i}`); click(`#sheet [data-action="smoment"][data-index="${i}"][data-value="${m}"]`); },
+    dur: (i, h) => { click(`#sess-${i}`); click(`#sheet [data-action="sduree"][data-index="${i}"][data-value="${h}"]`); },
+    rm: i => { click(`#sess-${i}`); click(`#sheet [data-action="rm"][data-index="${i}"]`); }
   };
 };
 
 const dom = open();
-const { d, $, click, stored, sections, setSwitch, starchLine, pressed, choose, chosen, sess, add, at, rm } = tools(dom);
+const { d, $, click, stored, sections, setSwitch, starchLine, pressed, choose, chosen, sess, chips, add, at, dur, rm } = tools(dom);
 
 assert(/kcal/.test($('#sum-text').textContent), 'résumé absent au chargement');
 assert.strictEqual($('#date').textContent, 'Aujourd’hui, mercredi 7 octobre');
@@ -79,7 +88,23 @@ assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation',
 assert(/shaker de protéines/.test(d.querySelector('[aria-labelledby="h-co"]').textContent), 'shaker dans la collation un jour sans séance');
 add('petite');
 assert.deepStrictEqual(sess(), ['Petite séance']);
-assert.strictEqual(pressed('smoment'), 'soir', 'nouvelle séance le soir par défaut');
+assert.deepStrictEqual(chips(), ['Petite, soir'], 'pastille de la séance');
+assert.strictEqual(d.activeElement, $('#sess-add'), 'focus rendu à « + Séance »');
+// Toucher la pastille : son moment (choisi), « Retirer » ; Échap ferme sans rien changer
+click('#sess-0');
+assert(!$('#sheet').hidden && $('#sheet-t').textContent === 'Petite séance, le soir' && $('#sheet [data-action="smoment"][aria-pressed="true"]').dataset.value === 'soir' && $('#sheet [data-action="rm"]'), 'panneau d’une séance');
+assert($('#page').hasAttribute('inert') && $('#nav').hasAttribute('inert') && d.activeElement === $('#sheet [aria-pressed="true"]'), 'page et menu inertes, focus sur le moment');
+d.dispatchEvent(new d.defaultView.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+assert($('#sheet').hidden && d.activeElement === $('#sess-0') && chips()[0] === 'Petite, soir', 'Échap : séance inchangée');
+// Ajout en un toucher, avec son moment
+click('#sess-add');
+assert($('#sheet-t').textContent === 'Ajouter une séance' && d.querySelectorAll('#sheet [data-action="add"]').length === 10 && $('#sheet-list').classList.contains('sess-sheet'), 'panneau d’ajout');
+assert.strictEqual($('#sheet [data-value="moyenne"][data-moment="midi"]').getAttribute('aria-label'), 'Séance moyenne, à midi', 'nom d’un ajout');
+click('#sheet .sheet-x');
+add('moyenne', 'midi');
+assert.deepStrictEqual(chips(), ['Moyenne, midi', 'Petite, soir'], 'ajout avec son moment, pastilles dans l’ordre de la journée');
+rm(1);
+assert.deepStrictEqual(chips(), ['Petite, soir'], 'séance retirée par son panneau');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Petite séance', 'Shaker', 'Dîner']);
 at(0, 'matin');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Petite séance', 'Collation', 'Déjeuner', 'Dîner']);
@@ -87,12 +112,15 @@ add('moyenne');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Petite séance', 'Déjeuner', 'Collation', 'Séance moyenne', 'Shaker', 'Dîner']);
 add('longue');
 assert.deepStrictEqual(sess(), ['Petite séance', 'Séance moyenne', 'Sortie longue']);
-assert($('[data-action="add"][data-value="longue"]').disabled && !$('[data-action="add"][data-value="petite"]').disabled, 'une seule sortie longue');
+assert.deepStrictEqual(chips(), ['Petite, matin', 'Longue, 2\u00a0h', 'Moyenne, soir'], 'pastilles dans l’ordre de la journée');
+click('#sess-add');
+assert([...d.querySelectorAll('#sheet [data-action="add"][data-value="longue"]')].every(b => b.disabled) && !$('#sheet [data-action="add"][data-value="petite"]').disabled, 'une seule sortie longue');
+click('#sheet .sheet-x');
 assert.deepStrictEqual(sections(), ['Petit-déjeuner', 'Petite séance', 'Sortie longue', 'Déjeuner', 'Goûter', 'Séance moyenne', 'Shaker', 'Dîner']);
-click('[data-action="sduree"][data-index="2"][data-value="3"]');
+dur(2, 3);
 assert(/^180\sg/.test($('#day .band .qty').textContent), 'ravito de la sortie longue de 3 h');
 add('petite');
-assert([...d.querySelectorAll('[data-action="add"]')].every(b => b.disabled), 'quatre séances au plus');
+assert($('#sess-add').disabled && d.activeElement === $('#sess-3'), 'quatre séances au plus, focus sur la nouvelle');
 rm(3); rm(2); rm(1); rm(0);
 assert.deepStrictEqual(sess(), [], 'séances non retirées');
 add('petite'); at(0, 'midi');
@@ -104,10 +132,54 @@ assert.deepStrictEqual(stored().plans['2026-10-07'].seances, [{ taille: 'moyenne
 // Repas libre : un seul par semaine, celui du samedi (par défaut) est retiré
 setSwitch('libre', true);
 assert(sections().includes('Repas libre') && /repas libre/.test($('#sum-text').textContent), 'repas libre');
+// Son interrupteur est dans la carte du dîner (3.20.0) : le focus y reste, la frise dit « Repas libre »
+assert($('#sw-lib').closest('#sec-diner') && d.activeElement === $('#sw-lib') && $('#ft-diner .f-l').textContent === 'Repas libre', 'repas libre dans la carte du dîner');
 assert(/samedi/.test($('#hint').textContent), 'message du repas libre déplacé');
 assert.strictEqual(stored().plans['2026-10-10'].libre, false, 'repas libre du samedi non retiré');
 setSwitch('libre', false);
 assert.strictEqual($('#hint').textContent, '', 'message non effacé');
+
+// Frise (3.20.0) : un repère par repas et par séance, dans l'ordre de la journée, une seule carte affichée (celle du repère
+// choisi) ; à 9 h aujourd'hui, le petit-déjeuner
+{
+  const tabs = () => [...d.querySelectorAll('#frise [role="tab"]')];
+  const shownCard = () => [...d.querySelectorAll('#day [role="tabpanel"]')].filter(x => !x.hidden).map(x => x.id).join();
+  const key = k => d.activeElement.dispatchEvent(new d.defaultView.KeyboardEvent('keydown', { key: k, bubbles: true }));
+  assert.deepStrictEqual(tabs().map(t => t.dataset.value), ['pd', 'dej', 'co', 'band0', 'shk', 'diner'], 'repères de la frise');
+  assert.deepStrictEqual(tabs().map(t => t.getAttribute('aria-label')), ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Séance moyenne, le soir', 'Shaker', 'Dîner'], 'noms des repères');
+  assert(shownCard() === 'sec-pd' && $('#ft-pd').getAttribute('aria-selected') === 'true' && $('#ft-pd').tabIndex === 0 && $('#ft-dej').tabIndex === -1, 'carte du petit-déjeuner à 9 h');
+  assert($('#ft-band0').classList.contains('f-s') && $('#ft-band0 .tip').textContent === 'Séance moyenne, le soir', 'repère de séance, son nom au survol');
+  click('#ft-diner');
+  assert(shownCard() === 'sec-diner' && $('#ft-diner').getAttribute('aria-selected') === 'true' && $('#ft-pd').getAttribute('aria-selected') === 'false', 'carte du dîner');
+  // Clavier : flèches en boucle, début, fin ; le focus suit
+  $('#ft-diner').focus(); key('ArrowRight');
+  assert(shownCard() === 'sec-pd' && d.activeElement === $('#ft-pd'), 'flèche droite depuis le dernier : le premier');
+  key('ArrowLeft'); assert(shownCard() === 'sec-diner' && d.activeElement === $('#ft-diner'), 'flèche gauche depuis le premier : le dernier');
+  key('Home'); assert(shownCard() === 'sec-pd', 'début');
+  key('End'); key('ArrowLeft'); assert(shownCard() === 'sec-shk', 'fin, puis flèche gauche');
+  // Carte d'une séance : son nom, son moment, ce qu'elle coûte
+  click('#ft-band0');
+  assert(shownCard() === 'sec-band0' && /^Séance moyenne\s*le soir/.test($('#sec-band0').textContent) && /Environ [\d\s]+\skcal dépensées, comptées dans ta journée\./.test($('#sec-band0').textContent), 'carte de la séance : ' + $('#sec-band0').textContent);
+  // Un choix redessine la page sans changer de carte ; une séance retirée : sa carte part, celle du moment revient
+  choose('starch', 'dej', 'pates'); choose('starch', 'dej', 'riz');
+  assert.strictEqual(shownCard(), 'sec-band0', 'carte gardée après un choix');
+  click('#ft-diner');
+  // Repas du moment selon l'heure ; un autre jour, le petit-déjeuner ; en changeant de jour, la carte reste si elle existe
+  const keep = now;
+  for (const [h, id] of [[7, 'pd'], [12, 'dej'], [16, 'co'], [20, 'diner']]) {
+    now = new Date(2026, 9, 7, h).getTime();
+    const t = tools(open());
+    assert.strictEqual(t.$('#frise [aria-selected="true"]').dataset.value, id, 'repas du moment à ' + h + ' h');
+    t.click('#week [data-value="2026-10-08"]');
+    assert.strictEqual(t.$('#frise [aria-selected="true"]').dataset.value, id, 'carte gardée en changeant de jour (' + id + ')');
+  }
+  // À 20 h, un autre jour sans la séance affichée : son petit-déjeuner (pas le repas du moment)
+  now = new Date(2026, 9, 7, 20).getTime();
+  const other = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { seances: [{ taille: 'petite', moment: 'soir' }] } }, choices: {} }))));
+  other.click('#ft-band0'); other.click('#week [data-value="2026-10-08"]');
+  assert.strictEqual(other.$('#frise [aria-selected="true"]').dataset.value, 'pd', 'autre jour sans cette séance : le petit-déjeuner');
+  now = keep;
+}
 
 // Changer de féculent change la quantité et la met en évidence
 choose('starch', 'dej', 'riz');
@@ -207,6 +279,12 @@ assert(/fruit/.test(lastLine('diner')) && /pomme, poire/.test(lastLine('diner'))
 choose('dessert', 'dej', 'aucun');
 choose('dessert', 'diner', 'aucun');
 assert(!/chocolat|fruit/.test(lastLine('dej') + lastLine('diner')) && stored().choices[3].dej.dessert === 'aucun', 'dessert non retiré');
+// Choix d'un repas sur une ligne (3.20.0) : libellés lus seulement par le lecteur d'écran ; sans dessert, « + Dessert » en contour
+assert([...d.querySelectorAll('#day .pick-l')].every(l => l.classList.contains('sr')) && $('#sec-dej .picks').children.length === 3, 'choix du déjeuner sur une ligne');
+assert($('#sel-dessert-dej').classList.contains('empty') && $('#sel-dessert-dej').textContent === '+\u00a0Dessert' && $('#sel-dessert-dej').getAttribute('aria-label') === 'Dessert\u00a0: aucun', 'sans dessert : ' + $('#sel-dessert-dej').textContent);
+choose('dessert', 'dej', 'fruit');
+assert(!$('#sel-dessert-dej').classList.contains('empty') && $('#sel-dessert-dej').textContent.trim() === 'Fruit' && $('#sel-dessert-dej').getAttribute('aria-labelledby') === 'l-dessert-dej sel-dessert-dej', 'dessert choisi : ' + $('#sel-dessert-dej').textContent);
+choose('dessert', 'dej', 'aucun');
 
 // Formulaire des repas du jour : s'ouvre tout seul à la première ouverture de la journée, une seule fois
 const rdom = open(null, false, true), r = tools(rdom), rw = rdom.window;
@@ -277,11 +355,14 @@ r.setSwitch('libre', true);
 r.click('#open-repas');
 assert(/Ce soir, c’est ton repas libre\s: ce dîner est gardé pour les prochains mercredis\./.test(r.$('[aria-labelledby="repas-h-diner"]').textContent), 'repas libre dans le formulaire');
 r.click('[data-action="repas-ok"]');
-// Icône « Choisir mes repas » en haut de la page : ouvre le formulaire, le focus y revient à la fermeture
-r.click('#repas-btn');
-assert(!r.$('#repas').hidden && r.$('#page').hidden, 'icône du formulaire des repas');
-r.click('#repas [data-action="fermer"]');
-assert.strictEqual(rw.document.activeElement, r.$('#repas-btn'), 'focus rendu à l’icône');
+// Menu (3.20.0) : « Journée » surligné sur la page et dans le formulaire, qu'il ferme sans rien changer
+assert.deepStrictEqual([...r.d.querySelectorAll('#nav [aria-current="page"]')].map(b => b.id), ['nav-jour'], 'menu : journée surlignée');
+r.click('#open-repas');
+assert(r.$('#nav-jour').getAttribute('aria-current') === 'page' && !r.$('#nav').hidden, 'menu : journée surlignée dans le formulaire');
+rf('prot', 'diner', 'thon');
+r.click('#nav-jour');
+assert(!r.$('#page').hidden && r.$('#repas').hidden && r.stored().choices[3].diner.prot === 'boeuf', 'menu : formulaire fermé sans rien changer');
+assert.strictEqual(rw.document.activeElement, r.$('#open-repas'), 'menu : focus rendu au bouton du formulaire');
 // Installer l'appli (Android) : bouton caché tant que le navigateur ne le propose pas ; il lance la proposition puis disparaît
 assert(r.$('#install').hidden, 'bouton Installer affiché sans proposition du navigateur');
 let prompted = 0;
@@ -417,7 +498,7 @@ const oldData = JSON.stringify({
 const seeded = open(ls => ls.setItem(OLD_KEY, oldData));
 const s2 = tools(seeded);
 assert.deepStrictEqual(s2.sess(), ['Séance moyenne'], 'course v1 non convertie');
-assert.strictEqual(s2.pressed('smoment'), 'matin', 'moment v1 perdu');
+assert.deepStrictEqual(s2.chips(), ['Moyenne, matin'], 'moment v1 perdu');
 assert.strictEqual(s2.chosen('prot', 'dej'), 'thon', 'choix v1 perdus');
 assert.strictEqual(s2.chosen('pd'), 'pain', 'petit-déjeuner v1 perdu');
 assert.strictEqual(s2.chosen('dessert', 'dej'), 'aucun', 'choix sans dessert : Aucun');
@@ -571,7 +652,7 @@ assert.strictEqual(JSON.parse(pw.localStorage.getItem(KEY)).plans['2026-10-07'].
 // Réglages dans un écran à part : roue dentée en haut de la page, retour par la flèche, le bouton du bas ou le bouton retour du téléphone
 p.click('[data-action="fermer"]');
 assert(p.$('#reglages').hidden && !p.$('#page').hidden && pw.document.activeElement === p.$('#gear'), 'réglages non fermés par la flèche');
-assert(p.$('#gear').getAttribute('aria-label') === 'Réglages' && p.$('#gear svg'), 'roue dentée absente');
+assert(p.$('#gear').textContent.trim() === 'Réglages' && p.$('#gear svg'), 'roue dentée absente');
 p.click('#gear');
 assert(!p.$('#reglages').hidden && pw.history.state && pw.history.state.screen === 'reglages', 'la roue dentée n’ouvre pas les réglages');
 pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
@@ -610,6 +691,35 @@ pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: { screen: 'reglages' 
 assert(view() === 'reglages', 'bouton retour depuis l’aide');
 pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
 assert(view() === 'page', 'bouton retour depuis les réglages');
+// Menu (3.20.0) : l'écran affiché surligné ; un écran du menu remplace celui du dessus (le retour ramène à la journée),
+// déjà ouvert plus bas, on y redescend ; « Journée » ferme tout
+{
+  const cur = () => [...p.d.querySelectorAll('#nav [aria-current="page"]')].map(b => b.id).join();
+  assert(cur() === 'nav-jour' && !p.$('#nav').hidden, 'menu : journée');
+  p.click('#gear');
+  assert(cur() === 'gear' && view() === 'reglages', 'menu : réglages');
+  const hl = pw.history.length;
+  p.click('#courses-btn');
+  assert.strictEqual(pw.history.length, hl, 'menu : pas de nouvelle entrée d’historique');
+  assert(cur() === 'courses-btn' && !p.$('#courses').hidden && view() === '' && pw.history.state.screen === 'courses', 'menu : courses à la place des réglages');
+  pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
+  assert(view() === 'page' && p.$('#courses').hidden && cur() === 'nav-jour', 'menu : le retour ramène à la journée');
+  p.click('#gear'); p.click('#help-regl');
+  assert(view() === 'aide' && cur() === 'help', 'menu : aide depuis les réglages');
+  p.click('#gear');
+  assert(view() === 'reglages' && cur() === 'gear', 'menu : réglages, sous l’aide');
+  p.click('#reglages .btn.wide');
+  assert(view() === 'page', 'menu : réglages retrouvés sous l’aide, un seul écran à fermer');
+  p.click('#gear');
+  p.click('#plan-btn');
+  assert(!p.$('#plan').hidden && cur() === 'plan-btn' && pw.document.activeElement === p.$('#plan-h'), 'menu : planifier');
+  p.click('#nav-jour');
+  assert(view() === 'page' && p.$('#plan').hidden && cur() === 'nav-jour' && pw.document.activeElement === p.$('#gear'), 'menu : journée, focus rendu');
+  p.click('#nav-jour');
+  assert(view() === 'page' && pw.document.activeElement === p.$('#title'), 'menu : journée depuis la journée');
+  p.click('#gear'); p.click('#help-regl'); p.click('#nav-jour');
+  assert(view() === 'page', 'menu : « Journée » ferme l’aide et les réglages dessous');
+}
 
 // Version affichée en bas de page
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version;
@@ -683,7 +793,7 @@ assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent], ['
 c.click('#week [data-value="2026-10-06"]');
 assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent], ['Hier, mardi 6 octobre', 'Qu’est-ce que tu as fait hier ?'], 'hier');
 c.click('#week [data-value="2026-10-09"]');
-assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent, c.$('#sw-lib-t').textContent], ['Vendredi 9 octobre', 'Qu’est-ce que tu prévois vendredi 9 octobre ?', 'Repas libre le soir'], 'autre jour');
+assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent, c.$('#sw-lib').textContent], ['Vendredi 9 octobre', 'Qu’est-ce que tu prévois vendredi 9 octobre ?', 'Repas libre le soir'], 'autre jour');
 assert(!c.$('#today-btn').hidden, 'bouton « Revenir à aujourd’hui »');
 // Séances et plats du jour affiché, enregistrés pour sa date (plats aussi en mémoire pour ce jour de la semaine)
 c.add('moyenne');
@@ -819,10 +929,10 @@ c.click('#courses [data-action="fermer"]');
 c.click('#plan-btn');
 c.click('[data-action="pl-start"]');
 assert(c.$('#date').textContent.startsWith('Aujourd’hui'), 'assistant : la page suit l’étape');
-c.click('#plan [data-action="fermer"]');
-assert(!c.$('#page').hidden && c.$('#date').textContent === 'Vendredi 9 octobre', 'flèche de l’assistant : jour d’avant');
+c.click('#nav-jour');
+assert(!c.$('#page').hidden && c.$('#date').textContent === 'Vendredi 9 octobre', 'menu « Journée » depuis l’assistant : jour d’avant');
 // Le formulaire des repas vaut pour le jour affiché
-c.click('#repas-btn');
+c.click('#open-repas');
 assert.strictEqual(c.$('#repas-h').textContent, 'Tes repas, vendredi 9 octobre', 'formulaire d’un autre jour');
 c.click('#repas-form .sel[data-kind="prot"][data-slot="diner"]');
 c.click('#sheet [data-value="saumon"]');
@@ -855,7 +965,7 @@ assert(al.chosen('prot', 'dej') === 'poisson' && al.chosen('prot', 'diner') === 
 al.click('#wk-next'); al.click('#week [data-value="2026-10-14"]');
 assert(al.chosen('prot', 'dej') === 'boeuf' && !al.stored().plans['2026-10-14'], 'mémoire du mercredi : poulet remplacé');
 // Formulaire et assistant : mêmes choix ; « Décide pour moi » ne tire jamais un aliment retiré
-al.click('#repas-btn');
+al.click('#open-repas');
 assert(!sheetVals('#sel-rprot-dej').includes('poulet') && al.$('#sel-rprot-dej').dataset.value === 'boeuf', 'formulaire : poulet proposé');
 al.click('#repas [data-action="fermer"]');
 al.click('#today-btn');
@@ -881,7 +991,7 @@ al.click('[data-action="repas-hasard"]');
 assert(/Viande rouge, cuite≈\s(4[0-9]0|500)\sg/.test(al.$('#wb-list').textContent) && al.stored().choices[3].dej.prot === 'poisson' && al.stored().choices[3].diner.prot === 'saumon', 'tirage sans poulet ni bœuf : ' + JSON.stringify(al.stored().choices[3]) + ' ' + al.$('#wb-list').textContent);
 al.click('#plan-btn'); al.click('[data-action="pl-start"]');
 assert(!sheetVals('#sel-pprot-diner').includes('poulet') && !sheetVals('#sel-ppd').includes('avoine'), 'assistant : aliment retiré proposé');
-al.click('#plan [data-action="fermer"]');
+al.click('#nav-jour');
 // Remis : de nouveau proposé ; relu au rechargement ; profil abîmé : tout est proposé
 al.click('#gear');
 al.click('#alim-list [data-kind="prot"][data-value="poulet"]');
@@ -926,7 +1036,7 @@ assert(/skyr nature/.test(coLis[0]) && /à la place des œufs, déjà au menu au
 // Assistant : la semaine en une phrase sous le total du jour
 hv.click('#plan-btn'); hv.click('[data-action="pl-start"]');
 assert(/^Ta semaine\s: trop de charcuterie/.test(hv.$('#plan-wb').textContent), 'semaine dans l’assistant : ' + hv.$('#plan-wb').textContent);
-hv.click('#plan [data-action="fermer"]');
+hv.click('#nav-jour');
 
 // Réglages, « Ta semaine type » : séances habituelles par jour et soir du repas libre, reprises par les jours pas encore remplis
 const swd = open(), sw = tools(swd), sww = swd.window;
@@ -984,7 +1094,7 @@ assert(mon && /^3\sséances/.test(mon.querySelector('.note').textContent) && /pa
 sw.click('#courses [data-action="fermer"]');
 sw.click('#plan-btn');
 assert(/partent des séances de ta semaine type/.test(sw.$('#plan-body').textContent), 'assistant : semaine type annoncée');
-sw.click('#plan [data-action="fermer"]');
+sw.click('#nav-jour');
 // Relue au rechargement ; abîmée, elle est ignorée
 const ssnap = snapOf(sww), srel = tools(open(ls => Object.entries(ssnap).forEach(([k, v]) => ls.setItem(k, v))));
 srel.click('#wk-next'); srel.click('#week [data-value="2026-10-12"]');
@@ -1295,7 +1405,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     ls.setItem('autre-appli:cle', 'garde');
   };
   const ef = tools(open(full)), ew = ef.d.defaultView;
-  assert(/Séance moyenne/.test(ef.$('#sess').textContent) && ef.chosen('prot', 'dej') === 'boeuf', 'données de départ');
+  assert(ef.sess().join() === 'Séance moyenne' && ef.chosen('prot', 'dej') === 'boeuf', 'données de départ');
   ef.click('#gear');
   assert(!ef.$('#eff-ask').hidden && ef.$('#eff-confirm').hidden && /Effacer mes données/.test(ef.$('#effacer h2').textContent), 'carte « Effacer mes données »');
   ef.click('[data-action="eff-ask"]');

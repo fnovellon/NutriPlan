@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.20.0, 4 octobre 2026
+
+- Un menu en haut de chaque écran : Journée, Planifier (calendrier), Courses (caddie), Aide et Réglages. L'écran où tu es est surligné. Le retour du téléphone ramène à ta journée.
+- Séances en une ligne : une pastille par séance (« Petite, midi »). « + Séance » ajoute en un seul toucher la taille et le moment ; touche une pastille pour changer son moment ou la retirer.
+- Tes repas, une carte à la fois : sous le total, une frise montre ta journée dans l'ordre, un point par repas et un repère rose par séance (son nom au survol). Touche un repère pour voir sa carte. À l'ouverture, c'est le repas du moment.
+- Les choix d'un repas tiennent sur une ligne ; sans dessert, une bulle « + Dessert ».
+- Le repas libre s'active dans la carte du dîner.
+- « Choisir mes repas » a maintenant un bouton « Annuler ».
+
 ## 3.19.0, 4 octobre 2026
 
 - Petit-déjeuner aux flocons d'avoine : jamais moins de 2,5 fois leur poids en skyr, pour que le porridge ou les flocons trempés restent mangeables. Les jours de sortie longue, 80 g de flocons vont avec 200 g de skyr (au lieu de 100 à 140 g) ; les autres jours, 60 g avec 150 g au moins.

@@ -7,10 +7,11 @@
  *   p1, p2 (protéine), st (féculent), leg (légumes), v-<légume>, f-<matière grasse>, x-skyr, x-miel (recette), dam, pm (ajout du
  *   soir), marge, des (dessert), gras (huile de secours) ; shk, fuel, pom, encas, skyr (soir), lib (repas libre).
  *   adj : portion ajustée à l'objectif de protéines.
- * @typedef {{id:string, title:string, when:?string, items:Item[], pick?:string, band?:boolean, sub?:?string, libre?:boolean,
- *   recipe?:?string, suggest?:?string}} Section
- *   repas (id pd, sw, dej, co, shk, diner, soir) ou bandeau de séance (band0, band1…, band:true) ; recipe : recette choisie,
- *   suggest : recette proposée pour le couple protéine × féculent ; libre : le repas libre qui remplace le dîner.
+ * @typedef {{id:string, title:string, when:?string, items:Item[], pick?:string, band?:boolean, moment?:string, kcal?:number,
+ *   sub?:?string, libre?:boolean, recipe?:?string, suggest?:?string}} Section
+ *   repas (id pd, sw, dej, co, shk, diner, soir) ou bandeau de séance (band0, band1…, band:true ; moment et coût de la
+ *   séance pour la frise et la carte de la page, 3.20.0) ; recipe : recette choisie, suggest : recette proposée pour le
+ *   couple protéine × féculent ; libre : le repas libre qui remplace le dîner.
  * @typedef {{taille:('petite'|'moyenne'|'longue'), moment:('matin'|'midi'|'soir'), duree?:number}} Seance
  * @typedef {{seances:Seance[], libre:boolean}} Plan  plan d'un jour (cleanPlan)
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
