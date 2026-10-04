@@ -699,11 +699,12 @@ assert(view() === 'page', 'bouton retour depuis les réglages');
   p.click('#gear');
   assert(cur() === 'gear' && view() === 'reglages', 'menu : réglages');
   const hl = pw.history.length;
-  p.click('#courses-btn');
+  p.click('#plan-btn');
   assert.strictEqual(pw.history.length, hl, 'menu : pas de nouvelle entrée d’historique');
-  assert(cur() === 'courses-btn' && !p.$('#courses').hidden && view() === '' && pw.history.state.screen === 'courses', 'menu : courses à la place des réglages');
+  assert(cur() === 'plan-btn' && !p.$('#plan').hidden && view() === '' && pw.history.state.screen === 'plan', 'menu : Planifier à la place des réglages');
   pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
-  assert(view() === 'page' && p.$('#courses').hidden && cur() === 'nav-jour', 'menu : le retour ramène à la journée');
+  assert(view() === 'page' && p.$('#plan').hidden && cur() === 'nav-jour', 'menu : le retour ramène à la journée');
+  assert.deepStrictEqual([...p.d.querySelectorAll('#nav button')].map(b => b.textContent.trim()), ['Journée', 'Planifier', 'Aide', 'Réglages'], 'menu : quatre boutons (3.21.0)');
   p.click('#gear'); p.click('#help-regl');
   assert(view() === 'aide' && cur() === 'help', 'menu : aide depuis les réglages');
   p.click('#gear');
@@ -835,58 +836,52 @@ const old = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-09-
 old.click('#week [data-value="2026-10-07"]');
 assert.deepStrictEqual(Object.keys(old.stored().plans).sort(), ['2026-09-20', '2026-12-25'], 'purge des jours');
 
-// Planifier : raccourcis ou dates, puis un jour par étape, puis les courses
+// Planifier (3.21.0) : la liste des planifications, puis « Nouvelle planification » (période, plats simples ou recettes, option
+// batch cooking) ; créer tire les plats de la période et ouvre son détail : jour par jour, batch cooking, courses
+const QKEY = 'repas-du-jour:planifs:v1';
+const planifsOf = w => JSON.parse(w.localStorage.getItem(QKEY) || 'null');
 c.click('#plan-btn');
-assert(!c.$('#plan').hidden && c.$('#page').hidden && cw.document.activeElement === c.$('#plan-h'), 'assistant ouvert');
+assert(!c.$('#plan').hidden && c.$('#page').hidden && cw.document.activeElement === c.$('#plan-h') && c.$('#plan-btn').getAttribute('aria-current') === 'page', 'Planifier ouvert');
+assert(/Aucune planification pour l’instant/.test(c.$('#plan-body').textContent) && !c.$('#plan-body .is-cur') && !c.$('#pl-list-t'), 'aucune planification au départ');
 const planSpan = () => c.$('#plan-span').textContent, planErr = () => c.$('#plan-err').textContent;
-assert.strictEqual(planSpan(), '7 jours, du mercredi 7 octobre au mardi 13 octobre.', 'les 7 prochains jours par défaut');
+assert(/^7\sjours, du mercredi 7\soctobre au mardi 13\soctobre\.$/.test(planSpan()), 'les 7 prochains jours par défaut : ' + planSpan());
 assert.strictEqual(c.$('[data-action="pl-preset"][aria-pressed="true"]').dataset.value, '7', 'raccourci choisi');
 c.click('[data-action="pl-preset"][data-value="suivante"]');
-assert.strictEqual(planSpan(), '7 jours, du lundi 12 octobre au dimanche 18 octobre.', 'la semaine prochaine');
+assert(/^7\sjours, du lundi 12\soctobre au dimanche 18\soctobre\.$/.test(planSpan()) && cw.document.activeElement === c.$('[data-action="pl-preset"][data-value="suivante"]'), 'la semaine prochaine, focus gardé');
 const setEnd = (which, end, v) => { const el = c.$(`input[data-range="${which}"][data-end="${end}"]`); el.value = v; el.dispatchEvent(new cw.Event('input', { bubbles: true })); };
 setEnd('plan', 'to', '2026-11-30');
 assert(/31\sjours au plus/.test(planErr()) && !planSpan(), 'période trop longue : ' + planErr());
-c.click('[data-action="pl-start"]');
-assert(c.$('#plan-step').textContent === '', 'assistant lancé malgré l’erreur');
+c.click('[data-action="pl-create"]');
+assert(c.$('#courses').hidden && planifsOf(cw) === null, 'planification créée malgré l’erreur');
 setEnd('plan', 'to', '2026-10-10');
 assert(/La fin doit venir après le début/.test(planErr()), 'fin avant le début : ' + planErr());
 setEnd('plan', 'from', '2026-10-01');
 assert(/Commence aujourd’hui ou plus tard/.test(planErr()), 'début passé : ' + planErr());
 setEnd('plan', 'from', '2026-10-08');
-assert.strictEqual(planSpan(), '3 jours, du jeudi 8 octobre au samedi 10 octobre.', 'dates choisies');
-c.click('[data-action="pl-start"]');
-assert.deepStrictEqual([c.$('#plan-step').textContent, c.$('#plan-h').textContent], ['Jour 1 sur 3', 'Demain, jeudi 8 octobre'], 'première étape');
-assert(cw.document.activeElement === c.$('#plan-h'), 'focus sur le jour');
-c.click('#plan-body [data-action="add"][data-value="petite"]');
-c.click('#plan-body [data-action="smoment"][data-index="0"][data-value="matin"]');
-c.click('#plan-body .sel[data-kind="starch"][data-slot="diner"]');
-c.click('#sheet [data-value="pdt"]');
-assert(cw.document.activeElement === c.$('#sel-pstarch-diner') && c.$('#sel-pstarch-diner').dataset.value === 'pdt', 'focus gardé sur le choix');
+assert(/^3\sjours, du jeudi 8\soctobre au samedi 10\soctobre\.$/.test(planSpan()), 'dates choisies : ' + planSpan());
+assert(/^1\sjour a déjà ses plats\s: ils seront remplacés\. Tes séances restent\.$/.test(c.$('#plan-over').textContent), 'jours déjà prévus : ' + c.$('#plan-over').textContent);
+// Plats : recettes par défaut, sans batch cooking ; plats simples sans l'option ; l'option et son nombre de recettes
+const plPressed = a => c.$(`[data-action="${a}"][aria-pressed="true"]`).dataset.value;
+assert(plPressed('pl-type') === 'recettes' && c.$('#pl-batch').getAttribute('aria-checked') === 'false' && !c.$('[data-action="pl-nrec"]'), 'recettes par défaut, sans batch cooking');
+c.click('[data-action="pl-type"][data-value="simple"]');
+assert(plPressed('pl-type') === 'simple' && !c.$('#pl-batch') && cw.document.activeElement === c.$('[data-action="pl-type"][data-value="simple"]') && /sans recette/.test(c.$('#plan-body').textContent), 'plats simples : pas d’option batch cooking');
+c.click('[data-action="pl-type"][data-value="recettes"]');
+c.click('#pl-batch');
+assert(c.$('#pl-batch').getAttribute('aria-checked') === 'true' && cw.document.activeElement === c.$('#pl-batch') && plPressed('pl-nrec') === '4', 'batch cooking : 4 recettes par défaut');
+c.click('[data-action="pl-nrec"][data-value="3"]');
+assert(plPressed('pl-nrec') === '3' && cw.document.activeElement === c.$('[data-action="pl-nrec"][data-value="3"]'), 'nombre de recettes, focus gardé');
+// Plats simples, l'option batch cooking restée allumée : elle ne compte pas
+c.click('[data-action="pl-type"][data-value="simple"]');
+// Créer (plats simples) : plats tirés et enregistrés pour chaque date (sans recette), séances gardées, détail ouvert
+c.click('[data-action="pl-create"]');
+assert(!c.$('#courses').hidden && c.$('#plan').hidden && cw.document.activeElement === c.$('#courses-h') && c.$('#plan-btn').getAttribute('aria-current') === 'page', 'détail après la création');
+assert.deepStrictEqual([c.$('#courses-h').textContent, c.$('#courses-span').textContent], ['Du 8 au 10 octobre', '3 jours, plats simples, à venir.'], 'titre du détail');
+assert.deepStrictEqual(planifsOf(cw), { list: [{ from: '2026-10-08', to: '2026-10-10', type: 'simple', n: 0, checked: [] }] }, 'planification enregistrée');
 cs = c.stored();
-assert(cs.plans['2026-10-08'].seances[0].moment === 'matin' && cs.plans['2026-10-08'].ch.diner.starch === 'pdt', 'étape enregistrée pour sa date');
-assert(/Environ\s[\d\s]+\skcal/.test(c.$('.plan-kcal').textContent), 'total du jour dans l’assistant');
-c.click('[data-action="pl-next"]');
-assert.deepStrictEqual([c.$('#plan-step').textContent, c.$('#plan-h').textContent], ['Jour 2 sur 3', 'Vendredi 9 octobre'], 'deuxième étape');
-assert(c.$('#plan-body .srow') && /Séance moyenne/.test(c.$('#plan-body .sess').textContent), 'séances déjà prévues ce jour-là');
-c.click('[data-action="pl-prev"]');
-assert.strictEqual(c.$('#plan-step').textContent, 'Jour 1 sur 3', 'retour à l’étape d’avant');
-c.click('[data-action="pl-next"]');
-cw.Math.random = () => 0.999;
-c.click('[data-action="pl-hasard"]');
-assert(c.stored().plans['2026-10-09'].ch.dej.prot === 'tofu' && /tirés au hasard/.test(c.$('#plan-hint').textContent), 'hasard pour ce jour');
-// Samedi 10 : repas libre par défaut, gardé ; « Décide pour tous les jours restants » mène aux courses
-c.click('[data-action="pl-next"]');
-assert(c.$('#plan-body [data-action="toggle"]').getAttribute('aria-checked') === 'true' && !c.$('[data-action="pl-hasard-tous"]') && c.$('[data-action="pl-next"]').textContent === 'Voir mes courses', 'dernière étape');
-c.click('[data-action="pl-prev"]');
-cw.Math.random = () => 0;
-c.click('[data-action="pl-hasard-tous"]');
-assert(!c.$('#courses').hidden && c.$('#plan').hidden && cw.document.activeElement === c.$('#courses-h'), 'courses après l’assistant');
-cs = c.stored();
-assert(cs.plans['2026-10-09'].ch.dej.prot === 'poulet' && cs.plans['2026-10-10'].ch.diner.prot === 'boeuf' && cs.plans['2026-10-08'].ch.diner.starch === 'pdt', 'hasard pour tous les jours restants seulement');
-assert(c.$('#date').textContent.startsWith('Aujourd’hui'), 'page revenue sur le jour d’avant l’assistant');
-// Courses : période de l'assistant, rayons, lignes à cocher, jour par jour
-assert.strictEqual(c.$('#courses-span').textContent, '3 jours, du jeudi 8 octobre au samedi 10 octobre.', 'période des courses');
-const aisles = [...c.d.querySelectorAll('#courses-list h2')].map(h => h.textContent);
+assert(['2026-10-08', '2026-10-09', '2026-10-10'].every(iso => cs.plans[iso].ch && !cs.plans[iso].ch.dej.recette && !cs.plans[iso].ch.diner.recette), 'plats simples : sans recette');
+assert(cs.plans['2026-10-09'].seances.length === 1 && cs.plans['2026-10-07'] === undefined && c.$('#date').textContent.startsWith('Aujourd’hui'), 'séances gardées, aujourd’hui pas touché');
+// Courses : rayons, lignes à cocher ; jour par jour
+const aisles = [...c.d.querySelectorAll('#courses-list h3')].map(h => h.textContent);
 assert.deepStrictEqual(aisles, ['Viandes et poissons', 'Crèmerie, œufs et tofu', 'Pain et féculents, poids crus', 'Fruits et légumes', 'Épicerie', 'Le reste'], 'rayons : ' + aisles);
 const shopLine = name => [...c.d.querySelectorAll('#courses-list .chk')].find(b => b.querySelector('.name').childNodes[0].textContent === name);
 assert(shopLine('repas libre') && shopLine('doses de shaker').querySelector('.q').textContent === '3', 'repas libre et shaker comptés');
@@ -904,33 +899,35 @@ for (const iso of ['2026-10-08', '2026-10-09', '2026-10-10']) {
 }
 assert.strictEqual(parseInt(shopLine('skyr nature').querySelector('.q').textContent.replace(/\D/g, ''), 10) * (/kg/.test(shopLine('skyr nature').querySelector('.q').textContent) ? 10 : 1), skyrSum, 'skyr des courses ≠ somme des jours');
 const days = [...c.d.querySelectorAll('#courses-days .shop-day')];
-assert(days.length === 3 && /^Jeudi 8\soctobre/.test(days[0].textContent) && /1\sséance/.test(days[0].textContent) && /repas libre le soir/.test(days[2].textContent), 'jour par jour : ' + days.map(x => x.textContent).join(' | '));
-// Cocher : gardé au rechargement ; tout décocher
+assert(days.length === 3 && /^Jeudi 8\soctobre/.test(days[0].textContent) && /Repos, midi\s: /.test(days[0].textContent) && /1\sséance/.test(days[1].textContent) && /repas libre le soir/.test(days[2].textContent), 'jour par jour : ' + days.map(x => x.textContent).join(' | '));
+// Cocher : gardé dans la planification, au rechargement ; tout décocher
 const line = shopLine('skyr nature'), key = line.dataset.value;
 c.click(`#courses-list [data-value="${key}"]`);
-assert(line.getAttribute('aria-checked') === 'true' && JSON.parse(cw.localStorage.getItem('repas-du-jour:courses:v1')).checked.includes(key), 'ligne cochée');
+assert(line.getAttribute('aria-checked') === 'true' && planifsOf(cw).list[0].checked.includes(key), 'ligne cochée');
 const cs2 = snapOf(cw), again2 = tools(open(ls => Object.entries(cs2).forEach(([k, v]) => ls.setItem(k, v))));
-again2.click('#courses-btn');
-assert(again2.$(`#courses-list [data-value="${key}"]`).getAttribute('aria-checked') === 'true' && again2.$('#courses-span').textContent.startsWith('3'), 'coche et période gardées');
+again2.click('#plan-btn');
+assert(/^Du 8 au 10\soctobreÀ venir3\sjours, plats simples\.$/.test(again2.$('#plan-body .shop-day').textContent) && !again2.$('#plan-body .is-cur'), 'planification à venir dans la liste : ' + again2.$('#plan-body .shop-day').textContent);
+again2.click('[data-action="pl-open"][data-value="2026-10-08|2026-10-10"]');
+assert(again2.$(`#courses-list [data-value="${key}"]`).getAttribute('aria-checked') === 'true', 'coche gardée');
 c.click('[data-action="co-uncheck"]');
-assert(c.$(`#courses-list [data-value="${key}"]`).getAttribute('aria-checked') === 'false', 'tout décocher');
-// Période des courses changée : liste recalculée ; un jour de la liste ouvre ce jour
-setEnd('courses', 'to', '2026-10-08');
-assert(c.$('#courses-span').textContent.startsWith('1 jour') && c.d.querySelectorAll('#courses-days .shop-day').length === 1, 'période d’un jour');
-setEnd('courses', 'to', '2026-10-01');
-assert(/La fin doit venir après le début/.test(c.$('#courses-err').textContent) && !c.$('#courses-list').textContent, 'période invalide');
-setEnd('courses', 'to', '2026-10-10');
-c.click('#courses-days [data-value="2026-10-09"]');
-assert(!c.$('#page').hidden && c.$('#courses').hidden && c.$('#date').textContent === 'Vendredi 9 octobre', 'jour ouvert depuis les courses');
-// Depuis la page : les courses gardent la dernière période ; la flèche de l'assistant ramène le jour d'avant
-c.click('#courses-btn');
-assert(c.$('#courses-span').textContent.startsWith('3'), 'dernière période des courses');
+assert(c.$(`#courses-list [data-value="${key}"]`).getAttribute('aria-checked') === 'false' && planifsOf(cw).list[0].checked.length === 0, 'tout décocher');
+// Retour à Planifier : la liste ; une nouvelle planification qui en chevauche une la raccourcit (une recette par repas)
 c.click('#courses [data-action="fermer"]');
+assert(!c.$('#plan').hidden && c.$('[data-action="pl-open"][data-value="2026-10-08|2026-10-10"]'), 'retour à la liste');
+setEnd('plan', 'from', '2026-10-10'); setEnd('plan', 'to', '2026-10-11');
+c.click('[data-action="pl-type"][data-value="recettes"]');
+assert(c.$('#pl-batch').getAttribute('aria-checked') === 'true', 'option batch cooking gardée');
+c.click('#pl-batch');
+c.click('[data-action="pl-create"]');
+assert.deepStrictEqual(planifsOf(cw).list.map(p => [p.from, p.to, p.type, p.n]), [['2026-10-08', '2026-10-09', 'simple', 0], ['2026-10-10', '2026-10-11', 'recettes', 0]], 'chevauchement : la plus ancienne raccourcie');
+cs = c.stored();
+assert(cs.plans['2026-10-10'].ch.dej.recette && cs.plans['2026-10-11'].ch.dej.recette && cs.plans['2026-10-11'].ch.diner.recette && /une recette par repas/.test(c.$('#courses-span').textContent), 'une recette par repas');
 c.click('#plan-btn');
-c.click('[data-action="pl-start"]');
-assert(c.$('#date').textContent.startsWith('Aujourd’hui'), 'assistant : la page suit l’étape');
-c.click('#nav-jour');
-assert(!c.$('#page').hidden && c.$('#date').textContent === 'Vendredi 9 octobre', 'menu « Journée » depuis l’assistant : jour d’avant');
+assert.deepStrictEqual([...c.d.querySelectorAll('#plan-body [data-action="pl-open"]')].map(b => b.dataset.value), ['2026-10-08|2026-10-09', '2026-10-10|2026-10-11'], 'deux planifications à venir');
+// Un jour du récap ouvre ce jour sur la page
+c.click('[data-action="pl-open"][data-value="2026-10-08|2026-10-09"]');
+c.click('#courses-days [data-value="2026-10-09"]');
+assert(!c.$('#page').hidden && c.$('#courses').hidden && c.$('#plan').hidden && /^Vendredi 9\soctobre$/.test(c.$('#date').textContent), 'jour ouvert depuis le récap');
 // Le formulaire des repas vaut pour le jour affiché
 c.click('#open-repas');
 assert.strictEqual(c.$('#repas-h').textContent, 'Tes repas, vendredi 9 octobre', 'formulaire d’un autre jour');
@@ -989,8 +986,12 @@ al.click('#open-repas');
 al.click('[data-action="repas-hasard"]');
 // Le reste de la semaine a déjà 400 à 500 g de viande rouge : un bœuf de plus dépasserait, il est écarté du tirage
 assert(/Viande rouge, cuite≈\s(4[0-9]0|500)\sg/.test(al.$('#wb-list').textContent) && al.stored().choices[3].dej.prot === 'poisson' && al.stored().choices[3].diner.prot === 'saumon', 'tirage sans poulet ni bœuf : ' + JSON.stringify(al.stored().choices[3]) + ' ' + al.$('#wb-list').textContent);
-al.click('#plan-btn'); al.click('[data-action="pl-start"]');
-assert(!sheetVals('#sel-pprot-diner').includes('poulet') && !sheetVals('#sel-ppd').includes('avoine'), 'assistant : aliment retiré proposé');
+// Une planification (plats simples, les 7 prochains jours) ne tire jamais un aliment retiré
+al.click('#plan-btn'); al.click('[data-action="pl-type"][data-value="simple"]'); al.click('[data-action="pl-create"]');
+{
+  const st = al.stored().plans, isos = ['2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13'];
+  assert(isos.every(iso => st[iso].ch.pdBase === 'pain' && st[iso].ch.dej.prot !== 'poulet' && st[iso].ch.diner.prot !== 'poulet' && st[iso].ch.dej.dessert === 'aucun'), 'planification : aliment retiré tiré');
+}
 al.click('#nav-jour');
 // Remis : de nouveau proposé ; relu au rechargement ; profil abîmé : tout est proposé
 al.click('#gear');
@@ -1033,10 +1034,6 @@ assert(fishN >= 15 && legN >= 8, `poisson et légumes secs favorisés : ${fishN}
 hv.choose('pd', null, 'sale');
 const coLis = [...hv.d.querySelectorAll('[aria-labelledby="h-co"] li')].map(li => li.textContent);
 assert(/skyr nature/.test(coLis[0]) && /à la place des œufs, déjà au menu aujourd’hui/.test(coLis[0]) && /amandes/.test(coLis[1]) && !coLis.some(t => /œuf/.test(t.replace('à la place des œufs', ''))), 'collation sans œufs : ' + coLis.join(' / '));
-// Assistant : la semaine en une phrase sous le total du jour
-hv.click('#plan-btn'); hv.click('[data-action="pl-start"]');
-assert(/^Ta semaine\s: trop de charcuterie/.test(hv.$('#plan-wb').textContent), 'semaine dans l’assistant : ' + hv.$('#plan-wb').textContent);
-hv.click('#nav-jour');
 
 // Réglages, « Ta semaine type » : séances habituelles par jour et soir du repas libre, reprises par les jours pas encore remplis
 const swd = open(), sw = tools(swd), sww = swd.window;
@@ -1085,15 +1082,14 @@ sw.click('#week [data-value="2026-10-08"]');
 sw.setSwitch('libre', true);
 assert(/celui de dimanche est retiré/.test(sw.$('#hint').textContent) && sw.stored().plans['2026-10-11'].libre === false, 'repas libre de la semaine type retiré : ' + sw.$('#hint').textContent);
 assert(!libreOf('2026-10-11'), 'dimanche sans repas libre');
-// La semaine suivante, pas encore remplie : la semaine type, aussi dans les courses et l'assistant
+// La semaine suivante, pas encore remplie : la semaine type, aussi dans une planification (ses séances gardées)
 sw.click('#today-btn');
-sw.click('#courses-btn');
-{ const el = sw.$('input[data-range="courses"][data-end="to"]'); el.value = '2026-10-12'; el.dispatchEvent(new sww.Event('input', { bubbles: true })); }
-const mon = [...sw.d.querySelectorAll('#courses-days .shop-day')].find(b => b.dataset.value === '2026-10-12');
-assert(mon && /^3\sséances/.test(mon.querySelector('.note').textContent) && /pas encore planifié/.test(mon.querySelector('.note').textContent), 'courses : semaine type ' + (mon && mon.textContent));
-sw.click('#courses [data-action="fermer"]');
 sw.click('#plan-btn');
-assert(/partent des séances de ta semaine type/.test(sw.$('#plan-body').textContent), 'assistant : semaine type annoncée');
+assert(/celles de ta semaine type/.test(sw.$('#plan-body').textContent), 'Planifier : semaine type annoncée');
+{ const el = sw.$('input[data-range="plan"][data-end="to"]'); el.value = '2026-10-12'; el.dispatchEvent(new sww.Event('input', { bubbles: true })); }
+sw.click('[data-action="pl-create"]');
+const mon = [...sw.d.querySelectorAll('#courses-days .shop-day')].find(b => b.dataset.value === '2026-10-12');
+assert(mon && /^3\sséances/.test(mon.querySelector('.note').textContent) && !('seances' in sw.stored().plans['2026-10-12']), 'planification : semaine type ' + (mon && mon.textContent));
 sw.click('#nav-jour');
 // Relue au rechargement ; abîmée, elle est ignorée
 const ssnap = snapOf(sww), srel = tools(open(ls => Object.entries(ssnap).forEach(([k, v]) => ls.setItem(k, v))));
@@ -1202,18 +1198,25 @@ assert(!sk.$('#repas').hidden, 'formulaire des repas après Passer');
 sk.click('[data-action="repas-hasard"]');
 assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil/.test(sk.$('#sum-note').textContent), 'page après Passer');
 
-// Batch cooking (3.13.0) : « Planifier », 3 recettes pour les 7 prochains jours (mercredi → mardi, repas libre samedi),
-// répétées midi et soir ; les courses montrent la fiche (à cuisiner aujourd'hui, boîtes au frigo puis au congélateur)
+// Batch cooking (3.13.0) : « Planifier », recettes en batch cooking, 3 recettes pour les 7 prochains jours (mercredi → mardi,
+// repas libre samedi), répétées midi et soir ; le détail montre la fiche (à cuisiner aujourd'hui, boîtes au frigo puis au
+// congélateur)
 {
   const bt = tools(open()), bw = bt.d.defaultView;
   bt.click('#plan-btn');
-  assert(bt.$('[data-action="pl-nrec"][aria-pressed="true"]').dataset.value === '4' && /Batch cooking/.test(bt.$('.plan-batch h2').textContent), '4 recettes par défaut');
+  bt.click('#pl-batch');
+  assert(bt.$('[data-action="pl-nrec"][aria-pressed="true"]').dataset.value === '4' && /Quelques recettes qui se gardent/.test(bt.$('#plan-body').textContent), '4 recettes par défaut');
   bt.click('[data-action="pl-nrec"][data-value="3"]');
   assert(bt.$('[data-action="pl-nrec"][aria-pressed="true"]').dataset.value === '3' && bt.d.activeElement === bt.$('[data-action="pl-nrec"][data-value="3"]'), 'nombre de recettes choisi, focus gardé');
   let seed = 11;
   bw.Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  bt.click('[data-action="pl-batch"]');
-  assert(!bt.$('#courses').hidden && bt.$('#plan').hidden && bt.$('#courses-span').textContent.startsWith('7\u00a0jours'), 'courses après le batch : ' + bt.$('#courses-span').textContent);
+  bt.click('[data-action="pl-create"]');
+  assert(!bt.$('#courses').hidden && bt.$('#plan').hidden && bt.$('#courses-span').textContent === '7\u00a0jours, batch cooking de 3\u00a0recettes, en cours.', 'détail après le batch : ' + bt.$('#courses-span').textContent);
+  // Planifier : la planification en cours, en tête et en évidence
+  bt.click('#plan-btn');
+  assert(bt.$('#plan-body > .pl-now .is-cur[data-value="2026-10-07|2026-10-13"]') && /^Du 7 au 13\soctobreEn cours7\sjours, batch cooking de 3\srecettes\. Le récap et tes courses\.$/.test(bt.$('.is-cur').textContent) && !bt.$('#pl-list-t'), 'planification en cours : ' + bt.$('#plan-body').textContent.slice(0, 120));
+  bt.click('.is-cur');
+  assert(!bt.$('#courses').hidden && bt.$('#courses-h').textContent === 'Du 7 au 13\u00a0octobre', 'détail de la planification en cours');
   const st = bt.stored(), isos = ['2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13'];
   const meals = isos.flatMap(iso => { const c = st.plans[iso].ch; return iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]; });
   const count = {};
@@ -1222,7 +1225,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   isos.forEach(iso => { const c = st.plans[iso].ch; assert(c.dej.prot !== c.diner.prot, 'même protéine midi et soir : ' + iso); });
   assert.deepStrictEqual(st.choices[3], st.plans['2026-10-07'].ch, 'mémoire du mercredi');
   // Fiche : à cuisiner aujourd'hui (la période commence aujourd'hui), une fiche par recette, boîtes au frigo 3 jours
-  assert(/^À cuisiner aujourd’hui\s:\s3 recettes, 13 boîtes\./.test(bt.$('#courses-batch .calc').textContent), 'fiche : ' + bt.$('#courses-batch .calc').textContent);
+  assert(/^À cuisiner aujourd’hui\s:\s3 recettes, 13\sboîtes\./.test(bt.$('#courses-batch .calc').textContent), 'fiche : ' + bt.$('#courses-batch .calc').textContent);
   const cards = [...bt.d.querySelectorAll('#courses-batch details.batch')];
   assert(cards.length === 3 && cards.every(x => !x.open), 'une fiche repliée par recette');
   let boxes = 0, freezer = 0;
@@ -1329,12 +1332,31 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     assert(!bt.$('#sheet-list').classList.contains('swap'), 'panneau de choix en bulles');
     bt.click('#sheet .sheet-x');
   }
-  // Période invalide : pas de batch
+  // Journée (3.21.0) : une recette du batch a son bouton « Batch cooking » ; sa page : seulement cette recette, le jour où la
+  // cuisiner, ce qu'il faut cuire, ses boîtes, sa préparation
+  bt.click('#nav-jour');
+  {
+    const id = bt.stored().plans['2026-10-07'].ch.dej.recette, R = bw.eval('RECIPES')[id];
+    assert(bt.$('#rec-b-dej') && bt.$('#rec-b-dej').textContent === 'Batch cooking' && bt.$('#rec-b-dej').getAttribute('aria-label') === 'Batch cooking de la recette du déjeuner', 'bouton du batch : ' + id);
+    bt.click('#rec-b-dej');
+    assert(!bt.$('#batch').hidden && bt.$('#page').hidden && bt.d.activeElement === bt.$('#batchp-h') && bt.$('#batchp-h').textContent === R.t && bt.$('#nav-jour').getAttribute('aria-current') === 'page', 'page du batch');
+    const n = bt.d.querySelectorAll('#batch-body .b-list')[1].querySelectorAll('li').length;
+    assert(new RegExp('^À cuisiner aujourd’hui\\s:\\s' + n + '\\sboîtes\\.').test(bt.$('#batch-body .calc').textContent) && n >= 2, 'jour et boîtes : ' + bt.$('#batch-body .calc').textContent);
+    assert.deepStrictEqual([...bt.d.querySelectorAll('#batch-body h3')].map(h => h.textContent), ['À cuire en tout', 'Les boîtes', 'Aromates, sans compter', 'Préparation'], 'fiche du batch');
+    assert(/^Mer\. 7, midi/.test(bt.$('#batch-body .b-list:nth-of-type(2) li .b-q').textContent) && !bt.$('#batch [data-action="co-swap"]') && bt.d.querySelectorAll('#batch-body .rec-steps li').length === 3, 'boîtes et préparation, sans « Changer »');
+    bt.click('#batch [data-action="fermer"]');
+    assert(!bt.$('#page').hidden && bt.d.activeElement === bt.$('#rec-b-dej'), 'retour à la journée, focus sur le bouton');
+    // Une recette servie une seule fois : pas de bouton ; la planification finie, la semaine du jour sert de repli
+    bt.choose('starch', 'dej', bt.chosen('starch', 'dej') === 'riz' ? 'pates' : 'riz');
+    assert(!bt.$('#rec-b-dej'), 'recette changée : plus de bouton');
+  }
+  // Période invalide : pas de planification
   bt.click('#plan-btn');
   const end = bt.$('input[data-range="plan"][data-end="to"]');
   end.value = '2026-10-01'; end.dispatchEvent(new bw.Event('input', { bubbles: true }));
-  bt.click('[data-action="pl-batch"]');
-  assert(!bt.$('#plan').hidden && /La fin doit venir après le début/.test(bt.$('#plan-err').textContent), 'batch refusé sur une période invalide');
+  const nq = JSON.parse(bw.localStorage.getItem('repas-du-jour:planifs:v1')).list.length;
+  bt.click('[data-action="pl-create"]');
+  assert(!bt.$('#plan').hidden && /La fin doit venir après le début/.test(bt.$('#plan-err').textContent) && JSON.parse(bw.localStorage.getItem('repas-du-jour:planifs:v1')).list.length === nq, 'planification refusée sur une période invalide');
 }
 
 // Onglets des réglages (3.18.0) : flèches, début et fin (le focus suit) ; le dernier onglet gardé à la réouverture par la
@@ -1394,6 +1416,36 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   });
 }
 
+// Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;
+// triées ; finies depuis plus de 21 jours, effacées
+{
+  const QK = 'repas-du-jour:planifs:v1';
+  for (const bad of ['{pas du json', '5', 'null', '[1]', JSON.stringify({ list: 'x' }), JSON.stringify({ list: [null, 5, { from: '2026-10-08', to: '2026-10-01' }, { from: '2026-10-01', to: '2026-12-31' }, { from: 'x', to: '2026-10-09' }] })]) {
+    const t = tools(open(ls => { ls.setItem(QK, bad); ls.setItem('repas-du-jour:courses:v1', JSON.stringify({ from: '2026-10-07', to: '2026-10-09', checked: [] })); }));
+    t.click('#plan-btn');
+    assert(/Aucune planification pour l’instant/.test(t.$('#plan-body').textContent), 'planifications abîmées : ' + bad);
+  }
+  const t = tools(open(ls => ls.setItem(QK, JSON.stringify({ list: [
+    { from: '2026-10-20', to: '2026-10-22', type: 'simple' },
+    { from: '2026-09-01', to: '2026-09-07', type: 'simple' },
+    { from: '2026-10-07', to: '2026-10-09', type: '__proto__', n: 7, checked: ['a|1', 5] },
+    { from: '2026-09-20', to: '2026-09-26', type: 'simple', n: 3 }] }))));
+  assert.deepStrictEqual(JSON.parse(t.d.defaultView.localStorage.getItem(QK)).list, [
+    { from: '2026-09-20', to: '2026-09-26', type: 'simple', n: 0, checked: [] },
+    { from: '2026-10-07', to: '2026-10-09', type: 'recettes', n: 0, checked: ['a|1'] },
+    { from: '2026-10-20', to: '2026-10-22', type: 'simple', n: 0, checked: [] }], 'planifications validées, triées, purgées');
+  t.click('#plan-btn');
+  assert(t.$('.is-cur[data-value="2026-10-07|2026-10-09"]') && t.$('#pl-list-t').textContent === 'Tes autres planifications', 'en cours');
+  assert.deepStrictEqual([...t.d.querySelectorAll('#plan-body [data-action="pl-open"]')].map(b => b.dataset.value + ' ' + b.querySelector('.k').textContent),
+    ['2026-10-07|2026-10-09 En cours', '2026-10-20|2026-10-22 À venir', '2026-09-20|2026-09-26 Passée'], 'ordre : en cours, à venir, passées');
+  // Une nouvelle planification au milieu d'une autre la coupe en deux (ses coches gardées des deux côtés)
+  const tw = t.d.defaultView, setT = (end, v) => { const el = t.$(`input[data-range="plan"][data-end="${end}"]`); el.value = v; el.dispatchEvent(new tw.Event('input', { bubbles: true })); };
+  setT('from', '2026-10-08'); setT('to', '2026-10-08');
+  t.click('[data-action="pl-create"]');
+  assert.deepStrictEqual(JSON.parse(tw.localStorage.getItem(QK)).list.map(p => [p.from, p.to, p.checked.join()]),
+    [['2026-09-20', '2026-09-26', ''], ['2026-10-07', '2026-10-07', 'a|1'], ['2026-10-08', '2026-10-08', ''], ['2026-10-09', '2026-10-09', 'a|1'], ['2026-10-20', '2026-10-22', '']], 'planification coupée en deux');
+}
+
 // Réglages, « Effacer mes données » (3.15.0) : demander, annuler (rien ne bouge), confirmer (tout ce qui est à l'appli
 // part, l'ancienne v1 comprise, le reste du stockage non), puis l'appli repart comme au premier lancement
 {
@@ -1405,6 +1457,9 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     ls.setItem('autre-appli:cle', 'garde');
   };
   const ef = tools(open(full)), ew = ef.d.defaultView;
+  // Migration (3.21.0) : l'ancienne période des courses devient une planification (avec ses coches), l'ancienne clé reste
+  assert.deepStrictEqual(JSON.parse(ew.localStorage.getItem('repas-du-jour:planifs:v1')), { list: [{ from: '2026-10-07', to: '2026-10-09', type: 'recettes', n: 0, checked: ['skyr|500 g'] }] }, 'courses converties en planification');
+  assert(/"from":"2026-10-07"/.test(ew.localStorage.getItem('repas-du-jour:courses:v1')), 'ancienne clé des courses touchée');
   assert(ef.sess().join() === 'Séance moyenne' && ef.chosen('prot', 'dej') === 'boeuf', 'données de départ');
   ef.click('#gear');
   assert(!ef.$('#eff-ask').hidden && ef.$('#eff-confirm').hidden && /Effacer mes données/.test(ef.$('#effacer h2').textContent), 'carte « Effacer mes données »');
@@ -1432,9 +1487,10 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   ef.click('#gear');
   assert(ef.$('#besoins [data-key="poids"]').value === '' && ef.d.querySelectorAll('#sem-days .dn').length === 7 && [...ef.d.querySelectorAll('#sem-days .dn')].every(x => x.textContent === '–'), 'profil et semaine type remis à zéro');
   ef.click('#reglages [data-action="fermer"]');
-  // Courses : période par défaut, rien de coché
-  ef.click('#courses-btn');
-  assert(ef.$('#courses-span').textContent.startsWith('7') && !ef.d.querySelector('#courses-list .chk[aria-checked="true"]'), 'courses remises à zéro');
+  // Planifier : plus aucune planification (l'ancienne clé des courses ne revient pas)
+  ef.click('#plan-btn');
+  assert(/Aucune planification pour l’instant/.test(ef.$('#plan-body').textContent) && !ef.$('[data-action="pl-open"]'), 'planifications remises à zéro');
+  ef.click('#nav-jour');
   // Rechargée : plus d'accueil (le profil vide est enregistré par « Passer »), toujours rien de l'ancienne v1
   const snap = {}; for (let i = 0; i < ew.localStorage.length; i++) { const k = ew.localStorage.key(i); snap[k] = ew.localStorage.getItem(k); }
   const again = tools(open(ls => { ls.clear(); Object.entries(snap).forEach(([k, v]) => ls.setItem(k, v)); }, true));

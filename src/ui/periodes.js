@@ -1,4 +1,4 @@
-  /* Périodes (assistant et courses) : dates AAAA-MM-JJ, 31 jours au plus */
+  /* Périodes (planifications) : dates AAAA-MM-JJ, 31 jours au plus */
   const MAX_DAYS = 31;
   const isoOk = function(v){ return typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) && fromIso(v) !== null && isoDate(fromIso(v)) === v; };
   const rangeDays = function(from, to){
@@ -31,17 +31,12 @@
     $(which + '-span').textContent = err ? '' : spanText(st.from, st.to);
     return err;
   };
-  /* Champs Du / Au de l'assistant et des courses */
+  /* Champs Du / Au d'une nouvelle planification */
   const rangeInput = function(e){
     const el = e.target;
-    if (!el.dataset || !el.dataset.range) return;
-    const st = el.dataset.range === 'plan' ? planner : shop;
-    if (!st) return;
-    st[el.dataset.end] = isoOk(el.value) ? el.value : '';
-    if (el.dataset.range === 'plan'){
-      fillRange('plan', planner, 0, true);
-      $('plan').querySelectorAll('[data-action="pl-preset"]').forEach(function(b){ const r = presetRange(b.dataset.value); b.setAttribute('aria-pressed', String(isoDate(r[0]) === planner.from && isoDate(r[1]) === planner.to)); });
-    } else { saveShop(); renderCourses(true); }
+    if (!el.dataset || el.dataset.range !== 'plan') return;
+    planner[el.dataset.end === 'to' ? 'to' : 'from'] = isoOk(el.value) ? el.value : '';
+    planFormUpdate();
   };
   document.addEventListener('input', rangeInput);
   document.addEventListener('change', rangeInput);

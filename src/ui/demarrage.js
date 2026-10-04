@@ -4,6 +4,8 @@
     if (isoDate(n) === isoDate(today)) return;
     today = n; todayJs = n.getDay(); selDate = today;
     purge(); loadSel(); prevQty = new Map(); fsel = null;
+    if (purgePlanifs()) saveQ();
+    resetPlanner();
     $('hint').textContent = '';
     if (topScreen() === 'repas') startDraft();
     render();

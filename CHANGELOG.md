@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.21.0, 4 octobre 2026
+
+- Planifier et Courses ne font plus qu'un. Le menu passe à quatre icônes : Journée, Planifier, Aide, Réglages.
+- Planifier montre ta planification en cours en évidence, puis les autres, à venir et passées.
+- Nouvelle planification, plus simple : choisis les jours, puis « Plats simples » (une protéine et un féculent) ou « Recettes ». Avec les recettes, l'option « Batch cooking » fait choisir 3, 4 ou 5 recettes différentes. Tous les plats sont tirés d'un coup ; tu changes ensuite un jour depuis ta journée. L'assistant jour par jour disparaît.
+- Une planification ouverte montre son récap jour par jour, son batch cooking et ses courses à cocher.
+- Dans ta journée, une recette qui fait partie d'un batch cooking a un bouton « Batch cooking » : il ouvre une page avec seulement cette recette, ce qu'il faut cuire et ses boîtes.
+- Ta période de courses actuelle devient ta première planification, avec ce que tu avais coché.
+
 ## 3.20.0, 4 octobre 2026
 
 - Un menu en haut de chaque écran : Journée, Planifier (calendrier), Courses (caddie), Aide et Réglages. L'écran où tu es est surligné. Le retour du téléphone ramène à ta journée.

@@ -100,20 +100,26 @@ function scan(dom, label){
   click(dom, '#help-regl'); scan(dom, 'aide');
 }
 {
-  // Calendrier, assistant de planification (dates, étapes, erreurs), courses
+  // Calendrier, Planifier (formulaire, erreurs, chaque type de plats), détail d'une planification, page du batch
   const dom = open(Object.assign(seen(), { [PKEY]: JSON.stringify({ age: 35, taille: 178, poids: 71 }) }));
   click(dom, '#week [data-value="2026-10-09"]'); scan(dom, 'page, autre jour');
   click(dom, '#wk-next'); scan(dom, 'page, semaine suivante');
   click(dom, '#today-btn');
-  click(dom, '#plan-btn'); scan(dom, 'planifier, dates');
+  click(dom, '#plan-btn'); scan(dom, 'planifier, aucune planification');
   type(dom, 'input[data-range="plan"][data-end="to"]', '2027-01-30'); scan(dom, 'planifier, période trop longue');
-  click(dom, '[data-action="pl-preset"][data-value="7"]');
-  click(dom, '[data-action="pl-start"]'); scan(dom, 'planifier, premier jour');
-  click(dom, '#plan-body [data-action="add"][data-value="longue"]'); click(dom, '#plan-body [data-action="toggle"]'); scan(dom, 'planifier, sortie longue et repas libre');
-  click(dom, '#plan-body .sel[data-kind="starch"][data-slot="dej"]'); scan(dom, 'planifier, panneau de choix'); click(dom, '#sheet [data-value="poischiches"]');
-  click(dom, '[data-action="pl-hasard-tous"]'); scan(dom, 'courses');
-  click(dom, '#courses-list .chk'); scan(dom, 'courses, ligne cochée');
-  type(dom, 'input[data-range="courses"][data-end="to"]', '2026-09-01'); scan(dom, 'courses, période invalide');
+  click(dom, '[data-action="pl-preset"][data-value="suivante"]');
+  click(dom, '[data-action="pl-type"][data-value="simple"]'); scan(dom, 'planifier, plats simples');
+  click(dom, '[data-action="pl-create"]'); scan(dom, 'planification à venir, plats simples');
+  click(dom, '#courses-list .chk'); scan(dom, 'planification, ligne cochée');
+  click(dom, '#courses [data-action="fermer"]'); scan(dom, 'planifier, une planification à venir');
+  click(dom, '[data-action="pl-preset"][data-value="7"]'); scan(dom, 'planifier, jours déjà prévus');
+  click(dom, '[data-action="pl-type"][data-value="recettes"]'); click(dom, '#pl-batch'); scan(dom, 'planifier, batch cooking');
+  click(dom, '[data-action="pl-create"]'); scan(dom, 'planification en cours, batch cooking');
+  click(dom, '#plan-btn'); scan(dom, 'planifier, en cours et à venir');
+  click(dom, '#nav-jour');
+  const bb = dom.window.document.querySelector('#rec-b-dej, #rec-b-diner');
+  C.ok(bb, 'batch cooking : pas de bouton dans la journée', '');
+  if (bb){ bb.click(); scan(dom, 'page du batch'); }
 }
 [
   ['petite corpulence au-dessus de l’objectif', { sexe: 'f', age: 28, taille: 160, poids: 45, deficit: 25, prot: 2.2 }],
@@ -185,8 +191,8 @@ function check(dom, log){
     ['pd', 'prot', 'starch'].forEach(k => C.ok(all.some(b => b.dataset.kind === k && !off.includes(k + ':' + b.dataset.value)), 'plus aucun aliment proposé', () => k + ' ' + where()));
     C.ok(all.every(b => (b.getAttribute('aria-pressed') === 'false') === off.includes(b.dataset.kind + ':' + b.dataset.value)), 'réglages ≠ aliments retirés', where);
   } catch (e){ C.ok(false, 'stockage illisible', () => e.message + ' ' + where()); }
-  // Assistant et formulaire : une bulle par choix, avec sa valeur ; courses : chaque ligne a sa quantité
-  ['#plan-body', '#repas-form'].forEach(id => {
+  // Formulaire des repas : une bulle par choix, avec sa valeur ; courses : chaque ligne a sa quantité
+  ['#repas-form'].forEach(id => {
     if ($(id).closest('main').hidden || !$(id + ' .sel')) return;
     const sels = [...d.querySelectorAll(id + ' .sel')];
     C.ok(sels.length === 7 && sels.every(b => b.dataset.value && b.textContent.trim()), 'bulles de choix', () => id + ' ' + where());
@@ -355,10 +361,10 @@ const ACTIONS = {
     const d = dom.window.document, w = dom.window;
     // Menu (3.20.0) : un écran du menu remplace celui du dessus, « Journée » ou le retour ramènent à la page
     const seq = R.pick([['#gear', '#reglages [data-action="fermer"]'], ['#help', '#aide [data-action="fermer"]'], ['#gear', '#help-regl', '#aide .btn.wide', '#reglages .btn.wide'], ['#gear', 'retour'], ['#help', 'retour'],
-      ['#gear', '#courses-btn', 'retour'], ['#help', '#gear', '#nav-jour'], ['#courses-btn', '#help', '#nav-jour'], ['#gear', '#help-regl', '#gear', 'retour']]);
+      ['#gear', '#plan-btn', 'retour'], ['#help', '#gear', '#nav-jour'], ['#plan-btn', '#help', '#nav-jour'], ['#gear', '#help-regl', '#gear', 'retour']]);
     seq.forEach(s => { if (s === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null })); else { const e = d.querySelector(s); if (e && !e.closest('[hidden]')) e.click(); } });
-    const cur = [...d.querySelectorAll('#nav [aria-current="page"]')], vis = ['page', 'reglages', 'aide', 'courses'].filter(id => !d.getElementById(id).hidden);
-    C.ok(cur.length === 1 && vis.length === 1 && cur[0].id === { page: 'nav-jour', reglages: 'gear', aide: 'help', courses: 'courses-btn' }[vis[0]], 'menu : écran surligné', () => seq.join(' ') + ' : ' + vis + ' / ' + cur.map(x => x.id));
+    const cur = [...d.querySelectorAll('#nav [aria-current="page"]')], vis = ['page', 'reglages', 'aide', 'plan'].filter(id => !d.getElementById(id).hidden);
+    C.ok(cur.length === 1 && vis.length === 1 && cur[0].id === { page: 'nav-jour', reglages: 'gear', aide: 'help', plan: 'plan-btn' }[vis[0]], 'menu : écran surligné', () => seq.join(' ') + ' : ' + vis + ' / ' + cur.map(x => x.id));
     if (!d.getElementById('page').hidden) return 'écrans ' + seq.join(' ');
     d.getElementById('nav-jour').click();
     C.ok(!d.getElementById('page').hidden, 'menu : « Journée » ne ramène pas à la page', () => seq.join(' '));
@@ -418,57 +424,57 @@ const ACTIONS = {
     C.ok(on && d.querySelectorAll('#week [aria-pressed="true"]').length === 1, 'calendrier : un seul jour choisi', b.id || b.dataset.value);
     return 'calendrier ' + (b.dataset.value || b.id);
   },
-  // Assistant : dates (raccourci ou champs), quelques étapes avec séances et plats, puis courses, hasard pour tous ou flèche
+  // Planifier (3.21.0) : une nouvelle planification (période, plats simples, recettes ou batch cooking) puis son détail ;
+  // ou une planification de la liste ; dans le détail : cocher, changer une recette du batch, ouvrir un jour ou revenir
   planifier: dom => {
-    const d = dom.window.document, w = dom.window;
+    const d = dom.window.document, w = dom.window, QK = 'repas-du-jour:planifs:v1';
     if (d.querySelector('#page').hidden) return 'planifier -';
     d.querySelector('#plan-btn').click();
-    if (R.chance(.5)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
-    else type(dom, 'input[data-range="plan"][data-end="to"]', R.pick(['2026-10-09', '2026-10-20', '2026-12-31', '', '2026-10-01']));
-    // Batch cooking : nombre de recettes, puis tout d'un coup, et les courses avec la fiche
-    if (R.chance(.5)){
-      if (R.chance(.8)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
-      R.pick([...d.querySelectorAll('[data-action="pl-nrec"]')]).click();
-      d.querySelector('[data-action="pl-batch"]').click();
-      if (!d.querySelector('#plan').hidden) d.querySelector('#nav-jour').click();
-      for (let i = R.chance(.7) ? R.int(1, 2) : 0; i > 0; i--) swapRecipe(dom);
-      C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', 'batch');
-      if (!d.querySelector('#courses').hidden && R.chance(.3)) d.querySelector('#courses [data-action="fermer"]').click();
-      return 'planifier batch';
+    const open = [...d.querySelectorAll('[data-action="pl-open"]')];
+    let how = 'liste';
+    if (open.length && R.chance(.3)) R.pick(open).click();
+    else {
+      if (R.chance(.6)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
+      else type(dom, 'input[data-range="plan"][data-end="' + R.pick(['from', 'to']) + '"]', R.pick(['2026-10-09', '2026-10-20', '2026-12-31', '', '2026-10-01']));
+      how = R.pick(['simple', 'recettes', 'batch', 'batch']);
+      d.querySelector('[data-action="pl-type"][data-value="' + (how === 'simple' ? 'simple' : 'recettes') + '"]').click();
+      const sw = d.querySelector('#pl-batch');
+      if (sw && (sw.getAttribute('aria-checked') === 'true') !== (how === 'batch')) d.querySelector('#pl-batch').click();
+      if (how === 'batch') R.pick([...d.querySelectorAll('[data-action="pl-nrec"]')]).click();
+      const err = d.querySelector('#plan-err').textContent, before = w.localStorage.getItem(QK);
+      const from = d.querySelector('input[data-range="plan"][data-end="from"]').value, to = d.querySelector('input[data-range="plan"][data-end="to"]').value;
+      d.querySelector('[data-action="pl-create"]').click();
+      if (err){ C.ok(!d.querySelector('#plan').hidden && w.localStorage.getItem(QK) === before, 'planification créée malgré l’erreur', err); d.querySelector('#nav-jour').click(); return 'planifier refusé'; }
+      // La nouvelle planification : enregistrée, ses jours tirés selon leur type
+      const q = JSON.parse(w.localStorage.getItem(QK)), p = q.list.find(x => x.from === from && x.to === to);
+      C.ok(!d.querySelector('#courses').hidden && p && p.type === (how === 'simple' ? 'simple' : 'recettes') && (p.n > 0) === (how === 'batch'), 'planification : détail ou enregistrement', () => how + ' ' + from + ' ' + to + ' ' + JSON.stringify(q.list));
+      const st = JSON.parse(w.localStorage.getItem(KEY));
+      if (how === 'simple' && p) C.ok(Object.keys(st.plans).filter(k => k >= p.from && k <= p.to).every(k => !st.plans[k].ch.dej.recette && !st.plans[k].ch.diner.recette), 'plats simples avec une recette', () => JSON.stringify(p));
+      // Planifications : pas de chevauchement, triées
+      C.ok(q.list.every((x, i) => i === 0 || q.list[i - 1].to < x.from), 'planifications qui se chevauchent', () => JSON.stringify(q.list));
     }
-    d.querySelector('[data-action="pl-start"]').click();
-    for (let i = R.int(0, 4); i > 0 && d.querySelector('[data-action="pl-next"]'); i--){
-      for (let j = R.int(0, 3); j > 0; j--){
-        const b = R.pick([...d.querySelectorAll('#plan-body button:not(:disabled)')].filter(x => !/^pl-/.test(x.dataset.action)));
-        if (b) b.click();
-        // Une bulle de plat ouvre le panneau : un choix le valide et le ferme
-        if (!d.querySelector('#sheet').hidden){
-          R.pick([...d.querySelectorAll('#sheet .opt')]).click();
-          if (!d.querySelector('#sheet').hidden) throw new Error('panneau de l’assistant resté ouvert');
-        }
-      }
-      R.pick(['pl-next', 'pl-next', 'pl-prev', 'pl-hasard']).split().forEach(a => { const b = d.querySelector('[data-action="' + a + '"]'); if (b) b.click(); });
-    }
-    const end = R.pick(['courses', 'tous', 'menu', 'retour']);
-    if (end === 'courses') while (!d.querySelector('#plan').hidden && d.querySelector('[data-action="pl-next"]')) d.querySelector('[data-action="pl-next"]').click();
-    else if (end === 'tous' && d.querySelector('[data-action="pl-hasard-tous"]')) d.querySelector('[data-action="pl-hasard-tous"]').click();
-    else if (end === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
-    if (!d.querySelector('#plan').hidden) d.querySelector('#nav-jour').click();
-    C.ok(d.querySelector('#plan').hidden, 'assistant resté ouvert', end);
-    if (!d.querySelector('#courses').hidden && R.chance(.5)) d.querySelector('#courses [data-action="fermer"]').click();
-    return 'planifier ' + end;
-  },
-  // Courses : ouvrir, cocher, changer la période, ouvrir un jour ou revenir
-  courses: dom => {
-    const d = dom.window.document;
-    if (d.querySelector('#courses').hidden){ if (d.querySelector('#page').hidden) return 'courses -'; d.querySelector('#courses-btn').click(); }
+    if (d.querySelector('#courses').hidden) throw new Error('détail de la planification non ouvert');
     for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#courses-list .chk')]); if (b) b.click(); }
     if (R.chance(.5)) swapRecipe(dom);
-    if (R.chance(.3)) type(dom, 'input[data-range="courses"][data-end="' + R.pick(['from', 'to']) + '"]', R.pick(['2026-10-10', '2026-10-31', '', '2026-09-01', '2027-06-01']));
-    const day = R.pick([...d.querySelectorAll('#courses-days .shop-day')]);
-    if (day && R.chance(.4)) day.click(); else d.querySelector('#courses [data-action="fermer"]').click();
-    C.ok(d.querySelector('#courses').hidden, 'courses restées ouvertes', '');
-    return 'courses';
+    const day = R.pick([...d.querySelectorAll('#courses-days .shop-day')]), end = R.pick(['jour', 'liste', 'menu', 'retour']);
+    if (end === 'jour' && day) day.click();
+    else if (end === 'liste') d.querySelector('#courses [data-action="fermer"]').click();
+    else if (end === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
+    else d.querySelector('#nav-jour').click();
+    if (!d.querySelector('#plan').hidden && R.chance(.5)) d.querySelector('#nav-jour').click();
+    C.ok(d.querySelector('#courses').hidden, 'détail resté ouvert', end);
+    return 'planifier ' + how + ' ' + end;
+  },
+  // Journée : la page du batch d'une recette, puis retour
+  batch: dom => {
+    const d = dom.window.document, b = d.querySelector('#rec-b-dej, #rec-b-diner');
+    if (d.querySelector('#page').hidden || !b) return 'batch -';
+    b.click();
+    const n = d.querySelectorAll('#batch-body .b-list')[1].querySelectorAll('li').length;
+    C.ok(!d.querySelector('#batch').hidden && n >= 2 && new RegExp('\\s' + n + '\\sboîtes\\.').test(d.querySelector('#batch-body .calc').textContent) && d.querySelectorAll('#batch-body .rec-steps li').length === 3, 'page du batch', () => d.querySelector('#batch-body').textContent.slice(0, 160));
+    d.querySelector('#batch [data-action="fermer"]').click();
+    C.ok(!d.querySelector('#page').hidden && d.activeElement === b.ownerDocument.getElementById(b.id), 'page du batch : retour', '');
+    return 'batch';
   },
   // Ta semaine : ouvrir ou refermer la carte
   semaine: dom => { const e = dom.window.document.querySelector('#wk-bal'); if (dom.window.document.querySelector('#page').hidden) return 'semaine -'; e.open = !e.open; return 'semaine ' + (e.open ? 'ouverte' : 'fermée'); },

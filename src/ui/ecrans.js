@@ -1,13 +1,15 @@
-  /* Écrans, un seul visible : accueil, page du jour, réglages, aide, formulaire des repas, Planifier et courses.
+  /* Écrans, un seul visible : accueil, page du jour, réglages, aide, formulaire des repas, Planifier, une planification
+     (récap et courses) et la page du batch d'une recette.
      Les écrans s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du téléphone
      revient d'un cran) et la position dans la page est rétablie au retour. Le menu en haut (3.20.0, #nav, caché pendant
      l'accueil) surligne l'écran affiché ; un écran du menu remplace celui du dessus, « Journée » ferme tout. */
   let stack = [], pageScroll = 0;
-  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h'};
+  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses', 'batch'];
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h', batch:'batchp-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const NAV = {page:'nav-jour', repas:'nav-jour', plan:'plan-btn', courses:'courses-btn', aide:'help', reglages:'gear'};
+  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', courses:'plan-btn', aide:'help', reglages:'gear'};
   const setView = function(v){
-    ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses'].forEach(function(id){ $(id).hidden = id !== v; });
+    VIEWS.forEach(function(id){ $(id).hidden = id !== v; });
     $('nav').hidden = v === 'accueil';
     if (v === 'page') fitFrise();
     $('nav').querySelectorAll('button').forEach(function(b){ if (b.id === NAV[v]) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
@@ -32,17 +34,15 @@
   const closeScreen = function(fromHistory){
     if (!stack.length) return;
     const left = stack.pop();
-    if (left.name === 'plan') leavePlan();
     showTop();
     if (!stack.length) $(document.getElementById(left.opener) ? left.opener : 'gear').focus({preventScroll:true});
     if (!fromHistory){ try { if (history.state && history.state.screen) history.back(); } catch (e) {} }
   };
   const closeAllScreens = function(){ while (stack.length) closeScreen(false); };
-  /* Remplace l'écran du dessus sans nouvelle entrée d'historique (fin de l'assistant → courses) */
+  /* Remplace l'écran du dessus sans nouvelle entrée d'historique (menu) */
   const replaceScreen = function(name){
     const top = stack[stack.length - 1];
     if (!top) return;
-    if (top.name === 'plan') leavePlan();
     top.name = name;
     try { history.replaceState({screen:name}, ''); } catch (e) {}
     showTop();

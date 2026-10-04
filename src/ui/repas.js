@@ -4,7 +4,7 @@
   const RKEY = 'repas-du-jour:repas:v1';
   let draft = null, repasVu = null, canStore = true;
   try { repasVu = localStorage.getItem(RKEY); } catch (e) { canStore = false; }
-  /* Les trois repas, une ligne par choix comme sur la page (formulaire des repas et assistant de planification) */
+  /* Les trois repas, avec le même sélecteur que la page (formulaire des repas) */
   const mealsFormHTML = function(src, ctx){
     const rows = function(kinds, slot){ return '<div class="picks">' + kinds.map(function(k){ return selRow(k, slot, src, ctx); }).join('') + '</div>'; };
     const meal = function(id, title, body, note){

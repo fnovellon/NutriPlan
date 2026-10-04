@@ -2,7 +2,6 @@
      ferme par un choix, le fond, Échap ou le bouton retour */
   let pick = null;
   /* ctx « repas » : le choix va dans le brouillon du formulaire (action rf), sinon il est enregistré tout de suite */
-  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses'];
   const openPick = function(kind, slot, ctx, trigger){
     const c = ctx === 'repas' ? draft : ch;
     if (!c) return;

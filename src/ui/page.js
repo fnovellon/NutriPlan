@@ -20,8 +20,8 @@
   const CHEVRON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
   /* Un choix : la sélection dans une bulle (les bulles d'un repas côte à côte, 3.20.0 ; le libellé n'est lu que par le
      lecteur d'écran) ; la toucher ouvre le panneau des choix.
-     ctx : page (choix du jour affiché), repas (brouillon du formulaire), plan (assistant, choix enregistrés tout de suite) */
-  const PFX = {page:'', repas:'r', plan:'p'};
+     ctx : page (choix du jour affiché) ou repas (brouillon du formulaire) */
+  const PFX = {page:'', repas:'r'};
   const selRow = function(kind, slot, src, ctx){
     const P = pickDef(kind, slot, src), id = PFX[ctx] + kind + (slot ? '-' + slot : '');
     const cur = P.opts.find(function(o){ return o[0] === P.current; });
@@ -64,9 +64,27 @@
     const x = RECIPES[s.suggest];
     return '<div class="rec"><p class="rec-t">Suggestion' + NB + ': <span class="rec-n">' + x.t + '</span></p>' + recMeta(x) + recBtns(s, false) + '</div>';
   };
+  /* Recette choisie qui fait partie d'un batch cooking (3.21.0) : « Batch cooking » ouvre sa fiche (ui/courses.js) */
   const recCardHTML = function(s){
-    const x = RECIPES[s.recipe];
-    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' + recBtns(s, true) + '</div>';
+    const x = RECIPES[s.recipe], bt = dayBatch[s.id];
+    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' + recBtns(s, true) +
+      (bt && bt.r.id === s.recipe ? '<button type="button" class="reset rec-batch" id="rec-b-' + s.id + '" data-action="rec-batch" data-slot="' + s.id + '"' +
+        ' aria-label="Batch cooking de la recette ' + REPAS[s.id] + '">Batch cooking</button>' : '') + '</div>';
+  };
+  /* Batch cooking du jour affiché : une recette choisie en fait partie si elle revient au moins deux fois dans son bloc de
+     7 jours, ceux de la planification qui contient la date (sinon sa semaine, lundi → dimanche). Pour chaque repas
+     concerné : la recette (batchCook), les dates du bloc, lead (0 : cuisinée le premier jour, sinon la veille). Calculé
+     une fois par dessin, seulement si un repas a une recette choisie. */
+  let dayBatch = {};
+  const batchFor = function(iso){
+    const p = planifOf(iso), wk = weekOf(fromIso(iso)), from = p ? p.from : isoDate(wk[0]), to = p ? p.to : isoDate(wk[6]);
+    const all = rangeDays(from, to), i = all.indexOf(iso), b0 = i - i % BATCH_BLOCK, isos = all.slice(b0, b0 + BATCH_BLOCK);
+    const lead = b0 === 0 && dayDiff(fromIso(from)) <= 0 ? 0 : 1, out = {};
+    if (i < 0) return out;
+    batchCook(isos.map(function(x){ return {res:dayResult(x)}; }), lead).forEach(function(bl){
+      bl.recipes.forEach(function(r){ r.boxes.forEach(function(bx){ if (isos[bx.day] === iso) out[bx.slot] = {r:r, isos:isos, lead:lead}; }); });
+    });
+    return out;
   };
   /* Une carte par repas et par séance, toutes dessinées, une seule visible (celle choisie dans la frise, 3.20.0) */
   const WHEN = {matin:'le matin', midi:'à midi', soir:'le soir'};
@@ -277,11 +295,11 @@
     renderWeek();
     const next = new Map();
     if (!res.secs.some(function(s){ return s.id === fsel; })) fsel = autoSec();
+    dayBatch = res.secs.some(function(s){ return s.recipe && !s.libre; }) ? batchFor(selIso()) : {};
     $('frise').innerHTML = friseHTML(res.secs);
     fitFrise();
     $('day').innerHTML = res.secs.map(function(s){ return s.band ? bandHTML(s, next) : mealHTML(s, next); }).join('');
     prevQty = next;
-    if (planner && planner.i >= 0 && topScreen() === 'plan') renderPlan();
   };
   /* Actions de la page du jour : séances, repas libre, plats, recettes, calendrier, plan de base */
   Object.assign(ACTIONS, {
@@ -315,6 +333,8 @@
     dessert: function(b, v){ if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } return ''; },
     /* Recette d'un repas : voir sa fiche, la choisir (celle proposée pour sa protéine et son féculent) ou la retirer */
     'rec-view': function(b){ if (!has(REPAS, b.dataset.slot)) return; openRecipe(b.dataset.slot, b); },
+    /* La page du batch de cette recette (3.21.0) */
+    'rec-batch': function(b){ const x = has(REPAS, b.dataset.slot) ? dayBatch[b.dataset.slot] : null; if (!x) return; renderBatchPage(x); openScreen('batch', b); },
     'rec-on': function(b){
       const slot = b.dataset.slot, id = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch)[0] : null;
       if (!id) return;
