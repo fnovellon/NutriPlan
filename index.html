@@ -845,7 +845,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.18.0';
+const APP_VERSION = '3.19.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1710,11 +1710,16 @@ function breakfast(long, banane, base, k, kp){
   if (base === 'pain' || base === 'sale'){
     const g = sc(long ? 110 : 80, 10, k);
     items.push(it('base', grams(g), 'pain complet', slices(g, 40) + (base === 'sale' ? ', en version sucrée avant la sortie longue (plus digeste)' : ''), mac('pain', g)));
-  } else {
+  }
+  /* Avec les flocons, jamais moins de 2,5 fois leur poids en skyr (3.19.0, arrondi à 10 g au-dessus) : sinon le porridge ou
+     les flocons trempés ne se mangent pas. Comme SKYR_MIN, ce plancher ne suit pas l'objectif de protéines. */
+  let skyrOats = 0;
+  if (base !== 'pain' && base !== 'sale'){
     const g = sc(long ? 80 : 60, 5, k);
     items.push(it('base', grams(g), 'flocons d’avoine ou muesli', 'muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr', mac('avoine', g)));
+    skyrOats = Math.ceil(g * OATS_SKYR / 10) * 10;
   }
-  const sk = Math.max(SKYR_MIN, sc(long ? 150 : 250, 10, kp));
+  const sk = Math.max(SKYR_MIN, skyrOats, sc(long ? 150 : 250, 10, kp));
   items.push(adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))));
   if (long || banane){
     items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
@@ -1806,6 +1811,8 @@ const FAT_MIN = 55, FAT_MAX = 95;
 const PROT_BAND = 0.1, PF_MIN = 0.5, PF_MAX = 1.5;
 /* Skyr du petit-déjeuner et du goûter : jamais moins d'un petit pot */
 const SKYR_MIN = 100;
+/* Skyr du petit-déjeuner aux flocons : au moins 2,5 fois le poids des flocons (3.19.0) */
+const OATS_SKYR = 2.5;
 function protTarget(p){ return p.prot * REF_KG * scaleOf(p); }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond (caps : kcal du plafond de chaque repas).
    off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).

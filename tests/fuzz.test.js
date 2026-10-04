@@ -137,6 +137,9 @@ for (let i = 0; i < N; i++){
   const items = r.secs.flatMap(s => s.items);
   const long = plan.seances.some(x => x.taille === 'longue'), grosse = plan.seances.some(x => x.taille !== 'petite');
   const ids = r.secs.map(s => s.id);
+  // Skyr des flocons (3.19.0) : au moins 2,5 fois le poids des flocons
+  { const pdi = sec(r, 'pd').items, oats = pdi.find(x => x.key === 'base' && x.buy.id === 'avoine'), sk = pdi.find(x => x.key === 'skyr');
+    if (oats) C.ok(sk && sk.buy.g >= Math.ceil(oats.buy.g * 2.5 / 10) * 10, 'skyr sous 2,5 fois les flocons', cas); }
   // Poids fixés valides : la ligne les reprend et n'est pas ajustée ; sinon ignorés
   ['dej', 'diner'].forEach(sl => {
     const sc2 = sec(r, sl), fx = A.fixedGrams(ch[sl]);

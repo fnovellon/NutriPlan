@@ -647,12 +647,15 @@ for (const [name, set] of Object.entries(SETS)) for (const pdBase of PD_ORDER) P
   nr++;
 }));
 
-// 18. Correctif 3.13.0 : le facteur de protéines va jusqu'à sa borne (œufs-jambon midi et soir : 2 œufs à 0,508, 1 à 0,5)
+// 18. Correctif 3.13.0 : le facteur de protéines va jusqu'à sa borne (œufs-jambon midi et soir : 2 œufs à 0,508, 1 à 0,5).
+// Base pain, une moyenne le matin (depuis la 3.19.0, le skyr des flocons d'une sortie longue ne descend plus assez bas pour
+// rejouer le cas d'origine)
 {
   const prof = { sexe: 'h', age: 23, taille: 220, poids: 71.2, neat: 'debout', prot: 1.8, ravito: 70 };
-  const set = [moyenne('matin'), petite('midi'), longue(1.5)], c = { pdBase: 'avoine', dej: { prot: 'oeufs', starch: 'riz', dessert: 'chocolat' }, diner: { prot: 'oeufs', starch: 'pates', dessert: 'chocolat' } };
+  const set = [moyenne('matin')], c = { pdBase: 'pain', dej: { prot: 'oeufs', starch: 'riz' }, diner: { prot: 'oeufs', starch: 'pates' } };
   const a = buildDay(cleanPlan({ seances: set, libre: false }, 3), c, prof), b = buildDay(cleanPlan({ seances: set, libre: false }, 3), c, { ...prof, prot: 1.9 });
-  assert(a.prot.factor === PF_MIN && a.tot.p <= a.prot.high + 0.5, `œufs-jambon : facteur ${a.prot.factor}, ${Math.round(a.tot.p)} g pour ${Math.round(a.prot.high)} au plus`);
+  const eggs = r => ['dej', 'diner'].map(id => r.secs.find(x => x.id === id).items.find(i => i.key === 'p1').qty).join();
+  assert(a.prot.factor === PF_MIN && eggs(a) === '1,1' && a.tot.p <= a.prot.high + 0.5, `œufs-jambon : facteur ${a.prot.factor}, œufs ${eggs(a)}, ${Math.round(a.tot.p)} g pour ${Math.round(a.prot.high)} au plus`);
   assert(b.tot.p >= a.tot.p - 8, 'objectif plus haut, pas moins de protéines');
 }
 
@@ -829,5 +832,19 @@ assert(!batchSwapOptions(dSale, 'tofu-riz', ['pd:avoine', 'pd:pain'], 1).some(x 
   }
   assert(done >= elig * 0.95, `arrondi : ${done} recettes sur ${elig}`);
 }
+
+// 21. Skyr des flocons (3.19.0) : jamais moins de 2,5 fois le poids des flocons (arrondi à 10 g au-dessus), même quand le
+// facteur de protéines baisse ; le pain garde son skyr ajusté (100 g au moins)
+for (const k of [0.65, 1, 1.4]) for (const set of [[], [moyenne('matin')], [longue(2)], [longue(3), petite('soir')]]) for (const prot of [1.6, 2, 2.2]) for (const p of ['thon', 'poulet', 'oeufs']) {
+  const plan = cleanPlan({ seances: set, libre: false }, 3), prof = { poids: 72 * k, prot };
+  const pd = r => r.secs.find(x => x.id === 'pd').items, g = (r, key) => (pd(r).find(i => i.key === key) || { buy: { g: 0 } }).buy.g;
+  const a = buildDay(plan, { pdBase: 'avoine', dej: { prot: p, starch: 'riz' }, diner: { prot: p, starch: 'pates' } }, prof);
+  assert(g(a, 'skyr') >= Math.ceil(g(a, 'base') * 2.5 / 10) * 10, `skyr ${g(a, 'skyr')} g pour ${g(a, 'base')} g de flocons (k ${k}, ${prot} g/kg, ${p})`);
+  assert(a.ecart >= -a.energy.target * 0.03, `skyr des flocons : écart de ${Math.round(a.ecart)} kcal`);
+  if (a.ecart > a.energy.target * 0.03) for (const kc of starchKcal(a)) assert(kc <= STARCH_MIN * k + 20, `skyr des flocons : au-dessus de l'objectif sans être au plancher (k ${k}, ${p})`);
+  const b = buildDay(plan, { pdBase: 'pain', dej: { prot: p, starch: 'riz' }, diner: { prot: p, starch: 'pates' } }, prof);
+  assert(g(b, 'skyr') >= 100, 'skyr du pain sous 100 g');
+}
+assert(buildDay(cleanPlan({ seances: [longue(2)], libre: false }, 3), { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } }).secs[0].items.find(i => i.key === 'skyr').qty === '200 g', 'sortie longue : 80 g de flocons, 200 g de skyr');
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

@@ -15,6 +15,8 @@ const FAT_MIN = 55, FAT_MAX = 95;
 const PROT_BAND = 0.1, PF_MIN = 0.5, PF_MAX = 1.5;
 /* Skyr du petit-déjeuner et du goûter : jamais moins d'un petit pot */
 const SKYR_MIN = 100;
+/* Skyr du petit-déjeuner aux flocons : au moins 2,5 fois le poids des flocons (3.19.0) */
+const OATS_SKYR = 2.5;
 function protTarget(p){ return p.prot * REF_KG * scaleOf(p); }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond (caps : kcal du plafond de chaque repas).
    off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).

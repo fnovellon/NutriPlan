@@ -17,11 +17,16 @@ function breakfast(long, banane, base, k, kp){
   if (base === 'pain' || base === 'sale'){
     const g = sc(long ? 110 : 80, 10, k);
     items.push(it('base', grams(g), 'pain complet', slices(g, 40) + (base === 'sale' ? ', en version sucrée avant la sortie longue (plus digeste)' : ''), mac('pain', g)));
-  } else {
+  }
+  /* Avec les flocons, jamais moins de 2,5 fois leur poids en skyr (3.19.0, arrondi à 10 g au-dessus) : sinon le porridge ou
+     les flocons trempés ne se mangent pas. Comme SKYR_MIN, ce plancher ne suit pas l'objectif de protéines. */
+  let skyrOats = 0;
+  if (base !== 'pain' && base !== 'sale'){
     const g = sc(long ? 80 : 60, 5, k);
     items.push(it('base', grams(g), 'flocons d’avoine ou muesli', 'muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr', mac('avoine', g)));
+    skyrOats = Math.ceil(g * OATS_SKYR / 10) * 10;
   }
-  const sk = Math.max(SKYR_MIN, sc(long ? 150 : 250, 10, kp));
+  const sk = Math.max(SKYR_MIN, skyrOats, sc(long ? 150 : 250, 10, kp));
   items.push(adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))));
   if (long || banane){
     items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));

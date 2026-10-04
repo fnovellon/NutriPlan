@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 3.19.0, 4 octobre 2026
+
+- Petit-déjeuner aux flocons d'avoine : jamais moins de 2,5 fois leur poids en skyr, pour que le porridge ou les flocons trempés restent mangeables. Les jours de sortie longue, 80 g de flocons vont avec 200 g de skyr (au lieu de 100 à 140 g) ; les autres jours, 60 g avec 150 g au moins.
+- Le skyr en plus apporte quelques grammes de protéines : la viande ou le poisson du midi et du soir baissent un peu, et le féculent garde le total de ta journée.
+
 ## 3.18.0, 3 octobre 2026
 
 - Réglages rangés en quatre onglets : Profil (toi, ta dépense, ton déficit, tes protéines), Sport (ta semaine type, les calories de tes séances, le ravito), Repas (tes aliments, le shaker, la marge cuisine) et Appli (aide, refaire l'accueil, installer, effacer tes données). Les onglets restent en haut de l'écran quand tu descends, et l'appli se souvient du dernier ouvert.
