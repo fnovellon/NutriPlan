@@ -1,13 +1,13 @@
   /* Écrans, un seul visible : accueil, page du jour, réglages, aide, formulaire des repas, Planifier, une planification
-     (récap et courses) et la page du batch d'une recette.
+     (récap et courses), la page du batch d'une recette et la bibliothèque des recettes (3.24.0).
      Les écrans s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du téléphone
      revient d'un cran) et la position dans la page est rétablie au retour. Le menu en haut (3.20.0, #nav, caché pendant
      l'accueil) surligne l'écran affiché ; un écran du menu remplace celui du dessus, « Journée » ferme tout. */
   let stack = [], pageScroll = 0;
-  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses', 'batch'];
-  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h', batch:'batchp-h'};
+  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses', 'batch', 'recettes'];
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h', batch:'batchp-h', recettes:'lib-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', courses:'plan-btn', aide:'help', reglages:'gear'};
+  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', courses:'plan-btn', recettes:'nav-rec', aide:'help', reglages:'gear'};
   const setView = function(v){
     VIEWS.forEach(function(id){ $(id).hidden = id !== v; });
     $('nav').hidden = v === 'accueil';

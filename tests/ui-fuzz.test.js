@@ -98,6 +98,13 @@ function scan(dom, label){
   ['avoine', 'sale', 'pain'].forEach(v => click(dom, '#alim-list [data-kind="pd"][data-value="' + v + '"]')); scan(dom, 'réglages, dernière base gardée');
   click(dom, '#sem-days [data-value="2"]'); click(dom, '#sem-acts [data-value="petite"]'); click(dom, '#sem-acts [data-value="longue"]'); click(dom, '#sem-lib [data-value="0"]'); scan(dom, 'réglages, semaine type');
   click(dom, '#help-regl'); scan(dom, 'aide');
+  // Recettes (3.24.0) : la liste, filtrée, une fiche, prise pour demain soir (repas libre : pas de bouton)
+  click(dom, '#nav-rec'); scan(dom, 'recettes');
+  click(dom, '#lib-quick'); click(dom, '#lib-mine'); scan(dom, 'recettes filtrées');
+  click(dom, '#lib-list .lib-r'); scan(dom, 'fiche de la bibliothèque');
+  click(dom, '[data-action="lib-take"]'); scan(dom, 'recette prise');
+  click(dom, '[data-action="lib-for"][data-value="1|diner"]'); click(dom, '#lib-list .lib-r'); scan(dom, 'fiche, demain soir');
+  click(dom, '#sheet .sheet-x'); click(dom, '#lib-quick'); click(dom, '#lib-mine');
 }
 {
   // Calendrier, Planifier (formulaire, erreurs, chaque type de plats), détail d'une planification, page du batch
@@ -407,10 +414,11 @@ const ACTIONS = {
     const d = dom.window.document, w = dom.window;
     // Menu (3.20.0) : un écran du menu remplace celui du dessus, « Journée » ou le retour ramènent à la page
     const seq = R.pick([['#gear', '#reglages [data-action="fermer"]'], ['#help', '#aide [data-action="fermer"]'], ['#gear', '#help-regl', '#aide .btn.wide', '#reglages .btn.wide'], ['#gear', 'retour'], ['#help', 'retour'],
-      ['#gear', '#plan-btn', 'retour'], ['#help', '#gear', '#nav-jour'], ['#plan-btn', '#help', '#nav-jour'], ['#gear', '#help-regl', '#gear', 'retour']]);
+      ['#gear', '#plan-btn', 'retour'], ['#help', '#gear', '#nav-jour'], ['#plan-btn', '#help', '#nav-jour'], ['#gear', '#help-regl', '#gear', 'retour'],
+      ['#nav-rec', 'retour'], ['#plan-btn', '#nav-rec', '#help'], ['#nav-rec', '#recettes [data-action="fermer"]'], ['#gear', '#nav-rec', '#nav-jour']]);
     seq.forEach(s => { if (s === 'retour') w.dispatchEvent(new w.PopStateEvent('popstate', { state: null })); else { const e = d.querySelector(s); if (e && !e.closest('[hidden]')) e.click(); } });
-    const cur = [...d.querySelectorAll('#nav [aria-current="page"]')], vis = ['page', 'reglages', 'aide', 'plan'].filter(id => !d.getElementById(id).hidden);
-    C.ok(cur.length === 1 && vis.length === 1 && cur[0].id === { page: 'nav-jour', reglages: 'gear', aide: 'help', plan: 'plan-btn' }[vis[0]], 'menu : écran surligné', () => seq.join(' ') + ' : ' + vis + ' / ' + cur.map(x => x.id));
+    const cur = [...d.querySelectorAll('#nav [aria-current="page"]')], vis = ['page', 'reglages', 'aide', 'plan', 'recettes'].filter(id => !d.getElementById(id).hidden);
+    C.ok(cur.length === 1 && vis.length === 1 && cur[0].id === { page: 'nav-jour', reglages: 'gear', aide: 'help', plan: 'plan-btn', recettes: 'nav-rec' }[vis[0]], 'menu : écran surligné', () => seq.join(' ') + ' : ' + vis + ' / ' + cur.map(x => x.id));
     if (!d.getElementById('page').hidden) return 'écrans ' + seq.join(' ');
     d.getElementById('nav-jour').click();
     C.ok(!d.getElementById('page').hidden, 'menu : « Journée » ne ramène pas à la page', () => seq.join(' '));
@@ -526,6 +534,30 @@ const ACTIONS = {
     if (!d.querySelector('#plan').hidden && R.chance(.5)) d.querySelector('#nav-jour').click();
     C.ok(d.querySelector('#courses').hidden, 'détail resté ouvert', end);
     return 'planifier ' + how + ' ' + end;
+  },
+  // Recettes (3.24.0) : quelques filtres, une recette prise pour un repas (ou fiche fermée), la date enregistrée suit
+  recettes: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'recettes -';
+    d.querySelector('#nav-rec').click();
+    const pick = (sel, v) => { const el = d.querySelector(sel); el.value = v; el.dispatchEvent(new w.Event('change', { bubbles: true })); };
+    if (R.chance(.4)) pick('#lib-prot', R.pick(['', 'poulet', 'boeuf', 'saumon', 'thon', 'oeufs']));
+    if (R.chance(.4)) pick('#lib-starch', R.pick(['', 'riz', 'pates', 'lentilles']));
+    if (R.chance(.3)) d.querySelector(R.pick(['#lib-box', '#lib-quick', '#lib-mine'])).click();
+    const tg = R.pick([...d.querySelectorAll('[data-action="lib-for"]')]); tg.click();
+    const items = [...d.querySelectorAll('#lib-list .lib-r')], n = +(/^\d+/.exec(d.querySelector('#lib-n').textContent) || [0])[0];
+    C.ok(items.length === (n || 0) && (!items.length || /\srecettes?(\.|, mais)/.test(d.querySelector('#lib-n').textContent)), 'recettes : nombre affiché', () => n + ' / ' + items.length);
+    const b = R.pick(items), out = () => { d.querySelector(R.pick(['#nav-jour', '#recettes [data-action="fermer"]'])).click(); };
+    if (!b){ out(); return 'recettes vides'; }
+    b.click();
+    const take = d.querySelector('[data-action="lib-take"]');
+    if (!take || R.chance(.3)){ d.querySelector('#sheet .sheet-x').click(); C.ok(d.activeElement === d.getElementById(b.id), 'recettes : focus après la fiche', b.id); out(); return 'recettes fiche'; }
+    take.click();
+    const q = tg.dataset.value.split('|'), x = new Date(clock.now + 864e5 * +q[0]), iso = x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+    const st = JSON.parse(w.localStorage.getItem(KEY)), c = st.plans[iso] && st.plans[iso].ch && st.plans[iso].ch[q[1]];
+    C.ok(c && c.recette === b.dataset.value && d.querySelector('#sheet').hidden && d.activeElement && d.activeElement.id === b.id, 'recettes : prise', () => iso + ' ' + JSON.stringify(c) + ' ' + b.dataset.value);
+    if (R.chance(.5)) d.querySelector('#lib-msg [data-action="lib-day"]').click(); else out();
+    return 'recette prise ' + b.dataset.value + ' ' + tg.dataset.value;
   },
   // Journée : « Un autre plat » pour un repas (un autre couple, le dessert gardé)
   redo: dom => {

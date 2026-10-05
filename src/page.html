@@ -118,6 +118,7 @@
 <nav class="nav" id="nav" aria-label="Menu">
   <button type="button" id="nav-jour" data-action="jour"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M19 21V3c-2.5 1.5-4 4.5-4 9 0 1.5 1 2.5 4 2.5"/></svg></span><span class="nav-l">Journée</span></button>
   <button type="button" id="plan-btn" data-action="plan"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg></span><span class="nav-l">Planifier</span></button>
+  <button type="button" id="nav-rec" data-action="recettes"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h6a4 4 0 0 1 4 4V21a3 3 0 0 0-3-3H2z"/><path d="M22 4.5h-6a4 4 0 0 0-4 4V21a3 3 0 0 1 3-3h7z"/></svg></span><span class="nav-l">Recettes</span></button>
   <button type="button" id="help" data-action="aide"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span class="nav-l">Aide</span></button>
   <button type="button" id="gear" data-action="needs"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-l">Réglages</span></button>
 </nav>
@@ -350,6 +351,7 @@
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
+      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», une nouvelle planification en recettes avec l’option «&nbsp;Batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Ta planification montre alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
     </ul>
@@ -435,6 +437,26 @@
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
+<main class="app lib" id="recettes" hidden>
+  <h1 id="lib-h" tabindex="-1">Recettes</h1>
+  <p class="repas-p">Les 80 recettes de l’appli, une par protéine et féculent. Touche-en une pour voir tes quantités et la prendre pour un repas.</p>
+  <p class="lbl lib-l" id="lib-for-l">Pour quel repas&nbsp;?</p>
+  <div class="opts-list lib-for" id="lib-for" role="group" aria-labelledby="lib-for-l"></div>
+  <p class="intro" id="lib-msg" role="status"></p>
+  <div class="fields lib-sel">
+    <label class="field"><span>Protéine</span><span class="inp"><select id="lib-prot" data-lib="prot"></select></span></label>
+    <label class="field"><span>Féculent</span><span class="inp"><select id="lib-starch" data-lib="starch"></select></span></label>
+  </div>
+  <div class="opts-list lib-f" role="group" aria-label="Filtres">
+    <button type="button" class="opt" id="lib-box" data-action="lib-f" data-value="box" aria-pressed="false">Se garde</button>
+    <button type="button" class="opt" id="lib-quick" data-action="lib-f" data-value="quick" aria-pressed="false">20&nbsp;min ou moins</button>
+  </div>
+  <div class="switches"><button type="button" class="switch" role="switch" id="lib-mine" aria-checked="true" data-action="lib-f" data-value="mine"><span>Seulement tes aliments</span><span class="knob" aria-hidden="true"></span></button></div>
+  <p class="calc lib-n" id="lib-n" role="status"></p>
+  <ul class="lib-list" id="lib-list"></ul>
+  <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
+</main>
+
 <div class="sheet" id="sheet" hidden>
   <div class="scrim" data-action="close-pick"></div>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheet-t">
@@ -473,6 +495,7 @@ if (typeof document !== 'undefined'){
 {{inclure ui/semaine.js}}
 {{inclure ui/courses.js}}
 {{inclure ui/panneau.js}}
+{{inclure ui/recettes.js}}
 {{inclure ui/semtype.js}}
 {{inclure ui/accueil.js}}
 {{inclure ui/actions.js}}

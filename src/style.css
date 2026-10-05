@@ -225,6 +225,20 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .in-r{animation:in-r .22s ease-out;}
 @keyframes in-l{from{opacity:0;transform:translateX(28px);}}
 @keyframes in-r{from{opacity:0;transform:translateX(-28px);}}
+/* Recettes (3.24.0) : le repas visé, les filtres, la liste (une ligne par recette, la choisie pour le repas visé marquée) */
+.lib-l{margin:6px 0 8px;}
+.lib-for{margin:0 0 16px;}
+.lib-sel{margin:4px 0 12px;}
+.field select{width:100%;min-width:0;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-family:var(--sans);font-weight:600;font-size:16px;}
+.field select:focus-visible{outline:2px solid var(--beet);outline-offset:1px;}
+.lib-f{margin:0 0 6px;}
+.lib .switches{margin:4px 0 14px;}
+.lib-n{margin:0 0 8px;}
+.lib-list{margin:0 0 24px;padding:0;list-style:none;border-top:1px solid var(--line);}
+.lib-r{display:flex;flex-direction:column;gap:2px;width:100%;padding:12px 2px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);text-align:left;}
+.lib-t{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.3;}
+.lib-m{font-size:14.5px;font-style:italic;color:var(--muted);}
+.lib-c{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-style:normal;font-weight:700;font-size:12.5px;line-height:1.6;}
 /* Légumes à volonté (3.23.0) : surlignés comme au marqueur */
 .vol{display:inline-block;padding:0 7px;border-radius:6px;background:var(--flash);color:var(--ink);font-family:var(--sans);font-style:normal;font-size:12.5px;font-weight:700;line-height:1.6;vertical-align:1px;white-space:nowrap;}
 .rec-vol{margin:8px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}

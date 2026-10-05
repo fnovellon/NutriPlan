@@ -704,7 +704,7 @@ assert(view() === 'page', 'bouton retour depuis les réglages');
   assert(cur() === 'plan-btn' && !p.$('#plan').hidden && view() === '' && pw.history.state.screen === 'plan', 'menu : Planifier à la place des réglages');
   pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
   assert(view() === 'page' && p.$('#plan').hidden && cur() === 'nav-jour', 'menu : le retour ramène à la journée');
-  assert.deepStrictEqual([...p.d.querySelectorAll('#nav button')].map(b => b.textContent.trim()), ['Journée', 'Planifier', 'Aide', 'Réglages'], 'menu : quatre boutons (3.21.0)');
+  assert.deepStrictEqual([...p.d.querySelectorAll('#nav button')].map(b => b.textContent.trim()), ['Journée', 'Planifier', 'Recettes', 'Aide', 'Réglages'], 'menu : cinq boutons (3.24.0)');
   p.click('#gear'); p.click('#help-regl');
   assert(view() === 'aide' && cur() === 'help', 'menu : aide depuis les réglages');
   p.click('#gear');
@@ -1582,6 +1582,80 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   // Recette choisie : ses légumes à volonté aussi
   t.click('#rec-c-dej');
   assert(/^à volonté des légumes en plus si tu as faim/.test(t.$('#sec-dej .rec-vol').textContent), 'recette : légumes à volonté');
+}
+
+// Recettes (3.24.0) : la bibliothèque (menu), ses filtres, la fiche pour le repas visé (mêmes quantités que la page),
+// « Prendre pour … » (date et mémoire, dessert gardé, message, focus), le repas libre, « Voir demain »
+{
+  const t = tools(open(ls => { ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72, off: ['prot:thon'] })); ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-08': { libre: true } }, choices: {} })); }));
+  const tw = t.d.defaultView, R = tw.eval('RECIPES'), ids = () => [...t.d.querySelectorAll('#lib-list .lib-r')].map(b => b.dataset.value);
+  const pick = (sel, v) => { const el = t.$(sel); el.value = v; el.dispatchEvent(new tw.Event('change', { bubbles: true })); };
+  t.choose('dessert', 'dej', 'fruit');
+  t.click('#nav-rec');
+  assert(!t.$('#recettes').hidden && t.$('#page').hidden && t.$('#nav-rec').getAttribute('aria-current') === 'page' && t.d.activeElement === t.$('#lib-h'), 'recettes ouvertes par le menu');
+  assert(t.pressed('lib-for') === '0|dej' && /^70\srecettes\.$/.test(t.$('#lib-n').textContent) && ids().every(id => R[id].p !== 'thon'), 'ce midi, sans le thon (pas proposé) : ' + t.$('#lib-n').textContent);
+  t.click('#lib-mine');
+  assert(ids().length === 80 && t.$('#lib-mine').getAttribute('aria-checked') === 'false', 'toutes les recettes');
+  t.click('#lib-mine');
+  pick('#lib-prot', 'saumon');
+  assert(ids().length === 10 && ids().every(id => R[id].p === 'saumon'), 'filtre protéine');
+  pick('#lib-starch', 'riz');
+  assert.deepStrictEqual(ids(), ['saumon-riz'], 'filtre féculent');
+  pick('#lib-prot', ''); pick('#lib-starch', '__proto__');
+  assert(ids().length === 70 && t.$('#lib-starch').value === '', 'valeur inconnue ignorée');
+  t.click('#lib-box');
+  assert(ids().length === Object.values(R).filter(x => x.box && x.p !== 'thon').length && ids().every(id => R[id].box), 'se garde');
+  t.click('#lib-quick');
+  assert(ids().length > 0 && ids().every(id => R[id].box && R[id].min <= 20), 'se garde, 20 min ou moins');
+  t.click('#lib-box'); t.click('#lib-quick');
+  // Fiche : quantités pour ce midi, « Prendre pour ce midi »
+  t.click('#lib-poulet-riz');
+  const libItems = t.$('#sheet-rec .items').textContent;
+  assert(!t.$('#sheet').hidden && t.$('#sheet-t').textContent === R['poulet-riz'].t && /^Pour ce midi$/.test(t.$('#sheet-rec h3').textContent) && t.d.activeElement === t.$('[data-action="lib-take"]') && t.$('[data-action="lib-take"]').textContent === 'Prendre pour ce midi', 'fiche de la bibliothèque');
+  t.click('[data-action="lib-take"]');
+  const c = t.stored().plans['2026-10-07'].ch.dej;
+  assert(c.prot === 'poulet' && c.starch === 'riz' && c.recette === 'poulet-riz' && c.dessert === 'fruit' && t.stored().choices[3].dej.recette === 'poulet-riz', 'prise pour ce midi : ' + JSON.stringify(c));
+  assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#lib-poulet-riz') && /Choisie pour ce midi/.test(t.$('#lib-poulet-riz').textContent), 'panneau fermé, focus, marquée');
+  assert(/^«\sPoulet au curry doux, riz basmati\s» prise pour ce midi\. Voir ma journée$/.test(t.$('#lib-msg').textContent), 'message : ' + t.$('#lib-msg').textContent);
+  t.click('#lib-poulet-riz');
+  assert(!t.$('[data-action="lib-take"]') && /Choisie pour ce midi\./.test(t.$('#sheet-rec .rec-meta').textContent) && t.$('#sheet-rec .items').textContent === libItems, 'déjà choisie : mêmes quantités, pas de bouton');
+  t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#lib-poulet-riz'), 'Échap');
+  // La page a suivi : mêmes quantités dans la fiche de la journée
+  t.click('#nav-jour');
+  assert(t.$('#sec-dej .rec.is-on') && t.chosen('prot', 'dej') === 'poulet', 'page à jour');
+  t.click('#rec-v-dej');
+  assert(t.$('#sheet-rec .items').textContent === libItems, 'mêmes quantités que la page');
+  t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  // Demain soir : repas libre, pas de bouton
+  t.click('#nav-rec');
+  assert(t.$('#lib-msg').textContent === '' && t.pressed('lib-for') === '0|dej', 'réouverte : message effacé, repas du moment');
+  t.click('[data-action="lib-for"][data-value="1|diner"]');
+  assert(/c’est ton repas libre/.test(t.$('#lib-n').textContent) && t.d.activeElement === t.$('[data-action="lib-for"][data-value="1|diner"]'), 'demain soir : repas libre');
+  t.click('#lib-boeuf-pates');
+  assert(!t.$('[data-action="lib-take"]') && /c’est ton repas libre/.test(t.$('#sheet-rec .warn').textContent), 'repas libre : pas de bouton');
+  t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  // Demain midi : prise, le repas libre reste ; « Voir demain » ouvre la page sur la carte du déjeuner
+  t.click('[data-action="lib-for"][data-value="1|dej"]');
+  t.click('#lib-boeuf-pates'); t.click('[data-action="lib-take"]');
+  const st = t.stored().plans['2026-10-08'];
+  assert(st.libre === true && st.ch.dej.recette === 'boeuf-pates' && /prise pour demain midi\. Voir demain$/.test(t.$('#lib-msg').textContent), 'prise pour demain midi');
+  t.click('#lib-msg [data-action="lib-day"]');
+  assert(!t.$('#page').hidden && t.$('#recettes').hidden && t.$('#date').textContent.startsWith('Demain') && !t.$('#sec-dej').hidden && t.d.activeElement === t.$('#ft-dej') && t.chosen('prot', 'dej') === 'boeuf', 'voir demain');
+  // Le repas visé suit l'heure à chaque ouverture : 15 h ce soir, 22 h demain midi
+  const keep = now;
+  [[15, '0|diner'], [22, '1|dej'], [9, '0|dej']].forEach(([h, v]) => {
+    now = new Date(2026, 9, 7, h).getTime();
+    t.click('#nav-jour'); t.click('#nav-rec');
+    assert(t.pressed('lib-for') === v, h + ' h : ' + t.pressed('lib-for'));
+  });
+  now = keep;
+  // Réglages, effacer : les filtres repartent de zéro
+  pick('#lib-prot', 'saumon'); t.click('#lib-box');
+  t.click('#gear'); t.click('#tab-appli'); t.click('[data-action="eff-ask"]'); t.click('[data-action="eff-ok"]'); t.click('[data-action="acc-skip"]');
+  if (!t.$('#repas').hidden) t.click('#repas [data-action="fermer"]');
+  t.click('#nav-rec');
+  assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 80, 'effacer : filtres remis');
 }
 
 // Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;

@@ -246,6 +246,20 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .in-r{animation:in-r .22s ease-out;}
 @keyframes in-l{from{opacity:0;transform:translateX(28px);}}
 @keyframes in-r{from{opacity:0;transform:translateX(-28px);}}
+/* Recettes (3.24.0) : le repas visé, les filtres, la liste (une ligne par recette, la choisie pour le repas visé marquée) */
+.lib-l{margin:6px 0 8px;}
+.lib-for{margin:0 0 16px;}
+.lib-sel{margin:4px 0 12px;}
+.field select{width:100%;min-width:0;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-family:var(--sans);font-weight:600;font-size:16px;}
+.field select:focus-visible{outline:2px solid var(--beet);outline-offset:1px;}
+.lib-f{margin:0 0 6px;}
+.lib .switches{margin:4px 0 14px;}
+.lib-n{margin:0 0 8px;}
+.lib-list{margin:0 0 24px;padding:0;list-style:none;border-top:1px solid var(--line);}
+.lib-r{display:flex;flex-direction:column;gap:2px;width:100%;padding:12px 2px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);text-align:left;}
+.lib-t{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.3;}
+.lib-m{font-size:14.5px;font-style:italic;color:var(--muted);}
+.lib-c{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-style:normal;font-weight:700;font-size:12.5px;line-height:1.6;}
 /* Légumes à volonté (3.23.0) : surlignés comme au marqueur */
 .vol{display:inline-block;padding:0 7px;border-radius:6px;background:var(--flash);color:var(--ink);font-family:var(--sans);font-style:normal;font-size:12.5px;font-weight:700;line-height:1.6;vertical-align:1px;white-space:nowrap;}
 .rec-vol{margin:8px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}
@@ -579,6 +593,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 <nav class="nav" id="nav" aria-label="Menu">
   <button type="button" id="nav-jour" data-action="jour"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M19 21V3c-2.5 1.5-4 4.5-4 9 0 1.5 1 2.5 4 2.5"/></svg></span><span class="nav-l">Journée</span></button>
   <button type="button" id="plan-btn" data-action="plan"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg></span><span class="nav-l">Planifier</span></button>
+  <button type="button" id="nav-rec" data-action="recettes"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h6a4 4 0 0 1 4 4V21a3 3 0 0 0-3-3H2z"/><path d="M22 4.5h-6a4 4 0 0 0-4 4V21a3 3 0 0 1 3-3h7z"/></svg></span><span class="nav-l">Recettes</span></button>
   <button type="button" id="help" data-action="aide"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span class="nav-l">Aide</span></button>
   <button type="button" id="gear" data-action="needs"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-l">Réglages</span></button>
 </nav>
@@ -811,6 +826,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
+      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», une nouvelle planification en recettes avec l’option «&nbsp;Batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Ta planification montre alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
     </ul>
@@ -896,6 +912,26 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
+<main class="app lib" id="recettes" hidden>
+  <h1 id="lib-h" tabindex="-1">Recettes</h1>
+  <p class="repas-p">Les 80 recettes de l’appli, une par protéine et féculent. Touche-en une pour voir tes quantités et la prendre pour un repas.</p>
+  <p class="lbl lib-l" id="lib-for-l">Pour quel repas&nbsp;?</p>
+  <div class="opts-list lib-for" id="lib-for" role="group" aria-labelledby="lib-for-l"></div>
+  <p class="intro" id="lib-msg" role="status"></p>
+  <div class="fields lib-sel">
+    <label class="field"><span>Protéine</span><span class="inp"><select id="lib-prot" data-lib="prot"></select></span></label>
+    <label class="field"><span>Féculent</span><span class="inp"><select id="lib-starch" data-lib="starch"></select></span></label>
+  </div>
+  <div class="opts-list lib-f" role="group" aria-label="Filtres">
+    <button type="button" class="opt" id="lib-box" data-action="lib-f" data-value="box" aria-pressed="false">Se garde</button>
+    <button type="button" class="opt" id="lib-quick" data-action="lib-f" data-value="quick" aria-pressed="false">20&nbsp;min ou moins</button>
+  </div>
+  <div class="switches"><button type="button" class="switch" role="switch" id="lib-mine" aria-checked="true" data-action="lib-f" data-value="mine"><span>Seulement tes aliments</span><span class="knob" aria-hidden="true"></span></button></div>
+  <p class="calc lib-n" id="lib-n" role="status"></p>
+  <ul class="lib-list" id="lib-list"></ul>
+  <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
+</main>
+
 <div class="sheet" id="sheet" hidden>
   <div class="scrim" data-action="close-pick"></div>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheet-t">
@@ -911,7 +947,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.23.0';
+const APP_VERSION = '3.24.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -3064,15 +3100,15 @@ if (typeof document !== 'undefined'){
     }
   });
   /* Écrans, un seul visible : accueil, page du jour, réglages, aide, formulaire des repas, Planifier, une planification
-     (récap et courses) et la page du batch d'une recette.
+     (récap et courses), la page du batch d'une recette et la bibliothèque des recettes (3.24.0).
      Les écrans s'empilent au-dessus de la page ; chacun ajoute une entrée d'historique (le bouton retour du téléphone
      revient d'un cran) et la position dans la page est rétablie au retour. Le menu en haut (3.20.0, #nav, caché pendant
      l'accueil) surligne l'écran affiché ; un écran du menu remplace celui du dessus, « Journée » ferme tout. */
   let stack = [], pageScroll = 0;
-  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses', 'batch'];
-  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h', batch:'batchp-h'};
+  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'courses', 'batch', 'recettes'];
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', courses:'courses-h', batch:'batchp-h', recettes:'lib-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', courses:'plan-btn', aide:'help', reglages:'gear'};
+  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', courses:'plan-btn', recettes:'nav-rec', aide:'help', reglages:'gear'};
   const setView = function(v){
     VIEWS.forEach(function(id){ $(id).hidden = id !== v; });
     $('nav').hidden = v === 'accueil';
@@ -3710,34 +3746,40 @@ if (typeof document !== 'undefined'){
     const on = $('sheet-list').querySelector('[aria-pressed="true"]');
     if (on) on.focus({preventScroll:true});
   };
-  /* Fiche d'une recette (même panneau) : tes quantités pour ce repas avec la recette, les aromates, les étapes, puis
-     « Choisir cette recette » ou « Retirer la recette » */
-  const openRecipe = function(slot, trigger){
-    const cur = recipeOf(ch[slot]), id = cur || recipesFor(ch[slot].prot, ch[slot].starch)[0];
-    if (!id) return;
-    const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel);
-    withRec[slot].recette = id;
-    const sec = buildDay(Object.assign({}, plan, {libre:false}), withRec, prof).secs.find(function(z){ return z.id === slot; });
-    const items = recipePart(sec), t = total(items), none = new Map();
-    pick = {kind:'recette', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'};
+  /* Fiche d'une recette (même panneau) : tes quantités pour ce repas avec la recette (sec : la section de buildDay), le
+     total, les aromates, les étapes ; meta, titre des quantités, note et bas (boutons) selon d'où elle s'ouvre (la page, la
+     bibliothèque des recettes) ; p : le panneau ouvert (pick) */
+  const showRecipe = function(x, sec, meta, head, note, foot, p){
+    const items = recipePart(sec), none = new Map();
+    pick = p;
     $('sheet-t').textContent = x.t;
     $('sheet-list').hidden = true;
     $('sheet-rec').hidden = false;
-    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '.' + (on ? ' Choisie pour ce ' + (slot === 'dej' ? 'déjeuner' : 'dîner') + '.' : '') + '</p>' +
-      '<h3 class="rec-h">Pour ce ' + (slot === 'dej' ? 'déjeuner' : 'dîner') + '</h3>' +
+    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '.' + meta + '</p>' +
+      '<h3 class="rec-h">' + head + '</h3>' +
       '<ul class="items">' + items.map(function(i){ return itemHTML('rec', i, none); }).join('') + '</ul>' +
-      '<p class="rec-tot">En tout' + NB + ':' + macHTML(t) + '</p>' +
-      (on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>') +
+      '<p class="rec-tot">En tout' + NB + ':' + macHTML(total(items)) + '</p>' + note +
       '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' +
-      '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + x.steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>' +
-      (on ? '<button type="button" class="btn wide" data-action="rec-off" data-slot="' + slot + '">Retirer la recette</button>'
-        : '<button type="button" class="btn main wide" data-action="rec-on" data-slot="' + slot + '">Choisir cette recette</button>');
+      '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + x.steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>' + foot;
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
     $('sheet').querySelector('.panel').scrollTop = 0;
     setInert(pick.view, true);
     document.documentElement.style.overflow = 'hidden';
-    $('sheet-rec').querySelector('.btn').focus({preventScroll:true});
+    ($('sheet-rec').querySelector('.btn') || $('sheet').querySelector('.sheet-x')).focus({preventScroll:true});
+  };
+  /* Depuis la page : « Choisir cette recette » ou « Retirer la recette » */
+  const openRecipe = function(slot, trigger){
+    const cur = recipeOf(ch[slot]), id = cur || recipesFor(ch[slot].prot, ch[slot].starch)[0];
+    if (!id) return;
+    const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel), meal = slot === 'dej' ? 'déjeuner' : 'dîner';
+    withRec[slot].recette = id;
+    const sec = buildDay(Object.assign({}, plan, {libre:false}), withRec, prof).secs.find(function(z){ return z.id === slot; });
+    showRecipe(x, sec, on ? ' Choisie pour ce ' + meal + '.' : '', 'Pour ce ' + meal,
+      on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
+      on ? '<button type="button" class="btn wide" data-action="rec-off" data-slot="' + slot + '">Retirer la recette</button>'
+        : '<button type="button" class="btn main wide" data-action="rec-on" data-slot="' + slot + '">Choisir cette recette</button>',
+      {kind:'recette', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'});
   };
   const closePick = function(fromHistory){
     if (!pick) return;
@@ -3763,6 +3805,104 @@ if (typeof document !== 'undefined'){
   Object.assign(ACTIONS, {
     'open-pick': function(b){ openPick(b.dataset.kind, b.dataset.slot || null, b.dataset.ctx || 'page', b); },
     'close-pick': function(){ closePick(false); }
+  });
+  /* Recettes (3.24.0) : la bibliothèque des 80 recettes, une par protéine × féculent, filtrables (protéine, féculent, celles
+     qui se gardent, les rapides, seulement tes aliments). Le repas visé (ce midi, ce soir, demain midi, demain soir) donne
+     les quantités de la fiche ; « Prendre pour … » met la recette dans ce repas (protéine, féculent, recette ; le dessert
+     reste), enregistrée pour la date et en mémoire pour son jour de la semaine. Filtres gardés pendant la visite de l'appli,
+     repas visé remis à l'heure à chaque ouverture. */
+  const LIB_T = [['0|dej', 'Ce midi'], ['0|diner', 'Ce soir'], ['1|dej', 'Demain midi'], ['1|diner', 'Demain soir']];
+  const LIB_QUICK = 20;
+  const lib = {prot:'', starch:'', box:false, quick:false, mine:true, target:'0|dej'};
+  const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return a.concat(STARCH_ORDER.map(function(s){ return p + '-' + s; }).filter(function(id){ return has(RECIPES, id); })); }, []);
+  /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi */
+  const resetLib = function(){
+    const h = new Date().getHours();
+    lib.target = h < 14 ? '0|dej' : h < 21 ? '0|diner' : '1|dej';
+    $('lib-msg').textContent = '';
+  };
+  const libTarget = function(){
+    const q = lib.target.split('|'), iso = isoDate(addDays(today, +q[0]));
+    return {iso:iso, slot:q[1], day:+q[0], label:LIB_T.find(function(t){ return t[0] === lib.target; })[1].toLowerCase(), libre:q[1] === 'diner' && planFor(iso).libre};
+  };
+  const libChosen = function(tg){ return recipeOf(choicesFor(tg.iso, fromIso(tg.iso).getDay())[tg.slot]); };
+  const libList = function(){
+    const off = cleanProfile(prof).off, okP = allowed('prot', off), okS = allowed('starch', off);
+    return LIB_ALL.filter(function(id){
+      const x = RECIPES[id];
+      return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) && (!lib.quick || x.min <= LIB_QUICK) &&
+        (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
+    });
+  };
+  /* Les filtres (listes de choix) une fois pour toutes ; le reste à chaque dessin */
+  $('lib-prot').innerHTML = '<option value="">Toutes</option>' + PROT_ORDER.map(function(p){ return '<option value="' + p + '">' + PROT[p].label + '</option>'; }).join('');
+  $('lib-starch').innerHTML = '<option value="">Tous</option>' + STARCH_ORDER.map(function(s){ return '<option value="' + s + '">' + STARCH[s].label + '</option>'; }).join('');
+  const renderLib = function(){
+    const tg = libTarget(), cur = libChosen(tg), list = libList();
+    $('lib-for').innerHTML = LIB_T.map(function(t){ return '<button type="button" class="opt" data-action="lib-for" data-value="' + t[0] + '" aria-pressed="' + (t[0] === lib.target) + '">' + t[1] + '</button>'; }).join('');
+    $('lib-prot').value = lib.prot; $('lib-starch').value = lib.starch;
+    [['lib-box', lib.box], ['lib-quick', lib.quick]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
+    $('lib-mine').setAttribute('aria-checked', String(lib.mine));
+    $('lib-n').textContent = list.length ? list.length + NB + 'recette' + (list.length > 1 ? 's' : '') + (tg.libre ? ', mais ' + tg.label + ', c’est ton repas libre.' : '.') : 'Aucune recette avec ces filtres.';
+    $('lib-list').innerHTML = list.map(function(id){
+      const x = RECIPES[id], on = id === cur && !tg.libre;
+      return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
+        '<span class="lib-t">' + x.t + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : '') + (on ? '<span class="lib-c">Choisie pour ' + tg.label + '</span>' : '') + '</span></button></li>';
+    }).join('');
+  };
+  /* Listes de choix : la liste suit tout de suite */
+  $('recettes').addEventListener('change', function(e){
+    const k = e.target.dataset && e.target.dataset.lib;
+    if (k !== 'prot' && k !== 'starch') return;
+    const v = e.target.value;
+    lib[k] = v === '' || has(k === 'prot' ? PROT : STARCH, v) ? v : '';
+    renderLib();
+  });
+  /* La recette pour le repas visé : la journée de cette date avec la recette à ce repas (sans repas libre) */
+  const libSec = function(id, tg){
+    const js = fromIso(tg.iso).getDay(), c = cleanCh(choicesFor(tg.iso, js), js), x = RECIPES[id];
+    c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:id};
+    return buildDay(Object.assign({}, planFor(tg.iso), {libre:false}), c, prof).secs.find(function(z){ return z.id === tg.slot; });
+  };
+  Object.assign(ACTIONS, {
+    recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },
+    'lib-for': function(b, v){ if (!LIB_T.some(function(t){ return t[0] === v; })) return; lib.target = v; $('lib-msg').textContent = ''; renderLib(); $('lib-for').querySelector('[data-value="' + v + '"]').focus({preventScroll:true}); },
+    'lib-f': function(b, v){ if (v !== 'box' && v !== 'quick' && v !== 'mine') return; lib[v] = !lib[v]; renderLib(); },
+    /* Fiche de la recette, avec tes quantités pour le repas visé */
+    'lib-open': function(b, v){
+      if (!has(RECIPES, v)) return;
+      const tg = libTarget(), x = RECIPES[v], on = libChosen(tg) === v && !tg.libre;
+      showRecipe(x, libSec(v, tg), on ? ' Choisie pour ' + tg.label + '.' : '', 'Pour ' + tg.label,
+        tg.libre ? '<p class="warn">' + cap(tg.label) + ', c’est ton repas libre' + NB + ': choisis un autre repas pour la prendre.</p>'
+          : on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
+        tg.libre || on ? '' : '<button type="button" class="btn main wide" data-action="lib-take" data-value="' + v + '">Prendre pour ' + tg.label + '</button>',
+        {kind:'lib', slot:tg.slot, trigger:b && b.id ? b.id : null, view:'recettes'});
+    },
+    /* « Prendre pour … » : la recette dans ce repas, le message, le panneau fermé (focus sur la recette dans la liste) */
+    'lib-take': function(b, v){
+      const tg = libTarget();
+      if (!has(RECIPES, v) || tg.libre) return;
+      const x = RECIPES[v], d = fromIso(tg.iso), js = d.getDay(), before = weekBal(d), c = cleanCh(choicesFor(tg.iso, js), js);
+      c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:v};
+      const cc = cleanCh(c, js);
+      writeDay(tg.iso, {ch:cc}); store.choices[js] = cc; persist();
+      loadSel(); prevQty = new Map(); render();
+      const cross = crossMsg(before, weekBal(d));
+      renderLib();
+      closePick(false);
+      $('lib-msg').innerHTML = '«' + NB + x.t + NB + '» prise pour ' + tg.label + '.' + (cross ? ' ' + cross : '') +
+        ' <button type="button" class="link" data-action="lib-day" data-value="' + tg.iso + '|' + tg.slot + '">Voir ' + (tg.day ? 'demain' : 'ma journée') + '</button>';
+    },
+    /* « Voir ma journée » (ou demain) : la page sur cette date, la carte du repas */
+    'lib-day': function(b, v){
+      const q = String(v).split('|'), d = fromIso(q[0]);
+      if (!d || !has(REPAS, q[1])) return;
+      closeAllScreens();
+      selDate = d; loadSel(); prevQty = new Map(); fsel = q[1];
+      render();
+      scroller().scrollTop = 0;
+      ($('ft-' + q[1]) || $('title')).focus({preventScroll:true});
+    }
   });
   /* Éditeur de semaine type (3.18.0), le même dans les réglages (préfixe sem, onglet « Sport ») et à l'accueil (préfixe acs,
      dernière étape) : un jour à la fois, ses séances avec les mêmes boutons que la page, le soir du repas libre. Identifiants
@@ -4112,7 +4252,7 @@ if (typeof document !== 'undefined'){
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    planifs = []; cur = null; resetPlanner(); eaten = {}; repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
+    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();

@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 3.24.0, 5 octobre 2026
+
+- Une bibliothèque de recettes, dans le menu : les 80 recettes de l'appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides (20 min ou moins), avec seulement tes aliments.
+- Choisis le repas (ce midi, ce soir, demain midi ou demain soir) : la fiche d'une recette te donne tes quantités pour ce repas, et « Prendre pour demain midi » la met dans ta journée.
+
 ## 3.23.0, 5 octobre 2026
 
 - « Mangé » : en haut de la carte d'un repas, coche ce que tu as mangé. La frise le marque d'une coche et la page passe au repas suivant. Sous la frise, ce qu'il te reste à manger dans la journée, en calories et en protéines.
