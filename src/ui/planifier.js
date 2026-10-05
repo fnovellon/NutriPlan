@@ -72,22 +72,22 @@
     if (same) same.focus({preventScroll:true});
   };
   /* Tire les plats de chaque date de la période : un jour après l'autre (équilibrés avec le reste de leur semaine), sans
-     recette pour les plats simples ; en batch cooking, tout d'un coup puis arrondi aux 100 g sur les boîtes (3.17.0) */
-  const drawPeriod = function(isos){
+     recette pour les plats simples ; en batch cooking (n recettes), tout d'un coup puis arrondi aux 100 g sur les boîtes */
+  const drawPeriod = function(isos, type, n){
     const pr = cleanProfile(prof), save = function(iso, c){ const js = fromIso(iso).getDay(), x = cleanCh(c, js); writeDay(iso, {ch:x}); store.choices[js] = x; };
-    if (planner.type === 'recettes' && planner.batch){
-      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), planner.n, pr.off, scaleOf(pr));
+    if (type === 'recettes' && n){
+      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), n, pr.off, scaleOf(pr));
       batchRound(isos.map(function(iso, j){ return {plan:planFor(iso), ch:cleanCh(cs[j], fromIso(iso).getDay())}; }), prof).forEach(function(c, j){ save(isos[j], c); });
     } else isos.forEach(function(iso){
       const c = drawFor(iso);
-      if (planner.type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
+      if (type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
       save(iso, c);
     });
     persist();
   };
   /* Actions de Planifier : l'ouvrir (menu), une planification, le formulaire, créer */
   Object.assign(ACTIONS, {
-    plan: function(b){ if (topScreen() === 'plan') return; renderPlan(); navTo('plan', b); },
+    plan: function(b){ if (topScreen() === 'plan') return; $('plan-msg').textContent = ''; renderPlan(); navTo('plan', b); },
     'pl-open': function(b, v){
       const q = String(v).split('|'), p = planifs.find(function(x){ return x.from === q[0] && x.to === q[1]; });
       if (p) openPlanif(p, b);
@@ -102,8 +102,8 @@
     'pl-nrec': function(b, v){ if (BATCH_N.indexOf(+v) >= 0){ planner.n = +v; planKeep(b); } },
     'pl-create': function(b){
       if (fillRange('plan', planner, 0, true)) return;
-      drawPeriod(rangeDays(planner.from, planner.to));
       const p = {from:planner.from, to:planner.to, type:planner.type, n:planner.type === 'recettes' && planner.batch ? planner.n : 0, checked:[]};
+      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
       addPlanif(p);
       loadSel(); prevQty = new Map(); render();
       renderPlan();

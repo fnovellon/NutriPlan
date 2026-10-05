@@ -216,6 +216,14 @@ function check(dom, log){
   });
   const leg = [...d.querySelectorAll('#legend b')].map(b => num(b.textContent));
   C.ok(leg.length === 3 && leg.every(x => x >= 0), 'légende des macros', () => leg.join() + ' : ' + where());
+  // Calendrier (3.22.0) : un trait sous les jours des planifications enregistrées, et seulement sous eux
+  try {
+    const q = JSON.parse(w.localStorage.getItem('repas-du-jour:planifs:v1') || '{"list":[]}').list;
+    [...d.querySelectorAll('#week [data-action="day"]')].forEach((b, i) => {
+      const iso = b.dataset.value, inP = q.some(p => p.from <= iso && p.to >= iso);
+      C.ok(d.querySelectorAll('#week .wk-pl')[i].classList.contains('on') === inP, 'calendrier : trait d’une planification', () => iso + ' ' + JSON.stringify(q));
+    });
+  } catch (e){ C.ok(false, 'planifications illisibles', () => e.message); }
   // « + Séance » désactivé à 4 séances ; une carte par séance
   const n = d.querySelectorAll('#sess .chip[data-action="sess"]').length;
   C.ok($('#sess-add').disabled === (n >= 4), '« + Séance »', where);
@@ -456,6 +464,22 @@ const ACTIONS = {
     if (d.querySelector('#courses').hidden) throw new Error('détail de la planification non ouvert');
     for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#courses-list .chk')]); if (b) b.click(); }
     if (R.chance(.5)) swapRecipe(dom);
+    // Partager la liste, refaire les plats ou retirer la planification (3.22.0), avec ou sans confirmer
+    const m = R.pick(['partage', 'refaire', 'retirer', '-', '-']), QK2 = 'repas-du-jour:planifs:v1';
+    if (m === 'partage'){ d.querySelector('#co-share').click(); C.ok(!d.querySelector('#co-text').hidden && /^Courses, /.test(d.querySelector('#co-text').value), 'partage de la liste', ''); }
+    else if (m !== '-' && !d.querySelector(m === 'refaire' ? '#co-redo' : '#co-del').hidden){
+      d.querySelector(m === 'refaire' ? '#co-redo' : '#co-del').click();
+      if (d.querySelector('#co-confirm').hidden) throw new Error('pas de confirmation : ' + m);
+      if (R.chance(.3)){ const before = w.localStorage.getItem(QK2); d.querySelector('#co-no').click(); C.ok(w.localStorage.getItem(QK2) === before && d.querySelector('#co-confirm').hidden, 'confirmation annulée : rien ne change', m); }
+      else {
+        const n = JSON.parse(w.localStorage.getItem(QK2)).list.length;
+        d.querySelector('#co-ok').click();
+        const q2 = JSON.parse(w.localStorage.getItem(QK2)).list;
+        C.ok(q2.every((x, i) => i === 0 || q2[i - 1].to < x.from), 'planifications qui se chevauchent après ' + m, () => JSON.stringify(q2));
+        if (m === 'retirer'){ C.ok(q2.length === n - 1 && !d.querySelector('#plan').hidden && d.querySelector('#courses').hidden, 'planification non retirée', ''); d.querySelector('#nav-jour').click(); return 'planifier retirée'; }
+        C.ok(!d.querySelector('#courses').hidden && /^Plats refaits/.test(d.querySelector('#courses-msg').textContent), 'plats non refaits', '');
+      }
+    }
     const day = R.pick([...d.querySelectorAll('#courses-days .shop-day')]), end = R.pick(['jour', 'liste', 'menu', 'retour']);
     if (end === 'jour' && day) day.click();
     else if (end === 'liste') d.querySelector('#courses [data-action="fermer"]').click();
@@ -464,6 +488,16 @@ const ACTIONS = {
     if (!d.querySelector('#plan').hidden && R.chance(.5)) d.querySelector('#nav-jour').click();
     C.ok(d.querySelector('#courses').hidden, 'détail resté ouvert', end);
     return 'planifier ' + how + ' ' + end;
+  },
+  // Journée : « Un autre plat » pour un repas (un autre couple, le dessert gardé)
+  redo: dom => {
+    const d = dom.window.document, b = R.pick([...d.querySelectorAll('#day .redo')]);
+    if (d.querySelector('#page').hidden || !b) return 'autre plat -';
+    const slot = b.dataset.slot, val = k => d.querySelector('[data-action="open-pick"][data-kind="' + k + '"][data-slot="' + slot + '"]').dataset.value;
+    const before = val('prot') + '/' + val('starch'), des = val('dessert');
+    b.click();
+    C.ok((val('prot') + '/' + val('starch') !== before || /Aucun autre plat/.test(d.querySelector('#hint').textContent)) && val('dessert') === des, 'un autre plat', () => before + ' → ' + val('prot') + '/' + val('starch'));
+    return 'autre plat ' + slot;
   },
   // Journée : la page du batch d'une recette, puis retour
   batch: dom => {

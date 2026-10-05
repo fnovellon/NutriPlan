@@ -75,15 +75,19 @@
   };
 
   /* Détail d'une planification (écran #courses) : le récap jour par jour, son batch cooking, ses courses par rayon */
-  let cur = null;
+  let cur = null, curList = [];
   const renderCourses = function(){
     if (!cur) return;
     const days = rangeDays(cur.from, cur.to), res = days.map(dayResult), t = todayIso();
     $('courses-h').textContent = periodTitle(cur.from, cur.to);
     $('courses-span').textContent = cap(planifLine(cur)) + (cur.from <= t && cur.to >= t ? ', en cours.' : cur.from > t ? ', à venir.' : ', passée.');
     $('courses-msg').textContent = '';
+    $('co-text').hidden = true;
+    coAsk(null);
+    $('co-redo').hidden = cur.to < t;
     $('courses-batch').innerHTML = batchHTML(days, res);
-    $('courses-list').innerHTML = shoppingList(res).map(function(g, j){
+    curList = shoppingList(res);
+    $('courses-list').innerHTML = curList.map(function(g, j){
       return '<h3 class="shop-a" id="shop-' + j + '">' + g.title + '</h3><ul class="shop" aria-labelledby="shop-' + j + '">' + g.lines.map(function(l){
         const key = l.id + '|' + l.qty;
         return '<li><button type="button" class="chk" role="checkbox" aria-checked="' + (cur.checked.indexOf(key) >= 0) + '" data-action="co-check" data-value="' + key + '">' +
@@ -101,6 +105,28 @@
     }).join('');
   };
   const openPlanif = function(p, opener){ cur = p; renderCourses(); openScreen('courses', opener); };
+  /* Partager la liste (3.22.0) : les lignes pas encore cochées (toutes si tout est coché), en texte, par le menu de partage du
+     téléphone ; sinon copiée ; sinon affichée dans un champ à copier */
+  const shareText = function(){
+    const left = curList.map(function(g){ return {title:g.title, lines:g.lines.filter(function(l){ return cur.checked.indexOf(l.id + '|' + l.qty) < 0; })}; });
+    const groups = left.some(function(g){ return g.lines.length; }) ? left : curList;
+    return 'Courses, ' + periodTitle(cur.from, cur.to).replace(/^D/, 'd') + '\n' + groups.filter(function(g){ return g.lines.length; }).map(function(g){
+      return '\n' + g.title + '\n' + g.lines.map(function(l){ return '- ' + l.qty + ' ' + l.name + (l.note ? ' (' + l.note + ')' : ''); }).join('\n');
+    }).join('\n') + '\n';
+  };
+  const showText = function(text, msg){ $('co-text').value = text; $('co-text').hidden = false; $('co-text').select(); $('courses-msg').textContent = msg; };
+  /* Refaire ou retirer la planification : une confirmation d'abord (what : 'redo', 'del' ou null pour la refermer) */
+  const coAsk = function(what){
+    $('co-ask').hidden = !!what; $('co-confirm').hidden = !what;
+    if (!what) return;
+    const t = todayIso(), from = cur.from < t ? t : cur.from;
+    $('co-q').textContent = what === 'redo'
+      ? 'Refaire tous les plats ' + (from === cur.from ? 'de cette planification' : 'd’aujourd’hui au ' + dayLabel(fromIso(cur.to))) + NB + '? Ceux que tu as changés seront tirés à nouveau. Tes séances restent.'
+      : 'Retirer cette planification de ta liste' + NB + '? Ses plats restent prévus, jour par jour.';
+    $('co-ok').textContent = what === 'redo' ? 'Oui, refaire' : 'Oui, la retirer';
+    $('co-ok').dataset.value = what;
+    $('co-no').focus({preventScroll:true});
+  };
   /* Batch cooking d'une planification : pour chaque bloc de 7 jours, le jour où cuisiner, puis une fiche repliée par recette
      servie au moins deux fois (« Changer de recette », puis batchBody) */
   const SLOT = {dej:'midi', diner:'soir'};
@@ -189,6 +215,40 @@
       b.setAttribute('aria-checked', String(k < 0));
     },
     'co-uncheck': function(){ if (!cur) return; cur.checked = []; saveQ(); renderCourses(); },
+    'co-share': function(){
+      if (!cur) return;
+      const text = shareText();
+      try {
+        if (navigator.share){ navigator.share({title:'Courses', text:text}).catch(function(){}); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(function(){ $('courses-msg').textContent = 'Liste copiée' + NB + ': colle-la où tu veux.'; }, function(){ showText(text, 'Copie la liste ci-dessous.'); });
+          return;
+        }
+      } catch (e) {}
+      showText(text, 'Copie la liste ci-dessous.');
+    },
+    'co-ask': function(b, v){ if (cur && (v === 'redo' || v === 'del')) coAsk(v); },
+    'co-no': function(){ const v = $('co-ok').dataset.value; coAsk(null); $(v === 'del' ? 'co-del' : 'co-redo').focus({preventScroll:true}); },
+    'co-ok': function(b, v){
+      if (!cur) return;
+      if (v === 'del'){
+        const left = periodTitle(cur.from, cur.to);
+        planifs = planifs.filter(function(x){ return x !== cur; }); saveQ(); cur = null;
+        renderPlan();
+        closeScreen(false);
+        $('plan-msg').textContent = left + NB + ': retirée de ta liste.';
+        return;
+      }
+      if (v !== 'redo' || cur.to < todayIso()) return;
+      /* Refaite à partir d'aujourd'hui : les jours passés gardent leurs plats (et restent une planification à part) */
+      const t = todayIso(), p = {from:cur.from < t ? t : cur.from, to:cur.to, type:cur.type, n:cur.n, checked:[]};
+      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
+      addPlanif(p); cur = p;
+      loadSel(); prevQty = new Map(); render();
+      renderCourses();
+      $('courses-msg').textContent = 'Plats refaits' + NB + ': ' + periodTitle(p.from, p.to).replace(/^D/, 'd') + '.';
+      $('co-redo').focus({preventScroll:true});
+    },
     'co-day': function(b, v){
       const d = fromIso(v);
       if (!d) return;

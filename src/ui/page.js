@@ -17,6 +17,7 @@
     const LABEL = {pd:'Base', prot:'Protéine', starch:'Féculent', dessert:'Dessert'};
     return {label:LABEL[kind], title:kind === 'pd' ? 'Base du petit-déjeuner' : LABEL[kind] + ' ' + REPAS[slot], action:kind, current:cur, opts:opts};
   };
+  const REDO = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
   const CHEVRON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
   /* Un choix : la sélection dans une bulle (les bulles d'un repas côte à côte, 3.20.0 ; le libellé n'est lu que par le
      lecteur d'écran) ; la toucher ouvre le panneau des choix.
@@ -92,7 +93,8 @@
   const mealHTML = function(s, next){
     let picks = '';
     if (s.pick === 'pd') picks = '<div class="picks">' + pickRow('pd', null) + '</div>';
-    else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) + '</div>';
+    else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) +
+      '<button type="button" class="redo" id="redo-' + s.pick + '" data-action="redo" data-slot="' + s.pick + '" aria-label="Un autre plat ' + REPAS[s.pick] + '" title="Un autre plat">' + REDO + '</button></div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
     const card = s.recipe && !s.libre, shown = card ? s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) >= 0; }) : s.items;
     /* Repas libre : un interrupteur dans la carte du dîner (et dans celle du repas libre, qui le remplace) */
@@ -237,12 +239,17 @@
     $('cal-t').textContent = 'Du ' + wk[0].getDate() + (wk[0].getMonth() !== wk[6].getMonth() ? NB + short(wk[0]) : '') + ' au ' + wk[6].getDate() + NB + short(wk[6]);
     $('wk-prev').disabled = wk[0] <= addDays(today, -21);
     $('wk-next').disabled = wk[6] >= addDays(today, 365);
-    $('week').innerHTML = wk.map(function(d){
+    /* Sous les jours, un trait par planification (3.22.0), arrondi à son premier et à son dernier jour */
+    const pls = wk.map(function(d){ return planifOf(isoDate(d)); });
+    $('week').innerHTML = wk.map(function(d, i){
       const iso = isoDate(d), isToday = dayDiff(d) === 0, planned = has(store.plans, iso);
       return '<button type="button" data-action="day" data-value="' + iso + '" aria-pressed="' + (iso === selIso()) + '"' +
-        ' aria-label="' + cap(dayLabel(d)) + (isToday ? ', aujourd’hui' : '') + (planned ? ', planifié' : '') + '"' +
+        ' aria-label="' + cap(dayLabel(d)) + (isToday ? ', aujourd’hui' : '') + (planned ? ', planifié' : '') + (pls[i] ? ', dans une planification' : '') + '"' +
         ' class="' + (isToday ? 'is-today' : '') + (planned ? ' is-planned' : '') + '"' + (dayDiff(d) < -21 ? ' disabled' : '') + '>' +
         '<span class="wd">' + d.toLocaleDateString('fr-FR', {weekday:'short'}) + '</span><span class="dn">' + d.getDate() + '</span></button>';
+    }).join('') + wk.map(function(d, i){
+      const p = pls[i];
+      return '<span class="wk-pl' + (p ? ' on' + (p.from === isoDate(d) || i === 0 ? ' s' : '') + (p.to === isoDate(d) || i === 6 ? ' e' : '') : '') + '" aria-hidden="true"></span>';
     }).join('');
     $('sess').innerHTML = sessChips();
   };
@@ -317,6 +324,24 @@
     rm: function(b){ if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan({seances:plan.seances}); return ''; },
     sess: function(b){ openSess(+b.dataset.index, b); },
     'sess-add': function(b){ if (!addDisabled('petite')) openSess(null, b); },
+    /* « Un autre plat » (3.22.0) : protéine et féculent tirés à nouveau pour ce repas (équilibrés avec la semaine, différents
+       du plat actuel et de la protéine de l'autre repas), avec la recette du couple si le repas en avait une ou si la
+       planification du jour est en recettes ; le dessert reste */
+    redo: function(b){
+      const slot = b.dataset.slot, other = slot === 'dej' ? 'diner' : 'dej';
+      if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
+      const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p ? p.type === 'recettes' : !!recipeOf(old);
+      for (let i = 0; i < 20; i++){
+        const c = randomChoices(null, pr.off, bal, scaleOf(pr))[slot];
+        if (c.prot === old.prot && c.starch === old.starch) continue;
+        if (c.prot === ch[other].prot && i < 19) continue;
+        ch[slot] = {prot:c.prot, starch:c.starch, dessert:dessertOf(old)};
+        if (rec && c.recette) ch[slot].recette = c.recette;
+        saveCh();
+        return '';
+      }
+      return 'Aucun autre plat ne va avec tes aliments proposés.';
+    },
     /* Frise : la carte d'un repas ou d'une séance */
     frise: function(b, v){ if ($('sec-' + v)) showSec(v, false); },
     toggle: function(b){

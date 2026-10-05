@@ -280,7 +280,7 @@ choose('dessert', 'dej', 'aucun');
 choose('dessert', 'diner', 'aucun');
 assert(!/chocolat|fruit/.test(lastLine('dej') + lastLine('diner')) && stored().choices[3].dej.dessert === 'aucun', 'dessert non retiré');
 // Choix d'un repas sur une ligne (3.20.0) : libellés lus seulement par le lecteur d'écran ; sans dessert, « + Dessert » en contour
-assert([...d.querySelectorAll('#day .pick-l')].every(l => l.classList.contains('sr')) && $('#sec-dej .picks').children.length === 3, 'choix du déjeuner sur une ligne');
+assert([...d.querySelectorAll('#day .pick-l')].every(l => l.classList.contains('sr')) && $('#sec-dej .picks').querySelectorAll(':scope > .pick').length === 3 && $('#sec-dej .picks > #redo-dej').getAttribute('aria-label') === 'Un autre plat du déjeuner', 'choix du déjeuner sur une ligne, puis « Un autre plat »');
 assert($('#sel-dessert-dej').classList.contains('empty') && $('#sel-dessert-dej').textContent === '+\u00a0Dessert' && $('#sel-dessert-dej').getAttribute('aria-label') === 'Dessert\u00a0: aucun', 'sans dessert : ' + $('#sel-dessert-dej').textContent);
 choose('dessert', 'dej', 'fruit');
 assert(!$('#sel-dessert-dej').classList.contains('empty') && $('#sel-dessert-dej').textContent.trim() === 'Fruit' && $('#sel-dessert-dej').getAttribute('aria-labelledby') === 'l-dessert-dej sel-dessert-dej', 'dessert choisi : ' + $('#sel-dessert-dej').textContent);
@@ -900,10 +900,16 @@ for (const iso of ['2026-10-08', '2026-10-09', '2026-10-10']) {
 assert.strictEqual(parseInt(shopLine('skyr nature').querySelector('.q').textContent.replace(/\D/g, ''), 10) * (/kg/.test(shopLine('skyr nature').querySelector('.q').textContent) ? 10 : 1), skyrSum, 'skyr des courses ≠ somme des jours');
 const days = [...c.d.querySelectorAll('#courses-days .shop-day')];
 assert(days.length === 3 && /^Jeudi 8\soctobre/.test(days[0].textContent) && /Repos, midi\s: /.test(days[0].textContent) && /1\sséance/.test(days[1].textContent) && /repas libre le soir/.test(days[2].textContent), 'jour par jour : ' + days.map(x => x.textContent).join(' | '));
-// Cocher : gardé dans la planification, au rechargement ; tout décocher
+// Partager la liste (3.22.0) : sans partage ni presse-papiers, dans un champ à copier ; tout, puis ce qui n'est pas coché
 const line = shopLine('skyr nature'), key = line.dataset.value;
+c.click('#co-share');
+const shared = () => c.$('#co-text').value;
+assert(!c.$('#co-text').hidden && /^Courses, du 8 au 10\soctobre\n\nViandes et poissons\n- /.test(shared()) && shared().includes('- ' + line.querySelector('.q').textContent + ' skyr nature') && c.$('#courses-msg').textContent === 'Copie la liste ci-dessous.', 'liste partagée : ' + shared().slice(0, 80));
+// Cocher : gardé dans la planification, au rechargement ; tout décocher
 c.click(`#courses-list [data-value="${key}"]`);
 assert(line.getAttribute('aria-checked') === 'true' && planifsOf(cw).list[0].checked.includes(key), 'ligne cochée');
+c.click('#co-share');
+assert(!shared().includes('skyr nature') && /doses de shaker/.test(shared()), 'liste partagée sans les lignes cochées');
 const cs2 = snapOf(cw), again2 = tools(open(ls => Object.entries(cs2).forEach(([k, v]) => ls.setItem(k, v))));
 again2.click('#plan-btn');
 assert(/^Du 8 au 10\soctobreÀ venir3\sjours, plats simples\.$/.test(again2.$('#plan-body .shop-day').textContent) && !again2.$('#plan-body .is-cur'), 'planification à venir dans la liste : ' + again2.$('#plan-body .shop-day').textContent);
@@ -924,9 +930,11 @@ cs = c.stored();
 assert(cs.plans['2026-10-10'].ch.dej.recette && cs.plans['2026-10-11'].ch.dej.recette && cs.plans['2026-10-11'].ch.diner.recette && /une recette par repas/.test(c.$('#courses-span').textContent), 'une recette par repas');
 c.click('#plan-btn');
 assert.deepStrictEqual([...c.d.querySelectorAll('#plan-body [data-action="pl-open"]')].map(b => b.dataset.value), ['2026-10-08|2026-10-09', '2026-10-10|2026-10-11'], 'deux planifications à venir');
-// Un jour du récap ouvre ce jour sur la page
+// Un jour du récap ouvre ce jour sur la page ; dans le calendrier, un trait sous les jours de chaque planification (3.22.0)
 c.click('[data-action="pl-open"][data-value="2026-10-08|2026-10-09"]');
 c.click('#courses-days [data-value="2026-10-09"]');
+assert.deepStrictEqual([...c.d.querySelectorAll('#week .wk-pl')].map(x => x.className.replace('wk-pl', '').trim()), ['', '', '', 'on s', 'on e', 'on s', 'on e'], 'calendrier : planifications');
+assert(/, dans une planification$/.test(c.$('#week [data-value="2026-10-09"]').getAttribute('aria-label')) && !/planification/.test(c.$('#week [data-value="2026-10-07"]').getAttribute('aria-label')), 'calendrier : nom des jours planifiés');
 assert(!c.$('#page').hidden && c.$('#courses').hidden && c.$('#plan').hidden && /^Vendredi 9\soctobre$/.test(c.$('#date').textContent), 'jour ouvert depuis le récap');
 // Le formulaire des repas vaut pour le jour affiché
 c.click('#open-repas');
@@ -1414,6 +1422,54 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     assert.strictEqual(t.$('#wk-bal').classList.contains('is-over'), over, 'charcuterie ' + n + ' tranches : alerte ' + over);
     assert(over ? /^Trop de charcuterie/.test(t.$('#wb-msg').textContent) && row.className === 'is-over' : /un paquet de 4 tranches/.test(row.textContent) && row.className === 'is-ok', 'charcuterie ' + n + ' tranches : ' + row.textContent + ' / ' + t.$('#wb-msg').textContent);
   });
+}
+
+// Gérer une planification (3.22.0) : refaire ses plats (à partir d'aujourd'hui si elle a commencé : les jours passés restent
+// une planification à part), la retirer de la liste (ses plats restent), avec une confirmation ; « Un autre plat » sur la page
+{
+  const QK = 'repas-du-jour:planifs:v1', isos = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'];
+  const seedCh = { pdBase: 'pain', dej: { prot: 'boeuf', starch: 'pdt' }, diner: { prot: 'tofu', starch: 'riz' } };
+  const t = tools(open(ls => { ls.setItem(QK, JSON.stringify({ list: [{ from: '2026-10-05', to: '2026-10-09', type: 'simple', n: 0, checked: ['a|1'] }] }));
+    const plans = {}; isos.forEach(iso => { plans[iso] = { ch: seedCh }; }); ls.setItem(KEY, JSON.stringify({ plans, choices: {} })); }));
+  const tw = t.d.defaultView, list = () => JSON.parse(tw.localStorage.getItem(QK)).list;
+  t.click('#plan-btn'); t.click('.is-cur');
+  t.click('#co-redo');
+  assert(t.$('#co-ask').hidden && !t.$('#co-confirm').hidden && /^Refaire tous les plats d’aujourd’hui au vendredi 9\soctobre\s\?/.test(t.$('#co-q').textContent) && t.d.activeElement === t.$('#co-no'), 'refaire : confirmation');
+  t.click('#co-no');
+  assert(!t.$('#co-ask').hidden && t.$('#co-confirm').hidden && t.d.activeElement === t.$('#co-redo') && JSON.stringify(t.stored().plans['2026-10-07'].ch) === JSON.stringify(seedCh), 'refaire annulé');
+  t.click('#co-redo'); t.click('#co-ok');
+  assert.deepStrictEqual(list().map(p => [p.from, p.to, p.type, p.checked.join()]), [['2026-10-05', '2026-10-06', 'simple', 'a|1'], ['2026-10-07', '2026-10-09', 'simple', '']], 'refaite à partir d’aujourd’hui');
+  const st = t.stored().plans;
+  assert(JSON.stringify(st['2026-10-05'].ch) === JSON.stringify(seedCh) && JSON.stringify(st['2026-10-06'].ch) === JSON.stringify(seedCh) && ['2026-10-07', '2026-10-08', '2026-10-09'].every(iso => !st[iso].ch.dej.recette), 'jours passés gardés, plats simples refaits');
+  assert(t.$('#courses-h').textContent === 'Du 7 au 9 octobre' && /^Plats refaits\s: du 7 au 9\soctobre\.$/.test(t.$('#courses-msg').textContent) && t.d.activeElement === t.$('#co-redo'), 'refaite : détail et message');
+  // Retirer : de la liste seulement, retour à Planifier avec un message
+  t.click('#co-del');
+  assert(/^Retirer cette planification de ta liste\s\? Ses plats restent prévus, jour par jour\.$/.test(t.$('#co-q').textContent) && t.$('#co-ok').textContent === 'Oui, la retirer', 'retirer : confirmation');
+  t.click('#co-ok');
+  assert(!t.$('#plan').hidden && t.$('#courses').hidden && /^Du 7 au 9\soctobre\s: retirée de ta liste\.$/.test(t.$('#plan-msg').textContent) && !t.$('.is-cur'), 'retirée : retour à Planifier');
+  assert.deepStrictEqual(list().map(p => p.from), ['2026-10-05'], 'retirée de la liste');
+  assert(t.stored().plans['2026-10-08'].ch, 'retirée : plats gardés');
+  // Une planification passée ne se refait pas
+  t.click('[data-action="pl-open"][data-value="2026-10-05|2026-10-06"]');
+  assert(t.$('#co-redo').hidden && !t.$('#co-del').hidden, 'planification passée : pas de « Refaire »');
+  t.click('#nav-jour');
+  // « Un autre plat » : un autre couple, une autre protéine que l'autre repas, le dessert gardé, le focus aussi
+  t.choose('dessert', 'dej', 'fruit');
+  for (let i = 0; i < 6; i++) {
+    const before = JSON.stringify(t.stored().plans['2026-10-07'].ch.dej), other = t.chosen('prot', 'diner');
+    t.click('#redo-dej');
+    const now = t.stored().plans['2026-10-07'].ch.dej;
+    assert(JSON.stringify({ prot: now.prot, starch: now.starch }) !== JSON.stringify({ prot: JSON.parse(before).prot, starch: JSON.parse(before).starch }) && now.prot !== other && now.dessert === 'fruit' && t.d.activeElement === t.$('#redo-dej'), 'un autre plat : ' + before + ' → ' + JSON.stringify(now));
+    assert(t.chosen('prot', 'dej') === now.prot && t.stored().choices[3].dej.prot === now.prot, 'un autre plat : page et mémoire');
+  }
+  // Dans une planification en recettes, le nouveau plat a sa recette ; sinon seulement si le repas en avait une
+  assert(!t.stored().plans['2026-10-07'].ch.dej.recette, 'plats simples : pas de recette');
+  t.click('#plan-btn'); t.click('[data-action="pl-create"]'); t.click('#nav-jour');
+  t.click('#redo-diner');
+  assert(t.stored().plans['2026-10-07'].ch.diner.recette, 'planification en recettes : la recette du nouveau plat');
+  // Jour de repas libre : pas de bouton au dîner
+  t.click('#week [data-value="2026-10-10"]');
+  assert(t.$('#redo-dej') && !t.$('#redo-diner'), 'repas libre : pas d’autre plat au dîner');
 }
 
 // Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;

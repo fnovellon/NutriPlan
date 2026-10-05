@@ -74,6 +74,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .schips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 13px;border:1.5px solid var(--beet);border-radius:999px;background:var(--beet-wash);color:var(--beet);font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;}
 .chip.add{border-color:var(--line);background:transparent;color:var(--ink);}
+/* « Un autre plat » : un rond en contour au bout des choix d'un repas */
+.redo{display:inline-flex;align-items:center;justify-content:center;flex:none;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--ink);}
+.redo svg{width:17px;height:17px;}
+.co-share{margin:0 0 6px;}
+.co-text{display:block;width:100%;min-height:9rem;margin:6px 0 10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:15px/1.4 var(--sans);}
+.co-text[hidden],#co-ask[hidden],#co-confirm[hidden]{display:none;}
+#plan-msg:empty{display:none;}
 .chip:disabled{opacity:.4;cursor:default;}
 .schips .rest-t{margin-right:4px;font-size:17px;font-style:italic;color:var(--muted);}
 /* Panneau des séances : une rangée par taille (ajout) ou le moment et « Retirer » (une séance) */
@@ -163,7 +170,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .items{margin:12px 0 0;padding:0;list-style:none;}
 .items li{display:grid;grid-template-columns:5.4rem minmax(0,1fr);column-gap:12px;align-items:baseline;padding:4px 0;}
 .q{display:flex;flex-direction:column;align-items:flex-end;justify-self:end;text-align:right;}
-.ck{white-space:nowrap;font-family:var(--sans);font-stretch:88%;font-weight:600;font-size:12px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
+.ck{font-family:var(--sans);font-stretch:88%;font-weight:600;font-size:12px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
 .mac{display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;font-family:var(--sans);font-stretch:88%;font-style:normal;font-weight:600;font-size:13px;line-height:1.35;color:var(--muted);font-variant-numeric:tabular-nums;}
 .mac abbr{text-decoration:none;font-weight:800;}
 .mac .p::before,.mac .c::before,.mac .f::before{content:"";display:inline-block;width:7px;height:7px;margin-right:3px;border-radius:2px;vertical-align:1px;}
@@ -348,6 +355,12 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .week button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
 .week button[aria-pressed="true"] .wd,.week button[aria-pressed="true"] .dn{color:var(--on-ink);}
 .week button:disabled{opacity:.35;cursor:default;}
+/* Planification (3.22.0) : un trait sous ses jours, d'un seul tenant (il passe sous l'espace entre deux jours) */
+.wk-pl{height:4px;margin:-1px -3px 0;}
+.wk-pl.on{background:var(--beet);}
+.wk-pl.s{margin-left:6px;border-radius:2px 0 0 2px;}
+.wk-pl.e{margin-right:6px;border-radius:0 2px 2px 0;}
+.wk-pl.s.e{border-radius:2px;}
 .cal-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .cal-acts .reset{margin:0;}
 .cal-acts [hidden]{display:none;}
@@ -828,6 +841,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 
 <main class="app plan" id="plan" hidden>
   <h1 id="plan-h" tabindex="-1">Planifier</h1>
+  <p class="calc" id="plan-msg" role="status"></p>
   <div id="plan-body"></div>
 </main>
 
@@ -841,8 +855,16 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
   <div id="courses-batch"></div>
   <h2 class="shop-t" id="courses-list-t">Tes courses</h2>
   <p class="calc">Tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon&nbsp;: coche au fur et à mesure.</p>
+  <button type="button" class="btn co-share" id="co-share" data-action="co-share">Partager la liste</button>
+  <textarea class="co-text" id="co-text" readonly hidden aria-label="Ta liste de courses, à copier"></textarea>
   <div id="courses-list"></div>
   <div class="regl-links"><button type="button" class="reset" data-action="co-uncheck">Tout décocher</button></div>
+  <h2 class="shop-t" id="co-manage-t">Cette planification</h2>
+  <div class="regl-links" id="co-ask"><button type="button" class="reset" id="co-redo" data-action="co-ask" data-value="redo">Refaire les plats</button><button type="button" class="reset danger" id="co-del" data-action="co-ask" data-value="del">La retirer de la liste</button></div>
+  <div id="co-confirm" role="group" aria-labelledby="co-q" hidden>
+    <p class="eff-q" id="co-q"></p>
+    <div class="regl-links"><button type="button" class="btn danger" id="co-ok" data-action="co-ok"></button><button type="button" class="btn" id="co-no" data-action="co-no">Annuler</button></div>
+  </div>
   <button type="button" class="btn main wide" data-action="fermer">Toutes tes planifications</button>
 </main>
 
@@ -867,7 +889,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.21.0';
+const APP_VERSION = '3.22.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -2555,6 +2577,7 @@ if (typeof document !== 'undefined'){
     const LABEL = {pd:'Base', prot:'Protéine', starch:'Féculent', dessert:'Dessert'};
     return {label:LABEL[kind], title:kind === 'pd' ? 'Base du petit-déjeuner' : LABEL[kind] + ' ' + REPAS[slot], action:kind, current:cur, opts:opts};
   };
+  const REDO = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
   const CHEVRON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
   /* Un choix : la sélection dans une bulle (les bulles d'un repas côte à côte, 3.20.0 ; le libellé n'est lu que par le
      lecteur d'écran) ; la toucher ouvre le panneau des choix.
@@ -2630,7 +2653,8 @@ if (typeof document !== 'undefined'){
   const mealHTML = function(s, next){
     let picks = '';
     if (s.pick === 'pd') picks = '<div class="picks">' + pickRow('pd', null) + '</div>';
-    else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) + '</div>';
+    else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) +
+      '<button type="button" class="redo" id="redo-' + s.pick + '" data-action="redo" data-slot="' + s.pick + '" aria-label="Un autre plat ' + REPAS[s.pick] + '" title="Un autre plat">' + REDO + '</button></div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
     const card = s.recipe && !s.libre, shown = card ? s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) >= 0; }) : s.items;
     /* Repas libre : un interrupteur dans la carte du dîner (et dans celle du repas libre, qui le remplace) */
@@ -2775,12 +2799,17 @@ if (typeof document !== 'undefined'){
     $('cal-t').textContent = 'Du ' + wk[0].getDate() + (wk[0].getMonth() !== wk[6].getMonth() ? NB + short(wk[0]) : '') + ' au ' + wk[6].getDate() + NB + short(wk[6]);
     $('wk-prev').disabled = wk[0] <= addDays(today, -21);
     $('wk-next').disabled = wk[6] >= addDays(today, 365);
-    $('week').innerHTML = wk.map(function(d){
+    /* Sous les jours, un trait par planification (3.22.0), arrondi à son premier et à son dernier jour */
+    const pls = wk.map(function(d){ return planifOf(isoDate(d)); });
+    $('week').innerHTML = wk.map(function(d, i){
       const iso = isoDate(d), isToday = dayDiff(d) === 0, planned = has(store.plans, iso);
       return '<button type="button" data-action="day" data-value="' + iso + '" aria-pressed="' + (iso === selIso()) + '"' +
-        ' aria-label="' + cap(dayLabel(d)) + (isToday ? ', aujourd’hui' : '') + (planned ? ', planifié' : '') + '"' +
+        ' aria-label="' + cap(dayLabel(d)) + (isToday ? ', aujourd’hui' : '') + (planned ? ', planifié' : '') + (pls[i] ? ', dans une planification' : '') + '"' +
         ' class="' + (isToday ? 'is-today' : '') + (planned ? ' is-planned' : '') + '"' + (dayDiff(d) < -21 ? ' disabled' : '') + '>' +
         '<span class="wd">' + d.toLocaleDateString('fr-FR', {weekday:'short'}) + '</span><span class="dn">' + d.getDate() + '</span></button>';
+    }).join('') + wk.map(function(d, i){
+      const p = pls[i];
+      return '<span class="wk-pl' + (p ? ' on' + (p.from === isoDate(d) || i === 0 ? ' s' : '') + (p.to === isoDate(d) || i === 6 ? ' e' : '') : '') + '" aria-hidden="true"></span>';
     }).join('');
     $('sess').innerHTML = sessChips();
   };
@@ -2855,6 +2884,24 @@ if (typeof document !== 'undefined'){
     rm: function(b){ if (!plan.seances[+b.dataset.index]) return; plan.seances.splice(+b.dataset.index, 1); savePlan({seances:plan.seances}); return ''; },
     sess: function(b){ openSess(+b.dataset.index, b); },
     'sess-add': function(b){ if (!addDisabled('petite')) openSess(null, b); },
+    /* « Un autre plat » (3.22.0) : protéine et féculent tirés à nouveau pour ce repas (équilibrés avec la semaine, différents
+       du plat actuel et de la protéine de l'autre repas), avec la recette du couple si le repas en avait une ou si la
+       planification du jour est en recettes ; le dessert reste */
+    redo: function(b){
+      const slot = b.dataset.slot, other = slot === 'dej' ? 'diner' : 'dej';
+      if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
+      const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p ? p.type === 'recettes' : !!recipeOf(old);
+      for (let i = 0; i < 20; i++){
+        const c = randomChoices(null, pr.off, bal, scaleOf(pr))[slot];
+        if (c.prot === old.prot && c.starch === old.starch) continue;
+        if (c.prot === ch[other].prot && i < 19) continue;
+        ch[slot] = {prot:c.prot, starch:c.starch, dessert:dessertOf(old)};
+        if (rec && c.recette) ch[slot].recette = c.recette;
+        saveCh();
+        return '';
+      }
+      return 'Aucun autre plat ne va avec tes aliments proposés.';
+    },
     /* Frise : la carte d'un repas ou d'une séance */
     frise: function(b, v){ if ($('sec-' + v)) showSec(v, false); },
     toggle: function(b){
@@ -3156,22 +3203,22 @@ if (typeof document !== 'undefined'){
     if (same) same.focus({preventScroll:true});
   };
   /* Tire les plats de chaque date de la période : un jour après l'autre (équilibrés avec le reste de leur semaine), sans
-     recette pour les plats simples ; en batch cooking, tout d'un coup puis arrondi aux 100 g sur les boîtes (3.17.0) */
-  const drawPeriod = function(isos){
+     recette pour les plats simples ; en batch cooking (n recettes), tout d'un coup puis arrondi aux 100 g sur les boîtes */
+  const drawPeriod = function(isos, type, n){
     const pr = cleanProfile(prof), save = function(iso, c){ const js = fromIso(iso).getDay(), x = cleanCh(c, js); writeDay(iso, {ch:x}); store.choices[js] = x; };
-    if (planner.type === 'recettes' && planner.batch){
-      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), planner.n, pr.off, scaleOf(pr));
+    if (type === 'recettes' && n){
+      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), n, pr.off, scaleOf(pr));
       batchRound(isos.map(function(iso, j){ return {plan:planFor(iso), ch:cleanCh(cs[j], fromIso(iso).getDay())}; }), prof).forEach(function(c, j){ save(isos[j], c); });
     } else isos.forEach(function(iso){
       const c = drawFor(iso);
-      if (planner.type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
+      if (type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
       save(iso, c);
     });
     persist();
   };
   /* Actions de Planifier : l'ouvrir (menu), une planification, le formulaire, créer */
   Object.assign(ACTIONS, {
-    plan: function(b){ if (topScreen() === 'plan') return; renderPlan(); navTo('plan', b); },
+    plan: function(b){ if (topScreen() === 'plan') return; $('plan-msg').textContent = ''; renderPlan(); navTo('plan', b); },
     'pl-open': function(b, v){
       const q = String(v).split('|'), p = planifs.find(function(x){ return x.from === q[0] && x.to === q[1]; });
       if (p) openPlanif(p, b);
@@ -3186,8 +3233,8 @@ if (typeof document !== 'undefined'){
     'pl-nrec': function(b, v){ if (BATCH_N.indexOf(+v) >= 0){ planner.n = +v; planKeep(b); } },
     'pl-create': function(b){
       if (fillRange('plan', planner, 0, true)) return;
-      drawPeriod(rangeDays(planner.from, planner.to));
       const p = {from:planner.from, to:planner.to, type:planner.type, n:planner.type === 'recettes' && planner.batch ? planner.n : 0, checked:[]};
+      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
       addPlanif(p);
       loadSel(); prevQty = new Map(); render();
       renderPlan();
@@ -3313,15 +3360,19 @@ if (typeof document !== 'undefined'){
   };
 
   /* Détail d'une planification (écran #courses) : le récap jour par jour, son batch cooking, ses courses par rayon */
-  let cur = null;
+  let cur = null, curList = [];
   const renderCourses = function(){
     if (!cur) return;
     const days = rangeDays(cur.from, cur.to), res = days.map(dayResult), t = todayIso();
     $('courses-h').textContent = periodTitle(cur.from, cur.to);
     $('courses-span').textContent = cap(planifLine(cur)) + (cur.from <= t && cur.to >= t ? ', en cours.' : cur.from > t ? ', à venir.' : ', passée.');
     $('courses-msg').textContent = '';
+    $('co-text').hidden = true;
+    coAsk(null);
+    $('co-redo').hidden = cur.to < t;
     $('courses-batch').innerHTML = batchHTML(days, res);
-    $('courses-list').innerHTML = shoppingList(res).map(function(g, j){
+    curList = shoppingList(res);
+    $('courses-list').innerHTML = curList.map(function(g, j){
       return '<h3 class="shop-a" id="shop-' + j + '">' + g.title + '</h3><ul class="shop" aria-labelledby="shop-' + j + '">' + g.lines.map(function(l){
         const key = l.id + '|' + l.qty;
         return '<li><button type="button" class="chk" role="checkbox" aria-checked="' + (cur.checked.indexOf(key) >= 0) + '" data-action="co-check" data-value="' + key + '">' +
@@ -3339,6 +3390,28 @@ if (typeof document !== 'undefined'){
     }).join('');
   };
   const openPlanif = function(p, opener){ cur = p; renderCourses(); openScreen('courses', opener); };
+  /* Partager la liste (3.22.0) : les lignes pas encore cochées (toutes si tout est coché), en texte, par le menu de partage du
+     téléphone ; sinon copiée ; sinon affichée dans un champ à copier */
+  const shareText = function(){
+    const left = curList.map(function(g){ return {title:g.title, lines:g.lines.filter(function(l){ return cur.checked.indexOf(l.id + '|' + l.qty) < 0; })}; });
+    const groups = left.some(function(g){ return g.lines.length; }) ? left : curList;
+    return 'Courses, ' + periodTitle(cur.from, cur.to).replace(/^D/, 'd') + '\n' + groups.filter(function(g){ return g.lines.length; }).map(function(g){
+      return '\n' + g.title + '\n' + g.lines.map(function(l){ return '- ' + l.qty + ' ' + l.name + (l.note ? ' (' + l.note + ')' : ''); }).join('\n');
+    }).join('\n') + '\n';
+  };
+  const showText = function(text, msg){ $('co-text').value = text; $('co-text').hidden = false; $('co-text').select(); $('courses-msg').textContent = msg; };
+  /* Refaire ou retirer la planification : une confirmation d'abord (what : 'redo', 'del' ou null pour la refermer) */
+  const coAsk = function(what){
+    $('co-ask').hidden = !!what; $('co-confirm').hidden = !what;
+    if (!what) return;
+    const t = todayIso(), from = cur.from < t ? t : cur.from;
+    $('co-q').textContent = what === 'redo'
+      ? 'Refaire tous les plats ' + (from === cur.from ? 'de cette planification' : 'd’aujourd’hui au ' + dayLabel(fromIso(cur.to))) + NB + '? Ceux que tu as changés seront tirés à nouveau. Tes séances restent.'
+      : 'Retirer cette planification de ta liste' + NB + '? Ses plats restent prévus, jour par jour.';
+    $('co-ok').textContent = what === 'redo' ? 'Oui, refaire' : 'Oui, la retirer';
+    $('co-ok').dataset.value = what;
+    $('co-no').focus({preventScroll:true});
+  };
   /* Batch cooking d'une planification : pour chaque bloc de 7 jours, le jour où cuisiner, puis une fiche repliée par recette
      servie au moins deux fois (« Changer de recette », puis batchBody) */
   const SLOT = {dej:'midi', diner:'soir'};
@@ -3427,6 +3500,40 @@ if (typeof document !== 'undefined'){
       b.setAttribute('aria-checked', String(k < 0));
     },
     'co-uncheck': function(){ if (!cur) return; cur.checked = []; saveQ(); renderCourses(); },
+    'co-share': function(){
+      if (!cur) return;
+      const text = shareText();
+      try {
+        if (navigator.share){ navigator.share({title:'Courses', text:text}).catch(function(){}); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(function(){ $('courses-msg').textContent = 'Liste copiée' + NB + ': colle-la où tu veux.'; }, function(){ showText(text, 'Copie la liste ci-dessous.'); });
+          return;
+        }
+      } catch (e) {}
+      showText(text, 'Copie la liste ci-dessous.');
+    },
+    'co-ask': function(b, v){ if (cur && (v === 'redo' || v === 'del')) coAsk(v); },
+    'co-no': function(){ const v = $('co-ok').dataset.value; coAsk(null); $(v === 'del' ? 'co-del' : 'co-redo').focus({preventScroll:true}); },
+    'co-ok': function(b, v){
+      if (!cur) return;
+      if (v === 'del'){
+        const left = periodTitle(cur.from, cur.to);
+        planifs = planifs.filter(function(x){ return x !== cur; }); saveQ(); cur = null;
+        renderPlan();
+        closeScreen(false);
+        $('plan-msg').textContent = left + NB + ': retirée de ta liste.';
+        return;
+      }
+      if (v !== 'redo' || cur.to < todayIso()) return;
+      /* Refaite à partir d'aujourd'hui : les jours passés gardent leurs plats (et restent une planification à part) */
+      const t = todayIso(), p = {from:cur.from < t ? t : cur.from, to:cur.to, type:cur.type, n:cur.n, checked:[]};
+      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
+      addPlanif(p); cur = p;
+      loadSel(); prevQty = new Map(); render();
+      renderCourses();
+      $('courses-msg').textContent = 'Plats refaits' + NB + ': ' + periodTitle(p.from, p.to).replace(/^D/, 'd') + '.';
+      $('co-redo').focus({preventScroll:true});
+    },
     'co-day': function(b, v){
       const d = fromIso(v);
       if (!d) return;

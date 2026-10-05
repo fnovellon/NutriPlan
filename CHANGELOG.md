@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 3.22.0, 5 octobre 2026
+
+- Partager ta liste de courses : un bouton l'envoie en texte (Messages, Notes, WhatsApp…), sans les lignes déjà cochées.
+- Une planification se refait (de nouveaux plats à partir d'aujourd'hui) ou se retire de la liste, avec une confirmation.
+- « Un autre plat » : un bouton au bout des choix du déjeuner et du dîner tire un autre plat pour ce repas, équilibré avec ta semaine. Ton dessert reste.
+- Le calendrier montre tes planifications : un trait sous leurs jours.
+- Les quantités cuites trop longues ne débordent plus des cartes.
+
 ## 3.21.0, 4 octobre 2026
 
 - Planifier et Courses ne font plus qu'un. Le menu passe à quatre icônes : Journée, Planifier, Aide, Réglages.

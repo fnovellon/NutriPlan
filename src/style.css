@@ -53,6 +53,13 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .schips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 13px;border:1.5px solid var(--beet);border-radius:999px;background:var(--beet-wash);color:var(--beet);font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;}
 .chip.add{border-color:var(--line);background:transparent;color:var(--ink);}
+/* « Un autre plat » : un rond en contour au bout des choix d'un repas */
+.redo{display:inline-flex;align-items:center;justify-content:center;flex:none;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--ink);}
+.redo svg{width:17px;height:17px;}
+.co-share{margin:0 0 6px;}
+.co-text{display:block;width:100%;min-height:9rem;margin:6px 0 10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:15px/1.4 var(--sans);}
+.co-text[hidden],#co-ask[hidden],#co-confirm[hidden]{display:none;}
+#plan-msg:empty{display:none;}
 .chip:disabled{opacity:.4;cursor:default;}
 .schips .rest-t{margin-right:4px;font-size:17px;font-style:italic;color:var(--muted);}
 /* Panneau des séances : une rangée par taille (ajout) ou le moment et « Retirer » (une séance) */
@@ -142,7 +149,7 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .items{margin:12px 0 0;padding:0;list-style:none;}
 .items li{display:grid;grid-template-columns:5.4rem minmax(0,1fr);column-gap:12px;align-items:baseline;padding:4px 0;}
 .q{display:flex;flex-direction:column;align-items:flex-end;justify-self:end;text-align:right;}
-.ck{white-space:nowrap;font-family:var(--sans);font-stretch:88%;font-weight:600;font-size:12px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
+.ck{font-family:var(--sans);font-stretch:88%;font-weight:600;font-size:12px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums;}
 .mac{display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;font-family:var(--sans);font-stretch:88%;font-style:normal;font-weight:600;font-size:13px;line-height:1.35;color:var(--muted);font-variant-numeric:tabular-nums;}
 .mac abbr{text-decoration:none;font-weight:800;}
 .mac .p::before,.mac .c::before,.mac .f::before{content:"";display:inline-block;width:7px;height:7px;margin-right:3px;border-radius:2px;vertical-align:1px;}
@@ -327,6 +334,12 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .week button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
 .week button[aria-pressed="true"] .wd,.week button[aria-pressed="true"] .dn{color:var(--on-ink);}
 .week button:disabled{opacity:.35;cursor:default;}
+/* Planification (3.22.0) : un trait sous ses jours, d'un seul tenant (il passe sous l'espace entre deux jours) */
+.wk-pl{height:4px;margin:-1px -3px 0;}
+.wk-pl.on{background:var(--beet);}
+.wk-pl.s{margin-left:6px;border-radius:2px 0 0 2px;}
+.wk-pl.e{margin-right:6px;border-radius:0 2px 2px 0;}
+.wk-pl.s.e{border-radius:2px;}
 .cal-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .cal-acts .reset{margin:0;}
 .cal-acts [hidden]{display:none;}

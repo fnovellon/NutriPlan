@@ -399,6 +399,7 @@
 
 <main class="app plan" id="plan" hidden>
   <h1 id="plan-h" tabindex="-1">Planifier</h1>
+  <p class="calc" id="plan-msg" role="status"></p>
   <div id="plan-body"></div>
 </main>
 
@@ -412,8 +413,16 @@
   <div id="courses-batch"></div>
   <h2 class="shop-t" id="courses-list-t">Tes courses</h2>
   <p class="calc">Tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon&nbsp;: coche au fur et à mesure.</p>
+  <button type="button" class="btn co-share" id="co-share" data-action="co-share">Partager la liste</button>
+  <textarea class="co-text" id="co-text" readonly hidden aria-label="Ta liste de courses, à copier"></textarea>
   <div id="courses-list"></div>
   <div class="regl-links"><button type="button" class="reset" data-action="co-uncheck">Tout décocher</button></div>
+  <h2 class="shop-t" id="co-manage-t">Cette planification</h2>
+  <div class="regl-links" id="co-ask"><button type="button" class="reset" id="co-redo" data-action="co-ask" data-value="redo">Refaire les plats</button><button type="button" class="reset danger" id="co-del" data-action="co-ask" data-value="del">La retirer de la liste</button></div>
+  <div id="co-confirm" role="group" aria-labelledby="co-q" hidden>
+    <p class="eff-q" id="co-q"></p>
+    <div class="regl-links"><button type="button" class="btn danger" id="co-ok" data-action="co-ok"></button><button type="button" class="btn" id="co-no" data-action="co-no">Annuler</button></div>
+  </div>
   <button type="button" class="btn main wide" data-action="fermer">Toutes tes planifications</button>
 </main>
 
