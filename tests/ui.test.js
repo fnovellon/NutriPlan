@@ -384,7 +384,7 @@ assert(nostore.$('#repas').hidden && !nostore.$('#page').hidden && nostore.$('#a
 choose('prot', 'diner', 'boeuf');
 choose('starch', 'diner', 'pates');
 const recBox = slot => $(`[aria-labelledby="h-${slot}"] .rec`);
-const dinerNames = () => [...d.querySelectorAll('[aria-labelledby="h-diner"] .items li .name')].map(n => n.childNodes[0].textContent);
+const dinerNames = () => [...d.querySelectorAll('[aria-labelledby="h-diner"] .items li .name')].map(n => n.childNodes[0].textContent.trim());
 const kcalOf = el => Number(el.textContent.replace(/\D/g, ''));
 assert(/^Suggestion\s:\sPâtes à la bolognaise/.test(recBox('diner').textContent) && !recBox('diner').classList.contains('is-on'), 'suggestion du dîner : ' + recBox('diner').textContent);
 assert(/35\smin, se garde/.test(recBox('diner').textContent) && $('#rec-c-diner').getAttribute('aria-label') === 'Choisir la recette du dîner', 'temps et bouton de la suggestion');
@@ -1449,6 +1449,9 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(!t.$('#plan').hidden && t.$('#courses').hidden && /^Du 7 au 9\soctobre\s: retirée de ta liste\.$/.test(t.$('#plan-msg').textContent) && !t.$('.is-cur'), 'retirée : retour à Planifier');
   assert.deepStrictEqual(list().map(p => p.from), ['2026-10-05'], 'retirée de la liste');
   assert(t.stored().plans['2026-10-08'].ch, 'retirée : plats gardés');
+  t.click('#nav-jour');
+  assert(![...t.d.querySelectorAll('#week .wk-pl')].slice(2, 5).some(x => x.classList.contains('on')) && t.d.querySelectorAll('#week .wk-pl.on').length === 2, 'retirée : plus de trait dans le calendrier (seuls lundi et mardi, l’autre planification)');
+  t.click('#plan-btn');
   // Une planification passée ne se refait pas
   t.click('[data-action="pl-open"][data-value="2026-10-05|2026-10-06"]');
   assert(t.$('#co-redo').hidden && !t.$('#co-del').hidden, 'planification passée : pas de « Refaire »');
@@ -1470,6 +1473,115 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   // Jour de repas libre : pas de bouton au dîner
   t.click('#week [data-value="2026-10-10"]');
   assert(t.$('#redo-dej') && !t.$('#redo-diner'), 'repas libre : pas d’autre plat au dîner');
+}
+
+// Repas mangés (3.23.0) : « Mangé » coche le repas (frise, stockage) et passe au suivant pas encore mangé ; sous la frise, ce
+// qu'il reste à manger ; décocher garde la carte ; pas de bouton les jours à venir ; stockage relu, validé, purgé à 21 jours
+{
+  const MK = 'repas-du-jour:manges:v1';
+  const t = tools(open(ls => ls.setItem(MK, JSON.stringify({ '2026-09-01': ['pd'], '2026-09-20': ['dej', 'x'], '2026-10-07': ['pd', '__proto__', 'pd', 'constructor'], 'x': ['pd'], '2026-10-08': 'pd' }))));
+  const tw = t.d.defaultView, mg = () => JSON.parse(tw.localStorage.getItem(MK));
+  const tabs = () => [...t.d.querySelectorAll('#frise .f-m')].map(b => b.dataset.value), eatenTabs = () => [...t.d.querySelectorAll('#frise .f-m.is-eaten')].map(b => b.dataset.value);
+  const kc = id => Number(t.$('#sec-' + id + ' .kcal').textContent.replace(/\D/g, ''));
+  // Relu : seul le petit-déjeuner d'aujourd'hui (identifiants validés, doublons retirés)
+  assert.deepStrictEqual(eatenTabs(), ['pd'], 'relu : ' + eatenTabs());
+  assert(t.$('#eat-pd').getAttribute('aria-pressed') === 'true' && t.$('#ft-pd').getAttribute('aria-label') === 'Petit-déjeuner, mangé' && t.$('#ft-pd .f-d svg') && t.$('#sec-pd').classList.contains('is-eaten'), 'petit-déjeuner coché');
+  assert(t.$('#eat-dej').getAttribute('aria-pressed') === 'false' && t.$('#eat-dej').getAttribute('aria-label') === 'Déjeuner mangé', 'déjeuner pas coché');
+  const total0 = Number(t.$('#sum-text strong').textContent.replace(/\D/g, ''));
+  const left = () => { const m = /^Reste à manger\s:\s≈\s([\d\s]+)\skcal et (\d+)\sg de protéines\.$/.exec(t.$('#eat-msg').textContent); return m ? Number(m[1].replace(/\D/g, '')) : null; };
+  assert(left() !== null && Math.abs(left() - (total0 - kc('pd'))) <= 10, 'reste à manger : ' + t.$('#eat-msg').textContent + ' / ' + total0 + ' − ' + kc('pd'));
+  // Décocher : la carte reste, le focus aussi ; le stockage garde les autres jours (purgés et validés)
+  t.click('#ft-pd'); t.click('#eat-pd');
+  assert(t.$('#eat-pd').getAttribute('aria-pressed') === 'false' && t.$('#ft-pd').getAttribute('aria-selected') === 'true' && t.d.activeElement === t.$('#eat-pd') && t.$('#eat-msg').textContent === '', 'décoché');
+  assert.deepStrictEqual(mg(), { '2026-09-20': ['dej'] }, 'stockage purgé et validé');
+  // Cocher le déjeuner puis le petit-déjeuner : on passe au premier repas suivant pas encore mangé (la collation)
+  t.click('#ft-dej'); t.click('#eat-dej');
+  const after = tabs()[tabs().indexOf('dej') + 1];
+  assert(t.$('#ft-' + after).getAttribute('aria-selected') === 'true' && !t.$('#sec-' + after).hidden && t.d.activeElement === t.$('#ft-' + after), 'déjeuner coché : carte suivante ' + after);
+  t.click('#ft-pd'); t.click('#eat-pd');
+  assert(t.$('#ft-co').getAttribute('aria-selected') === 'true', 'petit-déjeuner coché : le déjeuner, déjà mangé, est sauté');
+  assert.deepStrictEqual(mg()['2026-10-07'], ['dej', 'pd'], 'stockage du jour');
+  // Tout cocher : « Tout est mangé », le dernier reste affiché avec le focus sur son bouton
+  tabs().filter(id => !eatenTabs().includes(id)).forEach(id => { t.click('#ft-' + id); t.click('#eat-' + id); });
+  const last = tabs()[tabs().length - 1];
+  assert(t.$('#eat-msg').textContent === 'Tout est mangé pour aujourd’hui.' && eatenTabs().length === tabs().length && t.d.activeElement === t.$('#eat-' + last), 'tout mangé : ' + t.$('#eat-msg').textContent);
+  // Rechargée : même état ; demain, pas de bouton ni de message ; hier, des boutons
+  const r = tools(open(ls => ls.setItem(MK, tw.localStorage.getItem(MK))));
+  assert.deepStrictEqual([...r.d.querySelectorAll('#frise .f-m.is-eaten')].map(b => b.dataset.value), tabs(), 'rechargée');
+  r.click('#week [data-value="2026-10-08"]');
+  assert(!r.$('#day .eat') && !r.$('#frise .is-eaten') && r.$('#eat-msg').textContent === '', 'demain : rien à cocher');
+  r.click('#week [data-value="2026-10-06"]');
+  r.click('#eat-' + r.$('#frise [aria-selected="true"]').dataset.value);
+  assert(JSON.parse(r.d.defaultView.localStorage.getItem(MK))['2026-10-06'].length === 1 && /^Reste à manger/.test(r.$('#eat-msg').textContent), 'hier : coché');
+  // Repas libre : son budget à part
+  r.click('#week [data-value="2026-10-07"]');
+  r.click('#ft-diner'); r.click('#eat-diner');
+  r.setSwitch('libre', true);
+  assert(/^Reste à manger\s:\s≈\s[\d\s]+\skcal et \d+\sg de protéines, plus ton repas libre\.$/.test(r.$('#eat-msg').textContent), 'repas libre à part : ' + r.$('#eat-msg').textContent);
+}
+
+// Ce qui reste à manger avec une sortie longue : son ravito compté tant qu'aucun repas d'après n'est coché ; au retour sur
+// l'onglet un autre jour, les repas mangés de plus de 21 jours sont effacés du stockage
+{
+  const MK = 'repas-du-jour:manges:v1';
+  const t = tools(open(ls => ls.setItem(MK, JSON.stringify({ '2026-09-17': ['pd'] }))));
+  t.add('longue', 2);
+  const ids = [...t.d.querySelectorAll('#frise [role="tab"]')].map(b => b.dataset.value), band = ids.find(id => t.$('#sec-' + id).classList.contains('band'));
+  const after = ids.slice(ids.indexOf(band) + 1).find(id => t.$('#sec-' + id).classList.contains('meal'));
+  const kc = id => Number(t.$('#sec-' + id + ' .kcal').textContent.replace(/\D/g, '')), left = () => Number(/≈\s([\d\s]+)\skcal/.exec(t.$('#eat-msg').textContent)[1].replace(/\D/g, ''));
+  const ravito = [...t.d.querySelectorAll('#sec-' + band + ' .items li')].reduce((a, li) => a + Number(li.querySelector('.mac span').textContent.replace(/\D/g, '')), 0);
+  const meals = ids.filter(id => t.$('#sec-' + id).classList.contains('meal'));
+  t.click('#ft-pd'); t.click('#eat-pd');
+  assert(ravito > 100 && Math.abs(left() - (meals.filter(id => id !== 'pd').reduce((a, id) => a + kc(id), 0) + ravito)) <= 15, 'ravito compté avant : ' + left() + ' ' + ravito);
+  t.click('#ft-' + after); t.click('#eat-' + after);
+  assert(Math.abs(left() - meals.filter(id => id !== 'pd' && id !== after).reduce((a, id) => a + kc(id), 0)) <= 15, 'ravito plus compté après : ' + left());
+  const tw = t.d.defaultView, keep = now;
+  assert(JSON.parse(tw.localStorage.getItem(MK))['2026-09-17'], 'gardé à 20 jours');
+  now = new Date(2026, 9, 9, 9).getTime();
+  tw.dispatchEvent(new tw.Event('focus'));
+  assert(!JSON.parse(tw.localStorage.getItem(MK))['2026-09-17'] && JSON.parse(tw.localStorage.getItem(MK))['2026-10-07'], 'effacé à 22 jours, le reste gardé');
+  now = keep;
+}
+
+// Glisser sur la carte (3.23.0) : vers la gauche, le repère suivant de la frise (séances comprises), vers la droite le
+// précédent ; pas de boucle ; un geste court ou surtout vertical ne fait rien
+{
+  const t = tools(open()), tw = t.d.defaultView;
+  t.add('petite', 'soir');
+  const ids = () => [...t.d.querySelectorAll('#frise [role="tab"]')].map(b => b.dataset.value), sel = () => t.$('#frise [aria-selected="true"]').dataset.value;
+  const swipe = (dx, dy) => {
+    const ev = (type, x, y) => { const e = new tw.Event(type, { bubbles: true }); const p = [{ clientX: x, clientY: y }]; e.touches = type === 'touchend' ? [] : p; e.changedTouches = p; return e; };
+    t.$('#day .meal').dispatchEvent(ev('touchstart', 200, 400));
+    t.$('#day .meal').dispatchEvent(ev('touchend', 200 + dx, 400 + (dy || 0)));
+  };
+  t.click('#ft-pd');
+  const seen = [sel()];
+  for (let i = 1; i < ids().length + 2; i++){ swipe(-90); seen.push(sel()); }
+  assert.deepStrictEqual([...new Set(seen)], ids(), 'vers la gauche : ' + seen.join());
+  assert(t.$('#frise .f-s') && ids().includes(seen[seen.length - 1]) && seen[seen.length - 1] === ids()[ids().length - 1], 'jusqu’au dernier repère, sans boucle');
+  assert(t.$('#sec-' + sel()).classList.contains('in-l') && !t.$('#sec-' + sel()).hidden, 'carte animée depuis la droite');
+  swipe(90);
+  assert(sel() === ids()[ids().length - 2] && t.$('#sec-' + sel()).classList.contains('in-r'), 'vers la droite : le précédent');
+  const s0 = sel();
+  swipe(-40); swipe(-80, 90);
+  assert(sel() === s0, 'geste court ou vertical : rien');
+  t.click('#ft-pd'); swipe(120);
+  assert(sel() === 'pd', 'premier repère : pas de boucle');
+}
+
+// Légumes à volonté (3.23.0) ; protéines au-dessus de la fourchette (thon, lentilles) : la note du total le dit
+{
+  const t = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72 }))));
+  const leg = [...t.d.querySelectorAll('#sec-dej .items li')].find(li => /légumes/.test(li.textContent));
+  assert(leg.querySelector('.vol').textContent === 'à volonté' && /^au moins, et plus si tu as faim \(≈\s30\skcal les 100\sg\)$/.test(leg.querySelector('.note').textContent), 'légumes à volonté : ' + leg.textContent);
+  assert(!/Tes protéines dépassent/.test(t.$('#sum-note').textContent), 'pas de note des protéines par défaut');
+  t.choose('prot', 'dej', 'thon'); t.choose('starch', 'dej', 'lentilles');
+  const m = /Tes protéines dépassent ton objectif \((\d+)\sg, pour (\d+) à (\d+)\sg\), sans risque pour ta sèche\s: pour t’en rapprocher, remplace le thon, prends un autre féculent que les lentilles ou les pois chiches ou passe-toi du shaker\./.exec(t.$('#sum-note').textContent);
+  assert(m && +m[1] > +m[3] && +m[2] === 130 && +m[3] === 158, 'note des protéines : ' + t.$('#sum-note').textContent);
+  assert(t.$('#sum-note [data-action="needs"]').dataset.value === 'repas', '« Régler » : onglet Repas (shaker)');
+  // Recette choisie : ses légumes à volonté aussi
+  t.click('#rec-c-dej');
+  assert(/^à volonté des légumes en plus si tu as faim/.test(t.$('#sec-dej .rec-vol').textContent), 'recette : légumes à volonté');
 }
 
 // Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;
@@ -1510,13 +1622,14 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     ls.setItem(OLD_KEY, JSON.stringify({ plans: { '2026-10-07': { activity: 'course', moment: 'soir' } }, choices: {} }));
     ls.setItem(PKEY, JSON.stringify({ sexe: 'f', age: 30, taille: 165, poids: 58, off: ['prot:thon'], semaine: { jours: { 1: [{ taille: 'petite', moment: 'soir' }] }, libre: 4 } }));
     ls.setItem('repas-du-jour:courses:v1', JSON.stringify({ from: '2026-10-07', to: '2026-10-09', checked: ['skyr|500 g'] }));
+    ls.setItem('repas-du-jour:manges:v1', JSON.stringify({ '2026-10-07': ['pd'] }));
     ls.setItem('autre-appli:cle', 'garde');
   };
   const ef = tools(open(full)), ew = ef.d.defaultView;
   // Migration (3.21.0) : l'ancienne période des courses devient une planification (avec ses coches), l'ancienne clé reste
   assert.deepStrictEqual(JSON.parse(ew.localStorage.getItem('repas-du-jour:planifs:v1')), { list: [{ from: '2026-10-07', to: '2026-10-09', type: 'recettes', n: 0, checked: ['skyr|500 g'] }] }, 'courses converties en planification');
   assert(/"from":"2026-10-07"/.test(ew.localStorage.getItem('repas-du-jour:courses:v1')), 'ancienne clé des courses touchée');
-  assert(ef.sess().join() === 'Séance moyenne' && ef.chosen('prot', 'dej') === 'boeuf', 'données de départ');
+  assert(ef.sess().join() === 'Séance moyenne' && ef.chosen('prot', 'dej') === 'boeuf' && ef.$('#frise .f-m.is-eaten'), 'données de départ');
   ef.click('#gear');
   assert(!ef.$('#eff-ask').hidden && ef.$('#eff-confirm').hidden && /Effacer mes données/.test(ef.$('#effacer h2').textContent), 'carte « Effacer mes données »');
   ef.click('[data-action="eff-ask"]');
@@ -1537,7 +1650,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(!ef.$('#repas').hidden, 'formulaire des repas après l’accueil');
   ef.click('#repas [data-action="fermer"]');
   assert(!ef.$('#page').hidden && ef.$('#date').textContent.startsWith('Aujourd’hui') && /Repos/.test(ef.$('#sess').textContent), 'page de zéro');
-  assert(ef.chosen('prot', 'dej') === 'poulet' && ef.chosen('starch', 'dej') === 'riz' && !ef.$('.rec.is-on'), 'plats par défaut');
+  assert(ef.chosen('prot', 'dej') === 'poulet' && ef.chosen('starch', 'dej') === 'riz' && !ef.$('.rec.is-on') && !ef.$('#frise .is-eaten') && ef.$('#eat-msg').textContent === '', 'plats par défaut, rien de mangé');
   assert(!ew.localStorage.getItem(KEY) || Object.keys(JSON.parse(ew.localStorage.getItem(KEY)).plans).length === 0, 'aucun jour enregistré');
   assert(ef.$('#alim-list [data-kind="prot"][data-value="thon"]').getAttribute('aria-pressed') === 'true' && !ef.d.querySelector('#alim-list [aria-pressed="false"]'), 'aliments : tous proposés');
   ef.click('#gear');

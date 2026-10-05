@@ -5,6 +5,7 @@
     today = n; todayJs = n.getDay(); selDate = today;
     purge(); loadSel(); prevQty = new Map(); fsel = null;
     if (purgePlanifs()) saveQ();
+    const ne = Object.keys(eaten).length; purgeEaten(); if (Object.keys(eaten).length !== ne) saveEaten();
     resetPlanner();
     $('hint').textContent = '';
     if (topScreen() === 'repas') startDraft();

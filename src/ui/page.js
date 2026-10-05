@@ -45,7 +45,7 @@
     const q = '<span class="q"><span class="qty' + (changed ? ' bump' : '') + '">' + i.qty + '</span>' +
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
-    return '<li>' + q + '<span class="name">' + i.name + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
+    return '<li>' + q + '<span class="name">' + i.name + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
       (i.m && i.key !== 'lib' && i.key !== 'marge' && i.key !== 'encas' ? macHTML(i.m) : '') + '</span></li>';
   };
   /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et
@@ -68,7 +68,8 @@
   /* Recette choisie qui fait partie d'un batch cooking (3.21.0) : « Batch cooking » ouvre sa fiche (ui/courses.js) */
   const recCardHTML = function(s){
     const x = RECIPES[s.recipe], bt = dayBatch[s.id];
-    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' + recBtns(s, true) +
+    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' +
+      '<p class="rec-vol"><span class="vol">à volonté</span> des légumes en plus si tu as faim (≈' + NB + '30' + NB + 'kcal les 100' + NB + 'g)</p>' + recBtns(s, true) +
       (bt && bt.r.id === s.recipe ? '<button type="button" class="reset rec-batch" id="rec-b-' + s.id + '" data-action="rec-batch" data-slot="' + s.id + '"' +
         ' aria-label="Batch cooking de la recette ' + REPAS[s.id] + '">Batch cooking</button>' : '') + '</div>';
   };
@@ -87,6 +88,41 @@
     });
     return out;
   };
+  /* Repas mangés (3.23.0) : clé repas-du-jour:manges:v1, { 'AAAA-MM-JJ': ['pd', 'dej', …] } (identifiants de repas validés,
+     jours de plus de 21 jours effacés). Le bouton « Mangé » de la carte coche ou décoche ; cocher passe au repas suivant. */
+  const MKEY = 'repas-du-jour:manges:v1', MEALS = ['pd', 'sw', 'dej', 'co', 'shk', 'diner', 'soir'];
+  let eaten = {};
+  const saveEaten = function(){ try { localStorage.setItem(MKEY, JSON.stringify(eaten)); } catch (e) {} };
+  const purgeEaten = function(){
+    Object.keys(eaten).forEach(function(k){ if (today - fromIso(k) > 21 * 864e5) delete eaten[k]; });
+  };
+  try {
+    const o = JSON.parse(localStorage.getItem(MKEY) || 'null');
+    if (o && typeof o === 'object' && !Array.isArray(o)) Object.keys(o).forEach(function(k){
+      if (!/^\d{4}-\d\d-\d\d$/.test(k) || !fromIso(k) || !Array.isArray(o[k])) return;
+      const l = o[k].filter(function(x, j, a){ return MEALS.indexOf(x) >= 0 && a.indexOf(x) === j; });
+      if (l.length) eaten[k] = l;
+    });
+    purgeEaten();
+  } catch (e) {}
+  const isEaten = function(id){ return dayDiff(selDate) <= 0 && has(eaten, selIso()) && eaten[selIso()].indexOf(id) >= 0; };
+  /* Ce qui reste à manger, sous la frise, dès qu'un repas est coché : les repas pas encore mangés, et le ravito d'une
+     séance sans repas mangé après elle ; le repas libre à part (ses calories ne sont qu'un budget) */
+  const eatenText = function(secs){
+    const meals = secs.filter(function(s){ return !s.band; }), n = meals.filter(function(s){ return isEaten(s.id); }).length;
+    if (!n) return '';
+    if (n === meals.length) return 'Tout est mangé' + (dayDiff(selDate) === 0 ? ' pour aujourd’hui' : '') + '.';
+    let last = -1, lib = false;
+    secs.forEach(function(s, i){ if (!s.band && isEaten(s.id)) last = i; });
+    const left = [];
+    secs.forEach(function(s, i){
+      if (s.band ? i < last : isEaten(s.id)) return;
+      s.items.forEach(function(x){ if (x.key === 'lib') lib = true; else left.push(x); });
+    });
+    const m = total(left);
+    return 'Reste à manger' + NB + ': ≈' + NB + r10(m.kcal) + NB + 'kcal et ' + Math.round(m.p) + NB + 'g de protéines' + (lib ? ', plus ton repas libre' : '') + '.';
+  };
+  const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   /* Une carte par repas et par séance, toutes dessinées, une seule visible (celle choisie dans la frise, 3.20.0) */
   const WHEN = {matin:'le matin', midi:'à midi', soir:'le soir'};
   const panelAttrs = function(s){ return ' id="sec-' + s.id + '" role="tabpanel" aria-labelledby="h-' + s.id + '"' + (s.id === fsel ? '' : ' hidden'); };
@@ -100,8 +136,11 @@
     /* Repas libre : un interrupteur dans la carte du dîner (et dans celle du repas libre, qui le remplace) */
     const lib = s.id === 'diner' ? '<button type="button" class="switch" role="switch" id="sw-lib" aria-checked="' + !!s.libre + '" data-action="toggle" data-key="libre">' +
       '<span>Repas libre ' + (dayDiff(selDate) === 0 ? 'ce soir' : 'le soir') + '</span><span class="knob" aria-hidden="true"></span></button>' : '';
-    return '<section class="meal"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
-      (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2>' + kc + '</div>' + lib + picks + (card ? recCardHTML(s) : '') +
+    /* « Mangé » : aujourd'hui et les jours passés */
+    const done = isEaten(s.id);
+    const eat = dayDiff(selDate) > 0 ? '' : '<button type="button" class="eat" id="eat-' + s.id + '" data-action="eat" data-value="' + s.id + '" aria-pressed="' + done + '" aria-label="' + s.title + ' mangé">' + CHECK + '<span>Mangé</span></button>';
+    return '<section class="meal' + (done ? ' is-eaten' : '') + '"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
+      (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2><div class="mh-r">' + kc + eat + '</div></div>' + lib + picks + (card ? recCardHTML(s) : '') +
       (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) + '</section>';
   };
   const bandHTML = function(s, next){
@@ -130,7 +169,8 @@
         return '<button type="button" class="f-s' + (i < secs.length / 2 ? '' : ' tip-r') + '"' + a + ' aria-label="' + tip + '"><span class="tip" aria-hidden="true">' + tip + '</span></button>';
       }
       const tiny = s.libre ? 'Libre' : s.title === 'Goûter' ? 'Goûter' : SEC_TINY[s.id];
-      return '<button type="button" class="f-m"' + a + ' aria-label="' + s.title + '"><span class="f-d" aria-hidden="true"></span><span class="f-l" aria-hidden="true">' + (s.libre ? 'Repas libre' : SEC_SHORT[s.id] || s.title) + '</span>' +
+      const ok = isEaten(s.id);
+      return '<button type="button" class="f-m' + (ok ? ' is-eaten' : '') + '"' + a + ' aria-label="' + s.title + (ok ? ', mangé' : '') + '"><span class="f-d" aria-hidden="true">' + (ok ? CHECK : '') + '</span><span class="f-l" aria-hidden="true">' + (s.libre ? 'Repas libre' : SEC_SHORT[s.id] || s.title) + '</span>' +
         '<span class="f-l f-t" aria-hidden="true">' + tiny + '</span></button>';
     }).join('');
   };
@@ -142,15 +182,34 @@
   };
   window.addEventListener('resize', fitFrise);
   try { document.fonts.ready.then(fitFrise); } catch (e) {}
-  const showSec = function(id, focus){
+  /* dir (glisser) : la carte arrive de la droite (l, repère suivant) ou de la gauche (r) */
+  const showSec = function(id, focus, dir){
     fsel = id;
     $('frise').querySelectorAll('[role="tab"]').forEach(function(t){
       const on = t.dataset.value === id;
       t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
       if (on && focus) t.focus();
     });
-    $('day').querySelectorAll('[role="tabpanel"]').forEach(function(x){ x.hidden = x.id !== 'sec-' + id; });
+    $('day').querySelectorAll('[role="tabpanel"]').forEach(function(x){
+      x.hidden = x.id !== 'sec-' + id;
+      x.classList.remove('in-l', 'in-r');
+      if (dir && !x.hidden){ void x.offsetWidth; x.classList.add('in-' + dir); }
+    });
   };
+  /* Glisser sur la carte (3.23.0) : vers la gauche, le repère suivant de la frise ; vers la droite, le précédent (sans
+     boucle). Un geste surtout horizontal d'au moins 60 px. */
+  let touch = null;
+  $('day').addEventListener('touchstart', function(e){ touch = e.touches.length === 1 ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : null; }, {passive:true});
+  $('day').addEventListener('touchcancel', function(){ touch = null; }, {passive:true});
+  $('day').addEventListener('touchend', function(e){
+    const t0 = touch, t = e.changedTouches[0];
+    touch = null;
+    if (!t0 || !t) return;
+    const dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
+    const tabs = [...$('frise').querySelectorAll('[role="tab"]')].map(function(x){ return x.dataset.value; }), j = tabs.indexOf(fsel) + (dx < 0 ? 1 : -1);
+    if (tabs.indexOf(fsel) >= 0 && j >= 0 && j < tabs.length) showSec(tabs[j], false, dx < 0 ? 'l' : 'r');
+  }, {passive:true});
   /* Flèches gauche et droite (en boucle), début et fin : repère voisin, premier, dernier */
   $('frise').addEventListener('keydown', function(e){
     const tabs = [...$('frise').querySelectorAll('[role="tab"]')], i = tabs.findIndex(function(t){ return t.dataset.value === fsel; });
@@ -263,7 +322,8 @@
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
       (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.');
     let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
-    if (!res.libre && res.ecart > en.target * 0.03){
+    const over = !res.libre && res.ecart > en.target * 0.03;
+    if (over){
       const pr = cleanProfile(prof), tips = [];
       if (pr.marge > 0) tips.push('baisse la marge cuisine');
       if (pr.shaker === 'oui') tips.push('passe-toi du shaker');
@@ -282,6 +342,17 @@
       tips.push('baisse ton objectif de protéines');
       note += ' Tes protéines restent sous ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g)' + NB +
         ': ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.';
+    }
+    /* Protéines au-dessus de la fourchette alors que les portions sont déjà au minimum (3.23.0) : le thon (boîte entière),
+       les légumes secs, le shaker ou un objectif bas en apportent beaucoup. Sans risque, mais dit. */
+    if (!res.libre && t.p > res.prot.high + 0.5 && res.prot.factor <= PF_MIN + 0.02){
+      const pr = cleanProfile(prof), tips = [], sl = [ch.dej, ch.diner];
+      if (sl.some(function(c){ return c.prot === 'thon'; })) tips.push('remplace le thon');
+      if (sl.some(function(c){ return LEGUMES.indexOf(c.starch) >= 0; })) tips.push('prends un autre féculent que les lentilles ou les pois chiches');
+      /* Déjà proposé par la note des calories */
+      if (pr.shaker === 'oui' && !over){ tips.push('passe-toi du shaker'); tab = 'repas'; }
+      note += ' Tes protéines dépassent ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g), sans risque pour ta sèche' +
+        (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
     if (incomplete()){ note += ' Complète ton profil pour un calcul juste.'; tab = 'profil'; }
     /* « Régler » ouvre l'onglet des réglages de ce que propose la note (shaker, marge cuisine : Repas ; sinon Profil) */
@@ -305,6 +376,7 @@
     dayBatch = res.secs.some(function(s){ return s.recipe && !s.libre; }) ? batchFor(selIso()) : {};
     $('frise').innerHTML = friseHTML(res.secs);
     fitFrise();
+    $('eat-msg').textContent = eatenText(res.secs);
     $('day').innerHTML = res.secs.map(function(s){ return s.band ? bandHTML(s, next) : mealHTML(s, next); }).join('');
     prevQty = next;
   };
@@ -344,6 +416,21 @@
     },
     /* Frise : la carte d'un repas ou d'une séance */
     frise: function(b, v){ if ($('sec-' + v)) showSec(v, false); },
+    /* « Mangé » (3.23.0) : coche ou décoche le repas ; coché, la carte passe au repas suivant pas encore mangé (le focus
+       sur son repère de la frise), sinon le focus reste sur le bouton */
+    eat: function(b, v){
+      if (MEALS.indexOf(v) < 0 || !$('sec-' + v) || dayDiff(selDate) > 0) return;
+      const iso = selIso(), l = has(eaten, iso) ? eaten[iso] : [], on = l.indexOf(v) < 0;
+      if (on) l.push(v); else l.splice(l.indexOf(v), 1);
+      if (l.length) eaten[iso] = l; else delete eaten[iso];
+      saveEaten();
+      const tabs = [...$('frise').querySelectorAll('.f-m')].map(function(x){ return x.dataset.value; });
+      const to = on ? tabs.slice(tabs.indexOf(v) + 1).find(function(id){ return !isEaten(id); }) : null;
+      if (to) fsel = to;
+      $('hint').textContent = '';
+      render();
+      $(to ? 'ft-' + to : 'eat-' + v).focus({preventScroll:true});
+    },
     toggle: function(b){
       if (b.dataset.key !== 'libre') return;
       let msg = '';

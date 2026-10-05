@@ -234,6 +234,18 @@ function check(dom, log){
   C.ok(tabs.length === panels.length && tabs.every((t, i) => t.getAttribute('aria-controls') === panels[i].id), 'frise : un repère par carte', where);
   C.ok(onTabs.length === 1 && shown.length === 1 && onTabs[0].getAttribute('aria-controls') === shown[0].id && onTabs[0].tabIndex === 0, 'frise : repère choisi ≠ carte affichée', where);
   C.ok(d.querySelectorAll('#frise .f-s').length === n, 'frise : un repère par séance', where);
+  // Repas mangés (3.23.0) : frise, boutons et stockage d'accord ; rien à cocher les jours à venir ; « Reste à manger » ou
+  // « Tout est mangé » dès qu'un repas affiché est coché
+  try {
+    const iso = ($('#week [aria-pressed="true"]') || { dataset: {} }).dataset.value, x = new Date(clock.now);
+    const tIso = x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+    const mg = JSON.parse(w.localStorage.getItem('repas-du-jour:manges:v1') || '{}') || {}, l = iso && iso <= tIso && Array.isArray(mg[iso]) ? mg[iso] : [];
+    const meals = [...d.querySelectorAll('#frise .f-m')].map(b => b.dataset.value), on = meals.filter(id => l.includes(id));
+    C.ok(JSON.stringify([...d.querySelectorAll('#frise .f-m.is-eaten')].map(b => b.dataset.value)) === JSON.stringify(on), 'frise : repas mangés', () => iso + ' ' + JSON.stringify(l) + ' ' + where());
+    C.ok(iso > tIso ? !$('#day .eat') : d.querySelectorAll('#day .eat').length === meals.length && [...d.querySelectorAll('#day .eat')].every(b => (b.getAttribute('aria-pressed') === 'true') === l.includes(b.dataset.value)), 'boutons « Mangé »', () => iso + ' ' + tIso + ' ' + where());
+    const msg = $('#eat-msg').textContent;
+    C.ok(!on.length ? msg === '' : on.length === meals.length ? /^Tout est mangé/.test(msg) : /^Reste à manger\s:\s≈\s[\d\s]+\skcal et \d+\sg de protéines(, plus ton repas libre)?\.$/.test(msg), 'ce qui reste à manger', () => msg + ' ' + JSON.stringify(on) + ' ' + where());
+  } catch (e){ C.ok(false, 'repas mangés : lecture', () => e.message); }
   // Jour dont les séances n'ont jamais été modifiées : celles de la semaine type (aucune sans elle)
   try {
     const iso = ($('#week [aria-pressed="true"]') || { dataset: {} }).dataset.value, st = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{}}');
@@ -259,7 +271,7 @@ function check(dom, log){
   // Recettes : une sous le déjeuner et le dîner (pas au repas libre) ; choisie, ni « légumes » ni marge cuisine dans le repas
   ['dej', 'diner'].forEach(sl => {
     const meal = $('[aria-labelledby="h-' + sl + '"]'); if (!meal) return;
-    const box = meal.querySelector('.rec'), names = [...meal.querySelectorAll('.items .name')].map(n => n.childNodes[0].textContent);
+    const box = meal.querySelector('.rec'), names = [...meal.querySelectorAll('.items .name')].map(n => n.childNodes[0].textContent.trim());
     C.ok(!!box === !(sl === 'diner' && libre), 'recette proposée', () => sl + ' ' + where());
     if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
@@ -277,7 +289,7 @@ function swapRecipe(dom){
   else (how === 'hasard' ? opts[0] : R.pick(opts.slice(1))).click();
   if (!d.querySelector('#sheet').hidden || d.querySelector('#courses').hasAttribute('inert')) throw new Error('panneau changer resté ouvert');
   if (how === 'échap') C.ok(dom.window.localStorage.getItem(KEY) === before, 'changer : Échap a changé les plats', '');
-  else C.ok(/ remplace /.test(d.querySelector('#courses-msg').textContent) && d.activeElement && d.activeElement.dataset.action === 'co-swap', 'changer : message ou focus', () => d.querySelector('#courses-msg').textContent);
+  else C.ok(/ remplace /.test(d.querySelector('#courses-msg').textContent) && d.activeElement && (d.activeElement.dataset.action === 'co-swap' || d.activeElement.tagName === 'SUMMARY' && d.activeElement.parentNode.open && !d.activeElement.parentNode.querySelector('[data-action="co-swap"]')), 'changer : message ou focus', () => d.querySelector('#courses-msg').textContent);
   swaps++;
 }
 let swaps = 0;
@@ -318,6 +330,32 @@ const ACTIONS = {
     return 'frise ' + k;
   },
   libre: dom => { dom.window.document.querySelector('#sw-lib').click(); return 'repas libre'; },
+  // « Mangé » sur la carte d'un repas (3.23.0) : coché, la carte passe au repas suivant pas encore mangé
+  mange: dom => {
+    const d = dom.window.document, t = R.pick([...d.querySelectorAll('#frise .f-m')]);
+    if (d.querySelector('#page').hidden || !t) return 'mangé -';
+    t.click();
+    const b = d.querySelector('#eat-' + t.dataset.value);
+    if (!b) return 'mangé - (à venir)';
+    const was = b.getAttribute('aria-pressed') === 'true';
+    b.click();
+    const b2 = d.querySelector('#eat-' + t.dataset.value), sel = d.querySelector('#frise [aria-selected="true"]').dataset.value;
+    C.ok(b2.getAttribute('aria-pressed') === String(!was) && (sel === t.dataset.value ? d.activeElement === b2 : !was && d.activeElement === d.querySelector('#ft-' + sel)), 'bouton « Mangé »', () => t.dataset.value + ' ' + was + ' → ' + sel);
+    return 'mangé ' + t.dataset.value + (was ? ' (décoché)' : '');
+  },
+  // Glisser sur la carte : le repère voisin de la frise, ou rien (geste court, vertical, bout de la frise)
+  glisser: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'glisser -';
+    const ids = [...d.querySelectorAll('#frise [role="tab"]')].map(b => b.dataset.value), i = ids.indexOf(d.querySelector('#frise [aria-selected="true"]').dataset.value);
+    const dx = R.pick([-150, -70, -40, 40, 70, 150]), dy = R.pick([0, 0, 30, 120]);
+    const ev = (type, x, y) => { const e = new w.Event(type, { bubbles: true }); const p = [{ clientX: x, clientY: y }]; e.touches = type === 'touchend' ? [] : p; e.changedTouches = p; return e; };
+    const card = d.querySelector('#day [role="tabpanel"]:not([hidden])');
+    card.dispatchEvent(ev('touchstart', 200, 300)); card.dispatchEvent(ev('touchend', 200 + dx, 300 + dy));
+    const j = Math.abs(dx) >= 60 && Math.abs(dx) >= 1.5 * dy ? Math.min(ids.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1))) : i;
+    C.ok(d.querySelector('#frise [aria-selected="true"]').dataset.value === ids[j], 'glisser', () => dx + ',' + dy + ' ' + ids[i] + ' → ' + ids[j]);
+    return 'glisser ' + dx + ',' + dy;
+  },
   choose: dom => {
     const d = dom.window.document, b = R.pick([...d.querySelectorAll('#day .sel')]);
     if (!b) return 'choix -';
@@ -599,7 +637,7 @@ for (let run = 0; run < RUNS; run++){
     if (step % 30 === 29){
       const was = dom.window.document;
       // La carte affichée peut changer au rechargement (repas du moment), pas le contenu des cartes
-      const dayHTML = doc => doc.querySelector('#day').innerHTML.replace(/ bump/g, '').replace(/ hidden=""/g, '');
+      const dayHTML = doc => doc.querySelector('#day').innerHTML.replace(/ bump/g, '').replace(/ hidden=""/g, '').replace(/ in-[lr]/g, '');
       const before = dayHTML(was), sumText = was.querySelector('#sum-text').textContent;
       // Au chargement, la page montre aujourd'hui : comparable seulement si elle montrait aujourd'hui
       const onPage = !was.querySelector('#page').hidden && was.querySelector('#date').textContent.startsWith('Aujourd’hui');

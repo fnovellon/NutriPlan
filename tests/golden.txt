@@ -11,7 +11,7 @@ P 155 g (fourchette 130 à 158, facteur 0.62), G 187 g, L 59 g, portions × 1.00
   Déjeuner :
     110 g viande blanche maigre [≈ 85 g cuit] (poulet, dinde ou filet mignon de porc)  121 kcal
     100 g riz basmati [≈ 300 g cuit]  352 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -19,7 +19,7 @@ P 155 g (fourchette 130 à 158, facteur 0.62), G 187 g, L 59 g, portions × 1.00
   Dîner :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
     70 g lentilles ou haricots rouges [≈ 180 g cuits]  229 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -34,7 +34,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 257 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -46,7 +46,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 257 g, L 59 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -67,12 +67,12 @@ P 157 g (fourchette 130 à 158, facteur 0.52), G 257 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Dîner :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -92,7 +92,7 @@ P 158 g (fourchette 130 à 158, facteur 0.59), G 255 g, L 60 g, portions × 1.00
   Déjeuner (après la séance) :
     110 g viande blanche maigre [≈ 85 g cuit] (poulet, dinde ou filet mignon de porc)  121 kcal
     110 g riz basmati [≈ 330 g cuit]  387 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (dans l’après-midi) :
@@ -101,7 +101,7 @@ P 158 g (fourchette 130 à 158, facteur 0.59), G 255 g, L 60 g, portions × 1.00
   Dîner :
     120 g poisson blanc [≈ 95 g cuit] (cabillaud, colin…)  98 kcal
     70 g lentilles ou haricots rouges [≈ 180 g cuits]  229 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -116,7 +116,7 @@ P 157 g (fourchette 130 à 158, facteur 0.50), G 296 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -129,7 +129,7 @@ P 157 g (fourchette 130 à 158, facteur 0.50), G 296 g, L 59 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -151,12 +151,12 @@ P 157 g (fourchette 130 à 158, facteur 0.50), G 296 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Dîner :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -171,7 +171,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 368 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -185,7 +185,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 368 g, L 59 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -201,7 +201,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 368 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -214,7 +214,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 368 g, L 59 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -230,7 +230,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 411 g, L 59 g, portions × 1.00
   Déjeuner :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -243,7 +243,7 @@ P 157 g (fourchette 130 à 158, facteur 0.51), G 411 g, L 59 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -263,7 +263,7 @@ P 165 g (fourchette 130 à 158, facteur 0.50), G 429 g, L 59 g, portions × 1.00
   Déjeuner (après la sortie) :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Goûter :
     100 g skyr nature  62 kcal
@@ -273,7 +273,7 @@ P 165 g (fourchette 130 à 158, facteur 0.50), G 429 g, L 59 g, portions × 1.00
   Dîner :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -291,7 +291,7 @@ P 165 g (fourchette 130 à 158, facteur 0.50), G 627 g, L 59 g, portions × 1.00
   Déjeuner (après la sortie) :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Goûter :
     100 g skyr nature  62 kcal
@@ -304,7 +304,7 @@ P 165 g (fourchette 130 à 158, facteur 0.50), G 627 g, L 59 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -323,7 +323,7 @@ P 159 g (fourchette 130 à 158, facteur 0.50), G 510 g, L 60 g, portions × 1.00
   Déjeuner (après la séance) :
     90 g viande blanche maigre [≈ 70 g cuit] (poulet, dinde ou filet mignon de porc)  99 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (1h30 avant la séance) :
@@ -338,7 +338,7 @@ P 159 g (fourchette 130 à 158, facteur 0.50), G 510 g, L 60 g, portions × 1.00
   Dîner (après la séance) :
     100 g poisson blanc [≈ 80 g cuit] (cabillaud, colin…)  82 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -354,7 +354,7 @@ P 119 g (fourchette 130 à 158, facteur 0.77), G 128 g, L 40 g, portions × 1.00
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
     85 g pâtes [≈ 200 g cuites]  302 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
@@ -374,7 +374,7 @@ P 119 g (fourchette 130 à 158, facteur 0.78), G 159 g, L 40 g, portions × 1.00
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
     70 g pâtes [≈ 160 g cuites]  248 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 fruit (pomme, poire, orange, 2 kiwis…)  80 kcal
   Collation (1h30 avant la séance) :
@@ -402,7 +402,7 @@ P 157 g (fourchette 130 à 158, facteur 0.72), G 297 g, L 62 g, portions × 1.00
   Déjeuner (après la séance) :
     130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
     105 g riz basmati [≈ 320 g cuit]  370 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     20 g chocolat noir (70 % ou plus, 2 à 4 carrés selon la tablette)  114 kcal
   Collation (dans l’après-midi) :
@@ -412,7 +412,7 @@ P 157 g (fourchette 130 à 158, facteur 0.72), G 297 g, L 62 g, portions × 1.00
   Dîner :
     110 g bœuf haché 5 % [≈ 85 g cuit]  143 kcal
     55 g pâtes [≈ 130 g cuites]  195 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     15 g parmesan  61 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 fruit (pomme, poire, orange, 2 kiwis…)  80 kcal
@@ -428,7 +428,7 @@ P 114 g (fourchette 94 à 114, facteur 0.75), G 117 g, L 45 g, portions × 0.722
   Déjeuner :
     100 g viande blanche maigre [≈ 75 g cuit] (poulet, dinde ou filet mignon de porc)  110 kcal
     45 g riz basmati [≈ 140 g cuit]  158 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
     1 œuf (dur ou mollet, préparé à l’avance)  72 kcal
@@ -437,7 +437,7 @@ P 114 g (fourchette 94 à 114, facteur 0.75), G 117 g, L 45 g, portions × 0.722
     60 g crevettes cuites  59 kcal
     30 g halloumi (grillé à sec)  96 kcal
     30 g quinoa [≈ 80 g cuit]  107 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 100 kg, déficit 10 %, deux moyennes
@@ -452,7 +452,7 @@ P 216 g (fourchette 180 à 220, facteur 0.89), G 510 g, L 88 g, portions × 1.38
   Déjeuner :
     180 g bœuf haché 5 % [≈ 135 g cuit]  234 kcal
     165 g riz basmati [≈ 500 g cuit]  581 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     3 œufs (durs ou mollets, préparés à l’avance)  216 kcal
@@ -465,7 +465,7 @@ P 216 g (fourchette 180 à 220, facteur 0.89), G 510 g, L 88 g, portions × 1.38
   Dîner (après la séance) :
     200 g poisson gras [≈ 160 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  412 kcal
     165 g riz basmati [≈ 500 g cuit]  581 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 58 kg, sans shaker ni marge, petite le matin
@@ -483,11 +483,11 @@ P 125 g (fourchette 104 à 128, facteur 0.91), G 203 g, L 47 g, portions × 0.80
   Déjeuner :
     130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
     95 g riz basmati [≈ 290 g cuit]  334 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
   Dîner :
     110 g bœuf haché 5 % [≈ 85 g cuit]  143 kcal
     55 g pâtes [≈ 130 g cuites]  195 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     10 g parmesan  41 kcal
     15 g huile d’olive (en plus, pour tes lipides)  135 kcal
 
@@ -505,7 +505,7 @@ P 174 g (fourchette 144 à 176, facteur 0.72), G 722 g, L 64 g, portions × 1.11
   Déjeuner (après la sortie) :
     120 g bœuf haché 5 % [≈ 90 g cuit]  156 kcal
     135 g riz basmati [≈ 410 g cuit]  475 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Goûter :
     120 g skyr nature  74 kcal
@@ -518,7 +518,7 @@ P 174 g (fourchette 144 à 176, facteur 0.72), G 722 g, L 64 g, portions × 1.11
   Dîner (après la séance) :
     140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
     440 g patate douce [≈ 440 g à l’eau, ≈ 330 g au four]  378 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
@@ -534,7 +534,7 @@ P 153 g (fourchette 143 à 174, facteur 1.50), G 192 g, L 59 g, portions × 1.00
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
     200 g gnocchis frais  342 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (dans l’après-midi) :
     100 g skyr nature (à la place des œufs, déjà au menu aujourd’hui)  62 kcal
@@ -543,7 +543,7 @@ P 153 g (fourchette 143 à 174, facteur 1.50), G 192 g, L 59 g, portions × 1.00
     1 boîte de thon au naturel (environ 110 g égoutté)  123 kcal
     1 œuf dur (ou 20 g de parmesan)  72 kcal
     280 g pommes de terre [≈ 280 g à l’eau, ≈ 210 g au four]  224 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     5 g huile d’olive (en plus, pour tes lipides)  45 kcal
   Soir (pour compléter tes protéines) :
@@ -565,7 +565,7 @@ P 161 g (fourchette 135 à 165, facteur 0.73), G 402 g, L 58 g, portions × 1.04
   Déjeuner (après la séance) :
     140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
     420 g pommes de terre [≈ 420 g à l’eau, ≈ 320 g au four]  336 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (dans l’après-midi) :
@@ -577,7 +577,7 @@ P 161 g (fourchette 135 à 165, facteur 0.73), G 402 g, L 58 g, portions × 1.04
     2 œufs  144 kcal
     70 g jambon blanc (environ 1,5 tranche)  83 kcal
     125 g riz basmati [≈ 380 g cuit]  440 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     5 g huile d’olive (en plus, pour tes lipides)  45 kcal
 
@@ -597,7 +597,7 @@ P 218 g (fourchette 181 à 222, facteur 0.88), G 1147 g, L 88 g, portions × 1.4
   Déjeuner (après la séance) :
     180 g bœuf haché 5 % [≈ 135 g cuit]  234 kcal
     170 g riz basmati [≈ 510 g cuit]  598 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté, en dessert)  60 kcal
   Collation (1h30 avant la séance) :
@@ -611,7 +611,7 @@ P 218 g (fourchette 181 à 222, facteur 0.88), G 1147 g, L 88 g, portions × 1.4
   Dîner (après la séance) :
     200 g poisson gras [≈ 160 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  412 kcal
     170 g riz basmati [≈ 510 g cuit]  598 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, 1,6 g/kg, œufs et crevettes
@@ -626,7 +626,7 @@ P 138 g (fourchette 104 à 127, facteur 0.50), G 277 g, L 64 g, portions × 1.00
     2 œufs  144 kcal
     45 g jambon blanc (1 tranche)  54 kcal
     260 g gnocchis frais  445 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     100 g skyr nature (à la place des œufs, déjà au menu aujourd’hui)  62 kcal
@@ -639,7 +639,7 @@ P 138 g (fourchette 104 à 127, facteur 0.50), G 277 g, L 64 g, portions × 1.00
     60 g crevettes cuites  59 kcal
     30 g halloumi (grillé à sec)  96 kcal
     400 g patate douce [≈ 400 g à l’eau, ≈ 300 g au four]  344 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, petit-déjeuner salé, moyenne le soir, tofu et fruits secs
@@ -653,7 +653,7 @@ P 159 g (fourchette 130 à 158, facteur 0.50), G 272 g, L 67 g, portions × 1.00
   Déjeuner :
     100 g tofu ferme (nature, pressé puis poêlé)  148 kcal
     100 g pois chiches [≈ 220 g cuits ou égouttés]  351 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     30 g fruits secs (abricots, pruneaux ou figues)  74 kcal
   Collation (1h30 avant la séance) :
@@ -668,7 +668,7 @@ P 159 g (fourchette 130 à 158, facteur 0.50), G 272 g, L 67 g, portions × 1.00
   Dîner (après la séance) :
     80 g poisson gras [≈ 65 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  165 kcal
     100 g lentilles ou haricots rouges [≈ 250 g cuits]  327 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
 
 == 72 kg, petit-déjeuner salé, longue 2 h (version sucrée)
@@ -687,7 +687,7 @@ P 155 g (fourchette 130 à 158, facteur 0.78), G 441 g, L 58 g, portions × 1.00
   Déjeuner (après la sortie) :
     140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
     400 g pommes de terre [≈ 400 g à l’eau, ≈ 300 g au four]  320 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Goûter :
     120 g skyr nature  74 kcal
@@ -698,7 +698,7 @@ P 155 g (fourchette 130 à 158, facteur 0.78), G 441 g, L 58 g, portions × 1.00
     2 œufs  144 kcal
     70 g jambon blanc (environ 1,5 tranche)  83 kcal
     120 g riz basmati [≈ 360 g cuit]  422 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     5 g huile d’olive (en plus, pour tes lipides)  45 kcal
 
@@ -713,7 +713,7 @@ P 103 g (fourchette 84 à 103, facteur 0.66), G 118 g, L 56 g, portions × 0.650
   Déjeuner :
     70 g poisson gras [≈ 55 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  144 kcal
     20 g boulgour [≈ 50 g cuit]  66 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 compote (sans sucre ajouté)  60 kcal
   Collation (dans l’après-midi) :
@@ -722,7 +722,7 @@ P 103 g (fourchette 84 à 103, facteur 0.66), G 118 g, L 56 g, portions × 0.650
   Dîner :
     90 g poisson blanc [≈ 70 g cuit] (cabillaud, colin…)  74 kcal
     15 g semoule [≈ 30 g cuite]  53 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     25 g amandes (sur les légumes ou en fin de repas)  148 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
     1 fruit (pomme, poire, orange, 2 kiwis…)  80 kcal
@@ -767,7 +767,7 @@ P 155 g (fourchette 130 à 158, facteur 0.77), G 284 g, L 68 g, portions × 1.00
   Déjeuner :
     140 g viande blanche maigre [≈ 105 g cuit] (poulet, dinde ou filet mignon de porc)  154 kcal
     95 g riz basmati [≈ 290 g cuit]  334 kcal
-    250 g légumes (minimum, à volonté)  75 kcal
+    250 g légumes (au moins, et plus si tu as faim (≈ 30 kcal les 100 g))  75 kcal
     ≈ 75 kcal pour la cuisine (huile de cuisson, sauce, fromage râpé… (les épices ne comptent pas))  75 kcal
   Collation (1h30 avant la séance) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal

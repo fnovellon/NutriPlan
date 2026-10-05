@@ -95,7 +95,7 @@ function mainItems(slot, choice, k, kp){
   const P = PROT[choice.prot], rec = recipeOf(choice), extra = P[slot](k), fx = P.fixe ? null : fixedGrams(choice);
   if (rec && RECIPES[rec].soir) extra.forEach(function(i){ i.note = RECIPES[rec].soir; });
   return P.base(P.fixe ? k : kp, fx).map(function(i){ return P.fixe || (fx && fx[i.key === 'p2' ? 1 : 0] !== null) ? i : adj(i); }).concat([it('st', '', '', null, null)],
-    rec ? recipeItems(rec) : [it('leg', grams(250), 'légumes', 'minimum, à volonté', mac('legumes', 250))], extra);
+    rec ? recipeItems(rec) : [it('leg', grams(250), 'légumes', 'au moins, et plus si tu as faim (≈' + NB + '30' + NB + 'kcal les 100' + NB + 'g)', mac('legumes', 250))], extra);
 }
 function fuel(d, rate){
   const g = Math.round(rate * d / 5) * 5;

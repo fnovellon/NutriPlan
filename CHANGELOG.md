@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.23.0, 5 octobre 2026
+
+- « Mangé » : en haut de la carte d'un repas, coche ce que tu as mangé. La frise le marque d'une coche et la page passe au repas suivant. Sous la frise, ce qu'il te reste à manger dans la journée, en calories et en protéines.
+- Fais glisser la carte vers la gauche ou la droite pour passer au repas (ou à la séance) suivant ou précédent.
+- Si tes protéines dépassent ton objectif (thon, lentilles, pois chiches…), la note sous le total le dit et te propose comment t'en rapprocher.
+- Les légumes sont bien marqués « à volonté » : 250 g au moins, et plus si tu as faim (≈ 30 kcal les 100 g). La carte d'une recette te le rappelle aussi.
+- Une planification retirée de ta liste disparaît aussi tout de suite du calendrier.
+- Batch cooking : après « Changer de recette », le focus ne se perd plus quand la nouvelle recette ne peut pas être remplacée à son tour.
+
 ## 3.22.0, 5 octobre 2026
 
 - Partager ta liste de courses : un bouton l'envoie en texte (Messages, Notes, WhatsApp…), sans les lignes déjà cochées.

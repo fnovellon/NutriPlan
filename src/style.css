@@ -209,6 +209,25 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .tip{position:absolute;bottom:calc(100% + 2px);left:-6px;z-index:6;padding:5px 9px;border-radius:8px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-weight:600;font-size:13px;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease;}
 .tip-r .tip{left:auto;right:-6px;}
 .f-s:hover .tip,.f-s:focus-visible .tip{opacity:1;}
+/* Repas mangés (3.23.0) : point cerclé et coché dans la frise, bouton « Mangé » en haut de la carte, ce qui reste sous la frise */
+.f-d svg{display:block;width:100%;height:100%;}
+.f-m.is-eaten .f-d{width:18px;height:18px;margin:1px 0;padding:1px;color:var(--ink);}
+.f-m.is-eaten[aria-selected="true"] .f-d{width:20px;height:20px;margin:0;color:var(--on-ink);}
+.mh-r{display:flex;flex:none;flex-direction:column;align-items:flex-end;gap:6px;}
+.eat{display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:5px 12px 5px 9px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font-family:var(--sans);font-weight:600;font-size:13.5px;line-height:1.2;white-space:nowrap;}
+.eat svg{width:15px;height:15px;color:var(--muted);}
+.eat[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--on-ink);}
+.eat[aria-pressed="true"] svg{color:var(--on-ink);}
+.eat-msg{margin:0 0 12px;font-size:15px;line-height:1.4;color:var(--muted);}
+.eat-msg:empty{display:none;}
+/* Glisser sur la carte : elle arrive du côté du geste */
+.in-l{animation:in-l .22s ease-out;}
+.in-r{animation:in-r .22s ease-out;}
+@keyframes in-l{from{opacity:0;transform:translateX(28px);}}
+@keyframes in-r{from{opacity:0;transform:translateX(-28px);}}
+/* Légumes à volonté (3.23.0) : surlignés comme au marqueur */
+.vol{display:inline-block;padding:0 7px;border-radius:6px;background:var(--flash);color:var(--ink);font-family:var(--sans);font-style:normal;font-size:12.5px;font-weight:700;line-height:1.6;vertical-align:1px;white-space:nowrap;}
+.rec-vol{margin:8px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}
 
 .sum p.sum-note{margin:14px 0 0;font-size:15px;line-height:1.45;color:var(--muted);}
 .link{padding:0;border:0;background:none;color:var(--beet);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;}

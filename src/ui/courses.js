@@ -163,7 +163,7 @@
         bl.recipes.map(function(r){
           const g = r.boxes.filter(function(x){ return !x.fridge; }).length, n = r.boxes.length;
           const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr)).length;
-          return '<details class="batch"><summary><span class="b-s"><span class="b-t">' + r.t + '</span><span class="b-n">' + n + NB + 'boîtes' +
+          return '<details class="batch" id="bt-' + bl.start + '-' + r.id + '"><summary><span class="b-s"><span class="b-t">' + r.t + '</span><span class="b-n">' + n + NB + 'boîtes' +
             (g ? ', dont ' + g + ' au congélateur' : '') + '</span></span></summary><div class="b-body">' +
             (swap ? '<button type="button" class="btn b-swap" id="swap-' + bl.start + '-' + r.id + '" data-action="co-swap" data-value="' + bl.start + '|' + r.id + '">Changer de recette</button>'
               : '<p class="calc">Aucune autre recette ne va avec ta semaine.</p>') + batchBody(r, days) + '</div></details>';
@@ -234,7 +234,8 @@
       if (v === 'del'){
         const left = periodTitle(cur.from, cur.to);
         planifs = planifs.filter(function(x){ return x !== cur; }); saveQ(); cur = null;
-        renderPlan();
+        /* La page aussi : le trait de la planification part du calendrier */
+        render(); renderPlan();
         closeScreen(false);
         $('plan-msg').textContent = left + NB + ': retirée de ta liste.';
         return;
@@ -285,7 +286,9 @@
       loadSel(); prevQty = new Map(); render();
       renderCourses();
       $('courses-msg').textContent = '«' + NB + RECIPES[nid].t + NB + '» remplace «' + NB + RECIPES[s.id].t + NB + '» dans tes ' + n + NB + 'boîtes.';
-      const again = $('swap-' + s.start + '-' + nid);
-      if (again){ again.closest('details').open = true; again.focus({preventScroll:true}); }
+      /* Le focus sur « Changer de recette » de la nouvelle ; sans autre recette possible, sur sa fiche (sinon le titre) */
+      const box = $('bt-' + s.start + '-' + nid), again = $('swap-' + s.start + '-' + nid);
+      if (box) box.open = true;
+      (again || (box && box.querySelector('summary')) || $('courses-h')).focus({preventScroll:true});
     }
   });
