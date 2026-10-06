@@ -252,9 +252,10 @@ function batchRound(days, profile){
   const copy = function(c){ return {pdBase:c.pdBase, dej:Object.assign({}, c.dej), diner:Object.assign({}, c.diner)}; };
   let out = days.map(function(d){ return copy(d.ch); });
   const k = scaleOf(cleanProfile(profile));
-  const build = function(chs, i){ return buildDay(days[i].plan, chs[i], profile); };
+  /* Sans imprévu (3.26.0) : la boîte est cuisinée comme prévu */
+  const build = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {imprevu:null}), chs[i], profile); };
   /* Protéines d'un jour comparées à sa fourchette sur la journée normale (le repas libre n'a pas de macros connues) */
-  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:false}), chs[i], profile); };
+  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:false, imprevu:null}), chs[i], profile); };
   const sec = function(r, slot){ return r.secs.find(function(s){ return s.id === slot; }); };
   const grams = function(r, slot, key){ const x = sec(r, slot).items.find(function(i){ return i.key === key; }); return x && x.buy ? x.buy.g || 0 : 0; };
   const band = function(r){ return Math.max(0, r.prot.low - r.tot.p, r.tot.p - r.prot.high); };

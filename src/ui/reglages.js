@@ -39,8 +39,8 @@
       (pr.poids > protKg + 0.05 ? ' Au-delà de ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
       (pr.poids < protKg - 0.05 ? ' Sous ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
       ' Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g' +
-      (res.libre ? ' hors repas libre.' : '.') +
-      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
+      (res.libre || res.imprevu ? ' hors ' + (res.libre && res.imprevu ? 'repas libre et imprévu' : res.libre ? 'repas libre' : 'imprévu') + '.' : '.') +
+      (!res.libre && !res.imprevu && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
       ' Repère en sèche' + NB + ': 1,6 à 2,2' + NB + 'g/kg, 2,0 par défaut.';
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
     $('out-marge').textContent = pr.marge + NB + 'kcal';

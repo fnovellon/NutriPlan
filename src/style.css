@@ -254,6 +254,15 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .rp-n{font-size:16px;line-height:1.35;}
 .rp-ul .rm{flex:none;}
 .rp-none{margin:2px 0 12px;}
+/* Imprévu (3.26.0) : le bouton en bas de la carte d'un repas, le panneau */
+.imp-b{margin-top:14px;}
+.imp-s{margin:0 0 12px;}
+.imp-m{margin:0 0 14px;}
+.imp-l{margin:0 0 8px;}
+.imp-p{margin:0 0 12px;}
+.imp-f{margin:0 0 6px;}
+.imp-f .u{font-size:15px;color:var(--muted);}
+#sheet-rec .btn + .btn{margin-top:10px;}
 /* Légumes à volonté (3.23.0) : surlignés comme au marqueur */
 .vol{display:inline-block;padding:0 7px;border-radius:6px;background:var(--flash);color:var(--ink);font-family:var(--sans);font-style:normal;font-size:12.5px;font-weight:700;line-height:1.6;vertical-align:1px;white-space:nowrap;}
 .rec-vol{margin:8px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}

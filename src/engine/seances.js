@@ -46,13 +46,24 @@ function emptyPlan(js, sem){
   const w = sem || null, l = w && has(w.jours, String(js)) ? w.jours[js] : [];
   return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6)};
 }
-/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type.
+/* Imprévu d'un repas (3.26.0) : { slot, kcal, mode } ; slot : un repas de la journée, mode : 'place' (à la place du repas)
+   ou 'plus' (en plus), kcal : entier de 50 à 3 000. null s'il n'est pas valide. */
+const IMPREVU_SLOTS = ['pd', 'sw', 'dej', 'co', 'shk', 'diner', 'soir'], IMPREVU_KCAL = [50, 3000];
+function cleanImprevu(o){
+  if (!o || typeof o !== 'object' || IMPREVU_SLOTS.indexOf(o.slot) < 0 || (o.mode !== 'place' && o.mode !== 'plus')) return null;
+  const k = o.kcal;
+  return typeof k === 'number' && Number.isInteger(k) && k >= IMPREVU_KCAL[0] && k <= IMPREVU_KCAL[1] ? {slot:o.slot, kcal:k, mode:o.mode} : null;
+}
+/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type ; l'imprévu
+   seulement s'il est valide.
    @param {*} p  @param {number} js jour de la semaine (getDay)  @param {Week} [sem]  @returns {Plan} */
 function cleanPlan(p, js, sem){
   const out = emptyPlan(js, sem);
   if (!p || typeof p !== 'object') return out;
   if (has(p, 'libre')) out.libre = !!p.libre;
   if (has(p, 'seances')) out.seances = cleanSeances(p.seances);
+  const im = has(p, 'imprevu') ? cleanImprevu(p.imprevu) : null;
+  if (im) out.imprevu = im;
   return out;
 }
 /* Plan enregistré avant la 2.0.0 (activité par sport) converti en séances */

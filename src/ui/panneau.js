@@ -50,7 +50,7 @@
     if (!id) return;
     const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel), meal = slot === 'dej' ? 'déjeuner' : 'dîner';
     withRec[slot].recette = id;
-    const sec = buildDay(Object.assign({}, plan, {libre:false}), withRec, prof).secs.find(function(z){ return z.id === slot; });
+    const sec = buildDay(planForMeal(plan, slot), withRec, prof).secs.find(function(z){ return z.id === slot; });
     showRecipe(id, sec, on ? ' Choisie pour ce ' + meal + '.' : '', 'Pour ce ' + meal,
       on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
       on ? '<button type="button" class="btn wide" data-action="rec-off" data-slot="' + slot + '">Retirer la recette</button>'

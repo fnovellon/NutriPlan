@@ -385,6 +385,50 @@ for (let i = 0; i < N / 3; i++){
   }
 }
 
+// --- Imprévu (3.26.0) : un repas mangé autrement (à la place ou en plus), repris sur la suite de la journée -----------
+{
+  for (let i = 0; i < N / 3; i++){
+    const js = R.int(0, 6), prof = randProfile(), plan = randPlan(js), ch = randChoices();
+    const r0 = A.buildDay(plan, ch, prof), meals = r0.secs.filter(s => !s.band && !s.libre);
+    const im = { slot: R.pick(meals).id, kcal: R.int(5, 300) * 10, mode: R.pick(['place', 'plus']) };
+    const p1 = Object.assign({}, plan, { imprevu: im }), r = A.buildDay(p1, ch, prof), x = r.imprevu, input = JSON.stringify([prof, p1, ch]);
+    C.ok(x && x.slot === im.slot && x.kcal === im.kcal && x.mode === im.mode, 'imprévu absent', () => input);
+    if (!x) continue;
+    // Mêmes repas dans le même ordre, mêmes portions de protéines (pf), repas d'avant identiques
+    C.ok(r.secs.map(s => s.id).join() === r0.secs.map(s => s.id).join() && r.prot.factor === r0.prot.factor, 'imprévu : journée changée', () => input);
+    const at = r.secs.findIndex(s => s.id === im.slot);
+    r.secs.slice(0, at).forEach((s, j) => C.ok(JSON.stringify(s.items) === JSON.stringify(r0.secs[j].items), 'imprévu : un repas d’avant a changé', () => s.id + ' ' + input));
+    // Le repas : une ligne à la place, ou ses lignes puis l'imprévu
+    const s1 = r.secs[at], line = s1.items.filter(l => l.key === 'imp');
+    C.ok(line.length === 1 && line[0].m.kcal === im.kcal && line[0].m.p === 0 && (im.mode === 'place' ? s1.items.length === 1 : JSON.stringify(s1.items.slice(0, -1)) === JSON.stringify(r0.secs[at].items)), 'imprévu : lignes du repas', () => qtys(s1) + ' ' + input);
+    C.ok(x.delta === im.kcal - (im.mode === 'place' ? sum(r0.secs[at].items).kcal : 0), 'imprévu : écart avec le repas prévu', () => input);
+    // Après : seuls les féculents et l'encas bougent ; féculents dans leurs bornes (à un pas près)
+    r.secs.slice(at + 1).forEach((s, j) => {
+      const keep = l => JSON.stringify(l.filter(y => y.key !== 'st' && y.key !== 'encas'));
+      C.ok(keep(s.items) === keep(r0.secs[at + 1 + j].items), 'imprévu : autre chose que les féculents a bougé', () => s.id + ' ' + input);
+    });
+    const lo = A.STARCH_MIN * r.scale, step = id => { const S = A.STARCH[ch[id].starch]; return S.f[0] * S.step / 100; };
+    const later = ['dej', 'diner'].filter(id => r.secs.findIndex(s => s.id === id) > at && !(plan.libre && id === 'diner'));
+    later.forEach(id => {
+      const v = starchOf(r, id).m.kcal, hi = Math.max(lo, A.starchCap(ch[id].starch, r.scale));
+      C.ok(v >= Math.min(lo, starchOf(r0, id).m.kcal) - step(id) - 0.01 && v <= Math.max(hi, starchOf(r0, id).m.kcal) + step(id) + 0.01, 'imprévu : féculent hors de ses bornes', () => id + ' ' + Math.round(v) + ' ' + input);
+    });
+    // Le total : la journée sans imprévu + ce qui n'a pas pu être repris (over) ; tout est repris quand il y avait la place
+    C.ok(near(r.tot.kcal, r0.tot.kcal + x.over, 0.01), 'imprévu : total ≠ journée + over', () => input);
+    const coAt = r0.secs.findIndex(s => s.id === 'co'), enc = coAt > at && x.delta > 0 ? (r0.secs[coAt].items.find(y => y.key === 'encas') || { m: { kcal: 0 } }).m.kcal : 0;
+    const room = enc + later.reduce((a, id) => { const v = starchOf(r0, id).m.kcal, hi = Math.max(lo, A.starchCap(ch[id].starch, r.scale)); return a + Math.max(0, x.delta > 0 ? v - lo : hi - v); }, 0);
+    // Arrondis : un pas par féculent, 10 kcal ; un encas qui tomberait sous 30 kcal part en entier (jamais affiché en dessous)
+    const slack = later.reduce((a, id) => a + step(id), 0) + 10 + (enc ? 30 : 0);
+    if (Math.abs(x.delta) <= room - slack) C.ok(Math.abs(x.over) <= slack, 'imprévu pas repris malgré la place', () => Math.round(x.delta) + ' / ' + Math.round(room) + ' → ' + Math.round(x.over) + ' ' + input);
+    else C.ok(Math.abs(x.delta - x.over) <= room + slack && (Math.abs(x.over) <= slack || Math.sign(x.over) === Math.sign(x.delta)), 'imprévu : plus repris que la place', () => Math.round(x.delta) + ' / ' + Math.round(room) + ' → ' + Math.round(x.over) + ' ' + input);
+    // Repas libre : son budget ne bouge pas ; un imprévu à sa place (le dîner) est ignoré
+    if (plan.libre){
+      C.ok(r.libre === r0.libre, 'imprévu : budget du repas libre changé', () => input);
+      C.ok(A.buildDay(Object.assign({}, plan, { imprevu: { slot: 'diner', kcal: 500, mode: 'plus' } }), ch, prof).imprevu === null, 'imprévu au repas libre', () => input);
+    }
+  }
+}
+
 // --- C. Données abîmées : validation du stockage, jamais d'exception ni de pollution du prototype ----------------------
 // Séances valides en trop : les 4 premières gardées, dans l'ordre, une seule sortie longue (toujours le matin)
 for (let i = 0; i < N / 3; i++){

@@ -13,13 +13,14 @@
  *   séance pour la frise et la carte de la page, 3.20.0) ; recipe : recette choisie, suggest : recette proposée pour le
  *   couple protéine × féculent ; libre : le repas libre qui remplace le dîner.
  * @typedef {{taille:('petite'|'moyenne'|'longue'), moment:('matin'|'midi'|'soir'), duree?:number}} Seance
- * @typedef {{seances:Seance[], libre:boolean}} Plan  plan d'un jour (cleanPlan)
+ * @typedef {{seances:Seance[], libre:boolean, imprevu?:{slot:string, kcal:number, mode:string}}} Plan  plan d'un jour (cleanPlan ;
+ *   imprevu : 3.26.0)
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
  * @typedef {{prot:string, starch:string, dessert?:string, recette?:string}} MealChoice  plats du déjeuner ou du dîner
  * @typedef {{pdBase:string, dej:MealChoice, diner:MealChoice}} Choices  plats d'un jour
  * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off, fav, ban et semaine validés
  * @typedef {{bmr:number, rest:number, mode:string, restSource:string, cost:number, need:number, deficit:number, target:number,
  *   kgWeek:number}} Energy  dépense et objectif du jour (energy)
- * @typedef {{secs:Section[], tot:Macros, libre:?number, energy:Energy, ecart:number, scale:number,
+ * @typedef {{secs:Section[], tot:Macros, libre:?number, imprevu:?{slot:string, kcal:number, mode:string, delta:number, over:number}, energy:Energy, ecart:number, scale:number,
  *   prot:{target:number, low:number, high:number, floor:number, factor:number}}} Day  journée construite (buildDay)
  */

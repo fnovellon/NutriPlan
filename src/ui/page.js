@@ -46,7 +46,7 @@
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
     return '<li>' + q + '<span class="name">' + i.name + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
-      (i.m && i.key !== 'lib' && i.key !== 'marge' && i.key !== 'encas' ? macHTML(i.m) : '') + '</span></li>';
+      (i.m && ['lib', 'marge', 'encas', 'imp'].indexOf(i.key) < 0 ? macHTML(i.m) : '') + '</span></li>';
   };
   /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et
      « Choisir ». Choisie (3.14.0) : en tête du repas, à la place de ses ingrédients (détaillés dans sa fiche) : titre, temps,
@@ -141,7 +141,9 @@
     const eat = dayDiff(selDate) > 0 ? '' : '<button type="button" class="eat" id="eat-' + s.id + '" data-action="eat" data-value="' + s.id + '" aria-pressed="' + done + '" aria-label="' + s.title + ' mangé">' + CHECK + '<span>Mangé</span></button>';
     return '<section class="meal' + (done ? ' is-eaten' : '') + '"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
       (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2><div class="mh-r">' + kc + eat + '</div></div>' + lib + picks + (card ? recCardHTML(s) : '') +
-      (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) + '</section>';
+      (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) +
+      (s.libre ? '' : '<button type="button" class="reset imp-b" id="imp-' + s.id + '" data-action="imp" data-value="' + s.id + '" aria-haspopup="dialog"' +
+        (s.imprevu ? '>Modifier l’imprévu' : ' aria-label="Un imprévu ' + impAt(s) + NB + '?">Un imprévu' + NB + '?') + '</button>') + '</section>';
   };
   const bandHTML = function(s, next){
     return '<section class="band"' + panelAttrs(s) + '><h2 class="band-t" id="h-' + s.id + '">' + s.title + '<span class="when">' + WHEN[s.moment] + '</span></h2>' +
@@ -287,6 +289,70 @@
     const first = $('sheet-list').querySelector('[aria-pressed="true"]') || $('sheet-list').querySelector('button:not([disabled])');
     if (first) first.focus({preventScroll:true});
   };
+  /* Imprévu (3.26.0) : un repas mangé autrement, à la place ou en plus ; une estimation en kcal. Un seul par jour (en noter un
+     autre le remplace). Le panneau du bas : à la place ou en plus, quelques valeurs, ton chiffre, ce que ça change ; « Noter
+     l'imprévu », « Retirer l'imprévu ». */
+  const IMP_AT = {pd:'au petit-déjeuner', sw:'avant la séance', dej:'au déjeuner', shk:'après la séance', diner:'au dîner', soir:'le soir'};
+  const impAt = function(s){ return s.id === 'co' ? (s.title === 'Goûter' ? 'au goûter' : 'à la collation') : IMP_AT[s.id]; };
+  const IMP_PRESETS = [150, 300, 500, 800, 1000];
+  let impDraft = null;
+  const impOk = function(k){ return Number.isInteger(k) && k >= IMPREVU_KCAL[0] && k <= IMPREVU_KCAL[1]; };
+  /* Ce que l'imprévu change à la journée : repris sur la suite, ou en plus (en moins) de ce qui était prévu */
+  const impText = function(x){
+    if (!x) return '';
+    const kc = function(n){ return '≈' + NB + r10(Math.abs(n)) + NB + 'kcal'; }, took = x.delta - x.over;
+    if (Math.abs(x.over) < 30) return Math.abs(x.delta) < 30 ? 'Ta journée ne change pas.' : 'Repris sur la suite de ta journée' + NB + ': ton total ne bouge pas.';
+    if (x.over > 0) return (took >= 30 ? kc(took) + ' repris sur la suite de ta journée, ' + kc(x.over) + ' de plus que prévu' : kc(x.over) + ' de plus que prévu aujourd’hui') +
+      '. Ce n’est pas grave' + NB + ': rien à rattraper demain.';
+    return kc(x.over) + ' de moins que prévu aujourd’hui' + (took <= -30 ? ', ' + kc(took) + ' de plus sur la suite' : '') + '.';
+  };
+  const impPreview = function(){
+    const d = impDraft;
+    if (!d || !impOk(d.kcal)) return '';
+    return impText(buildDay(Object.assign({}, plan, {imprevu:{slot:d.slot, kcal:d.kcal, mode:d.mode}}), ch, prof).imprevu);
+  };
+  const impSheet = function(focusSel){
+    const d = impDraft, cur = cleanImprevu(plan.imprevu), here = cur && cur.slot === d.slot;
+    const seg = function(v, l){ return '<button type="button" data-action="imp-mode" data-value="' + v + '" aria-pressed="' + (d.mode === v) + '">' + l + '</button>'; };
+    const other = cur && !here ? buildDay(plan, ch, prof).secs.find(function(z){ return z.id === cur.slot; }) : null;
+    $('sheet-rec').innerHTML = '<p class="calc imp-s">Une estimation suffit' + NB + ': une pizza ≈' + NB + '800' + NB + 'kcal, un sandwich ≈' + NB + '500, une part de gâteau ≈' + NB + '350, une bière ≈' + NB + '150.</p>' +
+      '<div class="seg imp-m" role="group" aria-label="Ce que tu as mangé">' + seg('place', 'À la place du repas') + seg('plus', 'En plus') + '</div>' +
+      '<p class="lbl imp-l" id="imp-l">Environ combien' + NB + '?</p><div class="opts-list imp-p" role="group" aria-labelledby="imp-l">' + IMP_PRESETS.map(function(v){
+        return '<button type="button" class="opt" data-action="imp-kcal" data-value="' + v + '" aria-pressed="' + (d.kcal === v) + '">' + fmtInt(v) + NB + 'kcal</button>';
+      }).join('') + '</div>' +
+      '<label class="field wide imp-f"><span>Ou ton chiffre</span><span class="inp"><input type="number" id="imp-kcal" inputmode="numeric" min="50" max="3000" step="10" value="' + (d.kcal || '') + '"><span class="u">kcal</span></span></label>' +
+      '<p class="warn" id="imp-err" role="alert"></p><p class="calc" id="imp-calc" role="status">' + impPreview() + '</p>' +
+      (other ? '<p class="calc">Il remplace celui ' + (other.title === 'Goûter' ? 'du goûter' : {pd:'du petit-déjeuner', sw:'d’avant la séance', dej:'du déjeuner', co:'de la collation', shk:'d’après la séance', diner:'du dîner', soir:'du soir'}[cur.slot]) + ' (≈' + NB + fmtInt(cur.kcal) + NB + 'kcal).</p>' : '') +
+      '<button type="button" class="btn main wide" data-action="imp-ok">Noter l’imprévu</button>' +
+      (here ? '<button type="button" class="btn wide" data-action="imp-del">Retirer l’imprévu</button>' : '');
+    const f = focusSel ? $('sheet-rec').querySelector(focusSel) : null;
+    if (f) f.focus({preventScroll:true});
+  };
+  const openImp = function(slot, trigger){
+    const sec = buildDay(plan, ch, prof).secs.find(function(z){ return z.id === slot && !z.band; }), cur = cleanImprevu(plan.imprevu);
+    if (!sec || sec.libre) return;
+    impDraft = cur && cur.slot === slot ? {slot:slot, mode:cur.mode, kcal:cur.kcal} : {slot:slot, mode:'place', kcal:null};
+    pick = {kind:'imp', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, back:'ft-' + slot, view:'page'};
+    $('sheet-t').textContent = 'Un imprévu ' + impAt(sec);
+    $('sheet-list').hidden = true;
+    $('sheet-rec').hidden = false;
+    impSheet(null);
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    setInert('page', true);
+    document.documentElement.style.overflow = 'hidden';
+    $('sheet-rec').querySelector('[data-action="imp-mode"][aria-pressed="true"]').focus({preventScroll:true});
+  };
+  /* Ton chiffre, à la frappe : les valeurs toutes faites et ce que ça change suivent */
+  $('sheet').addEventListener('input', function(e){
+    if (e.target.id !== 'imp-kcal' || !impDraft) return;
+    const v = Number(e.target.value);
+    impDraft.kcal = e.target.value !== '' && impOk(v) ? v : null;
+    $('sheet-rec').querySelectorAll('[data-action="imp-kcal"]').forEach(function(b){ b.setAttribute('aria-pressed', String(+b.dataset.value === impDraft.kcal)); });
+    $('imp-err').textContent = '';
+    $('imp-calc').textContent = impPreview();
+  });
   const renderControls = function(){
     /* Jour affiché : « Aujourd'hui, jeudi 1er octobre », « Demain, … », sinon « Jeudi 8 octobre » */
     const diff = dayDiff(selDate), rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
@@ -319,8 +385,8 @@
   };
   const renderSummary = function(res){
     const t = res.tot, en = res.energy;
-    $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
-      (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.');
+    const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de repas libre'] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
+    $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' + (dont.length ? ', dont ' + dont.join(' et ') + '.' : '.');
     let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
     const over = !res.libre && res.ecart > en.target * 0.03;
     if (over){
@@ -333,8 +399,11 @@
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
         (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
-    /* Protéines sous la fourchette malgré les portions au maximum et le skyr du soir (thon deux fois, objectif haut, sans shaker) */
-    if (!res.libre && t.p < res.prot.low - 0.5){
+    /* Imprévu (3.26.0) qui n'a pas pu être repris en entier */
+    if (res.imprevu && Math.abs(res.imprevu.over) >= 30) note += ' Ton imprévu' + NB + ': ' + impText(res.imprevu).charAt(0).toLowerCase() + impText(res.imprevu).slice(1);
+    /* Protéines sous la fourchette malgré les portions au maximum et le skyr du soir (thon deux fois, objectif haut, sans shaker) ;
+       pas avec un imprévu, dont les macros ne sont pas connues */
+    if (!res.libre && !res.imprevu && t.p < res.prot.low - 0.5){
       const pr = cleanProfile(prof), tips = [];
       if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
       if (ch.pdBase === 'sale' && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner sucré (avec du skyr)');
@@ -345,7 +414,7 @@
     }
     /* Protéines au-dessus de la fourchette alors que les portions sont déjà au minimum (3.23.0) : le thon (boîte entière),
        les légumes secs, le shaker ou un objectif bas en apportent beaucoup. Sans risque, mais dit. */
-    if (!res.libre && t.p > res.prot.high + 0.5 && res.prot.factor <= PF_MIN + 0.02){
+    if (!res.libre && !res.imprevu && t.p > res.prot.high + 0.5 && res.prot.factor <= PF_MIN + 0.02){
       const pr = cleanProfile(prof), tips = [], sl = [ch.dej, ch.diner];
       if (sl.some(function(c){ return c.prot === 'thon'; })) tips.push('remplace le thon');
       if (sl.some(function(c){ return LEGUMES.indexOf(c.starch) >= 0; })) tips.push('prends un autre féculent que les lentilles ou les pois chiches');
@@ -363,7 +432,7 @@
     $('legend').innerHTML = '<li class="p">Protéines <b>' + Math.round(t.p) + NB + 'g</b></li>' +
       '<li class="c">Glucides <b>' + Math.round(t.c) + NB + 'g</b></li>' +
       '<li class="f">Lipides <b>' + Math.round(t.f) + NB + 'g</b></li>' +
-      (res.libre ? '<li class="x">hors repas libre</li>' : '');
+      (res.libre || res.imprevu ? '<li class="x">hors ' + (res.libre && res.imprevu ? 'repas libre et imprévu' : res.libre ? 'repas libre' : 'imprévu') + '</li>' : '');
   };
   const render = function(){
     renderControls();
@@ -414,6 +483,19 @@
       }
       return 'Aucun autre plat ne va avec tes aliments proposés.';
     },
+    /* Imprévu (3.26.0) : le panneau, à la place ou en plus, une valeur, noter (le message dit ce que ça change), retirer */
+    imp: function(b, v){ if (MEALS.indexOf(v) >= 0) openImp(v, b); },
+    'imp-mode': function(b, v){ if (!impDraft || (v !== 'place' && v !== 'plus')) return; impDraft.mode = v; impSheet('[data-action="imp-mode"][data-value="' + v + '"]'); },
+    'imp-kcal': function(b, v){ if (!impDraft || IMP_PRESETS.indexOf(+v) < 0) return; impDraft.kcal = +v; impSheet('[data-action="imp-kcal"][data-value="' + v + '"]'); },
+    'imp-ok': function(){
+      if (!impDraft) return;
+      if (!impOk(impDraft.kcal)){ $('imp-err').textContent = 'Choisis une valeur, ou entre un nombre entier de 50 à 3' + NB + '000' + NB + 'kcal.'; $('imp-kcal').focus(); return; }
+      plan.imprevu = {slot:impDraft.slot, kcal:impDraft.kcal, mode:impDraft.mode};
+      savePlan({imprevu:plan.imprevu});
+      impDraft = null;
+      return 'Imprévu noté. ' + impText(buildDay(plan, ch, prof).imprevu);
+    },
+    'imp-del': function(){ if (!impDraft) return; delete plan.imprevu; savePlan({imprevu:null}); impDraft = null; return 'Imprévu retiré.'; },
     /* Frise : la carte d'un repas ou d'une séance */
     frise: function(b, v){ if ($('sec-' + v)) showSec(v, false); },
     /* « Mangé » (3.23.0) : coche ou décoche le repas ; coché, la carte passe au repas suivant pas encore mangé (le focus

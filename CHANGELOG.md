@@ -1,5 +1,10 @@
 # Nouveautés
 
+## 3.26.0, 6 octobre 2026
+
+- Un imprévu dans ta journée : en bas de la carte d'un repas, « Un imprévu ? » note ce que tu as mangé à la place (ou en plus), avec une estimation en kcal. La suite de ta journée s'ajuste : l'encas, puis les féculents des repas d'après baissent pour garder ton total.
+- Ce qui ne peut pas être repris (un imprévu le soir, des féculents déjà au minimum) reste : la page le dit, sans rien te faire rattraper le lendemain.
+
 ## 3.25.0, 6 octobre 2026
 
 - Recettes favorites ou à éviter : dans la fiche d'une recette, « Favorite » la fait revenir deux fois plus souvent quand l'appli tire tes plats en recettes (« Décide pour moi », « Un autre plat », planifications, batch cooking), « À éviter » ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas, et les repères de la semaine passent toujours avant.

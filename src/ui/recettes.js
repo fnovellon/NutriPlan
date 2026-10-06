@@ -56,7 +56,7 @@
   const libSec = function(id, tg){
     const js = fromIso(tg.iso).getDay(), c = cleanCh(choicesFor(tg.iso, js), js), x = RECIPES[id];
     c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:id};
-    return buildDay(Object.assign({}, planFor(tg.iso), {libre:false}), c, prof).secs.find(function(z){ return z.id === tg.slot; });
+    return buildDay(planForMeal(planFor(tg.iso), tg.slot), c, prof).secs.find(function(z){ return z.id === tg.slot; });
   };
   Object.assign(ACTIONS, {
     recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },

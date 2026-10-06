@@ -109,6 +109,10 @@ function scan(dom, label){
   click(dom, '#lib-list .lib-r'); click(dom, '#rp-fav'); scan(dom, 'fiche, favorite'); click(dom, '#rp-ban'); scan(dom, 'fiche, à éviter'); click(dom, '#sheet .sheet-x');
   click(dom, '#lib-list .lib-r:last-child'); click(dom, '#lib-fav'); scan(dom, 'recettes, favorites');
   click(dom, '#gear'); click(dom, '#tab-repas'); scan(dom, 'réglages, tes recettes'); click(dom, '#nav-jour');
+  // Imprévu (3.26.0) : le panneau, puis la carte et la note
+  click(dom, '#imp-dej'); scan(dom, 'panneau de l’imprévu'); click(dom, '[data-action="imp-kcal"][data-value="1000"]'); scan(dom, 'panneau de l’imprévu, une valeur');
+  click(dom, '[data-action="imp-ok"]'); scan(dom, 'page, imprévu');
+  click(dom, '#imp-dej'); click(dom, '[data-action="imp-del"]');
 }
 {
   // Calendrier, Planifier (formulaire, erreurs, chaque type de plats), détail d'une planification, page du batch
@@ -190,7 +194,9 @@ function check(dom, log){
     Object.entries(s.plans).forEach(([date, p]) => {
       C.ok(/^\d{4}-\d\d-\d\d$/.test(date), 'date enregistrée invalide', () => date);
       // Enregistré champ par champ (3.11.0) : ce qui manque vient de la semaine type
-      C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || typeof p.libre === 'boolean'), 'plan enregistré invalide', () => JSON.stringify(p));
+      // Imprévu (3.26.0) : toujours valide quand il est enregistré
+      C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch', 'imprevu'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || typeof p.libre === 'boolean') &&
+        (!('imprevu' in p) || (p.imprevu !== null && JSON.stringify(w.eval('cleanImprevu')(p.imprevu)) === JSON.stringify(p.imprevu))), 'plan enregistré invalide', () => JSON.stringify(p));
       // Recette enregistrée : toujours celle de la protéine et du féculent du repas
       if (p && p.ch) C.ok(['dej', 'diner'].every(sl => !p.ch[sl] || !('recette' in p.ch[sl]) || p.ch[sl].recette === p.ch[sl].prot + '-' + p.ch[sl].starch), 'recette enregistrée qui ne va pas', () => JSON.stringify(p.ch));
     });
@@ -286,10 +292,19 @@ function check(dom, log){
     // Pas de suggestion non plus quand la recette du couple est à éviter (3.25.0)
     const banP = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).ban || [], sel = k => (meal.querySelector('[data-action="open-pick"][data-kind="' + k + '"]') || { dataset: {} }).dataset.value;
     const couple = sel('prot') + '-' + sel('starch');
-    C.ok(!!box === !(sl === 'diner' && libre) || (!box && banP.includes(couple)), 'recette proposée', () => sl + ' ' + where());
+    const replaced = !meal.querySelector('.picks') && /kcal d’imprévu/.test(meal.textContent);
+    C.ok(!!box === !(sl === 'diner' && libre) || (!box && (banP.includes(couple) || replaced)), 'recette proposée', () => sl + ' ' + where());
     if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
   });
+  // Imprévu (3.26.0) : celui enregistré pour la date (valide, sur un repas affiché, pas au repas libre) est sur sa carte et dans
+  // le total ; jamais plus d'une ligne d'imprévu
+  try {
+    const iso = ($('#week [aria-pressed="true"]') || { dataset: {} }).dataset.value, st = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{}}');
+    const im = st.plans[iso] && st.plans[iso].imprevu, ok = im && w.eval('cleanImprevu')(im), card = ok ? $('#sec-' + ok.slot) : null;
+    const shown = card && !(ok.slot === 'diner' && libre), lines = [...d.querySelectorAll('#day .items li')].filter(li => /kcal d’imprévu/.test(li.textContent));
+    C.ok(lines.length === (shown ? 1 : 0) && (!shown || card.contains(lines[0])) && /d’imprévu/.test($('#sum-text').textContent) === !!shown, 'imprévu : carte et total', () => iso + ' ' + JSON.stringify(im) + ' ' + where());
+  } catch (e){ C.ok(false, 'imprévu : lecture', () => e.message); }
   // Recettes à éviter (3.25.0) : jamais proposées sous un repas
   try {
     const ban = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).ban || [], RR = w.eval('RECIPES');
@@ -572,6 +587,26 @@ const ACTIONS = {
     C.ok(c && c.recette === b.dataset.value && d.querySelector('#sheet').hidden && d.activeElement && d.activeElement.id === b.id, 'recettes : prise', () => iso + ' ' + JSON.stringify(c) + ' ' + b.dataset.value);
     if (R.chance(.5)) d.querySelector('#lib-msg [data-action="lib-day"]').click(); else out();
     return 'recette prise ' + b.dataset.value + ' ' + tg.dataset.value;
+  },
+  // Imprévu (3.26.0) : un repas, à la place ou en plus, une valeur ou un chiffre, noté, retiré ou panneau fermé
+  imprevu: dom => {
+    const d = dom.window.document, w = dom.window, b = R.pick([...d.querySelectorAll('#day .imp-b')]);
+    if (d.querySelector('#page').hidden || !b) return 'imprévu -';
+    const slot = b.dataset.value;
+    b.click();
+    if (R.chance(.5)) d.querySelector('[data-action="imp-mode"][data-value="' + R.pick(['place', 'plus']) + '"]').click();
+    if (R.chance(.6)) R.pick([...d.querySelectorAll('[data-action="imp-kcal"]')]).click();
+    else { const el = d.querySelector('#imp-kcal'); el.value = String(R.pick([0, 20, 75, 450, 1234, 2990, 3500])); el.dispatchEvent(new w.Event('input', { bubbles: true })); }
+    const how = R.pick(['ok', 'ok', 'retirer', 'échap']), del = d.querySelector('[data-action="imp-del"]');
+    if (how === 'retirer' && del) del.click();
+    else if (how === 'échap') d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    else {
+      d.querySelector('[data-action="imp-ok"]').click();
+      if (!d.querySelector('#sheet').hidden){ C.ok(/entre un nombre/.test(d.querySelector('#imp-err').textContent), 'imprévu refusé sans message', slot); d.querySelector('#sheet .sheet-x').click(); return 'imprévu refusé'; }
+      C.ok(/^Imprévu noté\./.test(d.querySelector('#hint').textContent) && d.activeElement && d.activeElement.id === 'imp-' + slot, 'imprévu noté : message ou focus', slot);
+    }
+    C.ok(d.querySelector('#sheet').hidden, 'imprévu : panneau resté ouvert', how);
+    return 'imprévu ' + slot + ' ' + how;
   },
   // Fiche d'une recette de la page : favorite ou à éviter (l'une ou l'autre), puis fermée
   preferer: dom => {

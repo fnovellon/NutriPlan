@@ -103,13 +103,20 @@
     return p;
   };
   const loadSel = function(){ sel = selDate.getDay(); plan = planFor(selIso()); ch = choicesFor(selIso(), sel); };
-  /* Enregistre une date champ par champ (séances, repas libre, plats) : ce qui n'a jamais été touché reste à la semaine type */
+  /* Enregistre une date champ par champ (séances, repas libre, plats, imprévu) : ce qui n'a jamais été touché reste à la semaine
+     type ; un champ à null est retiré (imprévu, 3.26.0) */
   const writeDay = function(iso, f){
     const old = store.plans[iso] && typeof store.plans[iso] === 'object' ? store.plans[iso] : {}, rec = {};
-    ['seances', 'libre', 'ch'].forEach(function(k){ if (has(f, k)) rec[k] = f[k]; else if (has(old, k)) rec[k] = old[k]; });
+    ['seances', 'libre', 'ch', 'imprevu'].forEach(function(k){ if (has(f, k)){ if (f[k] !== null) rec[k] = f[k]; } else if (has(old, k)) rec[k] = old[k]; });
     store.plans[iso] = rec;
   };
   const savePlan = function(f){ writeDay(selIso(), f); persist(); };
+  /* Plan sans repas libre, et sans l'imprévu de ce repas (3.26.0) : pour les quantités d'une recette à ce repas, comme la
+     page les donnerait (un imprévu sur un autre repas reste compté) */
+  const planForMeal = function(p, slot){
+    const im = cleanImprevu(p.imprevu);
+    return Object.assign({}, p, {libre:false}, im && im.slot === slot ? {imprevu:null} : {});
+  };
   /* Plats choisis : pour cette date, et en mémoire pour ce jour de la semaine (repris par les jours pas encore choisis) */
   const saveCh = function(){ writeDay(selIso(), {ch:ch}); store.choices[sel] = ch; persist(); };
   /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */

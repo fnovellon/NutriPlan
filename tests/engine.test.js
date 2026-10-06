@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
-const { recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
+const { cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -905,6 +905,42 @@ assert(recipePref('poulet-riz', null) === 1 && recipePref('poulet-riz', { fav: [
   assert(pS > pS0 * 1.5, 'remplacement au hasard : favorite plus souvent (' + pS0 + ' → ' + pS + ')');
   const allBan = batchChoices(week(7, 5), 4, [], 1, lcg(3), { fav: [], ban: Object.keys(RECIPES) });
   assert(allBan.every(c => Object.prototype.hasOwnProperty.call(RECIPES, c.dej.recette)), 'batch : toutes à éviter, tirage quand même');
+}
+
+// Imprévu (3.26.0) : relu du stockage s'il est valide ; un repas mangé autrement, repris sur la suite de la journée
+{
+  const ok = { slot: 'dej', kcal: 600, mode: 'place' };
+  assert.deepStrictEqual(plain(cleanPlan({ seances: [], libre: false, imprevu: ok }, 3)), { seances: [], libre: false, imprevu: ok }, 'imprévu relu');
+  [{ slot: 'dej', kcal: 40, mode: 'place' }, { slot: 'dej', kcal: 3010, mode: 'plus' }, { slot: 'dej', kcal: 600.5, mode: 'plus' }, { slot: 'dej', kcal: '600', mode: 'plus' },
+    { slot: 'band0', kcal: 600, mode: 'plus' }, { slot: '__proto__', kcal: 600, mode: 'plus' }, { slot: 'dej', kcal: 600, mode: 'x' }, null, 5, 'dej'].forEach(bad =>
+    assert(!('imprevu' in cleanPlan({ seances: [], libre: false, imprevu: bad }, 3)) && cleanImprevu(bad) === null, 'imprévu abîmé ignoré : ' + JSON.stringify(bad)));
+  assert.deepStrictEqual(plain(cleanImprevu({ slot: 'co', kcal: 50, mode: 'plus', x: 1 })), { slot: 'co', kcal: 50, mode: 'plus' }, 'imprévu : seulement ses champs');
+  // Exemple : 72 kg, deux séances (des féculents à reprendre) ; 500 kcal en plus au petit-déjeuner, repris en entier
+  const chI = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'saumon', starch: 'pates' } }, plI = day([petite('matin'), moyenne('soir')]);
+  const n0 = buildDay(plI, chI), n1 = buildDay(Object.assign({}, plI, { imprevu: { slot: 'pd', kcal: 500, mode: 'plus' } }), chI);
+  assert(n1.imprevu.delta === 500 && Math.abs(n1.imprevu.over) <= 30 && Math.abs(n1.tot.kcal - n0.tot.kcal) <= 30, 'imprévu repris : ' + JSON.stringify(n1.imprevu));
+  const stK = (r, id) => r.secs.find(x => x.id === id).items.find(i => i.key === 'st').m.kcal;
+  assert(stK(n1, 'dej') < stK(n0, 'dej') && stK(n1, 'diner') < stK(n0, 'diner'), 'repris sur les deux féculents d’après');
+  // À la place du dîner, rien après : tout l'écart reste, rien d'autre ne bouge
+  const n2 = buildDay(Object.assign({}, plI, { imprevu: { slot: 'diner', kcal: 1200, mode: 'place' } }), chI);
+  assert(Math.abs(n2.imprevu.over - n2.imprevu.delta) < 0.01 && n2.secs.find(x => x.id === 'dej').items.length === n0.secs.find(x => x.id === 'dej').items.length && stK(n2, 'dej') === stK(n0, 'dej'), 'imprévu au dîner : rien à reprendre');
+  // Équilibre de la semaine : le poisson d'un dîner remplacé ne compte plus ; en plus, il compte
+  assert(weekBalance([n2]).poisson === weekBalance([n0]).poisson - 1 && weekBalance([buildDay(Object.assign({}, plI, { imprevu: { slot: 'diner', kcal: 300, mode: 'plus' } }), chI)]).poisson === weekBalance([n0]).poisson, 'imprévu : équilibre de la semaine');
+  // Courses : le repas remplacé n'est plus à acheter
+  const shop = r => JSON.stringify(shoppingList([r]));
+  assert(!/poisson gras/.test(shop(n2)) && /poisson gras/.test(shop(n0)), 'imprévu : courses');
+  // Repas libre : un imprévu au dîner est ignoré ; ailleurs, le budget du repas libre ne bouge pas
+  const pl = day([], { libre: true });
+  assert.deepStrictEqual(plain(buildDay(Object.assign({}, pl, { imprevu: { slot: 'diner', kcal: 500, mode: 'plus' } }), chI)), plain(buildDay(pl, chI)), 'imprévu au repas libre ignoré');
+  assert.strictEqual(buildDay(Object.assign({}, pl, { imprevu: { slot: 'pd', kcal: 500, mode: 'plus' } }), chI).libre, buildDay(pl, chI).libre, 'repas libre : budget inchangé');
+  // Batch cooking : les boîtes s'arrondissent comme sans imprévu (elles sont cuisinées)
+  const bwk = batchChoices(week(7, 5), 4, [], 1, lcg(5)), bplans = bwk.map((c, i) => ({ seances: [], libre: i === 5 }));
+  // Un imprévu à la place d'un déjeuner dont la recette est arrondie (sa boîte compte quand même), et un autre en plus
+  const rounded = batchRound(bwk.map((ch, i) => ({ plan: bplans[i], ch })));
+  const di = rounded.findIndex(c => c.dej.g);
+  assert(di >= 0, 'batch : une boîte arrondie');
+  const withImp = bplans.map((p, i) => i === di ? Object.assign({}, p, { imprevu: { slot: 'dej', kcal: 900, mode: 'place' } }) : i === (di + 1) % 7 ? Object.assign({}, p, { imprevu: { slot: 'pd', kcal: 800, mode: 'plus' } }) : p);
+  assert.deepStrictEqual(plain(batchRound(bwk.map((ch, i) => ({ plan: withImp[i], ch })))), plain(batchRound(bwk.map((ch, i) => ({ plan: bplans[i], ch })))), 'batch : arrondi sans l’imprévu');
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

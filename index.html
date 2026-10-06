@@ -275,6 +275,15 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .rp-n{font-size:16px;line-height:1.35;}
 .rp-ul .rm{flex:none;}
 .rp-none{margin:2px 0 12px;}
+/* Imprévu (3.26.0) : le bouton en bas de la carte d'un repas, le panneau */
+.imp-b{margin-top:14px;}
+.imp-s{margin:0 0 12px;}
+.imp-m{margin:0 0 14px;}
+.imp-l{margin:0 0 8px;}
+.imp-p{margin:0 0 12px;}
+.imp-f{margin:0 0 6px;}
+.imp-f .u{font-size:15px;color:var(--muted);}
+#sheet-rec .btn + .btn{margin-top:10px;}
 /* Légumes à volonté (3.23.0) : surlignés comme au marqueur */
 .vol{display:inline-block;padding:0 7px;border-radius:6px;background:var(--flash);color:var(--ink);font-family:var(--sans);font-style:normal;font-size:12.5px;font-weight:700;line-height:1.6;vertical-align:1px;white-space:nowrap;}
 .rec-vol{margin:8px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}
@@ -849,6 +858,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», une nouvelle planification en recettes avec l’option «&nbsp;Batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Ta planification montre alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
+      <li>Un repas ne s’est pas passé comme prévu&nbsp;? «&nbsp;Un imprévu&nbsp;?&nbsp;», en bas de sa carte&nbsp;: à la place du repas ou en plus, une estimation en kcal. La suite de ta journée s’ajuste (les féculents d’après baissent)&nbsp;; ce qui ne peut pas être repris reste, sans rien rattraper le lendemain.</li>
     </ul>
     <h2>Manger équilibré sur la semaine</h2>
     <ul>
@@ -968,7 +978,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.25.0';
+const APP_VERSION = '3.26.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1026,14 +1036,15 @@ function typo(t){
  *   séance pour la frise et la carte de la page, 3.20.0) ; recipe : recette choisie, suggest : recette proposée pour le
  *   couple protéine × féculent ; libre : le repas libre qui remplace le dîner.
  * @typedef {{taille:('petite'|'moyenne'|'longue'), moment:('matin'|'midi'|'soir'), duree?:number}} Seance
- * @typedef {{seances:Seance[], libre:boolean}} Plan  plan d'un jour (cleanPlan)
+ * @typedef {{seances:Seance[], libre:boolean, imprevu?:{slot:string, kcal:number, mode:string}}} Plan  plan d'un jour (cleanPlan ;
+ *   imprevu : 3.26.0)
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
  * @typedef {{prot:string, starch:string, dessert?:string, recette?:string}} MealChoice  plats du déjeuner ou du dîner
  * @typedef {{pdBase:string, dej:MealChoice, diner:MealChoice}} Choices  plats d'un jour
  * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off, fav, ban et semaine validés
  * @typedef {{bmr:number, rest:number, mode:string, restSource:string, cost:number, need:number, deficit:number, target:number,
  *   kgWeek:number}} Energy  dépense et objectif du jour (energy)
- * @typedef {{secs:Section[], tot:Macros, libre:?number, energy:Energy, ecart:number, scale:number,
+ * @typedef {{secs:Section[], tot:Macros, libre:?number, imprevu:?{slot:string, kcal:number, mode:string, delta:number, over:number}, energy:Energy, ecart:number, scale:number,
  *   prot:{target:number, low:number, high:number, floor:number, factor:number}}} Day  journée construite (buildDay)
  */
 /* Données : aliments. Valeurs pour 100 g (FOOD) ou par pièce (UNIT), féculents (STARCH), rendements de cuisson (YIELD),
@@ -1608,13 +1619,24 @@ function emptyPlan(js, sem){
   const w = sem || null, l = w && has(w.jours, String(js)) ? w.jours[js] : [];
   return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6)};
 }
-/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type.
+/* Imprévu d'un repas (3.26.0) : { slot, kcal, mode } ; slot : un repas de la journée, mode : 'place' (à la place du repas)
+   ou 'plus' (en plus), kcal : entier de 50 à 3 000. null s'il n'est pas valide. */
+const IMPREVU_SLOTS = ['pd', 'sw', 'dej', 'co', 'shk', 'diner', 'soir'], IMPREVU_KCAL = [50, 3000];
+function cleanImprevu(o){
+  if (!o || typeof o !== 'object' || IMPREVU_SLOTS.indexOf(o.slot) < 0 || (o.mode !== 'place' && o.mode !== 'plus')) return null;
+  const k = o.kcal;
+  return typeof k === 'number' && Number.isInteger(k) && k >= IMPREVU_KCAL[0] && k <= IMPREVU_KCAL[1] ? {slot:o.slot, kcal:k, mode:o.mode} : null;
+}
+/* Plan d'un jour relu du stockage : ce qui n'est pas enregistré (séances, repas libre) vient de la semaine type ; l'imprévu
+   seulement s'il est valide.
    @param {*} p  @param {number} js jour de la semaine (getDay)  @param {Week} [sem]  @returns {Plan} */
 function cleanPlan(p, js, sem){
   const out = emptyPlan(js, sem);
   if (!p || typeof p !== 'object') return out;
   if (has(p, 'libre')) out.libre = !!p.libre;
   if (has(p, 'seances')) out.seances = cleanSeances(p.seances);
+  const im = has(p, 'imprevu') ? cleanImprevu(p.imprevu) : null;
+  if (im) out.imprevu = im;
   return out;
 }
 /* Plan enregistré avant la 2.0.0 (activité par sport) converti en séances */
@@ -2116,6 +2138,46 @@ function composeDay(plan, ch, pr, pf){
   }
   const ecart = tot.kcal - en.target;
 
+  /* Imprévu (3.26.0, plan.imprevu, pas au dîner d'un repas libre) : le repas devient une ligne « ≈ 600 kcal d'imprévu » (à la
+     place) ou la reçoit en plus. L'écart avec ce qui était prévu est repris sur ce qui vient après : l'encas d'abord (s'il y a
+     plus à reprendre), puis les féculents des repas suivants, au prorata de leur marge, entre plancher et plafond (pas celui
+     d'un dîner remplacé par le repas libre). delta : l'écart avec le repas prévu ; ce qui ne peut pas être repris reste (over :
+     la journée en plus, ou en moins) ;
+     jamais reporté sur un autre jour. */
+  let imp = null;
+  const im = cleanImprevu(plan.imprevu), isec = im && !(plan.libre && im.slot === 'diner') ? secs.find(function(s){ return s.id === im.slot && !s.band; }) : null;
+  if (isec){
+    const before = tot.kcal, place = im.mode === 'place';
+    const delta = im.kcal - (place ? total(isec.items).kcal : 0);
+    let left = delta;
+    const line = it('imp', '≈' + NB + fmtInt(im.kcal), 'kcal d’imprévu', place ? 'à la place de ce repas' : 'en plus de ce repas', {kcal:im.kcal, p:0, c:0, f:0});
+    if (place){ isec.items = [line]; isec.pick = null; isec.recipe = null; isec.suggest = null; }
+    else isec.items.push(line);
+    isec.imprevu = im;
+    const later = secs.slice(secs.indexOf(isec) + 1);
+    if (left > 0 && later.indexOf(co) >= 0){
+      const e = co.items.find(function(i){ return i.key === 'encas'; });
+      if (e){
+        const kc = e.m.kcal, nk = Math.round((kc - left) / 10) * 10;
+        co.items = co.items.filter(function(i){ return i.key !== 'encas'; });
+        if (nk >= 30) co.items.push(it('encas', '≈' + NB + fmtInt(nk), e.name, e.note, {kcal:nk, p:0, c:nk / 4, f:0}, null, {id:'encas', kcal:nk}));
+        left -= kc - (nk >= 30 ? nk : 0);
+      }
+    }
+    const st = [[lunch, 'dej'], [dinner, 'diner']].filter(function(x){ return later.indexOf(x[0]) >= 0 && !(plan.libre && x[1] === 'diner'); }).map(function(x){
+      const cur = x[0].items.find(function(i){ return i.key === 'st'; }).m.kcal, lo = STARCH_MIN * k, hi = Math.max(lo, starchCap(ch[x[1]].starch, k));
+      return {sec:x[0], id:ch[x[1]].starch, cur:cur, room:Math.max(0, left > 0 ? cur - lo : hi - cur)};
+    });
+    const room = st.reduce(function(a, x){ return a + x.room; }, 0), take = Math.min(Math.abs(left), room);
+    st.forEach(function(x){
+      if (!room) return;
+      const item = starchItem(x.id, x.cur - Math.sign(left) * take * x.room / room);
+      setStarch(x.sec, item);
+    });
+    tot = total(allItems(secs));
+    imp = {slot:im.slot, kcal:im.kcal, mode:im.mode, delta:delta, over:tot.kcal - before};
+  }
+
   /* Repas libre : remplace le dîner du jour normal et son skyr du soir s'il y en a un (budget = les deux + 300 × k) */
   let libre = null;
   if (plan.libre){
@@ -2127,16 +2189,16 @@ function composeDay(plan, ch, pr, pf){
     tot = total(allItems(secs));
   }
   const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !plan.libre ? total(soirSec.items).p : 0;
-  return {secs:secs, tot:tot, libre:libre, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
+  return {secs:secs, tot:tot, libre:libre, imprevu:imp, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
 }
 /* Journée complète. Le facteur de protéines pf part de 1 (menu de référence) et ne bouge que si les protéines de la journée
    sortent de la fourchette objectif ± 10 % : il vise alors juste à l'intérieur (à 2 % du bord, pour absorber les arrondis).
    Quelques passes, car les féculents réajustés portent aussi des protéines. Le jour du repas libre, pf est cherché sur
-   la même journée sans repas libre (le repas libre n'a pas de macros connues).
+   la même journée sans repas libre (le repas libre n'a pas de macros connues), et sans imprévu (3.26.0).
    @param {Plan} plan  @param {Choices} ch  @param {*} [profile] champs du profil, validés ici  @returns {Day} */
 function buildDay(plan, ch, profile){
   const pr = cleanProfile(profile), T = protTarget(pr), lo = (1 - PROT_BAND) * T, hi = (1 + PROT_BAND) * T;
-  const base = plan.libre ? Object.assign({}, plan, {libre:false}) : plan;
+  const special = plan.libre || cleanImprevu(plan.imprevu), base = special ? Object.assign({}, plan, {libre:false, imprevu:null}) : plan;
   let pf = 1, r = composeDay(base, ch, pr, pf);
   for (let pass = 0; pass < 5; pass++){
     const P = r.tot.p - r.soirP, adj1 = r.adjP / pf;
@@ -2150,7 +2212,7 @@ function buildDay(plan, ch, profile){
     pf = next;
     r = composeDay(base, ch, pr, pf);
   }
-  if (plan.libre) r = composeDay(plan, ch, pr, pf);
+  if (special) r = composeDay(plan, ch, pr, pf);
   r.prot = {target:T, low:lo, high:hi, floor:lo, factor:pf};
   delete r.adjP; delete r.soirP;
   return r;
@@ -2409,9 +2471,10 @@ function batchRound(days, profile){
   const copy = function(c){ return {pdBase:c.pdBase, dej:Object.assign({}, c.dej), diner:Object.assign({}, c.diner)}; };
   let out = days.map(function(d){ return copy(d.ch); });
   const k = scaleOf(cleanProfile(profile));
-  const build = function(chs, i){ return buildDay(days[i].plan, chs[i], profile); };
+  /* Sans imprévu (3.26.0) : la boîte est cuisinée comme prévu */
+  const build = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {imprevu:null}), chs[i], profile); };
   /* Protéines d'un jour comparées à sa fourchette sur la journée normale (le repas libre n'a pas de macros connues) */
-  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:false}), chs[i], profile); };
+  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:false, imprevu:null}), chs[i], profile); };
   const sec = function(r, slot){ return r.secs.find(function(s){ return s.id === slot; }); };
   const grams = function(r, slot, key){ const x = sec(r, slot).items.find(function(i){ return i.key === key; }); return x && x.buy ? x.buy.g || 0 : 0; };
   const band = function(r){ return Math.max(0, r.prot.low - r.tot.p, r.tot.p - r.prot.high); };
@@ -2647,13 +2710,20 @@ if (typeof document !== 'undefined'){
     return p;
   };
   const loadSel = function(){ sel = selDate.getDay(); plan = planFor(selIso()); ch = choicesFor(selIso(), sel); };
-  /* Enregistre une date champ par champ (séances, repas libre, plats) : ce qui n'a jamais été touché reste à la semaine type */
+  /* Enregistre une date champ par champ (séances, repas libre, plats, imprévu) : ce qui n'a jamais été touché reste à la semaine
+     type ; un champ à null est retiré (imprévu, 3.26.0) */
   const writeDay = function(iso, f){
     const old = store.plans[iso] && typeof store.plans[iso] === 'object' ? store.plans[iso] : {}, rec = {};
-    ['seances', 'libre', 'ch'].forEach(function(k){ if (has(f, k)) rec[k] = f[k]; else if (has(old, k)) rec[k] = old[k]; });
+    ['seances', 'libre', 'ch', 'imprevu'].forEach(function(k){ if (has(f, k)){ if (f[k] !== null) rec[k] = f[k]; } else if (has(old, k)) rec[k] = old[k]; });
     store.plans[iso] = rec;
   };
   const savePlan = function(f){ writeDay(selIso(), f); persist(); };
+  /* Plan sans repas libre, et sans l'imprévu de ce repas (3.26.0) : pour les quantités d'une recette à ce repas, comme la
+     page les donnerait (un imprévu sur un autre repas reste compté) */
+  const planForMeal = function(p, slot){
+    const im = cleanImprevu(p.imprevu);
+    return Object.assign({}, p, {libre:false}, im && im.slot === slot ? {imprevu:null} : {});
+  };
   /* Plats choisis : pour cette date, et en mémoire pour ce jour de la semaine (repris par les jours pas encore choisis) */
   const saveCh = function(){ writeDay(selIso(), {ch:ch}); store.choices[sel] = ch; persist(); };
   /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */
@@ -2720,7 +2790,7 @@ if (typeof document !== 'undefined'){
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
     return '<li>' + q + '<span class="name">' + i.name + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
-      (i.m && i.key !== 'lib' && i.key !== 'marge' && i.key !== 'encas' ? macHTML(i.m) : '') + '</span></li>';
+      (i.m && ['lib', 'marge', 'encas', 'imp'].indexOf(i.key) < 0 ? macHTML(i.m) : '') + '</span></li>';
   };
   /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et
      « Choisir ». Choisie (3.14.0) : en tête du repas, à la place de ses ingrédients (détaillés dans sa fiche) : titre, temps,
@@ -2815,7 +2885,9 @@ if (typeof document !== 'undefined'){
     const eat = dayDiff(selDate) > 0 ? '' : '<button type="button" class="eat" id="eat-' + s.id + '" data-action="eat" data-value="' + s.id + '" aria-pressed="' + done + '" aria-label="' + s.title + ' mangé">' + CHECK + '<span>Mangé</span></button>';
     return '<section class="meal' + (done ? ' is-eaten' : '') + '"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
       (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2><div class="mh-r">' + kc + eat + '</div></div>' + lib + picks + (card ? recCardHTML(s) : '') +
-      (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) + '</section>';
+      (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) +
+      (s.libre ? '' : '<button type="button" class="reset imp-b" id="imp-' + s.id + '" data-action="imp" data-value="' + s.id + '" aria-haspopup="dialog"' +
+        (s.imprevu ? '>Modifier l’imprévu' : ' aria-label="Un imprévu ' + impAt(s) + NB + '?">Un imprévu' + NB + '?') + '</button>') + '</section>';
   };
   const bandHTML = function(s, next){
     return '<section class="band"' + panelAttrs(s) + '><h2 class="band-t" id="h-' + s.id + '">' + s.title + '<span class="when">' + WHEN[s.moment] + '</span></h2>' +
@@ -2961,6 +3033,70 @@ if (typeof document !== 'undefined'){
     const first = $('sheet-list').querySelector('[aria-pressed="true"]') || $('sheet-list').querySelector('button:not([disabled])');
     if (first) first.focus({preventScroll:true});
   };
+  /* Imprévu (3.26.0) : un repas mangé autrement, à la place ou en plus ; une estimation en kcal. Un seul par jour (en noter un
+     autre le remplace). Le panneau du bas : à la place ou en plus, quelques valeurs, ton chiffre, ce que ça change ; « Noter
+     l'imprévu », « Retirer l'imprévu ». */
+  const IMP_AT = {pd:'au petit-déjeuner', sw:'avant la séance', dej:'au déjeuner', shk:'après la séance', diner:'au dîner', soir:'le soir'};
+  const impAt = function(s){ return s.id === 'co' ? (s.title === 'Goûter' ? 'au goûter' : 'à la collation') : IMP_AT[s.id]; };
+  const IMP_PRESETS = [150, 300, 500, 800, 1000];
+  let impDraft = null;
+  const impOk = function(k){ return Number.isInteger(k) && k >= IMPREVU_KCAL[0] && k <= IMPREVU_KCAL[1]; };
+  /* Ce que l'imprévu change à la journée : repris sur la suite, ou en plus (en moins) de ce qui était prévu */
+  const impText = function(x){
+    if (!x) return '';
+    const kc = function(n){ return '≈' + NB + r10(Math.abs(n)) + NB + 'kcal'; }, took = x.delta - x.over;
+    if (Math.abs(x.over) < 30) return Math.abs(x.delta) < 30 ? 'Ta journée ne change pas.' : 'Repris sur la suite de ta journée' + NB + ': ton total ne bouge pas.';
+    if (x.over > 0) return (took >= 30 ? kc(took) + ' repris sur la suite de ta journée, ' + kc(x.over) + ' de plus que prévu' : kc(x.over) + ' de plus que prévu aujourd’hui') +
+      '. Ce n’est pas grave' + NB + ': rien à rattraper demain.';
+    return kc(x.over) + ' de moins que prévu aujourd’hui' + (took <= -30 ? ', ' + kc(took) + ' de plus sur la suite' : '') + '.';
+  };
+  const impPreview = function(){
+    const d = impDraft;
+    if (!d || !impOk(d.kcal)) return '';
+    return impText(buildDay(Object.assign({}, plan, {imprevu:{slot:d.slot, kcal:d.kcal, mode:d.mode}}), ch, prof).imprevu);
+  };
+  const impSheet = function(focusSel){
+    const d = impDraft, cur = cleanImprevu(plan.imprevu), here = cur && cur.slot === d.slot;
+    const seg = function(v, l){ return '<button type="button" data-action="imp-mode" data-value="' + v + '" aria-pressed="' + (d.mode === v) + '">' + l + '</button>'; };
+    const other = cur && !here ? buildDay(plan, ch, prof).secs.find(function(z){ return z.id === cur.slot; }) : null;
+    $('sheet-rec').innerHTML = '<p class="calc imp-s">Une estimation suffit' + NB + ': une pizza ≈' + NB + '800' + NB + 'kcal, un sandwich ≈' + NB + '500, une part de gâteau ≈' + NB + '350, une bière ≈' + NB + '150.</p>' +
+      '<div class="seg imp-m" role="group" aria-label="Ce que tu as mangé">' + seg('place', 'À la place du repas') + seg('plus', 'En plus') + '</div>' +
+      '<p class="lbl imp-l" id="imp-l">Environ combien' + NB + '?</p><div class="opts-list imp-p" role="group" aria-labelledby="imp-l">' + IMP_PRESETS.map(function(v){
+        return '<button type="button" class="opt" data-action="imp-kcal" data-value="' + v + '" aria-pressed="' + (d.kcal === v) + '">' + fmtInt(v) + NB + 'kcal</button>';
+      }).join('') + '</div>' +
+      '<label class="field wide imp-f"><span>Ou ton chiffre</span><span class="inp"><input type="number" id="imp-kcal" inputmode="numeric" min="50" max="3000" step="10" value="' + (d.kcal || '') + '"><span class="u">kcal</span></span></label>' +
+      '<p class="warn" id="imp-err" role="alert"></p><p class="calc" id="imp-calc" role="status">' + impPreview() + '</p>' +
+      (other ? '<p class="calc">Il remplace celui ' + (other.title === 'Goûter' ? 'du goûter' : {pd:'du petit-déjeuner', sw:'d’avant la séance', dej:'du déjeuner', co:'de la collation', shk:'d’après la séance', diner:'du dîner', soir:'du soir'}[cur.slot]) + ' (≈' + NB + fmtInt(cur.kcal) + NB + 'kcal).</p>' : '') +
+      '<button type="button" class="btn main wide" data-action="imp-ok">Noter l’imprévu</button>' +
+      (here ? '<button type="button" class="btn wide" data-action="imp-del">Retirer l’imprévu</button>' : '');
+    const f = focusSel ? $('sheet-rec').querySelector(focusSel) : null;
+    if (f) f.focus({preventScroll:true});
+  };
+  const openImp = function(slot, trigger){
+    const sec = buildDay(plan, ch, prof).secs.find(function(z){ return z.id === slot && !z.band; }), cur = cleanImprevu(plan.imprevu);
+    if (!sec || sec.libre) return;
+    impDraft = cur && cur.slot === slot ? {slot:slot, mode:cur.mode, kcal:cur.kcal} : {slot:slot, mode:'place', kcal:null};
+    pick = {kind:'imp', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, back:'ft-' + slot, view:'page'};
+    $('sheet-t').textContent = 'Un imprévu ' + impAt(sec);
+    $('sheet-list').hidden = true;
+    $('sheet-rec').hidden = false;
+    impSheet(null);
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    setInert('page', true);
+    document.documentElement.style.overflow = 'hidden';
+    $('sheet-rec').querySelector('[data-action="imp-mode"][aria-pressed="true"]').focus({preventScroll:true});
+  };
+  /* Ton chiffre, à la frappe : les valeurs toutes faites et ce que ça change suivent */
+  $('sheet').addEventListener('input', function(e){
+    if (e.target.id !== 'imp-kcal' || !impDraft) return;
+    const v = Number(e.target.value);
+    impDraft.kcal = e.target.value !== '' && impOk(v) ? v : null;
+    $('sheet-rec').querySelectorAll('[data-action="imp-kcal"]').forEach(function(b){ b.setAttribute('aria-pressed', String(+b.dataset.value === impDraft.kcal)); });
+    $('imp-err').textContent = '';
+    $('imp-calc').textContent = impPreview();
+  });
   const renderControls = function(){
     /* Jour affiché : « Aujourd'hui, jeudi 1er octobre », « Demain, … », sinon « Jeudi 8 octobre » */
     const diff = dayDiff(selDate), rel = {'-1':'Hier', '0':'Aujourd’hui', '1':'Demain'}[diff];
@@ -2993,8 +3129,8 @@ if (typeof document !== 'undefined'){
   };
   const renderSummary = function(res){
     const t = res.tot, en = res.energy;
-    $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' +
-      (res.libre ? ', dont ' + fmtInt(res.libre) + NB + 'kcal de repas libre.' : '.');
+    const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de repas libre'] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
+    $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' + (dont.length ? ', dont ' + dont.join(' et ') + '.' : '.');
     let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
     const over = !res.libre && res.ecart > en.target * 0.03;
     if (over){
@@ -3007,8 +3143,11 @@ if (typeof document !== 'undefined'){
       note += ' Tes minimums de protéines, lipides et féculents dépassent l’objectif de ' + r10(res.ecart) + NB + 'kcal' +
         (tips.length ? NB + ': pour t’en rapprocher, ' + (tips.length > 1 ? tips.slice(0, -1).join(', ') + ' ou ' + tips[tips.length - 1] : tips[0]) + '.' : '.');
     }
-    /* Protéines sous la fourchette malgré les portions au maximum et le skyr du soir (thon deux fois, objectif haut, sans shaker) */
-    if (!res.libre && t.p < res.prot.low - 0.5){
+    /* Imprévu (3.26.0) qui n'a pas pu être repris en entier */
+    if (res.imprevu && Math.abs(res.imprevu.over) >= 30) note += ' Ton imprévu' + NB + ': ' + impText(res.imprevu).charAt(0).toLowerCase() + impText(res.imprevu).slice(1);
+    /* Protéines sous la fourchette malgré les portions au maximum et le skyr du soir (thon deux fois, objectif haut, sans shaker) ;
+       pas avec un imprévu, dont les macros ne sont pas connues */
+    if (!res.libre && !res.imprevu && t.p < res.prot.low - 0.5){
       const pr = cleanProfile(prof), tips = [];
       if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
       if (ch.pdBase === 'sale' && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner sucré (avec du skyr)');
@@ -3019,7 +3158,7 @@ if (typeof document !== 'undefined'){
     }
     /* Protéines au-dessus de la fourchette alors que les portions sont déjà au minimum (3.23.0) : le thon (boîte entière),
        les légumes secs, le shaker ou un objectif bas en apportent beaucoup. Sans risque, mais dit. */
-    if (!res.libre && t.p > res.prot.high + 0.5 && res.prot.factor <= PF_MIN + 0.02){
+    if (!res.libre && !res.imprevu && t.p > res.prot.high + 0.5 && res.prot.factor <= PF_MIN + 0.02){
       const pr = cleanProfile(prof), tips = [], sl = [ch.dej, ch.diner];
       if (sl.some(function(c){ return c.prot === 'thon'; })) tips.push('remplace le thon');
       if (sl.some(function(c){ return LEGUMES.indexOf(c.starch) >= 0; })) tips.push('prends un autre féculent que les lentilles ou les pois chiches');
@@ -3037,7 +3176,7 @@ if (typeof document !== 'undefined'){
     $('legend').innerHTML = '<li class="p">Protéines <b>' + Math.round(t.p) + NB + 'g</b></li>' +
       '<li class="c">Glucides <b>' + Math.round(t.c) + NB + 'g</b></li>' +
       '<li class="f">Lipides <b>' + Math.round(t.f) + NB + 'g</b></li>' +
-      (res.libre ? '<li class="x">hors repas libre</li>' : '');
+      (res.libre || res.imprevu ? '<li class="x">hors ' + (res.libre && res.imprevu ? 'repas libre et imprévu' : res.libre ? 'repas libre' : 'imprévu') + '</li>' : '');
   };
   const render = function(){
     renderControls();
@@ -3088,6 +3227,19 @@ if (typeof document !== 'undefined'){
       }
       return 'Aucun autre plat ne va avec tes aliments proposés.';
     },
+    /* Imprévu (3.26.0) : le panneau, à la place ou en plus, une valeur, noter (le message dit ce que ça change), retirer */
+    imp: function(b, v){ if (MEALS.indexOf(v) >= 0) openImp(v, b); },
+    'imp-mode': function(b, v){ if (!impDraft || (v !== 'place' && v !== 'plus')) return; impDraft.mode = v; impSheet('[data-action="imp-mode"][data-value="' + v + '"]'); },
+    'imp-kcal': function(b, v){ if (!impDraft || IMP_PRESETS.indexOf(+v) < 0) return; impDraft.kcal = +v; impSheet('[data-action="imp-kcal"][data-value="' + v + '"]'); },
+    'imp-ok': function(){
+      if (!impDraft) return;
+      if (!impOk(impDraft.kcal)){ $('imp-err').textContent = 'Choisis une valeur, ou entre un nombre entier de 50 à 3' + NB + '000' + NB + 'kcal.'; $('imp-kcal').focus(); return; }
+      plan.imprevu = {slot:impDraft.slot, kcal:impDraft.kcal, mode:impDraft.mode};
+      savePlan({imprevu:plan.imprevu});
+      impDraft = null;
+      return 'Imprévu noté. ' + impText(buildDay(plan, ch, prof).imprevu);
+    },
+    'imp-del': function(){ if (!impDraft) return; delete plan.imprevu; savePlan({imprevu:null}); impDraft = null; return 'Imprévu retiré.'; },
     /* Frise : la carte d'un repas ou d'une séance */
     frise: function(b, v){ if ($('sec-' + v)) showSec(v, false); },
     /* « Mangé » (3.23.0) : coche ou décoche le repas ; coché, la carte passe au repas suivant pas encore mangé (le focus
@@ -3831,7 +3983,7 @@ if (typeof document !== 'undefined'){
     if (!id) return;
     const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel), meal = slot === 'dej' ? 'déjeuner' : 'dîner';
     withRec[slot].recette = id;
-    const sec = buildDay(Object.assign({}, plan, {libre:false}), withRec, prof).secs.find(function(z){ return z.id === slot; });
+    const sec = buildDay(planForMeal(plan, slot), withRec, prof).secs.find(function(z){ return z.id === slot; });
     showRecipe(id, sec, on ? ' Choisie pour ce ' + meal + '.' : '', 'Pour ce ' + meal,
       on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
       on ? '<button type="button" class="btn wide" data-action="rec-off" data-slot="' + slot + '">Retirer la recette</button>'
@@ -3958,7 +4110,7 @@ if (typeof document !== 'undefined'){
   const libSec = function(id, tg){
     const js = fromIso(tg.iso).getDay(), c = cleanCh(choicesFor(tg.iso, js), js), x = RECIPES[id];
     c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:id};
-    return buildDay(Object.assign({}, planFor(tg.iso), {libre:false}), c, prof).secs.find(function(z){ return z.id === tg.slot; });
+    return buildDay(planForMeal(planFor(tg.iso), tg.slot), c, prof).secs.find(function(z){ return z.id === tg.slot; });
   };
   Object.assign(ACTIONS, {
     recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },
@@ -4252,8 +4404,8 @@ if (typeof document !== 'undefined'){
       (pr.poids > protKg + 0.05 ? ' Au-delà de ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
       (pr.poids < protKg - 0.05 ? ' Sous ' + dec(protKg) + NB + 'kg, ton objectif et tes portions ne suivent plus ton poids.' : '') +
       ' Viande, poisson, œufs et skyr restent au plus près du menu de base et ne s’ajustent que pour entrer dans cette fourchette. Aujourd’hui' + NB + ': ' + Math.round(res.tot.p) + NB + 'g' +
-      (res.libre ? ' hors repas libre.' : '.') +
-      (!res.libre && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
+      (res.libre || res.imprevu ? ' hors ' + (res.libre && res.imprevu ? 'repas libre et imprévu' : res.libre ? 'repas libre' : 'imprévu') + '.' : '.') +
+      (!res.libre && !res.imprevu && res.prot.factor <= PF_MIN + 0.02 && res.tot.p > res.prot.high ? ' Le reste de ta journée (shaker, œufs, féculents) en apporte déjà beaucoup' + NB + ': plus bas, les portions ne peuvent pas suivre.' : '') +
       ' Repère en sèche' + NB + ': 1,6 à 2,2' + NB + 'g/kg, 2,0 par défaut.';
     $('out-ravito').textContent = pr.ravito + NB + 'g/h';
     $('out-marge').textContent = pr.marge + NB + 'kcal';

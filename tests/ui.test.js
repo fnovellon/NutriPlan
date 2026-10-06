@@ -1714,6 +1714,78 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(!u.$('#rp-list [data-action="rp-rm"]') && u.d.querySelectorAll('#rp-list .rp-none').length === 2, 'effacées avec le reste');
 }
 
+// Imprévu (3.26.0) : le panneau (à la place ou en plus, une valeur ou ton chiffre, ce que ça change), noté pour la date,
+// la carte et le total ; un seul par jour ; retiré ; pas au repas libre ; relu et validé
+{
+  const t = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72 }))));
+  const tw = t.d.defaultView, imp = () => (t.stored() && t.stored().plans['2026-10-07'] || {}).imprevu;
+  const esc = () => t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  const type = v => { const el = t.$('#imp-kcal'); el.value = v; el.dispatchEvent(new tw.Event('input', { bubbles: true })); };
+  const kc0 = Number(t.$('#sum-text strong').textContent.replace(/\D/g, ''));
+  assert(t.$('#imp-dej').textContent === 'Un imprévu ?' && t.$('#imp-dej').getAttribute('aria-label') === 'Un imprévu au déjeuner ?' && t.$('#imp-co').getAttribute('aria-label') === 'Un imprévu à la collation ?', 'bouton « Un imprévu ? »');
+  t.click('#imp-dej');
+  assert(!t.$('#sheet').hidden && t.$('#sheet-t').textContent === 'Un imprévu au déjeuner' && t.d.activeElement === t.$('[data-action="imp-mode"][data-value="place"]') && t.$('[data-action="imp-mode"][data-value="place"]').getAttribute('aria-pressed') === 'true', 'panneau : à la place par défaut');
+  t.click('[data-action="imp-ok"]');
+  assert(/entre un nombre entier de 50 à 3\s000\skcal/.test(t.$('#imp-err').textContent) && t.d.activeElement === t.$('#imp-kcal') && !imp() && !t.$('#sheet').hidden, 'sans valeur : refusé');
+  t.click('[data-action="imp-kcal"][data-value="500"]');
+  assert(t.$('[data-action="imp-kcal"][data-value="500"]').getAttribute('aria-pressed') === 'true' && t.$('#imp-kcal').value === '500' && t.$('#imp-calc').textContent.length > 10, 'valeur toute faite');
+  type('650');
+  assert(!t.$('[data-action="imp-kcal"][aria-pressed="true"]') && /\./.test(t.$('#imp-calc').textContent), 'ton chiffre');
+  type('20');
+  assert(t.$('#imp-calc').textContent === '', 'chiffre hors bornes : rien');
+  t.click('[data-action="imp-ok"]');
+  assert(/entre un nombre entier/.test(t.$('#imp-err').textContent) && !imp(), 'chiffre hors bornes : refusé');
+  type('650');
+  t.click('[data-action="imp-ok"]');
+  assert.deepStrictEqual(imp(), { slot: 'dej', kcal: 650, mode: 'place' }, 'imprévu enregistré');
+  assert(t.$('#sheet').hidden && /^Imprévu noté\. /.test(t.$('#hint').textContent) && t.d.activeElement === t.$('#imp-dej') && t.$('#imp-dej').textContent === 'Modifier l’imprévu', 'noté : message et focus');
+  const lines = [...t.d.querySelectorAll('#sec-dej .items li')].map(li => li.textContent);
+  assert(lines.length === 1 && /≈\s650kcal d’imprévuà la place de ce repas/.test(lines[0]) && !t.$('#sec-dej .picks') && !t.$('#sec-dej .rec'), 'carte : une ligne, ni choix ni recette : ' + lines);
+  assert(/dont 650\skcal d’imprévu\.$/.test(t.$('#sum-text').textContent) && /hors imprévu/.test(t.$('#legend').textContent), 'total : dont l’imprévu, macros hors imprévu');
+  // Rouvert : prérempli ; en plus ; un autre repas le remplace
+  t.click('#imp-dej');
+  assert(t.$('#imp-kcal').value === '650' && t.$('[data-action="imp-del"]'), 'rouvert : prérempli, « Retirer »');
+  t.click('[data-action="imp-mode"][data-value="plus"]');
+  assert(t.$('[data-action="imp-mode"][data-value="plus"]').getAttribute('aria-pressed') === 'true' && t.d.activeElement === t.$('[data-action="imp-mode"][data-value="plus"]'), 'en plus');
+  esc();
+  assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#imp-dej') && imp().mode === 'place', 'Échap : rien ne change');
+  t.click('#imp-pd');
+  assert(/^Il remplace celui du déjeuner \(≈\s650\skcal\)\.$/.test([...t.d.querySelectorAll('#sheet-rec .calc')].pop().textContent) && !t.$('[data-action="imp-del"]'), 'un seul par jour : il remplace l’autre');
+  t.click('[data-action="imp-mode"][data-value="plus"]'); t.click('[data-action="imp-kcal"][data-value="300"]'); t.click('[data-action="imp-ok"]');
+  assert.deepStrictEqual(imp(), { slot: 'pd', kcal: 300, mode: 'plus' }, 'remplacé');
+  assert(!t.$('#sec-dej .items li') || [...t.d.querySelectorAll('#sec-dej .items li')].length > 1, 'déjeuner revenu');
+  // Une séance ajoutée : l'imprévu reste
+  t.add('petite', 'soir');
+  assert.deepStrictEqual(imp(), { slot: 'pd', kcal: 300, mode: 'plus' }, 'séance ajoutée : imprévu gardé');
+  t.rm(0);
+  // Retiré
+  t.click('#imp-pd'); t.click('[data-action="imp-del"]');
+  assert(!('imprevu' in t.stored().plans['2026-10-07']) && t.$('#hint').textContent === 'Imprévu retiré.' && t.$('#imp-pd').textContent === 'Un imprévu ?' && Number(t.$('#sum-text strong').textContent.replace(/\D/g, '')) === kc0, 'retiré');
+  // Pas repris en entier (à la place du dîner, rien après) : la note du total le dit ; pas de note des protéines
+  t.choose('prot', 'dej', 'thon'); t.choose('starch', 'dej', 'lentilles');
+  assert(/Tes protéines dépassent/.test(t.$('#sum-note').textContent), 'protéines au-dessus, sans imprévu');
+  // Un petit imprévu en plus : les protéines restent au-dessus, mais leurs notes ne s'affichent pas (macros inconnues)
+  t.click('#imp-co'); t.click('[data-action="imp-mode"][data-value="plus"]'); t.click('[data-action="imp-kcal"][data-value="150"]'); t.click('[data-action="imp-ok"]');
+  assert(!/Tes protéines/.test(t.$('#sum-note').textContent), 'imprévu : pas de note des protéines');
+  // Fiche d'une recette : mêmes quantités que la page, imprévu compté (il est sur un autre repas)
+  const stQty = () => [...t.d.querySelectorAll('#sec-dej .items li')].find(li => /lentilles/.test(li.textContent)).querySelector('.qty').textContent;
+  t.click('#imp-pd'); t.click('[data-action="imp-mode"][data-value="plus"]'); t.click('[data-action="imp-kcal"][data-value="300"]'); t.click('[data-action="imp-ok"]');
+  const pageQ = stQty();
+  t.click('#rec-v-dej');
+  assert([...t.d.querySelectorAll('#sheet-rec .items li')].find(li => /lentilles/.test(li.textContent)).querySelector('.qty').textContent === pageQ, 'fiche : mêmes quantités que la page');
+  esc();
+  t.click('#imp-diner'); t.click('[data-action="imp-mode"][data-value="place"]'); t.click('[data-action="imp-kcal"][data-value="1000"]'); t.click('[data-action="imp-ok"]');
+  assert(/Ton imprévu\s: ≈\s[\d\s]+\skcal de plus que prévu aujourd’hui\. Ce n’est pas grave\s: rien à rattraper demain\./.test(t.$('#sum-note').textContent) && !/Tes protéines/.test(t.$('#sum-note').textContent), 'note de l’imprévu : ' + t.$('#sum-note').textContent);
+  // Repas libre : pas de bouton au dîner (l'imprévu du dîner n'est plus compté)
+  t.setSwitch('libre', true);
+  assert(!t.$('#imp-diner') && t.$('#imp-dej') && !/d’imprévu/.test(t.$('#sum-text').textContent), 'repas libre : pas d’imprévu au dîner');
+  // Relu ; abîmé, ignoré
+  const r = tools(open(ls => { ls.setItem(PKEY, JSON.stringify({ age: 35 })); ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { imprevu: { slot: 'co', kcal: 400, mode: 'plus' } }, '2026-10-08': { imprevu: { slot: 'co', kcal: '400', mode: 'plus' } } }, choices: {} })); }));
+  assert(/kcal d’imprévuen plus de ce repas/.test(r.$('#sec-co').textContent) && /d’imprévu/.test(r.$('#sum-text').textContent), 'relu');
+  r.click('#week [data-value="2026-10-08"]');
+  assert(!/d’imprévu/.test(r.$('#day').textContent) && !/d’imprévu/.test(r.$('#sum-text').textContent), 'abîmé : ignoré');
+}
+
 // Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;
 // triées ; finies depuis plus de 21 jours, effacées
 {
