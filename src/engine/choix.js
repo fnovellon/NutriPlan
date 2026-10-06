@@ -42,6 +42,17 @@ function withAllowed(c, off){
   };
   return {pdBase:next('pd', c.pdBase), dej:meal(c.dej, dejProt), diner:meal(c.diner, next('prot', c.diner.prot, dejProt))};
 }
+/* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, sans doublon */
+function cleanRecipeIds(o){
+  if (!Array.isArray(o)) return [];
+  return o.slice(0, 200).filter(function(x, i, a){ return typeof x === 'string' && has(RECIPES, x) && a.indexOf(x) === i; });
+}
+/* Poids d'une recette dans les tirages : 0 à éviter (jamais tirée), 2 favorite, 1 sinon ; prefs : { fav, ban } (le profil) */
+function recipePref(id, prefs){
+  if (!prefs || !id) return 1;
+  if (prefs.ban && prefs.ban.indexOf(id) >= 0) return 0;
+  return prefs.fav && prefs.fav.indexOf(id) >= 0 ? 2 : 1;
+}
 /* Tirage pondéré (rand : nombres dans [0, 1[). Poids > 0 : tirage pondéré ; 0 : écarté (repères) ; < 0 : écarté d'abord.
    Sans poids positif, tirage parmi les poids nuls, sinon parmi tous. */
 function tieredPick(r, a, w){
@@ -58,10 +69,16 @@ function tieredPick(r, a, w){
    poisson (et poisson gras) et légumes secs trois fois plus probables tant qu'il en manque, bœuf, « Œufs + jambon » et salé
    écartés s'ils feraient dépasser la viande rouge ou la charcuterie. Sans bal : tirage uniforme. La recette du couple
    protéine × féculent est choisie d'office (tirée au hasard s'il y en a plusieurs).
+   Avec prefs (3.25.0, recettes favorites et à éviter, seulement quand les plats sont des recettes) : chaque couple pèse le
+   poids de sa recette (recipePref : 0 à éviter, 2 favorite), la protéine la part de ses couples (le tirage du couple garde
+   donc les poids ci-dessus, multipliés) ; une recette à éviter n'est jamais tirée (s'il ne reste qu'elle, le couple vient
+   sans recette).
    @param {function():number} [rand]  @param {string[]} [off] aliments retirés  @param {Object} [bal] weekBalance du reste de la semaine
-   @param {number} [k] facteur de portions  @returns {Choices} */
-function randomChoices(rand, off, bal, k){
+   @param {number} [k] facteur de portions  @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices} */
+function randomChoices(rand, off, bal, k, prefs){
   const r = rand || Math.random, kk = k || 1, c = bal ? Object.assign({}, bal) : null;
+  const pp = prefs && ((prefs.fav && prefs.fav.length) || (prefs.ban && prefs.ban.length)) ? prefs : null;
+  const cp = function(p, s){ return recipePref(recipesFor(p, s)[0], pp); };
   /* 0 : écarté par les repères ; < 0 : écarté d'abord (œufs-jambon avec le salé) */
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
@@ -77,8 +94,14 @@ function randomChoices(rand, off, bal, k){
   };
   const starchW = function(s){ return c && LEGUMES.indexOf(s) >= 0 && c.legumes < WEEK_GOALS.legumes ? 3 : 1; };
   const meal = function(not){
-    const prots = allowed('prot', off), other = prots.filter(function(p){ return p !== not; });
-    const prot = pick(other.length ? other : prots, protW), starch = pick(allowed('starch', off), starchW);
+    const prots = allowed('prot', off), other = prots.filter(function(p){ return p !== not; }), sts = allowed('starch', off);
+    /* Préférences : la protéine pèse la part pondérée de ses couples, le féculent le poids de la recette du couple */
+    const share = function(p){
+      const t = sts.reduce(function(a, s){ return a + starchW(s); }, 0), u = sts.reduce(function(a, s){ return a + starchW(s) * cp(p, s); }, 0);
+      return t > 0 ? u / t : 1;
+    };
+    const prot = pick(other.length ? other : prots, pp ? function(p){ const w = protW(p); return w > 0 ? w * share(p) : w; } : protW);
+    const starch = pick(sts, pp ? function(s){ return starchW(s) * cp(prot, s); } : starchW);
     if (c){
       if (FISH.indexOf(prot) >= 0){ c.poisson++; if (prot === 'saumon') c.gras++; }
       if (prot === 'boeuf') c.rouge += boeufCuit;
@@ -86,7 +109,8 @@ function randomChoices(rand, off, bal, k){
       if (LEGUMES.indexOf(starch) >= 0) c.legumes++;
     }
     const o = {prot:prot, starch:starch, dessert:pick(allowed('dessert', off))}, recs = recipesFor(prot, starch);
-    if (recs.length) o.recette = recs.length > 1 ? pick(recs) : recs[0];
+    const okR = recs.filter(function(id){ return recipePref(id, pp) > 0; });
+    if (okR.length) o.recette = okR.length > 1 ? pick(okR) : okR[0];
     return o;
   };
   const dej = meal(null);

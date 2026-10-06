@@ -54,10 +54,11 @@ function composeDay(plan, ch, pr, pf){
   else if (matin.length) pd.when = '1h30 avant la séance';
   secs.push(pd);
 
-  /* recipe : la recette choisie ; suggest : celle proposée pour la protéine et le féculent du repas */
+  /* recipe : la recette choisie ; suggest : celle proposée pour la protéine et le féculent du repas (pas une recette à éviter,
+     3.25.0) */
   const meal = function(slot, title){
     const c = ch[slot];
-    return {id:slot, title:title, when:null, pick:slot, items:mainItems(slot, c, k, kp), recipe:recipeOf(c), suggest:recipesFor(c.prot, c.starch)[0] || null};
+    return {id:slot, title:title, when:null, pick:slot, items:mainItems(slot, c, k, kp), recipe:recipeOf(c), suggest:recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0; })[0] || null};
   };
   const lunch = meal('dej', 'Déjeuner'), dinner = meal('diner', 'Dîner');
   let co = null, nb = 0;

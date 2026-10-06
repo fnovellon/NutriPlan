@@ -1658,6 +1658,62 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 80, 'effacer : filtres remis');
 }
 
+// Recettes favorites et à éviter (3.25.0) : dans la fiche (page et bibliothèque), enregistrées dans le profil, l'une ou
+// l'autre ; la suggestion disparaît, la bibliothèque les marque (favorites : filtre et cœur ; à éviter : en fin de liste) ;
+// réglages « Tes recettes » ; les tirages en recettes ne prennent jamais une recette à éviter
+{
+  const t = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72 }))));
+  const tw = t.d.defaultView, pf = () => JSON.parse(tw.localStorage.getItem(PKEY)), R = tw.eval('RECIPES');
+  const esc = () => t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  // Page : la suggestion du déjeuner (poulet, riz)
+  t.click('#rec-v-dej');
+  assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'false' && t.$('#rp-ban').getAttribute('aria-pressed') === 'false' && t.$('#rp-s').textContent === '', 'fiche : ni favorite ni à éviter');
+  t.click('#rp-fav');
+  assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'true' && /deux fois plus souvent/.test(t.$('#rp-s').textContent) && t.d.activeElement === t.$('#rp-fav') && !t.$('#sheet').hidden, 'favorite');
+  assert.deepStrictEqual(pf().fav, ['poulet-riz'], 'favorite enregistrée');
+  t.click('#rp-ban');
+  assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'false' && t.$('#rp-ban').getAttribute('aria-pressed') === 'true' && /ne la tire plus/.test(t.$('#rp-s').textContent), 'à éviter');
+  assert(!pf().fav && pf().ban.join() === 'poulet-riz', 'l’une ou l’autre : ' + JSON.stringify(pf()));
+  assert(!t.$('#sec-dej .rec') && !t.$('#rec-v-dej'), 'plus de suggestion sous le déjeuner');
+  esc();
+  assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#ft-dej'), 'panneau fermé : focus sur le repère du repas');
+  // Bibliothèque : la recette à éviter en fin de liste ; une favorite avec son cœur et le filtre
+  t.click('#nav-rec'); t.click('#lib-mine');
+  const ids = () => [...t.d.querySelectorAll('#lib-list .lib-r')].map(b => b.dataset.value);
+  assert(ids()[ids().length - 1] === 'poulet-riz' && /, à éviter/.test(t.$('#lib-poulet-riz').textContent) && t.$('#lib-poulet-riz').classList.contains('is-ban'), 'à éviter en fin de liste');
+  t.click('#lib-saumon-riz'); t.click('#rp-fav'); esc();
+  assert(t.$('#lib-saumon-riz .lib-h') && t.d.activeElement === t.$('#lib-saumon-riz'), 'favorite : cœur dans la liste');
+  t.click('#lib-fav');
+  assert.deepStrictEqual(ids(), ['saumon-riz'], 'filtre des favorites');
+  t.click('#lib-fav'); t.click('#lib-mine');
+  // Réglages, « Tes recettes » : les deux listes ; retirer une recette (focus sur la suivante, sinon le titre)
+  t.click('#lib-boeuf-pates'); t.click('#rp-fav'); esc();
+  t.click('#gear'); t.click('#tab-repas');
+  const rows = k => [...t.d.querySelectorAll('#rp-list [data-action="rp-rm"][data-pref="' + k + '"]')].map(b => b.dataset.value);
+  assert.deepStrictEqual([rows('fav'), rows('ban')], [['saumon-riz', 'boeuf-pates'], ['poulet-riz']], 'réglages : les deux listes');
+  t.click('#rp-list [data-pref="fav"][data-value="saumon-riz"]');
+  assert(rows('fav').join() === 'boeuf-pates' && t.d.activeElement === t.$('#rp-list [data-pref="fav"][data-value="boeuf-pates"]') && pf().fav.join() === 'boeuf-pates', 'retirée : focus sur la suivante');
+  t.click('#rp-list [data-pref="ban"][data-value="poulet-riz"]');
+  assert(!rows('ban').length && /Aucune pour l’instant/.test(t.$('#rp-list').textContent) && t.d.activeElement === t.$('#rp-t') && !pf().ban, 'liste vide : focus sur le titre');
+  t.click('#nav-jour');
+  assert(t.$('#rec-v-dej'), 'suggestion revenue');
+  // Tirages en recettes : jamais une recette à éviter (toutes sauf celles du saumon)
+  const keep = Object.keys(R).filter(id => R[id].p === 'saumon'), ban = Object.keys(R).filter(id => !keep.includes(id));
+  tw.localStorage.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72, ban }));
+  const u = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72, ban }))));
+  u.click('#plan-btn'); u.click('[data-action="pl-create"]');
+  const st = u.stored().plans;
+  assert(Object.keys(st).length === 7 && Object.values(st).every(d => ['dej', 'diner'].every(sl => !d.ch[sl].recette || keep.includes(d.ch[sl].recette))), 'planification en recettes : aucune à éviter');
+  // En batch cooking aussi
+  u.click('#plan-btn'); u.click('#pl-batch'); u.click('[data-action="pl-create"]');
+  assert(Object.values(u.stored().plans).every(d => ['dej', 'diner'].every(sl => !d.ch[sl].recette || keep.includes(d.ch[sl].recette))), 'batch cooking : aucune à éviter');
+  u.click('#nav-jour');
+  for (let i = 0; i < 5; i++) { u.click('#redo-dej'); const c = u.stored().plans['2026-10-07'].ch.dej; assert(!c.recette || keep.includes(c.recette), 'un autre plat : pas une recette à éviter'); }
+  // Effacer mes données : plus de favorites
+  u.click('#gear'); u.click('#tab-appli'); u.click('[data-action="eff-ask"]'); u.click('[data-action="eff-ok"]');
+  assert(!u.$('#rp-list [data-action="rp-rm"]') && u.d.querySelectorAll('#rp-list .rp-none').length === 2, 'effacées avec le reste');
+}
+
 // Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;
 // triées ; finies depuis plus de 21 jours, effacées
 {

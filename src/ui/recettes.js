@@ -5,7 +5,7 @@
      repas visé remis à l'heure à chaque ouverture. */
   const LIB_T = [['0|dej', 'Ce midi'], ['0|diner', 'Ce soir'], ['1|dej', 'Demain midi'], ['1|diner', 'Demain soir']];
   const LIB_QUICK = 20;
-  const lib = {prot:'', starch:'', box:false, quick:false, mine:true, target:'0|dej'};
+  const lib = {prot:'', starch:'', box:false, quick:false, favs:false, mine:true, target:'0|dej'};
   const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return a.concat(STARCH_ORDER.map(function(s){ return p + '-' + s; }).filter(function(id){ return has(RECIPES, id); })); }, []);
   /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi */
   const resetLib = function(){
@@ -19,27 +19,29 @@
   };
   const libChosen = function(tg){ return recipeOf(choicesFor(tg.iso, fromIso(tg.iso).getDay())[tg.slot]); };
   const libList = function(){
-    const off = cleanProfile(prof).off, okP = allowed('prot', off), okS = allowed('starch', off);
+    const pr = cleanProfile(prof), off = pr.off, okP = allowed('prot', off), okS = allowed('starch', off);
+    /* Les recettes à éviter en fin de liste (3.25.0) */
     return LIB_ALL.filter(function(id){
       const x = RECIPES[id];
       return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) && (!lib.quick || x.min <= LIB_QUICK) &&
-        (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
-    });
+        (!lib.favs || pr.fav.indexOf(id) >= 0) && (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
+    }).sort(function(a, b){ return (pr.ban.indexOf(a) >= 0) - (pr.ban.indexOf(b) >= 0) || LIB_ALL.indexOf(a) - LIB_ALL.indexOf(b); });
   };
-  /* Les filtres (listes de choix) une fois pour toutes ; le reste à chaque dessin */
+  /* Les filtres (listes de choix) une fois pour toutes ; le reste à chaque dessin. Favorites : 3.25.0 */
   $('lib-prot').innerHTML = '<option value="">Toutes</option>' + PROT_ORDER.map(function(p){ return '<option value="' + p + '">' + PROT[p].label + '</option>'; }).join('');
   $('lib-starch').innerHTML = '<option value="">Tous</option>' + STARCH_ORDER.map(function(s){ return '<option value="' + s + '">' + STARCH[s].label + '</option>'; }).join('');
   const renderLib = function(){
     const tg = libTarget(), cur = libChosen(tg), list = libList();
     $('lib-for').innerHTML = LIB_T.map(function(t){ return '<button type="button" class="opt" data-action="lib-for" data-value="' + t[0] + '" aria-pressed="' + (t[0] === lib.target) + '">' + t[1] + '</button>'; }).join('');
     $('lib-prot').value = lib.prot; $('lib-starch').value = lib.starch;
-    [['lib-box', lib.box], ['lib-quick', lib.quick]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
+    [['lib-box', lib.box], ['lib-quick', lib.quick], ['lib-fav', lib.favs]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
     $('lib-mine').setAttribute('aria-checked', String(lib.mine));
     $('lib-n').textContent = list.length ? list.length + NB + 'recette' + (list.length > 1 ? 's' : '') + (tg.libre ? ', mais ' + tg.label + ', c’est ton repas libre.' : '.') : 'Aucune recette avec ces filtres.';
     $('lib-list').innerHTML = list.map(function(id){
-      const x = RECIPES[id], on = id === cur && !tg.libre;
-      return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
-        '<span class="lib-t">' + x.t + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : '') + (on ? '<span class="lib-c">Choisie pour ' + tg.label + '</span>' : '') + '</span></button></li>';
+      const x = RECIPES[id], on = id === cur && !tg.libre, k = prefOf(id);
+      return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + (k === 'ban' ? ' is-ban' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
+        '<span class="lib-t">' + (k === 'fav' ? '<span class="lib-h" role="img" aria-label="Favorite">' + HEART + '</span>' : '') + x.t + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : '') + (k === 'ban' ? ', à éviter' : '') +
+        (on ? '<span class="lib-c">Choisie pour ' + tg.label + '</span>' : '') + '</span></button></li>';
     }).join('');
   };
   /* Listes de choix : la liste suit tout de suite */
@@ -59,12 +61,12 @@
   Object.assign(ACTIONS, {
     recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },
     'lib-for': function(b, v){ if (!LIB_T.some(function(t){ return t[0] === v; })) return; lib.target = v; $('lib-msg').textContent = ''; renderLib(); $('lib-for').querySelector('[data-value="' + v + '"]').focus({preventScroll:true}); },
-    'lib-f': function(b, v){ if (v !== 'box' && v !== 'quick' && v !== 'mine') return; lib[v] = !lib[v]; renderLib(); },
+    'lib-f': function(b, v){ if (['box', 'quick', 'favs', 'mine'].indexOf(v) < 0) return; lib[v] = !lib[v]; renderLib(); },
     /* Fiche de la recette, avec tes quantités pour le repas visé */
     'lib-open': function(b, v){
       if (!has(RECIPES, v)) return;
-      const tg = libTarget(), x = RECIPES[v], on = libChosen(tg) === v && !tg.libre;
-      showRecipe(x, libSec(v, tg), on ? ' Choisie pour ' + tg.label + '.' : '', 'Pour ' + tg.label,
+      const tg = libTarget(), on = libChosen(tg) === v && !tg.libre;
+      showRecipe(v, libSec(v, tg), on ? ' Choisie pour ' + tg.label + '.' : '', 'Pour ' + tg.label,
         tg.libre ? '<p class="warn">' + cap(tg.label) + ', c’est ton repas libre' + NB + ': choisis un autre repas pour la prendre.</p>'
           : on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
         tg.libre || on ? '' : '<button type="button" class="btn main wide" data-action="lib-take" data-value="' + v + '">Prendre pour ' + tg.label + '</button>',

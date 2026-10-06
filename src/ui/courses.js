@@ -162,7 +162,7 @@
       return '<p class="calc">' + cookText(cook, nb, ng, bl.recipes.length + ' recettes, ') + '</p>' +
         bl.recipes.map(function(r){
           const g = r.boxes.filter(function(x){ return !x.fridge; }).length, n = r.boxes.length;
-          const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr)).length;
+          const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr), pr).length;
           return '<details class="batch" id="bt-' + bl.start + '-' + r.id + '"><summary><span class="b-s"><span class="b-t">' + r.t + '</span><span class="b-n">' + n + NB + 'boîtes' +
             (g ? ', dont ' + g + ' au congélateur' : '') + '</span></span></summary><div class="b-body">' +
             (swap ? '<button type="button" class="btn b-swap" id="swap-' + bl.start + '-' + r.id + '" data-action="co-swap" data-value="' + bl.start + '|' + r.id + '">Changer de recette</button>'
@@ -185,7 +185,7 @@
   };
   /* Panneau du bas : « Une autre au hasard », puis les recettes qui vont (même protéine d'abord) */
   const openSwap = function(start, id, trigger){
-    const pr = cleanProfile(prof), opts = has(RECIPES, id) ? batchSwapOptions(swapBlock(start).days, id, pr.off, scaleOf(pr)) : [];
+    const pr = cleanProfile(prof), opts = has(RECIPES, id) ? batchSwapOptions(swapBlock(start).days, id, pr.off, scaleOf(pr), pr) : [];
     if (!opts.length) return;
     const same = opts.filter(function(x){ return RECIPES[x].p === RECIPES[id].p; }), other = opts.filter(function(x){ return RECIPES[x].p !== RECIPES[id].p; });
     const opt = function(v, t, s){ return '<button type="button" class="opt" data-action="co-swap-to" data-value="' + v + '">' + t + '<span class="opt-s">' + s + '</span></button>'; };
@@ -268,7 +268,7 @@
     'co-swap-to': function(b, v){
       if (!pick || pick.kind !== 'swap') return;
       const s = pick, pr = cleanProfile(prof), k = scaleOf(pr), blk = swapBlock(s.start);
-      const opts = batchSwapOptions(blk.days, s.id, pr.off, k), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k) : v;
+      const opts = batchSwapOptions(blk.days, s.id, pr.off, k, pr), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k, null, pr) : v;
       closePick(false);
       if (!nid || opts.indexOf(nid) < 0) return;
       /* La nouvelle recette, arrondie aux 100 g sur ses boîtes (les autres gardent leurs poids) */

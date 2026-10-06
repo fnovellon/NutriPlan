@@ -276,6 +276,11 @@
         <div class="needs-body" id="alim-list"></div>
         <p class="warn" id="alim-warn" role="status"></p>
       </section>
+      <section class="needs" id="rec-prefs" aria-labelledby="rp-t">
+        <h2 class="needs-t" id="rp-t" tabindex="-1">Tes recettes</h2>
+        <p class="needs-s">Dans la fiche d’une recette, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats, «&nbsp;À éviter&nbsp;» ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas.</p>
+        <div class="needs-body" id="rp-list"></div>
+      </section>
       <section class="needs" aria-labelledby="shaker-t">
         <h2 class="needs-t" id="shaker-t">Shaker de protéines</h2>
         <div class="needs-body">
@@ -351,7 +356,7 @@
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
-      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée.</li>
+      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», une nouvelle planification en recettes avec l’option «&nbsp;Batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Ta planification montre alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
     </ul>
@@ -450,6 +455,7 @@
   <div class="opts-list lib-f" role="group" aria-label="Filtres">
     <button type="button" class="opt" id="lib-box" data-action="lib-f" data-value="box" aria-pressed="false">Se garde</button>
     <button type="button" class="opt" id="lib-quick" data-action="lib-f" data-value="quick" aria-pressed="false">20&nbsp;min ou moins</button>
+    <button type="button" class="opt" id="lib-fav" data-action="lib-f" data-value="favs" aria-pressed="false">Favorites</button>
   </div>
   <div class="switches"><button type="button" class="switch" role="switch" id="lib-mine" aria-checked="true" data-action="lib-f" data-value="mine"><span>Seulement tes aliments</span><span class="knob" aria-hidden="true"></span></button></div>
   <p class="calc lib-n" id="lib-n" role="status"></p>

@@ -63,7 +63,7 @@
     'repas-ok': function(){ if (!draft) return; applyRepas(draft); return ''; },
     'repas-hasard': function(){
       if (!draft) return;
-      applyRepas(drawFor(selIso()));
+      applyRepas(drawFor(selIso(), true));
       return 'Repas tirés au hasard' + NB + ': touche un plat pour le changer.';
     }
   });

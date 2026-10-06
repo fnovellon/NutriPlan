@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
-const { APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
+const { recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -846,5 +846,65 @@ for (const k of [0.65, 1, 1.4]) for (const set of [[], [moyenne('matin')], [long
   assert(g(b, 'skyr') >= 100, 'skyr du pain sous 100 g');
 }
 assert(buildDay(cleanPlan({ seances: [longue(2)], libre: false }, 3), { pdBase: 'avoine', dej: { prot: 'thon', starch: 'riz' }, diner: { prot: 'thon', starch: 'pates' } }).secs[0].items.find(i => i.key === 'skyr').qty === '200 g', 'sortie longue : 80 g de flocons, 200 g de skyr');
+
+// Recettes favorites et à éviter (3.25.0) : relues du profil (identifiants validés, l'une ou l'autre), poids des tirages
+assert.deepStrictEqual(plain(profileFields({ fav: ['poulet-riz', 'x', '__proto__', 5, 'poulet-riz', 'saumon-riz'], ban: ['saumon-riz', 'boeuf-pates', 'constructor'] })), { fav: ['poulet-riz', 'saumon-riz'], ban: ['boeuf-pates'] }, 'favorites et à éviter relues');
+assert.deepStrictEqual(plain(profileFields({ fav: 'poulet-riz', ban: {} })), {}, 'listes abîmées ignorées');
+assert(cleanProfile({}).fav.length === 0 && cleanProfile({}).ban.length === 0 && cleanRecipeIds(null).length === 0, 'aucune par défaut');
+assert(recipePref('poulet-riz', null) === 1 && recipePref('poulet-riz', { fav: ['poulet-riz'], ban: [] }) === 2 && recipePref('poulet-riz', { fav: [], ban: ['poulet-riz'] }) === 0, 'poids d’une recette');
+{
+  // Sans préférence : exactement le même tirage (mêmes nombres au hasard)
+  for (let i = 1; i < 60; i++) assert.deepStrictEqual(plain(randomChoices(lcg(i), [], null, 1, { fav: [], ban: [] })), plain(randomChoices(lcg(i), [], null, 1)), 'préférences vides : même tirage');
+  const draws = (prefs, n) => { const r = lcg(77), out = []; for (let i = 0; i < n; i++) out.push(randomChoices(r, [], null, 1, prefs)); return out; };
+  const ban = ['poulet-riz', 'boeuf-pates', 'saumon-riz'], N = 20000;
+  const withBan = draws({ fav: [], ban }, N);
+  assert(withBan.every(c => !ban.includes(c.dej.recette) && !ban.includes(c.diner.recette)) && withBan.every(c => !ban.includes(c.dej.prot + '-' + c.dej.starch)), 'à éviter : jamais tirée');
+  // Plats simples (sans préférences) : le couple reste possible
+  assert(draws(null, N).filter(c => c.dej.prot === 'poulet' && c.dej.starch === 'riz').length > N / 100, 'plats simples : le couple reste');
+  // Favorite : deux fois plus souvent (couple du déjeuner, tirage uniforme sinon : 1 / 80 → 2 / 81)
+  const f0 = draws(null, N).filter(c => c.dej.recette === 'saumon-riz').length, f1 = draws({ fav: ['saumon-riz'], ban: [] }, N).filter(c => c.dej.recette === 'saumon-riz').length;
+  assert(f1 / f0 > 1.75 && f1 / f0 < 2.25, 'favorite : deux fois plus souvent (' + f0 + ' → ' + f1 + ')');
+  // Toutes les recettes d'une protéine à éviter : cette protéine n'est plus tirée ; toutes : des plats sans recette
+  const allTofu = STARCH_ORDER.map(st => 'tofu-' + st);
+  assert(draws({ fav: [], ban: allTofu }, 3000).every(c => c.dej.prot !== 'tofu' && c.diner.prot !== 'tofu'), 'protéine sans recette possible : écartée');
+  const all = Object.keys(RECIPES), none = draws({ fav: [], ban: all }, 500);
+  assert(none.every(c => !c.dej.recette && !c.diner.recette && PROT_ORDER.includes(c.dej.prot) && STARCH_ORDER.includes(c.dej.starch)), 'toutes à éviter : plats sans recette');
+  // Repères de la semaine toujours respectés
+  draws({ fav: ['boeuf-riz', 'oeufs-riz'], ban: [] }, 0);
+  for (let i = 0; i < 300; i++) {
+    const full = randomChoices(lcg(i + 1), [], { poisson: 2, gras: 1, legumes: 2, rouge: 480, charcuterie: 140 }, 1, { fav: ['boeuf-riz', 'boeuf-pates', 'oeufs-riz'], ban: [] });
+    assert(full.pdBase !== 'sale' && ![full.dej.prot, full.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'favorites : repères de la semaine gardés');
+  }
+  // La suggestion d'un repas n'est jamais une recette à éviter ; choisie à la main, elle reste
+  const chP = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'pates', recette: 'boeuf-pates' } };
+  const dP = buildDay(day([]), chP, { ban: ['poulet-riz', 'boeuf-pates'] }), sec = id => dP.secs.find(x => x.id === id);
+  assert(sec('dej').suggest === null && sec('diner').recipe === 'boeuf-pates' && buildDay(day([]), chP).secs.find(x => x.id === 'dej').suggest === 'poulet-riz', 'suggestion : pas une recette à éviter');
+  assert.strictEqual(buildDay(day([]), chP, { ban: ['poulet-riz'] }).tot.kcal, buildDay(day([]), chP).tot.kcal, 'à éviter : rien ne change dans les calculs');
+  // Batch : une recette à éviter jamais tirée ni proposée au remplacement ; une favorite plus souvent
+  const boxes = Object.keys(RECIPES).filter(id => RECIPES[id].box), banB = boxes.filter((id, i) => i % 3 === 0);
+  let favIn = 0, favIn0 = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    const cs = batchChoices(week(7, 5), 4, [], 1, lcg(seed), { fav: [], ban: banB });
+    cs.forEach(c => ['dej', 'diner'].forEach(sl => assert(!banB.includes(c[sl].recette), 'batch : recette à éviter tirée')));
+    const bd = cs.map((ch, i) => ({ ch, libre: i === 5 }));
+    batchSwapOptions(bd, cs[0].dej.recette, [], 1, { fav: [], ban: banB }).forEach(x => assert(!banB.includes(x), 'remplacement : recette à éviter proposée'));
+    // (graines écartées : le premier nombre d'une petite graine est presque 0, toujours la première recette)
+    const inIt = cc => cc.some(c => c.dej.recette === 'tofu-lentilles' || c.diner.recette === 'tofu-lentilles');
+    if (inIt(batchChoices(week(7, 5), 4, [], 1, lcg(seed * 7919 + 1), { fav: ['tofu-lentilles'], ban: [] }))) favIn++;
+    if (inIt(batchChoices(week(7, 5), 4, [], 1, lcg(seed * 7919 + 1)))) favIn0++;
+  }
+  assert(favIn > favIn0 * 1.4, 'batch : favorite plus souvent (' + favIn0 + ' → ' + favIn + ')');
+  // Presque tout à éviter (seules les recettes du poulet et du saumon restent) : même quand les protéines manquent, jamais une à éviter
+  const keepB = boxes.filter(id => ['poulet', 'saumon'].includes(RECIPES[id].p)), banAll = Object.keys(RECIPES).filter(id => !keepB.includes(id));
+  for (let seed = 1; seed <= 30; seed++) batchChoices(week(7, 5), 4, [], 1, lcg(seed * 7919 + 1), { fav: [], ban: banAll }).forEach(c => ['dej', 'diner'].forEach(sl => assert(keepB.includes(c[sl].recette), 'batch presque tout à éviter : ' + c[sl].recette)));
+  // « Une autre au hasard » : une favorite plus souvent
+  const bdS = batchChoices(week(7, 5), 4, [], 1, lcg(11)).map((ch, i) => ({ ch, libre: i === 5 })), idS = bdS[0].ch.dej.recette, optsS = batchSwapOptions(bdS, idS, [], 1);
+  const favS = optsS[optsS.length - 1];
+  let pS = 0, pS0 = 0;
+  for (let seed = 1; seed <= 600; seed++) { if (batchSwapPick(bdS, idS, [], 1, lcg(seed * 7919 + 1), { fav: [favS], ban: [] }) === favS) pS++; if (batchSwapPick(bdS, idS, [], 1, lcg(seed * 7919 + 1)) === favS) pS0++; }
+  assert(pS > pS0 * 1.5, 'remplacement au hasard : favorite plus souvent (' + pS0 + ' → ' + pS + ')');
+  const allBan = batchChoices(week(7, 5), 4, [], 1, lcg(3), { fav: [], ban: Object.keys(RECIPES) });
+  assert(allBan.every(c => Object.prototype.hasOwnProperty.call(RECIPES, c.dej.recette)), 'batch : toutes à éviter, tirage quand même');
+}
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

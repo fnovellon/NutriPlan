@@ -17,7 +17,7 @@
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
  * @typedef {{prot:string, starch:string, dessert?:string, recette?:string}} MealChoice  plats du déjeuner ou du dîner
  * @typedef {{pdBase:string, dej:MealChoice, diner:MealChoice}} Choices  plats d'un jour
- * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off et semaine validés
+ * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off, fav, ban et semaine validés
  * @typedef {{bmr:number, rest:number, mode:string, restSource:string, cost:number, need:number, deficit:number, target:number,
  *   kgWeek:number}} Energy  dépense et objectif du jour (energy)
  * @typedef {{secs:Section[], tot:Macros, libre:?number, energy:Energy, ecart:number, scale:number,

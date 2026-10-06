@@ -105,6 +105,10 @@ function scan(dom, label){
   click(dom, '[data-action="lib-take"]'); scan(dom, 'recette prise');
   click(dom, '[data-action="lib-for"][data-value="1|diner"]'); click(dom, '#lib-list .lib-r'); scan(dom, 'fiche, demain soir');
   click(dom, '#sheet .sheet-x'); click(dom, '#lib-quick'); click(dom, '#lib-mine');
+  // Favorite et à éviter (3.25.0) : la fiche, la liste, les réglages
+  click(dom, '#lib-list .lib-r'); click(dom, '#rp-fav'); scan(dom, 'fiche, favorite'); click(dom, '#rp-ban'); scan(dom, 'fiche, à éviter'); click(dom, '#sheet .sheet-x');
+  click(dom, '#lib-list .lib-r:last-child'); click(dom, '#lib-fav'); scan(dom, 'recettes, favorites');
+  click(dom, '#gear'); click(dom, '#tab-repas'); scan(dom, 'réglages, tes recettes'); click(dom, '#nav-jour');
 }
 {
   // Calendrier, Planifier (formulaire, erreurs, chaque type de plats), détail d'une planification, page du batch
@@ -279,10 +283,18 @@ function check(dom, log){
   ['dej', 'diner'].forEach(sl => {
     const meal = $('[aria-labelledby="h-' + sl + '"]'); if (!meal) return;
     const box = meal.querySelector('.rec'), names = [...meal.querySelectorAll('.items .name')].map(n => n.childNodes[0].textContent.trim());
-    C.ok(!!box === !(sl === 'diner' && libre), 'recette proposée', () => sl + ' ' + where());
+    // Pas de suggestion non plus quand la recette du couple est à éviter (3.25.0)
+    const banP = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).ban || [], sel = k => (meal.querySelector('[data-action="open-pick"][data-kind="' + k + '"]') || { dataset: {} }).dataset.value;
+    const couple = sel('prot') + '-' + sel('starch');
+    C.ok(!!box === !(sl === 'diner' && libre) || (!box && banP.includes(couple)), 'recette proposée', () => sl + ' ' + where());
     if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
   });
+  // Recettes à éviter (3.25.0) : jamais proposées sous un repas
+  try {
+    const ban = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).ban || [], RR = w.eval('RECIPES');
+    d.querySelectorAll('#day .rec:not(.is-on) .rec-n').forEach(n => C.ok(!ban.some(id => RR[id] && RR[id].t === n.textContent), 'suggestion à éviter', () => n.textContent + ' ' + where()));
+  } catch (e){ C.ok(false, 'à éviter : lecture', () => e.message); }
 }
 // Batch cooking : changer une recette de la fiche (une de la liste, au hasard, ou panneau fermé sans rien changer)
 function swapRecipe(dom){
@@ -547,6 +559,8 @@ const ACTIONS = {
     const tg = R.pick([...d.querySelectorAll('[data-action="lib-for"]')]); tg.click();
     const items = [...d.querySelectorAll('#lib-list .lib-r')], n = +(/^\d+/.exec(d.querySelector('#lib-n').textContent) || [0])[0];
     C.ok(items.length === (n || 0) && (!items.length || /\srecettes?(\.|, mais)/.test(d.querySelector('#lib-n').textContent)), 'recettes : nombre affiché', () => n + ' / ' + items.length);
+    const bans = items.map(x => x.classList.contains('is-ban'));
+    C.ok(bans.every((x, i) => !x || bans.slice(i).every(Boolean)), 'recettes : celles à éviter en fin de liste', () => bans.join());
     const b = R.pick(items), out = () => { d.querySelector(R.pick(['#nav-jour', '#recettes [data-action="fermer"]'])).click(); };
     if (!b){ out(); return 'recettes vides'; }
     b.click();
@@ -558,6 +572,18 @@ const ACTIONS = {
     C.ok(c && c.recette === b.dataset.value && d.querySelector('#sheet').hidden && d.activeElement && d.activeElement.id === b.id, 'recettes : prise', () => iso + ' ' + JSON.stringify(c) + ' ' + b.dataset.value);
     if (R.chance(.5)) d.querySelector('#lib-msg [data-action="lib-day"]').click(); else out();
     return 'recette prise ' + b.dataset.value + ' ' + tg.dataset.value;
+  },
+  // Fiche d'une recette de la page : favorite ou à éviter (l'une ou l'autre), puis fermée
+  preferer: dom => {
+    const d = dom.window.document, b = R.pick([...d.querySelectorAll('#day [data-action="rec-view"]')]);
+    if (d.querySelector('#page').hidden || !b) return 'préférer -';
+    b.click();
+    const k = R.pick(['fav', 'ban']), btn = d.querySelector('#rp-' + k), was = btn.getAttribute('aria-pressed') === 'true';
+    btn.click();
+    const other = d.querySelector('#rp-' + (k === 'fav' ? 'ban' : 'fav'));
+    C.ok(btn.getAttribute('aria-pressed') === String(!was) && other.getAttribute('aria-pressed') === 'false' && d.activeElement === btn, 'favorite ou à éviter', k);
+    d.querySelector('#sheet .sheet-x').click();
+    return 'préférer ' + k + (was ? ' (retirée)' : '');
   },
   // Journée : « Un autre plat » pour un repas (un autre couple, le dessert gardé)
   redo: dom => {

@@ -74,6 +74,18 @@
     }).join('');
   };
   renderAliments();
+  /* Réglages, « Tes recettes » (3.25.0) : les favorites et celles à éviter, à retirer une par une */
+  const PREF_G = [['fav', 'Favorites', 'des favorites'], ['ban', 'À éviter', 'de la liste à éviter']];
+  const renderPrefs = function(){
+    const pr = cleanProfile(prof);
+    $('rp-list').innerHTML = PREF_G.map(function(g){
+      return '<p class="rf-l" id="rp-' + g[0] + '-l">' + g[1] + '</p>' + (pr[g[0]].length ? '<ul class="rp-ul" aria-labelledby="rp-' + g[0] + '-l">' + pr[g[0]].map(function(id){
+        return '<li><span class="rp-n">' + RECIPES[id].t + '</span><button type="button" class="rm" data-action="rp-rm" data-pref="' + g[0] + '" data-value="' + id + '"' +
+          ' aria-label="Retirer «' + NB + RECIPES[id].t + NB + '» ' + g[2] + '">×</button></li>';
+      }).join('') + '</ul>' : '<p class="calc rp-none">Aucune pour l’instant.</p>');
+    }).join('');
+  };
+  renderPrefs();
 
   /* Réglages, « Ta semaine type » : l'éditeur partagé avec l'accueil (ui/semtype.js) */
   renderSemaine();
@@ -135,12 +147,12 @@
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
+    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, favs:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();
     $('hint').textContent = ''; $('intro').textContent = ''; $('alim-warn').textContent = '';
-    fillNeeds(); renderAliments(); renderSemaine(); showTab('profil');
+    fillNeeds(); renderAliments(); renderPrefs(); renderSemaine(); showTab('profil');
     render();
     openAcc({});
     $('acc-h1').focus();
@@ -180,6 +192,15 @@
       return '';
     },
     /* « Tes aliments » : proposer ou non un aliment (au moins un gardé par type, sauf les desserts) */
+    /* Une recette retirée de sa liste : le focus va sur la suivante (sinon la précédente, sinon le titre) */
+    'rp-rm': function(b, v){
+      const k = b.dataset.pref;
+      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      const all = [...$('rp-list').querySelectorAll('[data-action="rp-rm"][data-pref="' + k + '"]')].map(function(x){ return x.dataset.value; }), i = all.indexOf(v);
+      setPref(v, k, false);
+      const to = all[i + 1] || all[i - 1], nx = to ? $('rp-list').querySelector('[data-pref="' + k + '"][data-value="' + to + '"]') : null;
+      (nx || $('rp-t')).focus({preventScroll:true});
+    },
     aliment: function(b, v){
       const kind = b.dataset.kind, key = kind + ':' + v, off = cleanProfile(prof).off;
       if (!has(CHOICE_IDS, kind) || CHOICE_IDS[kind].indexOf(v) < 0) return;

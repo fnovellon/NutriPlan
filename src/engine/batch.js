@@ -23,14 +23,17 @@ const HAM_SLICES = 4;
      de salés qu'au hasard (probabilité : jours possibles / bases proposées / 4) ; les autres jours, une autre base au hasard
      (le salé s'il ne reste que lui) ; desserts au hasard ; le dîner d'un repas libre reçoit une recette du bloc d'une autre
      protéine, sans boîte.
+   - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
+     favorite pèse double.
    @param {{libre:boolean, long?:boolean}[]} days  @param {number} n  @param {string[]} [off]  @param {number} [k]  @param {function():number} [rand]
-   @returns {Choices[]} */
-function batchChoices(days, n, off, k, rand){
+   @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices[]} */
+function batchChoices(days, n, off, k, rand, prefs){
   const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
   const prots = allowed('prot', off), starches = allowed('starch', off), pds = allowed('pd', off), sweet = pds.filter(function(x){ return x !== 'sale'; });
-  const ok = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
+  const ok0 = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
+  const okP = ok0.filter(function(id){ return recipePref(id, prefs) > 0; }), ok = okP.length ? okP : ok0;
   const keep = ok.filter(function(id){ return RECIPES[id].box; }), pool = keep.length ? keep : ok;
   const prot = function(e){ return RECIPES[e.id].p; };
   const out = [];
@@ -58,7 +61,7 @@ function batchChoices(days, n, off, k, rand){
         let w = usedS.indexOf(x.s) >= 0 ? 0.3 : 1;
         if (FISH.indexOf(x.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= x.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
         if (LEGUMES.indexOf(x.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
-        return w;
+        return w * recipePref(id, prefs);
       });
       const x = RECIPES[id];
       if (FISH.indexOf(x.p) >= 0){ c.poisson += ct; if (x.p === 'saumon') c.gras += ct; }
@@ -190,9 +193,10 @@ function batchSwap(days, id, nid, off){
    féculent proposés ; ni une recette déjà dans le bloc, ni la protéine d'une autre recette du bloc, ni la protéine de l'autre
    repas d'un jour où elle est servie ; bœuf seulement sous 500 g de viande rouge cuite sur le bloc après le changement
    (portions de base × k) ; « Œufs + jambon » seulement pour 2 repas (4 tranches de jambon) et s'il reste une autre base que
-   le salé ; une recette qui se congèle mal seulement si tous ses repas tombent dans les 3 premiers jours. Celles de la même protéine d'abord, puis dans l'ordre de RECIPES.
+   le salé ; une recette qui se congèle mal seulement si tous ses repas tombent dans les 3 premiers jours ; jamais une recette
+   à éviter (3.25.0). Celles de la même protéine d'abord, puis dans l'ordre de RECIPES.
    @returns {string[]} */
-function batchSwapOptions(days, id, off, k){
+function batchSwapOptions(days, id, off, k, prefs){
   const kk = k || 1, prots = allowed('prot', off), starches = allowed('starch', off);
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf, sweet = allowed('pd', off).some(function(b){ return b !== 'sale'; });
   const ok = Object.keys(RECIPES).filter(function(x){ return prots.indexOf(RECIPES[x].p) >= 0 && starches.indexOf(RECIPES[x].s) >= 0; });
@@ -203,7 +207,7 @@ function batchSwapOptions(days, id, off, k){
   const p0 = has(RECIPES, id) ? RECIPES[id].p : null;
   return pool.filter(function(x){
     const r = RECIPES[x];
-    if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0) return false;
+    if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0 || recipePref(x, prefs) === 0) return false;
     if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !days[m.i].libre && o.recette !== id && o.prot === r.p; })) return false;
     if (!r.gel && days.length > FRIDGE_DAYS && mine.some(function(m){ return m.i >= FRIDGE_DAYS; })) return false;
     if (r.p === 'oeufs' && (mine.length !== 2 || !sweet)) return false;
@@ -217,9 +221,9 @@ function batchSwapOptions(days, id, off, k){
 }
 /* « Une autre au hasard » : parmi batchSwapOptions, tirée comme au batch (poisson × 3 tant que le bloc, sans elle, n'a pas
    2 repas de poisson, saumon × 6 s'il manque le poisson gras ; légumes secs × 3 tant qu'il en manque 2 ; féculent d'une
-   autre recette du bloc × 0,3). null s'il n'y en a aucune. */
-function batchSwapPick(days, id, off, k, rand){
-  const opts = batchSwapOptions(days, id, off, k);
+   autre recette du bloc × 0,3 ; favorite × 2, 3.25.0). null s'il n'y en a aucune. */
+function batchSwapPick(days, id, off, k, rand, prefs){
+  const opts = batchSwapOptions(days, id, off, k, prefs);
   if (!opts.length) return null;
   const others = batchMeals(days).filter(function(m){ return m.c.recette !== id; }), c = {poisson:0, gras:0, legumes:0};
   others.forEach(function(m){
@@ -232,7 +236,7 @@ function batchSwapPick(days, id, off, k, rand){
     let w = usedS.indexOf(r.s) >= 0 ? 0.3 : 1;
     if (FISH.indexOf(r.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= r.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
     if (LEGUMES.indexOf(r.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
-    return w;
+    return w * recipePref(x, prefs);
   });
 }
 /* Batch cooking, chiffres ronds (3.17.0). Pour chaque recette d'un bloc servie au moins deux fois (repas libre exclu), qui se

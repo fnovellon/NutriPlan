@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.25.0, 6 octobre 2026
+
+- Recettes favorites ou à éviter : dans la fiche d'une recette, « Favorite » la fait revenir deux fois plus souvent quand l'appli tire tes plats en recettes (« Décide pour moi », « Un autre plat », planifications, batch cooking), « À éviter » ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas, et les repères de la semaine passent toujours avant.
+- Dans les recettes, un filtre « Favorites » ; celles à éviter passent en fin de liste.
+- Réglages, onglet Repas : « Tes recettes », pour retirer une favorite ou une recette à éviter.
+
 ## 3.24.0, 5 octobre 2026
 
 - Une bibliothèque de recettes, dans le menu : les 80 recettes de l'appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides (20 min ou moins), avec seulement tes aliments.

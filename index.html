@@ -260,6 +260,21 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 .lib-t{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.3;}
 .lib-m{font-size:14.5px;font-style:italic;color:var(--muted);}
 .lib-c{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-style:normal;font-weight:700;font-size:12.5px;line-height:1.6;}
+/* Recettes favorites et à éviter (3.25.0) : dans la fiche, la bibliothèque et les réglages */
+.rec-pref{margin:12px 0 0;}
+.rec-pref .opt{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:15px;}
+.rec-pref svg{width:16px;height:16px;color:var(--beet);}
+.rec-pref [aria-pressed="true"] svg{color:var(--on-ink);}
+.rec-pref-s{margin:6px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}
+.rec-pref-s:empty{display:none;}
+.lib-h{display:inline-block;width:15px;height:15px;margin-right:6px;color:var(--beet);vertical-align:-1px;}
+.lib-h svg{display:block;width:100%;height:100%;}
+.lib-r.is-ban .lib-t{color:var(--muted);}
+.rp-ul{margin:4px 0 12px;padding:0;list-style:none;}
+.rp-ul li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);}
+.rp-n{font-size:16px;line-height:1.35;}
+.rp-ul .rm{flex:none;}
+.rp-none{margin:2px 0 12px;}
 /* Légumes à volonté (3.23.0) : surlignés comme au marqueur */
 .vol{display:inline-block;padding:0 7px;border-radius:6px;background:var(--flash);color:var(--ink);font-family:var(--sans);font-style:normal;font-size:12.5px;font-weight:700;line-height:1.6;vertical-align:1px;white-space:nowrap;}
 .rec-vol{margin:8px 0 0;font-size:14.5px;line-height:1.4;color:var(--muted);}
@@ -751,6 +766,11 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
         <div class="needs-body" id="alim-list"></div>
         <p class="warn" id="alim-warn" role="status"></p>
       </section>
+      <section class="needs" id="rec-prefs" aria-labelledby="rp-t">
+        <h2 class="needs-t" id="rp-t" tabindex="-1">Tes recettes</h2>
+        <p class="needs-s">Dans la fiche d’une recette, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats, «&nbsp;À éviter&nbsp;» ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas.</p>
+        <div class="needs-body" id="rp-list"></div>
+      </section>
       <section class="needs" aria-labelledby="shaker-t">
         <h2 class="needs-t" id="shaker-t">Shaker de protéines</h2>
         <div class="needs-body">
@@ -826,7 +846,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent. «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
-      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée.</li>
+      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 80 recettes de l’appli, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans «&nbsp;Planifier&nbsp;», une nouvelle planification en recettes avec l’option «&nbsp;Batch cooking&nbsp;» choisit 3, 4 ou 5 recettes qui se gardent et les répète midi et soir sur la période. Ta planification montre alors «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
     </ul>
@@ -925,6 +945,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
   <div class="opts-list lib-f" role="group" aria-label="Filtres">
     <button type="button" class="opt" id="lib-box" data-action="lib-f" data-value="box" aria-pressed="false">Se garde</button>
     <button type="button" class="opt" id="lib-quick" data-action="lib-f" data-value="quick" aria-pressed="false">20&nbsp;min ou moins</button>
+    <button type="button" class="opt" id="lib-fav" data-action="lib-f" data-value="favs" aria-pressed="false">Favorites</button>
   </div>
   <div class="switches"><button type="button" class="switch" role="switch" id="lib-mine" aria-checked="true" data-action="lib-f" data-value="mine"><span>Seulement tes aliments</span><span class="knob" aria-hidden="true"></span></button></div>
   <p class="calc lib-n" id="lib-n" role="status"></p>
@@ -947,7 +968,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.24.0';
+const APP_VERSION = '3.25.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1009,7 +1030,7 @@ function typo(t){
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
  * @typedef {{prot:string, starch:string, dessert?:string, recette?:string}} MealChoice  plats du déjeuner ou du dîner
  * @typedef {{pdBase:string, dej:MealChoice, diner:MealChoice}} Choices  plats d'un jour
- * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off et semaine validés
+ * @typedef {Object} Profile  profil complet (cleanProfile) : les champs de PROFILE_DEFAULT, off, fav, ban et semaine validés
  * @typedef {{bmr:number, rest:number, mode:string, restSource:string, cost:number, need:number, deficit:number, target:number,
  *   kgWeek:number}} Energy  dépense et objectif du jour (energy)
  * @typedef {{secs:Section[], tot:Macros, libre:?number, energy:Energy, ecart:number, scale:number,
@@ -1610,7 +1631,7 @@ function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; })
 /* Profil et dépense : profil validé (profileFields, cleanProfile), métabolisme de base, dépense de repos, coût des séances,
    objectif du jour (energy). Règles : CLAUDE.md, « Dépense et objectif ». */
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], semaine:{jours:{}, libre:6}};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], fav:[], ban:[], semaine:{jours:{}, libre:6}};
 const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,2.2]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
@@ -1630,6 +1651,10 @@ function profileFields(o){
      devient 2,2 plutôt que la valeur par défaut */
   if (typeof o.prot === 'number' && o.prot > PROFILE_RANGES.prot[1] && o.prot <= 3) out.prot = PROFILE_RANGES.prot[1];
   if (Array.isArray(o.off)){ const off = cleanOff(o.off); if (off.length) out.off = off; }
+  /* Recettes favorites et à éviter (3.25.0) : l'une ou l'autre, la favorite l'emporte */
+  const fav = cleanRecipeIds(o.fav), ban = cleanRecipeIds(o.ban).filter(function(id){ return fav.indexOf(id) < 0; });
+  if (fav.length) out.fav = fav;
+  if (ban.length) out.ban = ban;
   if (o.semaine && typeof o.semaine === 'object'){ const w = cleanWeek(o.semaine); if (Object.keys(w.jours).length || w.libre !== 6) out.semaine = w; }
   return out;
 }
@@ -1640,6 +1665,8 @@ function cleanProfile(o){
   if (!f.mode) f.mode = has(f, 'repos') ? 'manuel' : 'auto';
   const out = Object.assign({}, PROFILE_DEFAULT, f);
   out.off = (f.off || []).slice();
+  out.fav = (f.fav || []).slice();
+  out.ban = (f.ban || []).slice();
   out.semaine = cleanWeek(f.semaine);
   return out;
 }
@@ -1711,6 +1738,17 @@ function withAllowed(c, off){
   };
   return {pdBase:next('pd', c.pdBase), dej:meal(c.dej, dejProt), diner:meal(c.diner, next('prot', c.diner.prot, dejProt))};
 }
+/* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, sans doublon */
+function cleanRecipeIds(o){
+  if (!Array.isArray(o)) return [];
+  return o.slice(0, 200).filter(function(x, i, a){ return typeof x === 'string' && has(RECIPES, x) && a.indexOf(x) === i; });
+}
+/* Poids d'une recette dans les tirages : 0 à éviter (jamais tirée), 2 favorite, 1 sinon ; prefs : { fav, ban } (le profil) */
+function recipePref(id, prefs){
+  if (!prefs || !id) return 1;
+  if (prefs.ban && prefs.ban.indexOf(id) >= 0) return 0;
+  return prefs.fav && prefs.fav.indexOf(id) >= 0 ? 2 : 1;
+}
 /* Tirage pondéré (rand : nombres dans [0, 1[). Poids > 0 : tirage pondéré ; 0 : écarté (repères) ; < 0 : écarté d'abord.
    Sans poids positif, tirage parmi les poids nuls, sinon parmi tous. */
 function tieredPick(r, a, w){
@@ -1727,10 +1765,16 @@ function tieredPick(r, a, w){
    poisson (et poisson gras) et légumes secs trois fois plus probables tant qu'il en manque, bœuf, « Œufs + jambon » et salé
    écartés s'ils feraient dépasser la viande rouge ou la charcuterie. Sans bal : tirage uniforme. La recette du couple
    protéine × féculent est choisie d'office (tirée au hasard s'il y en a plusieurs).
+   Avec prefs (3.25.0, recettes favorites et à éviter, seulement quand les plats sont des recettes) : chaque couple pèse le
+   poids de sa recette (recipePref : 0 à éviter, 2 favorite), la protéine la part de ses couples (le tirage du couple garde
+   donc les poids ci-dessus, multipliés) ; une recette à éviter n'est jamais tirée (s'il ne reste qu'elle, le couple vient
+   sans recette).
    @param {function():number} [rand]  @param {string[]} [off] aliments retirés  @param {Object} [bal] weekBalance du reste de la semaine
-   @param {number} [k] facteur de portions  @returns {Choices} */
-function randomChoices(rand, off, bal, k){
+   @param {number} [k] facteur de portions  @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices} */
+function randomChoices(rand, off, bal, k, prefs){
   const r = rand || Math.random, kk = k || 1, c = bal ? Object.assign({}, bal) : null;
+  const pp = prefs && ((prefs.fav && prefs.fav.length) || (prefs.ban && prefs.ban.length)) ? prefs : null;
+  const cp = function(p, s){ return recipePref(recipesFor(p, s)[0], pp); };
   /* 0 : écarté par les repères ; < 0 : écarté d'abord (œufs-jambon avec le salé) */
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
@@ -1746,8 +1790,14 @@ function randomChoices(rand, off, bal, k){
   };
   const starchW = function(s){ return c && LEGUMES.indexOf(s) >= 0 && c.legumes < WEEK_GOALS.legumes ? 3 : 1; };
   const meal = function(not){
-    const prots = allowed('prot', off), other = prots.filter(function(p){ return p !== not; });
-    const prot = pick(other.length ? other : prots, protW), starch = pick(allowed('starch', off), starchW);
+    const prots = allowed('prot', off), other = prots.filter(function(p){ return p !== not; }), sts = allowed('starch', off);
+    /* Préférences : la protéine pèse la part pondérée de ses couples, le féculent le poids de la recette du couple */
+    const share = function(p){
+      const t = sts.reduce(function(a, s){ return a + starchW(s); }, 0), u = sts.reduce(function(a, s){ return a + starchW(s) * cp(p, s); }, 0);
+      return t > 0 ? u / t : 1;
+    };
+    const prot = pick(other.length ? other : prots, pp ? function(p){ const w = protW(p); return w > 0 ? w * share(p) : w; } : protW);
+    const starch = pick(sts, pp ? function(s){ return starchW(s) * cp(prot, s); } : starchW);
     if (c){
       if (FISH.indexOf(prot) >= 0){ c.poisson++; if (prot === 'saumon') c.gras++; }
       if (prot === 'boeuf') c.rouge += boeufCuit;
@@ -1755,7 +1805,8 @@ function randomChoices(rand, off, bal, k){
       if (LEGUMES.indexOf(starch) >= 0) c.legumes++;
     }
     const o = {prot:prot, starch:starch, dessert:pick(allowed('dessert', off))}, recs = recipesFor(prot, starch);
-    if (recs.length) o.recette = recs.length > 1 ? pick(recs) : recs[0];
+    const okR = recs.filter(function(id){ return recipePref(id, pp) > 0; });
+    if (okR.length) o.recette = okR.length > 1 ? pick(okR) : okR[0];
     return o;
   };
   const dej = meal(null);
@@ -1953,10 +2004,11 @@ function composeDay(plan, ch, pr, pf){
   else if (matin.length) pd.when = '1h30 avant la séance';
   secs.push(pd);
 
-  /* recipe : la recette choisie ; suggest : celle proposée pour la protéine et le féculent du repas */
+  /* recipe : la recette choisie ; suggest : celle proposée pour la protéine et le féculent du repas (pas une recette à éviter,
+     3.25.0) */
   const meal = function(slot, title){
     const c = ch[slot];
-    return {id:slot, title:title, when:null, pick:slot, items:mainItems(slot, c, k, kp), recipe:recipeOf(c), suggest:recipesFor(c.prot, c.starch)[0] || null};
+    return {id:slot, title:title, when:null, pick:slot, items:mainItems(slot, c, k, kp), recipe:recipeOf(c), suggest:recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0; })[0] || null};
   };
   const lunch = meal('dej', 'Déjeuner'), dinner = meal('diner', 'Dîner');
   let co = null, nb = 0;
@@ -2128,14 +2180,17 @@ const HAM_SLICES = 4;
      de salés qu'au hasard (probabilité : jours possibles / bases proposées / 4) ; les autres jours, une autre base au hasard
      (le salé s'il ne reste que lui) ; desserts au hasard ; le dîner d'un repas libre reçoit une recette du bloc d'une autre
      protéine, sans boîte.
+   - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
+     favorite pèse double.
    @param {{libre:boolean, long?:boolean}[]} days  @param {number} n  @param {string[]} [off]  @param {number} [k]  @param {function():number} [rand]
-   @returns {Choices[]} */
-function batchChoices(days, n, off, k, rand){
+   @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices[]} */
+function batchChoices(days, n, off, k, rand, prefs){
   const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
   const prots = allowed('prot', off), starches = allowed('starch', off), pds = allowed('pd', off), sweet = pds.filter(function(x){ return x !== 'sale'; });
-  const ok = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
+  const ok0 = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
+  const okP = ok0.filter(function(id){ return recipePref(id, prefs) > 0; }), ok = okP.length ? okP : ok0;
   const keep = ok.filter(function(id){ return RECIPES[id].box; }), pool = keep.length ? keep : ok;
   const prot = function(e){ return RECIPES[e.id].p; };
   const out = [];
@@ -2163,7 +2218,7 @@ function batchChoices(days, n, off, k, rand){
         let w = usedS.indexOf(x.s) >= 0 ? 0.3 : 1;
         if (FISH.indexOf(x.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= x.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
         if (LEGUMES.indexOf(x.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
-        return w;
+        return w * recipePref(id, prefs);
       });
       const x = RECIPES[id];
       if (FISH.indexOf(x.p) >= 0){ c.poisson += ct; if (x.p === 'saumon') c.gras += ct; }
@@ -2295,9 +2350,10 @@ function batchSwap(days, id, nid, off){
    féculent proposés ; ni une recette déjà dans le bloc, ni la protéine d'une autre recette du bloc, ni la protéine de l'autre
    repas d'un jour où elle est servie ; bœuf seulement sous 500 g de viande rouge cuite sur le bloc après le changement
    (portions de base × k) ; « Œufs + jambon » seulement pour 2 repas (4 tranches de jambon) et s'il reste une autre base que
-   le salé ; une recette qui se congèle mal seulement si tous ses repas tombent dans les 3 premiers jours. Celles de la même protéine d'abord, puis dans l'ordre de RECIPES.
+   le salé ; une recette qui se congèle mal seulement si tous ses repas tombent dans les 3 premiers jours ; jamais une recette
+   à éviter (3.25.0). Celles de la même protéine d'abord, puis dans l'ordre de RECIPES.
    @returns {string[]} */
-function batchSwapOptions(days, id, off, k){
+function batchSwapOptions(days, id, off, k, prefs){
   const kk = k || 1, prots = allowed('prot', off), starches = allowed('starch', off);
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf, sweet = allowed('pd', off).some(function(b){ return b !== 'sale'; });
   const ok = Object.keys(RECIPES).filter(function(x){ return prots.indexOf(RECIPES[x].p) >= 0 && starches.indexOf(RECIPES[x].s) >= 0; });
@@ -2308,7 +2364,7 @@ function batchSwapOptions(days, id, off, k){
   const p0 = has(RECIPES, id) ? RECIPES[id].p : null;
   return pool.filter(function(x){
     const r = RECIPES[x];
-    if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0) return false;
+    if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0 || recipePref(x, prefs) === 0) return false;
     if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !days[m.i].libre && o.recette !== id && o.prot === r.p; })) return false;
     if (!r.gel && days.length > FRIDGE_DAYS && mine.some(function(m){ return m.i >= FRIDGE_DAYS; })) return false;
     if (r.p === 'oeufs' && (mine.length !== 2 || !sweet)) return false;
@@ -2322,9 +2378,9 @@ function batchSwapOptions(days, id, off, k){
 }
 /* « Une autre au hasard » : parmi batchSwapOptions, tirée comme au batch (poisson × 3 tant que le bloc, sans elle, n'a pas
    2 repas de poisson, saumon × 6 s'il manque le poisson gras ; légumes secs × 3 tant qu'il en manque 2 ; féculent d'une
-   autre recette du bloc × 0,3). null s'il n'y en a aucune. */
-function batchSwapPick(days, id, off, k, rand){
-  const opts = batchSwapOptions(days, id, off, k);
+   autre recette du bloc × 0,3 ; favorite × 2, 3.25.0). null s'il n'y en a aucune. */
+function batchSwapPick(days, id, off, k, rand, prefs){
+  const opts = batchSwapOptions(days, id, off, k, prefs);
   if (!opts.length) return null;
   const others = batchMeals(days).filter(function(m){ return m.c.recette !== id; }), c = {poisson:0, gras:0, legumes:0};
   others.forEach(function(m){
@@ -2337,7 +2393,7 @@ function batchSwapPick(days, id, off, k, rand){
     let w = usedS.indexOf(r.s) >= 0 ? 0.3 : 1;
     if (FISH.indexOf(r.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= r.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
     if (LEGUMES.indexOf(r.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
-    return w;
+    return w * recipePref(x, prefs);
   });
 }
 /* Batch cooking, chiffres ronds (3.17.0). Pour chaque recette d'un bloc servie au moins deux fois (repas libre exclu), qui se
@@ -3022,7 +3078,7 @@ if (typeof document !== 'undefined'){
       if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
       const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p ? p.type === 'recettes' : !!recipeOf(old);
       for (let i = 0; i < 20; i++){
-        const c = randomChoices(null, pr.off, bal, scaleOf(pr))[slot];
+        const c = randomChoices(null, pr.off, bal, scaleOf(pr), rec ? pr : null)[slot];
         if (c.prot === old.prot && c.starch === old.starch) continue;
         if (c.prot === ch[other].prot && i < 19) continue;
         ch[slot] = {prot:c.prot, starch:c.starch, dessert:dessertOf(old)};
@@ -3228,7 +3284,7 @@ if (typeof document !== 'undefined'){
     'repas-ok': function(){ if (!draft) return; applyRepas(draft); return ''; },
     'repas-hasard': function(){
       if (!draft) return;
-      applyRepas(drawFor(selIso()));
+      applyRepas(drawFor(selIso(), true));
       return 'Repas tirés au hasard' + NB + ': touche un plat pour le changer.';
     }
   });
@@ -3352,10 +3408,10 @@ if (typeof document !== 'undefined'){
   const drawPeriod = function(isos, type, n){
     const pr = cleanProfile(prof), save = function(iso, c){ const js = fromIso(iso).getDay(), x = cleanCh(c, js); writeDay(iso, {ch:x}); store.choices[js] = x; };
     if (type === 'recettes' && n){
-      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), n, pr.off, scaleOf(pr));
+      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), n, pr.off, scaleOf(pr), null, pr);
       batchRound(isos.map(function(iso, j){ return {plan:planFor(iso), ch:cleanCh(cs[j], fromIso(iso).getDay())}; }), prof).forEach(function(c, j){ save(isos[j], c); });
     } else isos.forEach(function(iso){
-      const c = drawFor(iso);
+      const c = drawFor(iso, type === 'recettes');
       if (type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
       save(iso, c);
     });
@@ -3391,7 +3447,8 @@ if (typeof document !== 'undefined'){
   /* Repères de la semaine (lundi → dimanche) d'une date, sans le jour skip (celui qu'on tire au hasard) */
   const weekBal = function(d, skip){ return weekBalance(weekOf(d).map(isoDate).filter(function(iso){ return iso !== skip; }).map(dayResult)); };
   /* « Décide pour moi » d'une date : équilibré avec le reste de sa semaine */
-  const drawFor = function(iso){ const pr = cleanProfile(prof); return randomChoices(null, pr.off, weekBal(fromIso(iso), iso), scaleOf(pr)); };
+  /* recettes : les plats seront des recettes (favorites et à éviter comptent, 3.25.0) */
+  const drawFor = function(iso, recettes){ const pr = cleanProfile(prof); return randomChoices(null, pr.off, weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null); };
   /* Un paquet de jambon (4 tranches, × k) : toléré au-delà du repère de 150 g de charcuterie (3.17.0) */
   const hamPack = function(){ return HAM_SLICES * sc(45, 5, scaleOf(cleanProfile(prof))); };
   const gr = function(x){ return '≈' + NB + Math.round(x / 10) * 10 + NB + 'g'; };
@@ -3592,7 +3649,7 @@ if (typeof document !== 'undefined'){
       return '<p class="calc">' + cookText(cook, nb, ng, bl.recipes.length + ' recettes, ') + '</p>' +
         bl.recipes.map(function(r){
           const g = r.boxes.filter(function(x){ return !x.fridge; }).length, n = r.boxes.length;
-          const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr)).length;
+          const swap = batchSwapOptions(swapBlock(bl.start, days).days, r.id, pr.off, scaleOf(pr), pr).length;
           return '<details class="batch" id="bt-' + bl.start + '-' + r.id + '"><summary><span class="b-s"><span class="b-t">' + r.t + '</span><span class="b-n">' + n + NB + 'boîtes' +
             (g ? ', dont ' + g + ' au congélateur' : '') + '</span></span></summary><div class="b-body">' +
             (swap ? '<button type="button" class="btn b-swap" id="swap-' + bl.start + '-' + r.id + '" data-action="co-swap" data-value="' + bl.start + '|' + r.id + '">Changer de recette</button>'
@@ -3615,7 +3672,7 @@ if (typeof document !== 'undefined'){
   };
   /* Panneau du bas : « Une autre au hasard », puis les recettes qui vont (même protéine d'abord) */
   const openSwap = function(start, id, trigger){
-    const pr = cleanProfile(prof), opts = has(RECIPES, id) ? batchSwapOptions(swapBlock(start).days, id, pr.off, scaleOf(pr)) : [];
+    const pr = cleanProfile(prof), opts = has(RECIPES, id) ? batchSwapOptions(swapBlock(start).days, id, pr.off, scaleOf(pr), pr) : [];
     if (!opts.length) return;
     const same = opts.filter(function(x){ return RECIPES[x].p === RECIPES[id].p; }), other = opts.filter(function(x){ return RECIPES[x].p !== RECIPES[id].p; });
     const opt = function(v, t, s){ return '<button type="button" class="opt" data-action="co-swap-to" data-value="' + v + '">' + t + '<span class="opt-s">' + s + '</span></button>'; };
@@ -3698,7 +3755,7 @@ if (typeof document !== 'undefined'){
     'co-swap-to': function(b, v){
       if (!pick || pick.kind !== 'swap') return;
       const s = pick, pr = cleanProfile(prof), k = scaleOf(pr), blk = swapBlock(s.start);
-      const opts = batchSwapOptions(blk.days, s.id, pr.off, k), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k) : v;
+      const opts = batchSwapOptions(blk.days, s.id, pr.off, k, pr), nid = v === '*' ? batchSwapPick(blk.days, s.id, pr.off, k, null, pr) : v;
       closePick(false);
       if (!nid || opts.indexOf(nid) < 0) return;
       /* La nouvelle recette, arrondie aux 100 g sur ses boîtes (les autres gardent leurs poids) */
@@ -3749,13 +3806,13 @@ if (typeof document !== 'undefined'){
   /* Fiche d'une recette (même panneau) : tes quantités pour ce repas avec la recette (sec : la section de buildDay), le
      total, les aromates, les étapes ; meta, titre des quantités, note et bas (boutons) selon d'où elle s'ouvre (la page, la
      bibliothèque des recettes) ; p : le panneau ouvert (pick) */
-  const showRecipe = function(x, sec, meta, head, note, foot, p){
-    const items = recipePart(sec), none = new Map();
+  const showRecipe = function(id, sec, meta, head, note, foot, p){
+    const x = RECIPES[id], items = recipePart(sec), none = new Map();
     pick = p;
     $('sheet-t').textContent = x.t;
     $('sheet-list').hidden = true;
     $('sheet-rec').hidden = false;
-    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '.' + meta + '</p>' +
+    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '.' + meta + '</p>' + prefBtns(id) +
       '<h3 class="rec-h">' + head + '</h3>' +
       '<ul class="items">' + items.map(function(i){ return itemHTML('rec', i, none); }).join('') + '</ul>' +
       '<p class="rec-tot">En tout' + NB + ':' + macHTML(total(items)) + '</p>' + note +
@@ -3775,17 +3832,54 @@ if (typeof document !== 'undefined'){
     const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel), meal = slot === 'dej' ? 'déjeuner' : 'dîner';
     withRec[slot].recette = id;
     const sec = buildDay(Object.assign({}, plan, {libre:false}), withRec, prof).secs.find(function(z){ return z.id === slot; });
-    showRecipe(x, sec, on ? ' Choisie pour ce ' + meal + '.' : '', 'Pour ce ' + meal,
+    showRecipe(id, sec, on ? ' Choisie pour ce ' + meal + '.' : '', 'Pour ce ' + meal,
       on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
       on ? '<button type="button" class="btn wide" data-action="rec-off" data-slot="' + slot + '">Retirer la recette</button>'
         : '<button type="button" class="btn main wide" data-action="rec-on" data-slot="' + slot + '">Choisir cette recette</button>',
-      {kind:'recette', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'});
+      {kind:'recette', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, back:'ft-' + slot, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'});
   };
+  /* Recette favorite ou à éviter (3.25.0), dans sa fiche : l'une ou l'autre, enregistrée dans le profil (fav, ban) ; la page
+     (suggestions), la bibliothèque et les réglages suivent, le panneau reste ouvert */
+  const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 20.5s-7.4-4.4-9.3-8.9C1.3 8.2 3.3 4.5 6.9 4.5c2.1 0 3.4 1.1 5.1 3 1.7-1.9 3-3 5.1-3 3.6 0 5.6 3.7 4.2 7.1-1.9 4.5-9.3 8.9-9.3 8.9z"/></svg>';
+  const PREF_TEXT = {fav:'Elle revient deux fois plus souvent quand l’appli tire tes plats.', ban:'L’appli ne la tire plus et ne la propose plus sous tes repas. Tu peux toujours la choisir.'};
+  const prefOf = function(id){ const pr = cleanProfile(prof); return pr.fav.indexOf(id) >= 0 ? 'fav' : pr.ban.indexOf(id) >= 0 ? 'ban' : ''; };
+  const prefBtns = function(id){
+    const k = prefOf(id);
+    return '<div class="opts-list rec-pref" role="group" aria-label="Cette recette dans les tirages">' +
+      '<button type="button" class="opt" id="rp-fav" data-action="rec-pref" data-pref="fav" data-value="' + id + '" aria-pressed="' + (k === 'fav') + '">' + HEART + 'Favorite</button>' +
+      '<button type="button" class="opt" id="rp-ban" data-action="rec-pref" data-pref="ban" data-value="' + id + '" aria-pressed="' + (k === 'ban') + '">À éviter</button></div>' +
+      '<p class="rec-pref-s" id="rp-s" role="status">' + (k ? PREF_TEXT[k] : '') + '</p>';
+  };
+  /* k : fav ou ban ; on : la mettre (sinon l'enlever) ; elle quitte toujours l'autre liste */
+  const setPref = function(id, k, on){
+    const pr = cleanProfile(prof);
+    ['fav', 'ban'].forEach(function(f){
+      const l = pr[f].filter(function(x){ return x !== id; });
+      if (f === k && on) l.push(id);
+      if (l.length) prof[f] = l; else delete prof[f];
+    });
+    saveProf();
+    render(); renderLib(); renderPrefs();
+  };
+  Object.assign(ACTIONS, {
+    'rec-pref': function(b, v){
+      const k = b.dataset.pref;
+      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      setPref(v, k, prefOf(v) !== k);
+      const now = prefOf(v);
+      $('rp-fav').setAttribute('aria-pressed', String(now === 'fav'));
+      $('rp-ban').setAttribute('aria-pressed', String(now === 'ban'));
+      $('rp-s').textContent = now ? PREF_TEXT[now] : '';
+      b.focus({preventScroll:true});
+    }
+  });
   const closePick = function(fromHistory){
     if (!pick) return;
     const id = pick.trigger, view = pick.view, back = pick.back;
     pick = null;
     $('sheet').hidden = true;
+    /* La fiche fermée est vidée : ses boutons ne traînent pas, cachés, sous le panneau suivant */
+    $('sheet-rec').innerHTML = '';
     setInert(view, false);
     document.documentElement.style.overflow = '';
     if (!fromHistory){ try { if (history.state && history.state.pick) history.back(); } catch (e) {} }
@@ -3813,7 +3907,7 @@ if (typeof document !== 'undefined'){
      repas visé remis à l'heure à chaque ouverture. */
   const LIB_T = [['0|dej', 'Ce midi'], ['0|diner', 'Ce soir'], ['1|dej', 'Demain midi'], ['1|diner', 'Demain soir']];
   const LIB_QUICK = 20;
-  const lib = {prot:'', starch:'', box:false, quick:false, mine:true, target:'0|dej'};
+  const lib = {prot:'', starch:'', box:false, quick:false, favs:false, mine:true, target:'0|dej'};
   const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return a.concat(STARCH_ORDER.map(function(s){ return p + '-' + s; }).filter(function(id){ return has(RECIPES, id); })); }, []);
   /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi */
   const resetLib = function(){
@@ -3827,27 +3921,29 @@ if (typeof document !== 'undefined'){
   };
   const libChosen = function(tg){ return recipeOf(choicesFor(tg.iso, fromIso(tg.iso).getDay())[tg.slot]); };
   const libList = function(){
-    const off = cleanProfile(prof).off, okP = allowed('prot', off), okS = allowed('starch', off);
+    const pr = cleanProfile(prof), off = pr.off, okP = allowed('prot', off), okS = allowed('starch', off);
+    /* Les recettes à éviter en fin de liste (3.25.0) */
     return LIB_ALL.filter(function(id){
       const x = RECIPES[id];
       return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) && (!lib.quick || x.min <= LIB_QUICK) &&
-        (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
-    });
+        (!lib.favs || pr.fav.indexOf(id) >= 0) && (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
+    }).sort(function(a, b){ return (pr.ban.indexOf(a) >= 0) - (pr.ban.indexOf(b) >= 0) || LIB_ALL.indexOf(a) - LIB_ALL.indexOf(b); });
   };
-  /* Les filtres (listes de choix) une fois pour toutes ; le reste à chaque dessin */
+  /* Les filtres (listes de choix) une fois pour toutes ; le reste à chaque dessin. Favorites : 3.25.0 */
   $('lib-prot').innerHTML = '<option value="">Toutes</option>' + PROT_ORDER.map(function(p){ return '<option value="' + p + '">' + PROT[p].label + '</option>'; }).join('');
   $('lib-starch').innerHTML = '<option value="">Tous</option>' + STARCH_ORDER.map(function(s){ return '<option value="' + s + '">' + STARCH[s].label + '</option>'; }).join('');
   const renderLib = function(){
     const tg = libTarget(), cur = libChosen(tg), list = libList();
     $('lib-for').innerHTML = LIB_T.map(function(t){ return '<button type="button" class="opt" data-action="lib-for" data-value="' + t[0] + '" aria-pressed="' + (t[0] === lib.target) + '">' + t[1] + '</button>'; }).join('');
     $('lib-prot').value = lib.prot; $('lib-starch').value = lib.starch;
-    [['lib-box', lib.box], ['lib-quick', lib.quick]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
+    [['lib-box', lib.box], ['lib-quick', lib.quick], ['lib-fav', lib.favs]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
     $('lib-mine').setAttribute('aria-checked', String(lib.mine));
     $('lib-n').textContent = list.length ? list.length + NB + 'recette' + (list.length > 1 ? 's' : '') + (tg.libre ? ', mais ' + tg.label + ', c’est ton repas libre.' : '.') : 'Aucune recette avec ces filtres.';
     $('lib-list').innerHTML = list.map(function(id){
-      const x = RECIPES[id], on = id === cur && !tg.libre;
-      return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
-        '<span class="lib-t">' + x.t + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : '') + (on ? '<span class="lib-c">Choisie pour ' + tg.label + '</span>' : '') + '</span></button></li>';
+      const x = RECIPES[id], on = id === cur && !tg.libre, k = prefOf(id);
+      return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + (k === 'ban' ? ' is-ban' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
+        '<span class="lib-t">' + (k === 'fav' ? '<span class="lib-h" role="img" aria-label="Favorite">' + HEART + '</span>' : '') + x.t + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : '') + (k === 'ban' ? ', à éviter' : '') +
+        (on ? '<span class="lib-c">Choisie pour ' + tg.label + '</span>' : '') + '</span></button></li>';
     }).join('');
   };
   /* Listes de choix : la liste suit tout de suite */
@@ -3867,12 +3963,12 @@ if (typeof document !== 'undefined'){
   Object.assign(ACTIONS, {
     recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },
     'lib-for': function(b, v){ if (!LIB_T.some(function(t){ return t[0] === v; })) return; lib.target = v; $('lib-msg').textContent = ''; renderLib(); $('lib-for').querySelector('[data-value="' + v + '"]').focus({preventScroll:true}); },
-    'lib-f': function(b, v){ if (v !== 'box' && v !== 'quick' && v !== 'mine') return; lib[v] = !lib[v]; renderLib(); },
+    'lib-f': function(b, v){ if (['box', 'quick', 'favs', 'mine'].indexOf(v) < 0) return; lib[v] = !lib[v]; renderLib(); },
     /* Fiche de la recette, avec tes quantités pour le repas visé */
     'lib-open': function(b, v){
       if (!has(RECIPES, v)) return;
-      const tg = libTarget(), x = RECIPES[v], on = libChosen(tg) === v && !tg.libre;
-      showRecipe(x, libSec(v, tg), on ? ' Choisie pour ' + tg.label + '.' : '', 'Pour ' + tg.label,
+      const tg = libTarget(), on = libChosen(tg) === v && !tg.libre;
+      showRecipe(v, libSec(v, tg), on ? ' Choisie pour ' + tg.label + '.' : '', 'Pour ' + tg.label,
         tg.libre ? '<p class="warn">' + cap(tg.label) + ', c’est ton repas libre' + NB + ': choisis un autre repas pour la prendre.</p>'
           : on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
         tg.libre || on ? '' : '<button type="button" class="btn main wide" data-action="lib-take" data-value="' + v + '">Prendre pour ' + tg.label + '</button>',
@@ -4191,6 +4287,18 @@ if (typeof document !== 'undefined'){
     }).join('');
   };
   renderAliments();
+  /* Réglages, « Tes recettes » (3.25.0) : les favorites et celles à éviter, à retirer une par une */
+  const PREF_G = [['fav', 'Favorites', 'des favorites'], ['ban', 'À éviter', 'de la liste à éviter']];
+  const renderPrefs = function(){
+    const pr = cleanProfile(prof);
+    $('rp-list').innerHTML = PREF_G.map(function(g){
+      return '<p class="rf-l" id="rp-' + g[0] + '-l">' + g[1] + '</p>' + (pr[g[0]].length ? '<ul class="rp-ul" aria-labelledby="rp-' + g[0] + '-l">' + pr[g[0]].map(function(id){
+        return '<li><span class="rp-n">' + RECIPES[id].t + '</span><button type="button" class="rm" data-action="rp-rm" data-pref="' + g[0] + '" data-value="' + id + '"' +
+          ' aria-label="Retirer «' + NB + RECIPES[id].t + NB + '» ' + g[2] + '">×</button></li>';
+      }).join('') + '</ul>' : '<p class="calc rp-none">Aucune pour l’instant.</p>');
+    }).join('');
+  };
+  renderPrefs();
 
   /* Réglages, « Ta semaine type » : l'éditeur partagé avec l'accueil (ui/semtype.js) */
   renderSemaine();
@@ -4252,12 +4360,12 @@ if (typeof document !== 'undefined'){
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
+    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, favs:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();
     $('hint').textContent = ''; $('intro').textContent = ''; $('alim-warn').textContent = '';
-    fillNeeds(); renderAliments(); renderSemaine(); showTab('profil');
+    fillNeeds(); renderAliments(); renderPrefs(); renderSemaine(); showTab('profil');
     render();
     openAcc({});
     $('acc-h1').focus();
@@ -4297,6 +4405,15 @@ if (typeof document !== 'undefined'){
       return '';
     },
     /* « Tes aliments » : proposer ou non un aliment (au moins un gardé par type, sauf les desserts) */
+    /* Une recette retirée de sa liste : le focus va sur la suivante (sinon la précédente, sinon le titre) */
+    'rp-rm': function(b, v){
+      const k = b.dataset.pref;
+      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      const all = [...$('rp-list').querySelectorAll('[data-action="rp-rm"][data-pref="' + k + '"]')].map(function(x){ return x.dataset.value; }), i = all.indexOf(v);
+      setPref(v, k, false);
+      const to = all[i + 1] || all[i - 1], nx = to ? $('rp-list').querySelector('[data-pref="' + k + '"][data-value="' + to + '"]') : null;
+      (nx || $('rp-t')).focus({preventScroll:true});
+    },
     aliment: function(b, v){
       const kind = b.dataset.kind, key = kind + ':' + v, off = cleanProfile(prof).off;
       if (!has(CHOICE_IDS, kind) || CHOICE_IDS[kind].indexOf(v) < 0) return;

@@ -1,7 +1,7 @@
 /* Profil et dépense : profil validé (profileFields, cleanProfile), métabolisme de base, dépense de repos, coût des séances,
    objectif du jour (energy). Règles : CLAUDE.md, « Dépense et objectif ». */
 /* Profil et dépense énergétique */
-const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], semaine:{jours:{}, libre:6}};
+const PROFILE_DEFAULT = {mode:'auto', sexe:'h', age:35, taille:178, poids:72, neat:'assis', gras:null, repos:null, deficit:15, ravito:60, shaker:'oui', shakerKcal:120, shakerProt:24, kcalPetite:null, kcalMoyenne:null, kcalLongueH:null, marge:150, prot:2, off:[], fav:[], ban:[], semaine:{jours:{}, libre:6}};
 const PROFILE_RANGES = {age:[14,99], taille:[120,230], poids:[35,250], gras:[3,60], repos:[1200,6000], deficit:[0,25], ravito:[30,90], shakerKcal:[100,160], shakerProt:[10,40], kcalPetite:[100,1000], kcalMoyenne:[150,1500], kcalLongueH:[200,1200], marge:[0,300], prot:[1.6,2.2]};
 /* Activité hors sport, en multiple du métabolisme de base (effet thermique des repas compris) */
 const NEAT = {assis:1.4, mixte:1.55, debout:1.7};
@@ -21,6 +21,10 @@ function profileFields(o){
      devient 2,2 plutôt que la valeur par défaut */
   if (typeof o.prot === 'number' && o.prot > PROFILE_RANGES.prot[1] && o.prot <= 3) out.prot = PROFILE_RANGES.prot[1];
   if (Array.isArray(o.off)){ const off = cleanOff(o.off); if (off.length) out.off = off; }
+  /* Recettes favorites et à éviter (3.25.0) : l'une ou l'autre, la favorite l'emporte */
+  const fav = cleanRecipeIds(o.fav), ban = cleanRecipeIds(o.ban).filter(function(id){ return fav.indexOf(id) < 0; });
+  if (fav.length) out.fav = fav;
+  if (ban.length) out.ban = ban;
   if (o.semaine && typeof o.semaine === 'object'){ const w = cleanWeek(o.semaine); if (Object.keys(w.jours).length || w.libre !== 6) out.semaine = w; }
   return out;
 }
@@ -31,6 +35,8 @@ function cleanProfile(o){
   if (!f.mode) f.mode = has(f, 'repos') ? 'manuel' : 'auto';
   const out = Object.assign({}, PROFILE_DEFAULT, f);
   out.off = (f.off || []).slice();
+  out.fav = (f.fav || []).slice();
+  out.ban = (f.ban || []).slice();
   out.semaine = cleanWeek(f.semaine);
   return out;
 }
