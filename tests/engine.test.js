@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
-const { cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -604,7 +604,7 @@ for (const set of [[], [moyenne('soir')], [longue(2)]]) {
   assert(!keys.includes('leg') && !keys.includes('marge') && dn.items.some(i => i.key === 'leg') && dn.items.some(i => i.key === 'marge'), 'recette : ni « légumes » ni marge au déjeuner, le dîner les garde');
   assert.deepStrictEqual(plain(keys.filter(k => /^[vfx]-/.test(k))), ['v-oignon', 'v-poivron', 'v-epinards', 'f-huile', 'f-coco', 'x-skyr'], 'lignes de la recette, dans l’ordre');
   const line = key => dj.items.find(i => i.key === key);
-  assert(line('v-oignon').qty === '70 g' && line('v-oignon').name === 'oignon' && line('v-oignon').buy.id === 'oignon' && line('v-oignon').buy.g === 70, 'oignon');
+  assert(line('v-oignon').qty === '1' && line('v-oignon').name === 'oignon' && /^≈\s100\sg, ou 4\séchalotes$/.test(line('v-oignon').note) && line('v-oignon').buy.id === 'oignon' && line('v-oignon').buy.g === 100, 'oignon en unités (3.27.0)');
   near(line('v-epinards').m.kcal, FOOD.epinards[0] * 0.8, 1e-9, 'épinards');
   assert(line('f-huile').qty === '5 g' && line('f-huile').note === '1 c. à café' && line('f-coco').qty === '15 g', 'matière grasse en grammes, mesure en note');
   near(line('f-coco').m.f, FOOD.coco[3] * 0.15, 1e-9, 'lait de coco');
@@ -631,7 +631,7 @@ assert.strictEqual(withAllowed({ pdBase: 'avoine', dej: { prot: 'poulet', starch
 assert(!('recette' in withAllowed({ pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: RC0.diner }, ['starch:riz']).dej), 'féculent retiré : recette oubliée');
 // Courses : les légumes et la matière grasse de la recette, chacun dans un rayon
 const shopR = shoppingList([buildDay(day([]), RC)]), shopLine = id => shopR.flatMap(g => g.lines).find(l => l.id === id);
-assert(shopLine('oignon').qty === '70 g' && shopLine('coco').qty === '15 g' && shopLine('huile').qty === '5 g', 'courses : oignon, lait de coco, huile');
+assert(shopLine('oignon').qty === '1' && shopLine('oignon').name === 'oignon' && shopLine('coco').qty === '15 g' && shopLine('huile').qty === '5 g', 'courses : oignon, lait de coco, huile');
 const aisleIds = SHOP_AISLES.flatMap(g => g.ids);
 for (const id of VEG_IDS.concat(['huile', 'coco', 'creme', 'lait', 'sesame', 'tahini', 'olives', 'parmesan'])) assert.strictEqual(aisleIds.filter(x => x === id).length, 1, `courses : ${id} dans un rayon`);
 // Garde-fous avec les recettes : 12 journées types × 3 bases × les 80 recettes au déjeuner (dîner : une autre recette)
@@ -941,6 +941,20 @@ assert(recipePref('poulet-riz', null) === 1 && recipePref('poulet-riz', { fav: [
   assert(di >= 0, 'batch : une boîte arrondie');
   const withImp = bplans.map((p, i) => i === di ? Object.assign({}, p, { imprevu: { slot: 'dej', kcal: 900, mode: 'place' } }) : i === (di + 1) % 7 ? Object.assign({}, p, { imprevu: { slot: 'pd', kcal: 800, mode: 'plus' } }) : p);
   assert.deepStrictEqual(plain(batchRound(bwk.map((ch, i) => ({ plan: withImp[i], ch })))), plain(batchRound(bwk.map((ch, i) => ({ plan: bplans[i], ch })))), 'batch : arrondi sans l’imprévu');
+}
+
+// Oignon en unités (3.27.0) : ½ (50 g) ou 1 (100 g) dans chaque recette, 250 g de légumes en tout ; « ½ », « 1 ½ », « 2 ½ »
+assert(Object.values(RECIPES).every(x => !x.leg.oignon || [50, 100].includes(x.leg.oignon)) && Object.values(RECIPES).every(x => Object.values(x.leg).reduce((a, g) => a + g, 0) === 250), 'oignon : ½ ou 1, 250 g de légumes');
+assert.deepStrictEqual([50, 100, 150, 200, 250].map(g => onionQty(g) + ' ' + onionName(g)), ['½ oignon', '1 oignon', '1 ½ oignon', '2 oignons', '2 ½ oignons'], 'oignon : quantités');
+assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.test(onionNote(300)), 'oignon : note');
+{
+  // Batch : « 2 ½ oignons » à cuire en tout ; courses : arrondies à l'oignon entier au-dessus (« 3 oignons »)
+  const chO = { pdBase: 'avoine', dej: { prot: 'boeuf', starch: 'riz', recette: 'boeuf-riz' }, diner: { prot: 'poulet', starch: 'pdt' } };
+  const o5 = Array.from({ length: 5 }, () => ({ res: buildDay(day([]), chO) }));
+  const tot = batchCook(o5, 1)[0].recipes[0].totals.find(t => t.id === 'oignon'), g1 = RECIPES['boeuf-riz'].leg.oignon;
+  assert(tot.qty === onionQty(5 * g1) && tot.name === onionName(5 * g1), 'batch : oignons en unités ' + JSON.stringify(tot));
+  const shopO = shoppingList(o5.map(x => x.res)).flatMap(g => g.lines).find(l => l.id === 'oignon');
+  assert(shopO.qty === String(Math.ceil(5 * g1 / 100)) && /^pour ≈\s/.test(shopO.note), 'courses : oignons entiers ' + JSON.stringify(shopO));
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

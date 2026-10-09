@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.27.0, 9 octobre 2026
+
+- Les oignons se comptent en unités : « ½ oignon » ou « 1 oignon » dans les recettes (≈ 50 ou 100 g, ou des échalotes), « 2 ½ oignons » à cuire en batch, et des oignons entiers dans les courses.
+- Correction : un imprévu « en plus » sur un repas avec une recette choisie s'affiche maintenant sous la recette, et n'entre plus dans ses macros.
+- Pour tomber juste, chaque recette met maintenant ½ oignon (ou 1 pour les plats mijotés qui en demandent plus) ; son légume principal s'ajuste de quelques grammes, et ta journée garde le même total.
+
 ## 3.26.0, 6 octobre 2026
 
 - Un imprévu dans ta journée : en bas de la carte d'un repas, « Un imprévu ? » note ce que tu as mangé à la place (ou en plus), avec une estimation en kcal. La suite de ta journée s'ajuste : l'encas, puis les féculents des repas d'après baissent pour garder ton total.

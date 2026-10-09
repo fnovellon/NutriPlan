@@ -51,7 +51,8 @@
   /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et
      « Choisir ». Choisie (3.14.0) : en tête du repas, à la place de ses ingrédients (détaillés dans sa fiche) : titre, temps,
      calories et macros de la recette (tout le repas sauf dessert et compote), « Voir la recette » et « Retirer ». */
-  const RECIPE_OUT = ['des', 'comp'];
+  /* Sous la carte d'une recette choisie : le dessert, la compote et un imprévu en plus (3.27.0 : il n'entre pas dans ses macros) */
+  const RECIPE_OUT = ['des', 'comp', 'imp'];
   const recipePart = function(s){ return s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) < 0; }); };
   const recBtns = function(s, on){
     const of = REPAS[s.id];

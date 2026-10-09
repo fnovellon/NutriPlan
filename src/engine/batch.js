@@ -148,6 +148,8 @@ function batchCook(days, lead){
       const totals = ids.map(function(bid){
         const a = tot[bid], i = a.first, k = i.key;
         if (a.n) return {id:bid, qty:String(a.n), name:a.n > 1 && has(PLURAL, bid) ? PLURAL[bid] : i.name, note:null};
+        /* Oignons en unités (3.27.0) */
+        if (bid === 'oignon') return {id:bid, qty:onionQty(a.g), name:onionName(a.g), note:onionNote(a.g)};
         const note = a.cooked ? '≈' + NB + shopQty(Math.round(a.cooked / 10) * 10) + ' ' + i.cook.ways[0].adj
           : /^f-/.test(k) ? i.note + ' par boîte' : /^v-/.test(k) ? RFOOD[bid][1] : null;
         return {id:bid, qty:shopQty(a.g), name:i.name, note:note};

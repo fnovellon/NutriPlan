@@ -90,7 +90,10 @@ const BYNAME = {
 Object.entries(A.RFOOD).forEach(([id, x]) => { BYNAME[x[0]] = ['food', id]; });
 const YIELD = { 'viande blanche maigre': 0.75, ['bœuf haché 5' + NB + '%']: 0.75, 'poisson blanc': 0.8, 'poisson gras': 0.8 };
 // Valeurs attendues d'une ligne d'après sa quantité affichée ; null si la ligne n'est pas un aliment connu
+// Oignon compté en unités (3.27.0) : « ½ », « 1 », « 1 ½ »… → grammes (un oignon = 100 g)
+const onionG = qty => { const o = /^(\d+)?(?:\u00A0?(½))?$/.exec(qty); return o && (o[1] || o[2]) ? ((+o[1] || 0) + (o[2] ? 0.5 : 0)) * A.ONION_G : null; };
 function expected(item, pr){
+  if ((item.name === 'oignon' || item.name === 'oignons') && onionG(item.qty) !== null) return A.FOOD.oignon.map(v => v * onionG(item.qty) / 100);
   const g = /^(\d+) g$/.exec(item.qty), n = /^(\d+)$/.exec(item.qty), bud = /^≈ ([\d  ]+)$/.exec(item.qty);
   const src = BYNAME[item.name];
   const st = A.STARCH_ORDER.find(id => A.STARCH[id].name === item.name);
@@ -339,7 +342,7 @@ for (let i = 0; i < N; i++){
     const b = x.buy, g = /^(\d+)\u00A0g$/.exec(x.qty);
     if (!C.ok(b && typeof b.id === 'string', 'ligne sans achat', () => x.qty + ' ' + x.name)) return;
     C.ok(['g', 'n', 'kcal'].some(k => fin(b[k]) && b[k] > 0), 'achat sans quantité', () => JSON.stringify(b));
-    if (b.g !== undefined && x.key !== 'fuel') C.ok(g && +g[1] === b.g, 'achat en grammes ≠ quantité affichée', () => x.qty + ' ' + x.name + ' ' + JSON.stringify(b));
+    if (b.g !== undefined && x.key !== 'fuel') C.ok(x.key === 'v-oignon' ? onionG(x.qty) === b.g && b.g % 50 === 0 : g && +g[1] === b.g, 'achat en grammes ≠ quantité affichée', () => x.qty + ' ' + x.name + ' ' + JSON.stringify(b));
     if (b.n !== undefined && x.key !== 'lib') C.ok(x.qty === (b.n === 0.5 ? '½' : String(b.n)), 'achat en pièces ≠ quantité affichée', () => x.qty + ' ' + x.name + ' ' + JSON.stringify(b));
     if (b.kcal !== undefined) C.ok(near(b.kcal, x.m.kcal, 1e-9), 'budget ≠ kcal de la ligne', () => x.qty + ' ' + x.name);
     // Le bon aliment : celui de la table (le fruit du dessert est « au choix », pas une pomme)
@@ -529,6 +532,7 @@ for (let i = 0; i < N / 3; i++){
       [l.qty, l.name, l.note || ''].forEach(t => C.ok(!/NaN|undefined|null|Infinity/.test(t) && !/\d (g|kg|kcal)\b/.test(t), 'liste : texte cassé', () => JSON.stringify(l)));
       if (id === 'oeufs') C.ok(+l.qty === a.n && !l.note && l.name === (a.n > 1 ? 'œufs' : 'œuf'), 'liste : œufs', () => JSON.stringify([l, a]));
       else if (PIECE.includes(id)) C.ok(+l.qty === a.n, 'liste : pièces', () => JSON.stringify([l, a]));
+      else if (id === 'oignon') C.ok(+l.qty === Math.max(1, Math.ceil(a.g / A.ONION_G - 0.001)) && l.name === (+l.qty > 1 ? 'oignons' : 'oignon'), 'liste : oignons entiers', () => JSON.stringify([l, a]));
       else if (id === 'encas' || id === 'marge') C.ok(Math.abs(num(l.qty) - Math.round(a.kcal / 10) * 10) < 1e-6, 'liste : budget', () => JSON.stringify([l, a]));
       else C.ok(Math.abs(grams(l.qty) - a.g) <= (a.g >= 1000 ? 5 : 0.5), 'liste : grammes', () => JSON.stringify([l, a]) + ' ' + input());
     });
@@ -745,7 +749,8 @@ for (let i = 0; i < N / 3; i++){
       secs.forEach(({ s }) => s.items.filter(x => /^(p1|p2|st|[vfx]-)/.test(x.key)).forEach(x => { const a = sum[x.buy.id] || (sum[x.buy.id] = { g: 0, n: 0 }); a.g += x.buy.g || 0; a.n += x.buy.n || 0; }));
       C.ok(Object.keys(sum).sort().join() === r.totals.map(t => t.id).sort().join(), 'fiche : aliments à cuire', () => r.id);
       r.totals.forEach(t => {
-        const a = sum[t.id], q = Number(t.qty.replace(/[^\d,]/g, '').replace(',', '.')) * (/kg$/.test(t.qty) ? 1000 : 1);
+        // Oignons en unités (3.27.0) : « 2 ½ » → 250 g
+        const a = sum[t.id], q = t.id === 'oignon' ? onionG(t.qty) : Number(t.qty.replace(/[^\d,]/g, '').replace(',', '.')) * (/kg$/.test(t.qty) ? 1000 : 1);
         C.ok(a && Math.abs(q - (a.n || a.g)) <= (a.g >= 1000 ? 5 : 1e-9), 'fiche : quantité à cuire ≠ somme des boîtes', () => r.id + ' ' + JSON.stringify([t, a]));
         [t.qty, t.name, t.note || ''].forEach(x => C.ok(!/NaN|undefined|null/.test(x) && !/\d (g|kg)\b/.test(x), 'fiche : texte cassé', () => JSON.stringify(t)));
       });

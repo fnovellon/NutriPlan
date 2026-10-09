@@ -294,7 +294,7 @@ function check(dom, log){
     const couple = sel('prot') + '-' + sel('starch');
     const replaced = !meal.querySelector('.picks') && /kcal d’imprévu/.test(meal.textContent);
     C.ok(!!box === !(sl === 'diner' && libre) || (!box && (banP.includes(couple) || replaced)), 'recette proposée', () => sl + ' ' + where());
-    if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
+    if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir', 'kcal d’imprévu'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
   });
   // Imprévu (3.26.0) : celui enregistré pour la date (valide, sur un repas affiché, pas au repas libre) est sur sa carte et dans

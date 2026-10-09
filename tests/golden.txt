@@ -729,7 +729,7 @@ P 103 g (fourchette 84 à 103, facteur 0.66), G 118 g, L 56 g, portions × 0.650
 
 == 72 kg, recettes midi et soir, repos (curry, bolognaise)
 dépense 2328 kcal (repos 2328, séances 0), objectif 1980 kcal, apport 1987 kcal (écart 7)
-P 155 g (fourchette 130 à 158, facteur 0.75), G 199 g, L 57 g, portions × 1.000
+P 155 g (fourchette 130 à 158, facteur 0.75), G 198 g, L 57 g, portions × 1.000
   Petit-déjeuner :
     60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     190 g skyr nature  118 kcal
@@ -738,8 +738,8 @@ P 155 g (fourchette 130 à 158, facteur 0.75), G 199 g, L 57 g, portions × 1.00
   Déjeuner :
     130 g viande blanche maigre [≈ 100 g cuit] (poulet, dinde ou filet mignon de porc)  143 kcal
     90 g riz basmati [≈ 270 g cuit]  317 kcal
-    70 g oignon (ou échalote)  27 kcal
-    100 g poivron  37 kcal
+    1 oignon (≈ 100 g, ou 4 échalotes)  39 kcal
+    70 g poivron  26 kcal
     80 g épinards (frais ou surgelés)  28 kcal
     5 g huile d’olive (1 c. à café)  45 kcal
     15 g lait de coco (1 c. à soupe)  29 kcal
@@ -750,15 +750,15 @@ P 155 g (fourchette 130 à 158, facteur 0.75), G 199 g, L 57 g, portions × 1.00
   Dîner :
     110 g bœuf haché 5 % [≈ 85 g cuit]  143 kcal
     60 g pâtes [≈ 140 g cuites]  213 kcal
-    60 g oignon (ou échalote)  23 kcal
+    ½ oignon (≈ 50 g, ou 2 échalotes)  20 kcal
     50 g carottes  20 kcal
-    140 g pulpe de tomate (en conserve)  46 kcal
+    150 g pulpe de tomate (en conserve)  50 kcal
     10 g huile d’olive (2 c. à café)  90 kcal
     15 g parmesan (râpé sur les pâtes)  61 kcal
 
 == 72 kg, recette au dîner, moyenne le soir, chocolat (poke bowl)
-dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2428 kcal (écart -2)
-P 155 g (fourchette 130 à 158, facteur 0.77), G 284 g, L 68 g, portions × 1.000
+dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2433 kcal (écart 3)
+P 155 g (fourchette 130 à 158, facteur 0.77), G 285 g, L 68 g, portions × 1.000
   Petit-déjeuner :
     60 g flocons d’avoine ou muesli (muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr)  222 kcal
     190 g skyr nature  118 kcal
@@ -779,10 +779,10 @@ P 155 g (fourchette 130 à 158, facteur 0.77), G 284 g, L 68 g, portions × 1.00
   Dîner (après la séance) :
     120 g poisson gras [≈ 95 g cuit] (saumon, maquereau ou sardines à l’huile égouttées, sans matière grasse)  247 kcal
     95 g riz basmati [≈ 290 g cuit]  334 kcal
-    100 g concombre  12 kcal
+    80 g concombre  10 kcal
     70 g carottes  28 kcal
     50 g chou (rouge ou chinois)  15 kcal
-    30 g oignon (ou échalote)  12 kcal
+    ½ oignon (≈ 50 g, ou 2 échalotes)  20 kcal
     5 g huile de sésame (1 c. à café, ou d’olive)  45 kcal
     3 g graines de sésame (1 c. à café)  19 kcal
     20 g chocolat noir (70 % ou plus, 2 à 4 carrés selon la tablette)  114 kcal

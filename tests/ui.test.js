@@ -1754,6 +1754,14 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.click('[data-action="imp-mode"][data-value="plus"]'); t.click('[data-action="imp-kcal"][data-value="300"]'); t.click('[data-action="imp-ok"]');
   assert.deepStrictEqual(imp(), { slot: 'pd', kcal: 300, mode: 'plus' }, 'remplacé');
   assert(!t.$('#sec-dej .items li') || [...t.d.querySelectorAll('#sec-dej .items li')].length > 1, 'déjeuner revenu');
+  // Un imprévu en plus sur un repas avec une recette choisie : sa ligne sous la carte, hors des macros de la recette
+  t.click('#ft-dej'); t.click('#rec-c-dej');
+  t.click('#imp-dej'); t.click('[data-action="imp-mode"][data-value="plus"]'); t.click('[data-action="imp-kcal"][data-value="150"]'); t.click('[data-action="imp-ok"]');
+  const num = x => Number(x.replace(/[^\d]/g, '')), lis = [...t.d.querySelectorAll('#sec-dej .items li')];
+  const under = lis.reduce((a, li) => a + (li.querySelector('.mac') ? num(li.querySelector('.mac > span').textContent) : num(li.querySelector('.qty').textContent)), 0);
+  assert(lis.some(li => /kcal d’imprévu/.test(li.textContent)) && Math.abs(num(t.$('#sec-dej .rec-k .mac > span').textContent) + under - num(t.$('#sec-dej .kcal').textContent)) <= 5, 'imprévu sous la carte de la recette, hors de ses macros');
+  t.click('#rec-c-dej');
+  t.click('#imp-pd'); t.click('[data-action="imp-mode"][data-value="plus"]'); t.click('[data-action="imp-kcal"][data-value="300"]'); t.click('[data-action="imp-ok"]');
   // Une séance ajoutée : l'imprévu reste
   t.add('petite', 'soir');
   assert.deepStrictEqual(imp(), { slot: 'pd', kcal: 300, mode: 'plus' }, 'séance ajoutée : imprévu gardé');

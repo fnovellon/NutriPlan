@@ -38,6 +38,8 @@ function shoppingList(days){
     if (id === 'encas') return a.kcal ? {qty:kc(a.kcal), name:'d’encas', note:'pain complet et miel, fruits secs, riz au lait, barre de céréales'} : null;
     if (id === 'marge') return a.kcal ? {qty:kc(a.kcal), name:'pour la cuisine', note:'environ ' + grams(Math.round(a.kcal / 9 / 5) * 5) + ' d’huile'} : null;
     if (!a.g) return null;
+    /* Oignons (3.27.0) : à acheter entiers, au-dessus de ce que demandent les plats */
+    if (id === 'oignon'){ const n = Math.max(1, Math.ceil(a.g / ONION_G - 0.001)); return {qty:String(n), name:pl(n, 'oignon', 'oignons'), note:'pour ≈' + NB + shopQty(a.g) + ', ou des échalotes'}; }
     if (id === 'ravito') return {qty:shopQty(a.g), name:'de glucides pour l’effort', note:'boisson d’effort, gels ou pâtes de fruits'};
     const NAMES = {poulet:'viande blanche maigre', boeuf:'bœuf haché 5' + NB + '%', poisson:'poisson blanc', saumon:'poisson gras', crevettes:'crevettes cuites',
       jambon:'jambon blanc', skyr:'skyr nature', halloumi:'halloumi', parmesan:'parmesan', tofu:'tofu ferme', pain:'pain complet', legumes:'légumes verts',
