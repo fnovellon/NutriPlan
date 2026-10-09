@@ -118,7 +118,9 @@ function handEnergy(pr, plan){
     : x.taille === 'moyenne' ? (pr.kcalMoyenne !== null ? pr.kcalMoyenne : 6.3 * pr.poids)
     : (pr.kcalLongueH !== null ? pr.kcalLongueH : 7 * pr.poids) * x.duree), 0);
   const deficit = rest * pr.deficit / 100;
-  return { rest, cost, deficit, target: Math.round((rest + cost - deficit) / 10) * 10, kgWeek: deficit * 7 / 7700 };
+  // Veille d'une sortie longue (3.28.0) : 0,5 g/kg de glucides par heure de la sortie, poids borné comme les portions
+  const recharge = plan.veille ? 0.5 * 72 * Math.min(1.4, Math.max(0.65, pr.poids / 72)) * plan.veille : 0;
+  return { rest, cost, deficit, recharge, target: Math.round((rest + cost - deficit + 4 * recharge) / 10) * 10, kgWeek: deficit * 7 / 7700 };
 }
 
 // --- A. Journées au hasard : chaque règle vérifiée -----------------------------------------------------------------
@@ -132,6 +134,7 @@ for (let i = 0; i < N; i++){
     if (BASE[0]) ch[sl].g = R.chance(.9) ? near(BASE[0], 10) : R.pick([175, 0, -10, '150', 5000, null]);
     if (BASE[1] && R.chance(.7)) ch[sl].g2 = R.chance(.9) ? near(BASE[1], 5) : R.pick([3, 'x', 1e6]);
   });
+  if (R.chance(.2)) plan.veille = R.pick([1.5, 2, 2.5, 3, 4]);
   const input = JSON.stringify([prof, plan, ch]), cas = () => input;
   let r;
   try { r = A.buildDay(plan, ch, prof); } catch (e){ C.ok(false, 'exception', e.message + ' ' + input); continue; }
@@ -193,7 +196,7 @@ for (let i = 0; i < N; i++){
 
   // Dépense et objectif recalculés à la main
   const h = handEnergy(pr, plan);
-  C.ok(near(r.energy.rest, h.rest, 1e-6) && near(r.energy.cost, h.cost, 1e-6) && near(r.energy.deficit, h.deficit, 1e-6) && r.energy.target === h.target && near(r.energy.kgWeek, h.kgWeek, 1e-9),
+  C.ok(near(r.energy.rest, h.rest, 1e-6) && near(r.energy.cost, h.cost, 1e-6) && near(r.energy.deficit, h.deficit, 1e-6) && r.energy.target === h.target && near(r.energy.kgWeek, h.kgWeek, 1e-9) && near(r.energy.recharge, h.recharge, 1e-9),
     'dépense ≠ calcul à la main', () => JSON.stringify([r.energy, h]) + ' ' + input);
   if (!plan.libre) C.ok(near(r.ecart, r.tot.kcal - T, 1e-6), 'écart ≠ apport − objectif', cas);
 

@@ -957,4 +957,25 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
   assert(shopO.qty === String(Math.ceil(5 * g1 / 100)) && /^pour ≈\s/.test(shopO.note), 'courses : oignons entiers ' + JSON.stringify(shopO));
 }
 
+// Recharge la veille d'une sortie longue (3.28.0) : 0,5 g/kg de glucides par heure de la sortie, surtout au dîner
+{
+  const chV = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'pdt' } };
+  const n = buildDay(day([]), chV), v = buildDay(day([], { veille: 2 }), chV), kc = (r, id) => r.secs.find(x => x.id === id).items.find(i => i.key === 'st').m.kcal;
+  assert(n.energy.recharge === 0 && v.energy.recharge === 72 && v.energy.target === Math.round((v.energy.rest - v.energy.deficit + 4 * 72) / 10) * 10, 'recharge : 72 g à 72 kg pour 2 h ' + JSON.stringify(v.energy));
+  assert(Math.abs(v.tot.c - n.tot.c - 72) <= 10 && Math.abs(v.tot.kcal - n.tot.kcal - 288) <= 30, 'recharge en glucides : ' + Math.round(v.tot.c - n.tot.c));
+  // Au dîner d'abord : jusqu'à son plafond (pommes de terre : 400 g), puis le déjeuner, puis un encas
+  const pdtCap = starchCap('pdt', 1);
+  assert(kc(v, 'diner') >= pdtCap - 10 && kc(v, 'diner') - kc(n, 'diner') >= kc(v, 'dej') - kc(n, 'dej'), 'recharge au dîner d’abord : ' + Math.round(kc(v, 'diner') - kc(n, 'diner')) + ' / ' + Math.round(kc(v, 'dej') - kc(n, 'dej')));
+  // Déficit de 25 % : le dîner a de la place (≈ 320 kcal), il prend presque toute la recharge (216 kcal pour 1h30)
+  const chR = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'poulet', starch: 'riz' } }, nR = buildDay(day([]), chR, { deficit: 25 }), vR = buildDay(day([], { veille: 1.5 }), chR, { deficit: 25 });
+  assert(kc(vR, 'diner') - kc(nR, 'diner') >= 0.85 * 4 * 54 && kc(vR, 'dej') - kc(nR, 'dej') <= 0.15 * 4 * 54, 'recharge au dîner tant qu’il a de la place : ' + Math.round(kc(vR, 'diner') - kc(nR, 'diner')) + ' / ' + Math.round(kc(vR, 'dej') - kc(nR, 'dej')));
+  assert(buildDay(day([], { veille: 1.5 }), chV).energy.recharge === 54 && buildDay(day([], { veille: 2 }), chV, { poids: 100 }).energy.recharge === 36 * (100 / 72) * 2, 'recharge : durée et poids');
+  ['2', -1, 9, NaN, null, 0].forEach(bad => assert.deepStrictEqual(plain(buildDay(day([], { veille: bad }), chV)), plain(n), 'veille abîmée ignorée : ' + bad));
+  // Repas libre ce soir-là : la recharge est dans son budget
+  assert(buildDay(day([], { libre: true, veille: 2 }), chV).libre > buildDay(day([], { libre: true }), chV).libre, 'recharge : repas libre');
+  // Plus que les féculents ne peuvent prendre : le reste en encas
+  const big = buildDay(day([moyenne('soir'), petite('matin')], { veille: 4 }), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'poulet', starch: 'pates' } });
+  assert(Math.abs(big.tot.kcal - big.energy.target) <= 0.03 * big.energy.target, 'recharge : objectif tenu');
+}
+
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

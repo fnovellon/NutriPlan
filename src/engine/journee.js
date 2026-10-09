@@ -20,14 +20,15 @@ const OATS_SKYR = 2.5;
 function protTarget(p){ return p.prot * REF_KG * scaleOf(p); }
 /* Partage l'énergie des féculents entre déjeuner et dîner, entre plancher et plafond (caps : kcal du plafond de chaque repas).
    off : kcal du dessert de chaque repas, prises sur le féculent du même repas (l'autre compense s'il touche une limite).
+   late : kcal réservées au dîner (recharge de la veille d'une sortie longue, 3.28.0), hors du partage.
    rest > 0 : les deux sont au plafond ; rest < 0 : les deux sont au plancher. */
-function splitStarch(budget, share, k, off, caps){
+function splitStarch(budget, share, k, off, caps, late){
   const o = off || {dej:0, diner:0};
   const lo = STARCH_MIN * k;
   const clampA = function(x){ return Math.min(Math.max(lo, caps.dej), Math.max(lo, x)); };
   const clampB = function(x){ return Math.min(Math.max(lo, caps.diner), Math.max(lo, x)); };
   const avail = budget - o.dej - o.diner;
-  let ka = clampA(budget * share - o.dej);
+  let ka = clampA((budget - (late || 0)) * share - o.dej);
   const kb = clampB(avail - ka);
   ka = clampA(avail - kb);
   return {dej:ka, diner:kb, rest:avail - ka - kb};
@@ -130,7 +131,7 @@ function composeDay(plan, ch, pr, pf){
     const fixed = total(allItems(secs).filter(function(i){ return i.key !== 'st' && i.key !== 'des'; })).kcal;
     const des = function(sec){ return total(sec.items.filter(function(i){ return i.key === 'des'; })).kcal; };
     const sp = splitStarch(en.target - fixed, wDej / (wDej + wDiner), k, {dej:des(lunch), diner:des(dinner)},
-      {dej:starchCap(ch.dej.starch, k), diner:starchCap(ch.diner.starch, k)});
+      {dej:starchCap(ch.dej.starch, k), diner:starchCap(ch.diner.starch, k)}, 4 * en.recharge);
     setStarch(lunch, starchItem(ch.dej.starch, sp.dej));
     setStarch(dinner, starchItem(ch.diner.starch, sp.diner));
     if (sp.rest >= 30){

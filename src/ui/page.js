@@ -389,6 +389,9 @@
     const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de repas libre'] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' + (dont.length ? ', dont ' + dont.join(' et ') + '.' : '.');
     let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
+    /* Veille d'une sortie longue (3.28.0) : la recharge, et le conseil d'un féculent digeste si le dîner est aux légumineuses */
+    if (en.recharge) note += ' Veille de sortie longue' + NB + ': +' + NB + Math.max(5, Math.round(en.recharge / 5) * 5) + NB + 'g de glucides pour recharger, au dîner d’abord.' +
+      (!plan.libre && LEGUMES.indexOf(ch.diner.starch) >= 0 ? ' Ce soir, du riz ou des pâtes passeront mieux que des légumineuses.' : '');
     const over = !res.libre && res.ecart > en.target * 0.03;
     if (over){
       const pr = cleanProfile(prof), tips = [];

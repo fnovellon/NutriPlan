@@ -94,12 +94,18 @@
   const semOf = function(){ return cleanProfile(prof).semaine; };
   /* Plan d'une date : ce qui est enregistré, le reste de la semaine type. Le repas libre de la semaine type ne compte pas
      si un autre jour de la même semaine en a un enregistré (un seul par semaine). */
-  const planFor = function(iso){
+  const basePlan = function(iso){
     const d = fromIso(iso), rec = store.plans[iso], p = cleanPlan(rec, d.getDay(), semOf());
     if (p.libre && !(rec && typeof rec === 'object' && has(rec, 'libre')) && weekOf(d).some(function(x){
       const i = isoDate(x), o = store.plans[i];
       return i !== iso && o && typeof o === 'object' && has(o, 'libre') && o.libre === true;
     })) p.libre = false;
+    return p;
+  };
+  /* Veille d'une sortie longue (3.28.0) : la durée de celle du lendemain (prévue ou de la semaine type), pour recharger */
+  const planFor = function(iso){
+    const p = basePlan(iso), l = basePlan(isoDate(addDays(fromIso(iso), 1))).seances.find(function(x){ return x.taille === 'longue'; });
+    if (l) p.veille = l.duree;
     return p;
   };
   const loadSel = function(){ sel = selDate.getDay(); plan = planFor(selIso()); ch = choicesFor(selIso(), sel); };

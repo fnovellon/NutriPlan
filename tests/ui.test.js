@@ -1794,6 +1794,24 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(!/d’imprévu/.test(r.$('#day').textContent) && !/d’imprévu/.test(r.$('#sum-text').textContent), 'abîmé : ignoré');
 }
 
+// Veille d'une sortie longue (3.28.0) : la note du total le dit (0,5 g/kg par heure de sortie), le dîner aux légumineuses
+// reçoit un conseil ; la sortie vient d'un jour enregistré ou de la semaine type
+{
+  const longT = JSON.stringify({ plans: { '2026-10-08': { seances: [{ taille: 'longue', moment: 'matin', duree: 2.5 }] } }, choices: {} });
+  const t = tools(open(ls => ls.setItem(KEY, longT)));
+  const kc0 = Number(tools(open()).$('#sum-text strong').textContent.replace(/\D/g, ''));
+  t.choose('starch', 'diner', 'riz');
+  assert(/Veille de sortie longue\s:\s\+\s90\sg de glucides pour recharger, au dîner d’abord\./.test(t.$('#sum-note').textContent) && !/légumineuses/.test(t.$('#sum-note').textContent), 'veille : note ' + t.$('#sum-note').textContent);
+  assert(Number(t.$('#sum-text strong').textContent.replace(/\D/g, '')) - kc0 >= 300, 'veille : objectif plus haut');
+  t.choose('starch', 'diner', 'lentilles');
+  assert(/Ce soir, du riz ou des pâtes passeront mieux que des légumineuses\./.test(t.$('#sum-note').textContent), 'veille : conseil du dîner');
+  t.click('#week [data-value="2026-10-08"]');
+  assert(!/Veille de sortie longue/.test(t.$('#sum-note').textContent), 'le jour de la sortie : pas de recharge');
+  // Semaine type : sortie longue le jeudi
+  const s = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ semaine: { jours: { 4: [{ taille: 'longue', moment: 'matin', duree: 2 }] }, libre: 6 } }))));
+  assert(/Veille de sortie longue\s:\s\+\s70\sg/.test(s.$('#sum-note').textContent), 'veille : semaine type');
+}
+
 // Planifications relues et validées (3.21.0) : abîmées, ignorées (l'ancienne période des courses n'est alors pas reprise) ;
 // triées ; finies depuis plus de 21 jours, effacées
 {

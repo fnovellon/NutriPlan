@@ -59,8 +59,17 @@ function seanceCost(x, p){
 function dayCost(plan, p){ return plan.seances.reduce(function(a, x){ return a + seanceCost(x, p); }, 0); }
 /* Le déficit est un % de la dépense d'un jour sans sport, retiré chaque jour : les séances restent couvertes.
    @param {Plan} plan  @param {Profile} p  @returns {Energy} */
+/* Recharge la veille d'une sortie longue (3.28.0) : 0,5 g de glucides par kg et par heure de la sortie du lendemain
+   (plan.veille, sa durée en heures ; ajoutée par l'interface, jamais enregistrée), soit 36 g par heure à 72 kg, × k.
+   Ajoutée à l'objectif du jour en féculents, au dîner d'abord (jusqu'à son plafond, puis le déjeuner, puis un encas) : le
+   déficit de ce jour-là est plus petit d'autant. */
+const RECHARGE_G = 36;
+function rechargeG(plan, p){
+  const h = plan && typeof plan.veille === 'number' && plan.veille > 0 && plan.veille <= 8 ? plan.veille : 0;
+  return h ? RECHARGE_G * scaleOf(p) * h : 0;
+}
 function energy(plan, p){
-  const rest = restNeed(p), cost = dayCost(plan, p), deficit = rest * p.deficit / 100;
-  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, deficit:deficit,
-    target:Math.round((rest + cost - deficit) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
+  const rest = restNeed(p), cost = dayCost(plan, p), deficit = rest * p.deficit / 100, recharge = rechargeG(plan, p);
+  return {bmr:bmr(p), rest:rest, mode:p.mode, restSource:restSource(p), cost:cost, need:rest + cost, deficit:deficit, recharge:recharge,
+    target:Math.round((rest + cost - deficit + 4 * recharge) / 10) * 10, kgWeek:deficit * 7 / KCAL_PER_KG};
 }

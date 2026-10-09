@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.28.0, 9 octobre 2026
+
+- La veille d'une sortie longue, ta journée recharge un peu tes réserves : 0,5 g de glucides par kg et par heure de sortie en plus (≈ 70 g pour 2 h à 72 kg), en féculents, au dîner d'abord. La note sous le total te le dit.
+- Si ce dîner-là est aux lentilles ou aux pois chiches, la page te conseille plutôt du riz ou des pâtes, plus digestes avant une grosse sortie.
+- Ce jour-là, ton déficit est un peu plus petit : sur la semaine, presque rien ne change pour ta sèche.
+
 ## 3.27.0, 9 octobre 2026
 
 - Les oignons se comptent en unités : « ½ oignon » ou « 1 oignon » dans les recettes (≈ 50 ou 100 g, ou des échalotes), « 2 ½ oignons » à cuire en batch, et des oignons entiers dans les courses.
