@@ -6,7 +6,7 @@ const BATCH_BLOCK = 7, BATCH_N = [3, 4, 5], FRIDGE_DAYS = 3;
    deux par boîte d'« Œufs + jambon ») ; 4 tranches, 180 g à 72 kg, dépassent un peu le repère de 150 g, toléré (weekNeeds). */
 const HAM_SLICES = 4;
 /* Plats d'une période en batch cooking. days : [{libre, long}] dans l'ordre des dates (long : sortie longue ce jour-là) ; renvoie les choix de chaque jour
-   ({pdBase, dej, diner}, recette comprise ; rand comme randomChoices). Par bloc :
+   ({pdBase, dej, diner}, recette comprise ; rand comme randomChoices ; la collation n'est pas tirée). Par bloc :
    - n recettes au plus (au moins deux repas chacune), parmi celles qui se gardent et dont la protéine et le féculent sont
      proposés ; protéines différentes et féculents variés autant que possible ; poisson, poisson gras et légumes secs
      favorisés tant que le bloc en manque ; écartés d'abord : le bœuf s'il ferait dépasser la viande rouge (repas du bloc,
@@ -18,10 +18,10 @@ const HAM_SLICES = 4;
      répartis dans l'ordre des jours, deux recettes en cours à la fois (celle qui se congèle mal, sinon la plus fournie,
      d'abord), en alternant ; jamais la
      même protéine au déjeuner et au dîner si c'est possible (échange avec le repas le plus proche) ;
-   - petits-déjeuners : 0 ou 4 tranches de jambon par bloc (HAM_SLICES). Avec « Œufs + jambon » (2 boîtes), aucun salé ;
-     sinon 4 petits-déjeuners salés (jours sans sortie longue ni œufs-jambon) ou aucun, tirés pour garder en moyenne autant
-     de salés qu'au hasard (probabilité : jours possibles / bases proposées / 4) ; les autres jours, une autre base au hasard
-     (le salé s'il ne reste que lui) ; desserts au hasard ; le dîner d'un repas libre reçoit une recette du bloc d'une autre
+   - petits-déjeuners : 0 ou 4 tranches de jambon par bloc (HAM_SLICES). Avec « Œufs + jambon » (2 boîtes), aucun
+     petit-déjeuner au jambon (salé, wrap) ; sinon 4 (jours sans sortie longue ni œufs-jambon, chacun une base au jambon au
+     hasard) ou aucun, tirés pour en garder en moyenne autant qu'au hasard (probabilité : jours possibles × bases au jambon
+     / bases proposées / 4) ; les autres jours, une autre base au hasard (une au jambon s'il ne reste qu'elles) ; desserts au hasard ; le dîner d'un repas libre reçoit une recette du bloc d'une autre
      protéine, sans boîte.
    - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
      favorite pèse double.
@@ -31,7 +31,9 @@ function batchChoices(days, n, off, k, rand, prefs){
   const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
-  const prots = allowed('prot', off), starches = allowed('starch', off), pds = allowed('pd', off), sweet = pds.filter(function(x){ return x !== 'sale'; });
+  const prots = allowed('prot', off), starches = allowed('starch', off), pds = allowed('pd', off);
+  /* Bases avec une tranche de jambon (salé, wrap, 3.29.0) et les autres */
+  const hams = pds.filter(function(x){ return PD[x].ham; }), sweet = pds.filter(function(x){ return !PD[x].ham; });
   const ok0 = Object.keys(RECIPES).filter(function(id){ return prots.indexOf(RECIPES[id].p) >= 0 && starches.indexOf(RECIPES[id].s) >= 0; });
   const okP = ok0.filter(function(id){ return recipePref(id, prefs) > 0; }), ok = okP.length ? okP : ok0;
   const keep = ok.filter(function(id){ return RECIPES[id].box; }), pool = keep.length ? keep : ok;
@@ -108,10 +110,10 @@ function batchChoices(days, n, off, k, rand, prefs){
     const eggs = plates.some(function(pl, i){ return prot(pl[0]) === 'oeufs' || (!(block[i] && block[i].libre) && prot(pl[1]) === 'oeufs'); });
     const free = [], sale = [];
     plates.forEach(function(pl, i){ if (!(block[i] && block[i].long) && prot(pl[0]) !== 'oeufs' && prot(pl[1]) !== 'oeufs') free.push(i); });
-    if (sweet.length && pds.indexOf('sale') >= 0 && !eggs && free.length >= HAM_SLICES && r() < Math.min(1, free.length / pds.length / HAM_SLICES))
+    if (sweet.length && hams.length && !eggs && free.length >= HAM_SLICES && r() < Math.min(1, free.length * hams.length / pds.length / HAM_SLICES))
       while (sale.length < HAM_SLICES) sale.push(free.splice(Math.min(free.length - 1, Math.floor(r() * free.length)), 1)[0]);
     block.forEach(function(d, i){
-      const pdBase = sale.indexOf(i) >= 0 ? 'sale' : pick(sweet.length ? sweet : pds);
+      const pdBase = sale.indexOf(i) >= 0 ? pick(hams) : pick(sweet.length ? sweet : pds);
       const meal = function(e){ const x = RECIPES[e.id]; return {prot:x.p, starch:x.s, dessert:pick(allowed('dessert', off)), recette:e.id}; };
       out.push({pdBase:pdBase, dej:meal(plates[i][0]), diner:meal(plates[i][1])});
     });
@@ -174,12 +176,13 @@ function batchMeals(days){
   return out;
 }
 /* Plats du bloc avec nid à la place de id : protéine, féculent et recette ; dessert gardé, poids fixés (g, g2) oubliés. Si
-   elle est « Œufs + jambon » (4 tranches), les petits-déjeuners salés du bloc passent à la première autre base proposée.
+   elle est « Œufs + jambon » (4 tranches), les petits-déjeuners au jambon du bloc (salé, wrap) passent à la première autre
+   base proposée. La collation (co, cs) reste.
    @param {{ch:Choices, libre:boolean}[]} days  @param {string} id  @param {string} nid  @param {string[]} [off]  @returns {Choices[]} */
 function batchSwap(days, id, nid, off){
-  const x = RECIPES[nid], sweet = allowed('pd', off).filter(function(b){ return b !== 'sale'; })[0];
+  const x = RECIPES[nid], sweet = allowed('pd', off).filter(function(b){ return !PD[b].ham; })[0];
   return days.map(function(d){
-    const c = {pdBase:d.ch.pdBase, dej:Object.assign({}, d.ch.dej), diner:Object.assign({}, d.ch.diner)};
+    const c = Object.assign({}, d.ch, {dej:Object.assign({}, d.ch.dej), diner:Object.assign({}, d.ch.diner)});
     ['dej', 'diner'].forEach(function(s){
       if (c[s].recette !== id) return;
       const o = {prot:x.p, starch:x.s};
@@ -187,20 +190,20 @@ function batchSwap(days, id, nid, off){
       o.recette = nid;
       c[s] = o;
     });
-    if (x.p === 'oeufs' && c.pdBase === 'sale' && sweet) c.pdBase = sweet;
+    if (x.p === 'oeufs' && has(PD, c.pdBase) && PD[c.pdBase].ham && sweet) c.pdBase = sweet;
     return c;
   });
 }
 /* Recettes qui peuvent remplacer id dans le bloc, mêmes règles que le tirage : elles se gardent (sinon toutes), protéine et
    féculent proposés ; ni une recette déjà dans le bloc, ni la protéine d'une autre recette du bloc, ni la protéine de l'autre
    repas d'un jour où elle est servie ; bœuf seulement sous 500 g de viande rouge cuite sur le bloc après le changement
-   (portions de base × k) ; « Œufs + jambon » seulement pour 2 repas (4 tranches de jambon) et s'il reste une autre base que
-   le salé ; une recette qui se congèle mal seulement si tous ses repas tombent dans les 3 premiers jours ; jamais une recette
+   (portions de base × k) ; « Œufs + jambon » seulement pour 2 repas (4 tranches de jambon) et s'il reste une base sans
+   jambon ; une recette qui se congèle mal seulement si tous ses repas tombent dans les 3 premiers jours ; jamais une recette
    à éviter (3.25.0). Celles de la même protéine d'abord, puis dans l'ordre de RECIPES.
    @returns {string[]} */
 function batchSwapOptions(days, id, off, k, prefs){
   const kk = k || 1, prots = allowed('prot', off), starches = allowed('starch', off);
-  const boeufCuit = sc(150, 10, kk) * YIELD.boeuf, sweet = allowed('pd', off).some(function(b){ return b !== 'sale'; });
+  const boeufCuit = sc(150, 10, kk) * YIELD.boeuf, sweet = allowed('pd', off).some(function(b){ return !PD[b].ham; });
   const ok = Object.keys(RECIPES).filter(function(x){ return prots.indexOf(RECIPES[x].p) >= 0 && starches.indexOf(RECIPES[x].s) >= 0; });
   const keep = ok.filter(function(x){ return RECIPES[x].box; }), pool = keep.length ? keep : ok;
   const meals = batchMeals(days), mine = meals.filter(function(m){ return m.c.recette === id; });
@@ -251,7 +254,7 @@ function batchSwapPick(days, id, off, k, rand, prefs){
    déjà arrondies (un repas avec g ou g2) ne bougent pas : après un changement de recette, seule la nouvelle l'est.
    @param {{plan:Plan, ch:Choices}[]} days  @param {*} [profile] champs du profil  @returns {Choices[]} */
 function batchRound(days, profile){
-  const copy = function(c){ return {pdBase:c.pdBase, dej:Object.assign({}, c.dej), diner:Object.assign({}, c.diner)}; };
+  const copy = function(c){ return Object.assign({}, c, {dej:Object.assign({}, c.dej), diner:Object.assign({}, c.diner)}); };
   let out = days.map(function(d){ return copy(d.ch); });
   const k = scaleOf(cleanProfile(profile));
   /* Sans imprévu (3.26.0) : la boîte est cuisinée comme prévu */

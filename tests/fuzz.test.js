@@ -48,7 +48,13 @@ const slot = () => {
   else if (R.chance(.05)) o.recette = R.pick(Object.keys(A.RECIPES));
   return o;
 };
-const randChoices = () => ({ pdBase: R.pick(A.PD_ORDER), dej: slot(), diner: slot() });
+// Collation (3.29.0) : souvent choisie, parfois absente ou invalide (œufs durs, banane et compote)
+const randChoices = () => {
+  const c = { pdBase: R.pick(A.PD_ORDER), dej: slot(), diner: slot() };
+  if (R.chance(.7)) c.co = R.pick(A.SNACK_ORDER.concat(['x']));
+  if (R.chance(.6)) c.cs = R.pick(['banane', 'boules', 'boules', 'y']);
+  return c;
+};
 const copy = x => JSON.parse(JSON.stringify(x));
 
 // --- Aides ---------------------------------------------------------------------------------------------------------
@@ -84,7 +90,10 @@ const BYNAME = {
   'œufs': ['unit', 'oeuf'], 'œuf': ['unit', 'oeuf'], 'œuf dur': ['unit', 'oeuf'], 'banane': ['unit', 'banane'],
   'pomme': ['unit', 'pomme'], 'fruit': ['unit', 'pomme'], 'compote': ['unit', 'compote'],
   // Matières grasses des recettes nommées autrement que dans RFOOD
-  'huile de sésame': ['food', 'huile'], 'parmesan râpé': ['food', 'parmesan']
+  'huile de sésame': ['food', 'huile'], 'parmesan râpé': ['food', 'parmesan'],
+  // Petits-déjeuners et collations (3.29.0)
+  'flocons d’avoine': ['food', 'avoine'], 'cacao non sucré': ['food', 'cacao'], 'riz rond': ['food', 'rizrond'], 'tomate': ['food', 'tomate'],
+  'tortilla complète': ['unit', 'tortilla'], 'galettes de riz soufflé': ['unit', 'galette']
 };
 // Légumes et matières grasses des recettes (3.12.0)
 Object.entries(A.RFOOD).forEach(([id, x]) => { BYNAME[x[0]] = ['food', id]; });
@@ -101,6 +110,8 @@ function expected(item, pr){
   if (src && src[0] === 'unit' && n) return A.UNIT[src[1]].map(v => v * n[1]);
   if (st && g) return A.STARCH[st].f.map(v => v * g[1] / 100);
   if (item.name === 'boîte de thon au naturel' && item.qty === '1') return A.FOOD.thon.map(v => v * 1.1);
+  // Demi-boîte des bouchées de thon de la collation (3.29.0) : 55 g égouttés
+  if (item.name === 'boîte de thon au naturel' && item.qty === '½') return A.FOOD.thon.map(v => v * 0.55);
   // Shaker : protéines saisies (au plus kcal / 4), le reste des kcal à parts égales entre glucides et lipides
   if (item.name === 'shaker de protéines' && item.qty === '1'){ const p = Math.min(pr.shakerProt, pr.shakerKcal / 4), rest = pr.shakerKcal - 4 * p; return [pr.shakerKcal, p, rest / 8, rest / 18]; }
   if (item.name === 'glucides pendant l’effort' && g) return [4 * g[1], 0, +g[1], 0];
@@ -108,6 +119,51 @@ function expected(item, pr){
   if (item.name === 'kcal d’encas' && bud){ const k = +bud[1].replace(/\D/g, ''); return [k, 0, k / 4, 0]; }
   if (item.name === 'kcal environ' && /^[\d  ]+$/.test(item.qty)){ const k = +item.qty.replace(/\D/g, ''); return [k, 0, 0, 0]; }
   return null;
+}
+// Petit-déjeuner attendu (CLAUDE.md, « Petit-déjeuner », 3.29.0 pour les recettes) : [clé, quantité, nom] de chaque ligne.
+// Portions × k ; skyr × k × pf, jamais sous 100 g (ni sous 2,5 fois les flocons de l'avoine et du bircher) ; banane les jours
+// de séance moyenne ou longue ; sortie longue : + flocons ou pain et miel, les bases salées passent au pain sucré
+const scq = (g, step, k) => Math.max(step, Math.round(g * k / step) * step);
+function expPd(b, long, grosse, k, pf){
+  const kp = k * pf, G = g => g + NB + 'g', out = [], eg = n => [String(n), n > 1 ? 'œufs' : 'œuf'];
+  const fruit = g => out.push(grosse || long ? ['fruit', '1', 'banane'] : ['fruit', G(g), 'fruits rouges']);
+  const skyr = (ref, min) => out.push(['skyr', G(Math.max(100, min || 0, scq(ref, 10, kp))), 'skyr nature']);
+  const miel = () => { if (long) out.push(['miel', G(scq(15, 5, k)), 'miel']); };
+  const n2 = A.pieces(2, k), n1 = A.pieces(1, k);
+  if (b === 'sale' && !long){ out.push(['base', G(scq(80, 10, k)), 'pain complet'], ['oeufs', ...eg(n2)], ['jambon', G(scq(45, 5, k)), 'jambon blanc']); fruit(125); }
+  else if (b === 'brouillade' && !long){ out.push(['oeufs', ...eg(n2)], ['epi', G(100), 'épinards'], ['chp', G(60), 'champignons de Paris'], ['pain', G(scq(60, 10, k)), 'pain complet']); skyr(150); fruit(100); }
+  else if (b === 'wrap' && !long){ out.push(['tort', '1', 'tortilla complète'], ['oeufs', ...eg(n2)], ['jambon', G(scq(45, 5, k)), 'jambon blanc'], ['tom', G(80), 'tomate']); fruit(125); }
+  else if (b === 'pancakes'){ out.push(['base', G(scq(long ? 60 : 40, 5, k)), 'flocons d’avoine'], ['fruit', '1', 'banane'], ['oeufs', ...eg(n2)]); skyr(100); out.push(['fr', G(50), 'fruits rouges']); miel(); }
+  else if (b === 'painperdu'){ out.push(['base', G(scq(long ? 110 : 80, 10, k)), 'pain complet'], ['oeufs', ...eg(n1)], ['lait', G(scq(100, 10, k)), 'lait demi-écrémé']); skyr(150); fruit(125); miel(); }
+  else if (b === 'bircher'){
+    const f = scq(long ? 70 : 50, 5, k);
+    out.push(['base', G(f), 'flocons d’avoine']); skyr(200, Math.ceil(f * 2.5 / 10) * 10);
+    out.push(['lait', G(scq(60, 10, k)), 'lait demi-écrémé'], ['fruit', '1', 'pomme'], ['am', G(scq(10, 5, k)), 'amandes']); miel();
+  }
+  else if (b === 'porridge'){ out.push(['base', G(scq(long ? 70 : 50, 5, k)), 'flocons d’avoine'], ['lait', G(scq(150, 10, k)), 'lait demi-écrémé'], ['cacao', G(8), 'cacao non sucré'], ['fruit', '1', 'banane']); skyr(150); miel(); }
+  else if (b === 'smoothie'){ skyr(250); out.push(['fruit', '1', 'banane'], ['fr', G(100), 'fruits rouges'], ['lait', G(scq(100, 10, k)), 'lait demi-écrémé'], ['base', G(scq(long ? 50 : 30, 5, k)), 'flocons d’avoine']); miel(); }
+  else {
+    const oats = b === 'avoine', f = scq(long ? 80 : 60, 5, k);
+    out.push(oats ? ['base', G(f), 'flocons d’avoine ou muesli'] : ['base', G(scq(long ? 110 : 80, 10, k)), 'pain complet']);
+    skyr(long ? 150 : 250, oats ? Math.ceil(f * 2.5 / 10) * 10 : 0); fruit(125); miel(); out.push(['am', G(scq(15, 5, k)), 'amandes']);
+  }
+  return out;
+}
+// Collation attendue (3.29.0) : la partie protéines (œufs durs par défaut ; œufs durs et muffins remplacés par skyr et amandes
+// s'il y a déjà des œufs), puis les jours de séance banane (+ compote) ou boules d'énergie ; le riz au lait fait les deux
+function expCo(kind0, cs, seance, grosse, k, oeufs){
+  const kind = A.SNACK_ORDER.includes(kind0) ? kind0 : 'oeufs', G = g => g + NB + 'g', out = [], eg = n => [String(n), n > 1 ? 'œufs' : 'œuf'];
+  if (kind === 'rizaulait') return [['rzr', G(scq(30, 5, k)), 'riz rond'], ['rzl', G(scq(200, 10, k)), 'lait demi-écrémé'], ['rzs', G(Math.max(100, scq(100, 10, k))), 'skyr nature']];
+  if (oeufs && (kind === 'oeufs' || kind === 'muffins')) out.push(['csk', G(Math.max(100, scq(100, 10, k))), 'skyr nature'], ['cam', G(scq(15, 5, k)), 'amandes']);
+  else if (kind === 'muffins') out.push(['mfo', ...eg(A.pieces(2, k))], ['mfe', G(40), 'épinards'], ['mfp', G(scq(10, 5, k)), 'parmesan']);
+  else if (kind === 'mugcake') out.push(['mko', ...eg(A.pieces(1, k))], ['mks', G(scq(80, 10, k)), 'skyr nature'], ['mka', G(scq(15, 5, k)), 'flocons d’avoine'], ['mkc', G(5), 'cacao non sucré']);
+  else if (kind === 'thon') out.push(['tht', '½', 'boîte de thon au naturel'], ['thc', G(150), 'concombre'], ['ths', G(30), 'skyr nature'], ['thg', '2', 'galettes de riz soufflé']);
+  else out.push(['oe', ...eg(A.pieces(2, k))]);
+  if (seance){
+    if (cs === 'boules'){ const b = grosse ? 3 : 2; out.push(['bof', G(scq(10 * b, 5, k)), 'flocons d’avoine'], ['bos', G(scq(10 * b, 5, k)), 'fruits secs'], ['boa', G(scq(5 * b, 5, k)), 'amandes']); }
+    else { out.push(['ban', '1', 'banane']); if (grosse) out.push(['comp', '1', 'compote']); }
+  }
+  return out;
 }
 // Dépense recalculée à la main (CLAUDE.md, « Dépense et objectif »)
 function handEnergy(pr, plan){
@@ -145,7 +201,7 @@ for (let i = 0; i < N; i++){
   const ids = r.secs.map(s => s.id);
   // Skyr des flocons (3.19.0) : au moins 2,5 fois le poids des flocons
   { const pdi = sec(r, 'pd').items, oats = pdi.find(x => x.key === 'base' && x.buy.id === 'avoine'), sk = pdi.find(x => x.key === 'skyr');
-    if (oats) C.ok(sk && sk.buy.g >= Math.ceil(oats.buy.g * 2.5 / 10) * 10, 'skyr sous 2,5 fois les flocons', cas); }
+    if (oats && (ch.pdBase === 'avoine' || ch.pdBase === 'bircher')) C.ok(sk && sk.buy.g >= Math.ceil(oats.buy.g * 2.5 / 10) * 10, 'skyr sous 2,5 fois les flocons', cas); }
   // Poids fixés valides : la ligne les reprend et n'est pas ajustée ; sinon ignorés
   ['dej', 'diner'].forEach(sl => {
     const sc2 = sec(r, sl), fx = A.fixedGrams(ch[sl]);
@@ -217,8 +273,9 @@ for (let i = 0; i < N; i++){
     // Skyr du soir : seulement s'il manque des protéines sans lui
     if (soir) C.ok(r.tot.p - soir.items[0].m.p < r.prot.low + 0.5, 'skyr du soir inutile', () => Math.round(r.tot.p) + ' ' + input);
   }
-  // Skyr du petit-déjeuner et du goûter : jamais sous 100 g
-  items.filter(x => x.name === 'skyr nature' && x.key !== 'x-skyr').forEach(x => C.ok(parseInt(x.qty, 10) >= 100, 'skyr sous 100 g', () => x.qty + ' ' + input));
+  // Skyr du petit-déjeuner, du goûter et de la collation : jamais sous 100 g ; pas celui d'une recette (sauce, mug cake,
+  // bouchées de thon, 3.29.0)
+  items.filter(x => x.name === 'skyr nature' && !['x-skyr', 'mks', 'ths'].includes(x.key)).forEach(x => C.ok(parseInt(x.qty, 10) >= 100, 'skyr sous 100 g', () => x.qty + ' ' + input));
   // Recettes : choisie (et qui va avec la protéine et le féculent), ses lignes exactement, sans « légumes » ni marge cuisine ;
   // sinon les lignes habituelles. Suggestion : la recette du couple.
   ['dej', 'diner'].forEach(id => {
@@ -231,14 +288,13 @@ for (let i = 0; i < N; i++){
       C.ok(lines.map(l => l.key + ':' + l.buy.g).join() === want.join() && !keys.includes('leg') && !keys.includes('marge'), 'lignes de la recette', show);
     } else C.ok(!lines.length && keys.includes('leg') && keys.includes('marge') === (id === 'dej' ? Math.round(pr.marge / 2 / 5) * 5 : pr.marge - Math.round(pr.marge / 2 / 5) * 5) > 0, 'repas sans recette', show);
   });
-  // Petit-déjeuner selon la base : salé = pain, œufs, une tranche de jambon et fruit (portions × k, fixes), sauf les jours
-  // de sortie longue (version sucrée au pain) ; sinon base, skyr, fruit (miel les jours de sortie longue), amandes
+  // Petit-déjeuner selon la base (expPd) : chaque ligne, sa quantité, son nom ; seul le skyr suit l'objectif de protéines ;
+  // une base salée un jour de sortie longue passe au pain sucré, et le dit
   {
-    const pd = sec(r, 'pd').items, keys = pd.map(x => x.key).join(' '), sale = ch.pdBase === 'sale' && !long;
-    const base = ch.pdBase === 'avoine' ? 'flocons d’avoine ou muesli' : 'pain complet';
-    C.ok(keys === (sale ? 'base oeufs jambon fruit' : long ? 'base skyr fruit miel am' : 'base skyr fruit am') && pd[0].name === base, 'petit-déjeuner selon la base', () => ch.pdBase + ' : ' + keys + ' ' + input);
-    if (sale) C.ok(pd[1].qty === String(A.pieces(2, k)) && pd[2].qty === Math.round(45 * k / 5) * 5 + NB + 'g' && !pd.some(x => x.adj), 'petit-déjeuner salé : portions', () => pd.map(x => x.qty).join(', ') + ' ' + input);
-    if (ch.pdBase === 'sale' && long) C.ok(/version sucrée/.test(pd[0].note), 'sortie longue : version sucrée non dite', () => pd[0].note);
+    const pd = sec(r, 'pd').items, got = JSON.stringify(pd.map(x => [x.key, x.qty, x.name])), want = JSON.stringify(expPd(ch.pdBase, long, grosse, k, r.prot.factor));
+    C.ok(got === want, 'petit-déjeuner selon la base', () => ch.pdBase + ' : ' + got + ' au lieu de ' + want + ' ' + input);
+    C.ok(pd.every(x => !!x.adj === (x.key === 'skyr')), 'petit-déjeuner : seul le skyr est ajusté', () => ch.pdBase + ' ' + input);
+    if (A.PD[ch.pdBase].sale && long) C.ok(/version sucrée/.test(pd[0].note), 'sortie longue : version sucrée non dite', () => pd[0].note);
   }
 
   // Lipides : plancher toujours ; plafond (+ 8,4 g par chocolat) avec une marge cuisine d'au plus 150 kcal, dès 47 kg
@@ -299,20 +355,20 @@ for (let i = 0; i < N; i++){
     C.ok(b.items.length === 1 && b.items[0].qty === Math.round(pr.ravito * d / 5) * 5 + NB + 'g', 'ravito de la sortie longue', () => JSON.stringify(b.items) + ' ' + input);
   });
   C.ok(items.filter(x => x.key === 'shk').length === (pr.shaker === 'oui' ? 1 : 0), 'nombre de shakers', () => ids.join(' ') + ' ' + input);
-  // Collation : œufs, + banane s'il y a une séance, + compote s'il y a une moyenne ou une longue ; goûter : skyr, pomme, amandes
+  // Collation au choix (expCo, 3.29.0) ; goûter de sortie longue : skyr, pomme, amandes, sans choix
   const co = sec(r, 'co'), coNames = co.items.map(x => x.name);
-  if (long) C.ok(['skyr nature', 'pomme', 'amandes'].every(n => coNames.includes(n)), 'goûter incomplet', () => coNames.join(', '));
+  if (long) C.ok(['skyr nature', 'pomme', 'amandes'].every(n => coNames.includes(n)) && !co.pick, 'goûter incomplet', () => coNames.join(', '));
   else {
-    // Déjà des œufs dans la journée (salé, « Œufs + jambon ») : skyr et amandes à la place des œufs
-    const oeufs = ch.pdBase === 'sale' || ch.dej.prot === 'oeufs' || ch.diner.prot === 'oeufs';
-    const oe = co.items[0], nOe = A.pieces(2, k);
-    if (oeufs) C.ok(co.items[0].key === 'csk' && co.items[1].key === 'cam' && co.items[0].qty === Math.max(100, Math.round(100 * k / 10) * 10) + NB + 'g' && co.items[1].qty === Math.round(15 * k / 5) * 5 + NB + 'g' && !co.items.some(x => x.key === 'oe'), 'collation sans œufs', () => coNames.join(', ') + ' ' + input);
-    else C.ok(oe.qty === String(nOe) && oe.name === (nOe > 1 ? 'œufs' : 'œuf') && oe.buy.id === 'oeuf', 'œufs de la collation', () => oe.qty + ' ' + oe.name);
-    // Œufs de la journée : 4 au plus à 72 kg (salé ou « Œufs + jambon », jamais avec ceux de la collation), hors repas libre
+    // Déjà des œufs dans la journée (petit-déjeuner aux œufs, « Œufs + jambon ») : skyr et amandes à la place des œufs durs
+    const oeufs = !!A.PD[ch.pdBase].oeufs || ch.dej.prot === 'oeufs' || ch.diner.prot === 'oeufs', kind = A.SNACK_ORDER.includes(ch.co) ? ch.co : 'oeufs';
+    const got = JSON.stringify(co.items.filter(x => x.key !== 'shk' && x.key !== 'encas').map(x => [x.key, x.qty, x.name]));
+    const want = JSON.stringify(expCo(ch.co, ch.cs, plan.seances.length > 0, grosse, k, oeufs));
+    C.ok(got === want, 'collation selon le choix', () => got + ' au lieu de ' + want + ' ' + input);
+    C.ok(co.pick === 'co' && co.cs === (plan.seances.length > 0 && kind !== 'rizaulait'), 'collation : choix proposés', () => co.pick + ' ' + co.cs + ' ' + input);
+    // Œufs de la journée : 4 au plus à 72 kg (petit-déjeuner aux œufs ou « Œufs + jambon », jamais avec les œufs durs de la
+    // collation), un de plus avec le mug cake, hors repas libre
     const eggs = items.filter(x => x.buy && x.buy.id === 'oeuf').reduce((t, x) => t + x.buy.n, 0);
-    if (!plan.libre && ch.dej.prot !== 'oeufs' && ch.diner.prot !== 'oeufs') C.ok(eggs <= A.pieces(2, k) + 2, 'trop d’œufs dans la journée', () => eggs + ' ' + input);
-    C.ok(coNames.includes('banane') === plan.seances.length > 0, 'banane de la collation', () => coNames.join(', ') + ' ' + input);
-    C.ok(coNames.includes('compote') === grosse, 'compote de la collation', () => coNames.join(', ') + ' ' + input);
+    if (!plan.libre && ch.dej.prot !== 'oeufs' && ch.diner.prot !== 'oeufs') C.ok(eggs <= A.pieces(2, k) + 2 + (kind === 'mugcake' ? A.pieces(1, k) : 0), 'trop d’œufs dans la journée', () => eggs + ' ' + input);
   }
   // Desserts : une ligne en fin de repas si choisi ; après une séance à midi, compote seulement sans dessert au déjeuner
   ['dej', 'diner'].forEach(id => {
@@ -516,7 +572,7 @@ for (let i = 0; i < N / 3; i++){
 
 // --- Liste de courses : exactement la somme des achats des journées, rangée par rayon ------------------------------
 {
-  const PIECE = ['banane', 'pomme', 'fruit', 'thon', 'compote', 'shaker', 'libre'];
+  const PIECE = ['banane', 'pomme', 'fruit', 'thon', 'compote', 'shaker', 'libre', 'tortilla', 'galette'];
   const num = q => Number(q.replace(/[^\d,]/g, '').replace(',', '.'));
   const grams = q => /kg$/.test(q) ? num(q) * 1000 : num(q);
   for (let i = 0; i < N / 10; i++){
@@ -534,7 +590,8 @@ for (let i = 0; i < N / 3; i++){
       const a = sum[id] || {};
       [l.qty, l.name, l.note || ''].forEach(t => C.ok(!/NaN|undefined|null|Infinity/.test(t) && !/\d (g|kg|kcal)\b/.test(t), 'liste : texte cassé', () => JSON.stringify(l)));
       if (id === 'oeufs') C.ok(+l.qty === a.n && !l.note && l.name === (a.n > 1 ? 'œufs' : 'œuf'), 'liste : œufs', () => JSON.stringify([l, a]));
-      else if (PIECE.includes(id)) C.ok(+l.qty === a.n, 'liste : pièces', () => JSON.stringify([l, a]));
+      // Pièces entières : une demi-boîte de thon (collation, 3.29.0) se compte à la boîte au-dessus
+      else if (PIECE.includes(id)) C.ok(+l.qty === Math.ceil(a.n - 1e-9), 'liste : pièces', () => JSON.stringify([l, a]));
       else if (id === 'oignon') C.ok(+l.qty === Math.max(1, Math.ceil(a.g / A.ONION_G - 0.001)) && l.name === (+l.qty > 1 ? 'oignons' : 'oignon'), 'liste : oignons entiers', () => JSON.stringify([l, a]));
       else if (id === 'encas' || id === 'marge') C.ok(Math.abs(num(l.qty) - Math.round(a.kcal / 10) * 10) < 1e-6, 'liste : budget', () => JSON.stringify([l, a]));
       else C.ok(Math.abs(grams(l.qty) - a.g) <= (a.g >= 1000 ? 5 : 0.5), 'liste : grammes', () => JSON.stringify([l, a]) + ' ' + input());
@@ -630,11 +687,12 @@ for (let i = 0; i < N / 3; i++){
     const c = A.randomChoices(R.next, off, bal, k), show = () => JSON.stringify([off, bal, k, c]), ok = kind => A.allowed(kind, off);
     C.ok(ok('pd').includes(c.pdBase) && ['dej', 'diner'].every(sl => ok('prot').includes(c[sl].prot) && ok('starch').includes(c[sl].starch) && ok('dessert').includes(c[sl].dessert)), 'tirage équilibré : aliment retiré', show);
     C.ok(ok('prot').length < 2 || c.dej.prot !== c.diner.prot, 'tirage équilibré : même protéine', show);
-    if (c.pdBase === 'sale' && ok('prot').some(p => p !== 'oeufs' && p !== c.dej.prot)) C.ok(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'tirage : œufs + jambon avec le salé', show);
+    const hamPd = x => !!A.PD[x].ham;
+    if (hamPd(c.pdBase) && ok('prot').some(p => p !== 'oeufs' && p !== c.dej.prot)) C.ok(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'tirage : œufs + jambon avec un petit-déjeuner au jambon', show);
     const jS = Math.round(45 * k / 5) * 5, jO = Math.round(90 * k / 5) * 5, bC = Math.round(150 * k / 10) * 10 * 0.75;
-    if (ok('pd').some(x => x !== 'sale') && bal.charcuterie + jS > 150) C.ok(c.pdBase !== 'sale', 'tirage : salé malgré la charcuterie', show);
+    if (ok('pd').some(x => !hamPd(x)) && bal.charcuterie + jS > 150) C.ok(!hamPd(c.pdBase), 'tirage : jambon au petit-déjeuner malgré la charcuterie', show);
     // Bœuf écarté s'il reste, pour chaque repas, une autre protéine sous les repères (la règle « pas deux fois la même » passe avant)
-    const ham = bal.charcuterie + (c.pdBase === 'sale' ? jS : 0), okProt = p => p !== 'boeuf' && !(p === 'oeufs' && (c.pdBase === 'sale' || ham + jO > 150));
+    const ham = bal.charcuterie + (hamPd(c.pdBase) ? jS : 0), okProt = p => p !== 'boeuf' && !(p === 'oeufs' && (hamPd(c.pdBase) || ham + jO > 150));
     if (bal.rouge + bC > 500 && ok('prot').filter(okProt).length >= 2) C.ok(c.dej.prot !== 'boeuf' && c.diner.prot !== 'boeuf', 'tirage : bœuf malgré la viande rouge', show);
   }
 }
@@ -658,7 +716,8 @@ for (let i = 0; i < N / 3; i++){
     cs.forEach((c, d) => {
       C.ok(ok('pd').includes(c.pdBase) && ['dej', 'diner'].every(sl => A.recipeOf(c[sl]) === c[sl].recette && ok('prot').includes(c[sl].prot) && ok('starch').includes(c[sl].starch) && ok('dessert').includes(c[sl].dessert)), 'batch : choix invalide ou retiré', () => show() + ' ' + JSON.stringify(c));
       if (keep.length) C.ok(A.RECIPES[c.dej.recette].box && A.RECIPES[c.diner.recette].box, 'batch : recette qui ne se garde pas', show);
-      if (c.pdBase === 'sale' && ok('pd').length > 1) C.ok(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'batch : œufs-jambon avec le salé', show);
+      if (A.PD[c.pdBase].ham && ok('pd').some(x => !A.PD[x].ham)) C.ok(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'batch : œufs-jambon avec un petit-déjeuner au jambon', show);
+      C.ok(!('co' in c) && !('cs' in c), 'batch : collation tirée', show);
     });
     for (let b = 0; b < len; b += 7){
       const blk = cs.slice(b, b + 7), bd = days.slice(b, b + 7), served = [];
@@ -675,15 +734,15 @@ for (let i = 0; i < N / 3; i++){
       // Qui se congèle mal : dans les 3 premiers jours (assez de recettes qui se congèlent bien, protéines variées)
       if (bd.length > 3 && freeGel >= nr) served.forEach(x => C.ok(A.RECIPES[x.c.recette].gel || x.d < 3, 'batch : se congèle mal, servie après 3 jours', () => bshow() + ' ' + x.c.recette + ' jour ' + x.d));
       // Repères estimés (portions de base) : bœuf et jambon sous leurs limites quand il reste d'autres choix
-      const beef = served.filter(x => x.c.prot === 'boeuf').length, oe = served.filter(x => x.c.prot === 'oeufs').length, sale = blk.filter(c => c.pdBase === 'sale').length;
+      const beef = served.filter(x => x.c.prot === 'boeuf').length, oe = served.filter(x => x.c.prot === 'oeufs').length, sale = blk.filter(c => A.PD[c.pdBase].ham).length;
       const enough = (bd.length > 3 ? freeGel : free) >= nr;
       if (enough) C.ok(beef * Math.round(150 * k / 10) * 10 * 0.75 <= 500 + 1e-9, 'batch : viande rouge', bshow);
-      // Jambon par paquet (3.17.0) : 0 ou 4 tranches (salé : 1, boîte d'œufs-jambon : 2) ; pas de salé avec les œufs-jambon
-      // ni un jour de sortie longue (sauf s'il ne reste que le salé)
-      if (ok('pd').some(x => x !== 'sale')){
+      // Jambon par paquet (3.17.0) : 0 ou 4 tranches (salé ou wrap : 1, boîte d'œufs-jambon : 2) ; pas de petit-déjeuner au
+      // jambon avec les œufs-jambon ni un jour de sortie longue (sauf s'il ne reste qu'eux)
+      if (ok('pd').some(x => !A.PD[x].ham)){
         C.ok(oe ? sale === 0 : [0, 4].includes(sale), 'batch : jambon, 0 ou 4 tranches', () => bshow() + ' salés ' + sale + ', œufs-jambon ' + oe);
         if (enough) C.ok(oe === 0 || oe === 2, 'batch : œufs-jambon, 2 boîtes', bshow);
-        blk.forEach((c, d) => { if (c.pdBase === 'sale') C.ok(!bd[d].long, 'batch : salé un jour de sortie longue', bshow); });
+        blk.forEach((c, d) => { if (A.PD[c.pdBase].ham) C.ok(!bd[d].long, 'batch : jambon au petit-déjeuner un jour de sortie longue', bshow); });
       }
       // Changer une recette (3.16.0) : les recettes proposées sont exactement celles qui respectent les règles (recalculées
       // ici), la remplaçante prend tous les repas de l'ancienne (dîner d'un repas libre compris), rien d'autre ne bouge
@@ -694,7 +753,7 @@ for (let i = 0; i < N / 3; i++){
       const bdays = blk2.map((c, d) => ({ ch: c, libre: bd[d].libre }));
       const opts = A.batchSwapOptions(bdays, id, off, k), sshow = () => bshow() + ' changer ' + id + ' ' + JSON.stringify(blk2);
       const used = blk2.flatMap(c => [c.dej.recette, c.diner.recette]).filter(x => x && x !== id), usedP = used.map(x => A.RECIPES[x].p);
-      const mine = served.filter(x => x.c.recette === id), sweet = ok('pd').find(p => p !== 'sale');
+      const mine = served.filter(x => x.c.recette === id), sweet = ok('pd').find(p => !A.PD[p].ham);
       const want = pl.filter(x => {
         const r = A.RECIPES[x];
         if (x === id || used.includes(x) || usedP.includes(r.p)) return false;
@@ -714,7 +773,7 @@ for (let i = 0; i < N / 3; i++){
           const was = blk2[d][sl];
           C.ok(was.recette === id ? c[sl].recette === nid && c[sl].prot === x.p && c[sl].starch === x.s && c[sl].dessert === was.dessert : JSON.stringify(c[sl]) === JSON.stringify(was), 'changer : repas', () => sshow() + ' → ' + nid);
         }));
-        if (x.p === 'oeufs') C.ok(after.every(c => c.pdBase !== 'sale'), 'changer : salé avec les œufs-jambon', () => sshow() + ' → ' + nid);
+        if (x.p === 'oeufs') C.ok(after.every(c => !A.PD[c.pdBase].ham), 'changer : jambon au petit-déjeuner avec les œufs-jambon', () => sshow() + ' → ' + nid);
         after.forEach((c, d) => { if (!bd[d].libre && blk2[d].dej.prot !== blk2[d].diner.prot) C.ok(c.dej.prot !== c.diner.prot, 'changer : même protéine midi et soir', () => sshow() + ' → ' + nid + ' jour ' + d); });
       }
     }

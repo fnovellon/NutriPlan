@@ -77,7 +77,8 @@
     const pr = cleanProfile(prof), save = function(iso, c){ const js = fromIso(iso).getDay(), x = cleanCh(c, js); writeDay(iso, {ch:x}); store.choices[js] = x; };
     if (type === 'recettes' && n){
       const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), n, pr.off, scaleOf(pr), null, pr);
-      batchRound(isos.map(function(iso, j){ return {plan:planFor(iso), ch:cleanCh(cs[j], fromIso(iso).getDay())}; }), prof).forEach(function(c, j){ save(isos[j], c); });
+      /* La collation n'est pas tirée : elle reste celle de chaque date (3.29.0) */
+      batchRound(isos.map(function(iso, j){ const js = fromIso(iso).getDay(); return {plan:planFor(iso), ch:cleanCh(keepSnack(cs[j], choicesFor(iso, js)), js)}; }), prof).forEach(function(c, j){ save(isos[j], c); });
     } else isos.forEach(function(iso){
       const c = drawFor(iso, type === 'recettes');
       if (type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });

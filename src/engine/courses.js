@@ -4,9 +4,9 @@
 const SHOP_AISLES = [
   {title:'Viandes et poissons', ids:['poulet', 'boeuf', 'poisson', 'saumon', 'crevettes', 'jambon']},
   {title:'Crèmerie, œufs et tofu', ids:['skyr', 'oeufs', 'halloumi', 'parmesan', 'creme', 'lait', 'tofu']},
-  {title:'Pain et féculents, poids crus', ids:['pain'].concat(STARCH_ORDER)},
+  {title:'Pain et féculents, poids crus', ids:['pain', 'tortilla'].concat(STARCH_ORDER, ['rizrond'])},
   {title:'Fruits et légumes', ids:['legumes'].concat(VEG_IDS.filter(function(v){ return v !== 'pulpe'; }), ['fruitsRouges', 'banane', 'pomme', 'fruit'])},
-  {title:'Épicerie', ids:['avoine', 'amandes', 'miel', 'fruitsSecs', 'chocolat', 'thon', 'pulpe', 'compote', 'huile', 'coco', 'olives', 'sesame', 'tahini']},
+  {title:'Épicerie', ids:['avoine', 'amandes', 'miel', 'fruitsSecs', 'chocolat', 'cacao', 'galette', 'thon', 'pulpe', 'compote', 'huile', 'coco', 'olives', 'sesame', 'tahini']},
   {title:'Le reste', ids:['shaker', 'ravito', 'encas', 'marge', 'libre']}
 ];
 function shopQty(g){
@@ -32,8 +32,11 @@ function shoppingList(days){
     }
     const PIECES = {banane:['banane', 'bananes', null], pomme:['pomme', 'pommes', null], fruit:['fruit au choix', 'fruits au choix', 'pomme, poire, orange, 2 kiwis…'],
       thon:['boîte de thon au naturel', 'boîtes de thon au naturel', null], compote:['compote', 'compotes', 'pots sans sucre ajouté'],
-      shaker:['dose de shaker', 'doses de shaker', null]};
-    if (has(PIECES, id)) return a.n ? {qty:String(a.n), name:pl(a.n, PIECES[id][0], PIECES[id][1]), note:PIECES[id][2]} : null;
+      shaker:['dose de shaker', 'doses de shaker', null], tortilla:['tortilla complète', 'tortillas complètes', null],
+      galette:['galette de riz soufflé', 'galettes de riz soufflé', null]};
+    /* Pièces entières (une demi-boîte de thon à la collation, 3.29.0 : on en achète une) */
+    const n = Math.ceil(a.n - 1e-9);
+    if (has(PIECES, id)) return n ? {qty:String(n), name:pl(n, PIECES[id][0], PIECES[id][1]), note:PIECES[id][2]} : null;
     if (id === 'libre') return a.n ? {qty:String(a.n), name:pl(a.n, 'repas libre', 'repas libres'), note:kc(a.kcal) + ' au total'} : null;
     if (id === 'encas') return a.kcal ? {qty:kc(a.kcal), name:'d’encas', note:'pain complet et miel, fruits secs, riz au lait, barre de céréales'} : null;
     if (id === 'marge') return a.kcal ? {qty:kc(a.kcal), name:'pour la cuisine', note:'environ ' + grams(Math.round(a.kcal / 9 / 5) * 5) + ' d’huile'} : null;
@@ -43,10 +46,11 @@ function shoppingList(days){
     if (id === 'ravito') return {qty:shopQty(a.g), name:'de glucides pour l’effort', note:'boisson d’effort, gels ou pâtes de fruits'};
     const NAMES = {poulet:'viande blanche maigre', boeuf:'bœuf haché 5' + NB + '%', poisson:'poisson blanc', saumon:'poisson gras', crevettes:'crevettes cuites',
       jambon:'jambon blanc', skyr:'skyr nature', halloumi:'halloumi', parmesan:'parmesan', tofu:'tofu ferme', pain:'pain complet', legumes:'légumes verts',
-      fruitsRouges:'fruits rouges', avoine:'flocons d’avoine ou muesli', amandes:'amandes', miel:'miel', fruitsSecs:'fruits secs', chocolat:'chocolat noir', huile:'huile d’olive'};
+      fruitsRouges:'fruits rouges', avoine:'flocons d’avoine ou muesli', amandes:'amandes', miel:'miel', fruitsSecs:'fruits secs', chocolat:'chocolat noir', huile:'huile d’olive',
+      cacao:'cacao non sucré', rizrond:'riz rond'};
     const NOTES = {poulet:'poulet, dinde ou filet mignon de porc', poisson:'cabillaud, colin…', saumon:'saumon, maquereau ou sardines à l’huile', tofu:'nature', avoine:'muesli sans sucre ajouté',
       jambon:slices(a.g, 45), pain:slices(a.g, 40), legumes:'au choix', fruitsRouges:'surgelés, c’est parfait', fruitsSecs:'abricots, pruneaux ou figues',
-      chocolat:'70' + NB + '% ou plus'};
+      chocolat:'70' + NB + '% ou plus', cacao:'en poudre', rizrond:'pour le riz au lait'};
     return {qty:shopQty(a.g), name:has(STARCH, id) ? STARCH[id].name : has(NAMES, id) ? NAMES[id] : RFOOD[id][0],
       note:has(NOTES, id) ? NOTES[id] : has(RFOOD, id) ? RFOOD[id][1] : null};
   };

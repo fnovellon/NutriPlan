@@ -5,12 +5,18 @@
   /* Choix possibles d'une rangée ; src : les choix affichés (ceux du jour, ou le brouillon du formulaire des repas) */
   /* Libellé d'un aliment au choix (et ce qu'il regroupe) */
   const labelOf = function(kind, id){
-    const x = kind === 'pd' ? PD[id] : kind === 'prot' ? PROT[id] : kind === 'starch' ? STARCH[id] : DESSERT[id];
+    const x = kind === 'pd' ? PD[id] : kind === 'prot' ? PROT[id] : kind === 'starch' ? STARCH[id] : kind === 'snack' ? SNACK[id] : kind === 'snackcs' ? SNACK_CS[id] : DESSERT[id];
     return {label:x.label, sub:x.sub || null};
   };
   /* Les aliments proposés (réglages) ; le choix actuel reste affiché même s'il n'est plus proposé */
   const pickDef = function(kind, slot, src){
     const c = src || ch, off = cleanProfile(prof).off;
+    /* Collation (3.29.0) : toutes proposées */
+    if (kind === 'snack' || kind === 'snackcs'){
+      const sn = kind === 'snack', cur = sn ? (has(SNACK, c.co) ? c.co : 'oeufs') : (has(SNACK_CS, c.cs) ? c.cs : 'banane');
+      return {label:sn ? 'Collation' : 'Avec la séance', title:sn ? 'Collation' : 'Glucides de la collation, avec la séance', action:kind, current:cur,
+        opts:(sn ? SNACK_ORDER : SNACK_CS_ORDER).map(function(id){ const l = labelOf(kind, id); return [id, l.label, l.sub]; })};
+    }
     const cur = kind === 'pd' ? c.pdBase : kind === 'dessert' ? dessertOf(c[slot]) : c[slot][kind];
     const all = kind === 'pd' ? PD_ORDER : kind === 'prot' ? PROT_ORDER : kind === 'starch' ? STARCH_ORDER : DESSERT_ORDER, ok = allowed(kind, off);
     const opts = all.filter(function(id){ return id === cur || ok.indexOf(id) >= 0; }).map(function(id){ const l = labelOf(kind, id); return [id, l.label, l.sub]; });
@@ -130,6 +136,7 @@
   const mealHTML = function(s, next){
     let picks = '';
     if (s.pick === 'pd') picks = '<div class="picks">' + pickRow('pd', null) + '</div>';
+    else if (s.pick === 'co') picks = '<div class="picks">' + pickRow('snack', null) + (s.cs ? pickRow('snackcs', null) : '') + '</div>';
     else if (s.pick === 'dej' || s.pick === 'diner') picks = '<div class="picks">' + pickRow('prot', s.pick) + pickRow('starch', s.pick) + pickRow('dessert', s.pick) +
       '<button type="button" class="redo" id="redo-' + s.pick + '" data-action="redo" data-slot="' + s.pick + '" aria-label="Un autre plat ' + REPAS[s.pick] + '" title="Un autre plat">' + REDO + '</button></div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
@@ -410,7 +417,7 @@
     if (!res.libre && !res.imprevu && t.p < res.prot.low - 0.5){
       const pr = cleanProfile(prof), tips = [];
       if (ch.dej.prot === 'thon' || ch.diner.prot === 'thon') tips.push('remplace le thon');
-      if (ch.pdBase === 'sale' && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner sucré (avec du skyr)');
+      if (has(PD, ch.pdBase) && PD[ch.pdBase].ham && !plan.seances.some(function(x){ return x.taille === 'longue'; })) tips.push('prends un petit-déjeuner avec du skyr');
       if (pr.shaker === 'non'){ tips.push('reprends un shaker'); tab = 'repas'; }
       tips.push('baisse ton objectif de protéines');
       note += ' Tes protéines restent sous ton objectif (' + Math.round(t.p) + NB + 'g, pour ' + Math.round(res.prot.low) + ' à ' + Math.round(res.prot.high) + NB + 'g)' + NB +
@@ -526,6 +533,9 @@
       return msg;
     },
     pd: function(b, v){ if (has(PD, v)){ ch.pdBase = v; saveCh(); } return ''; },
+    /* Collation (3.29.0) : la partie protéines, et les glucides les jours de séance */
+    snack: function(b, v){ if (has(SNACK, v)){ ch.co = v; saveCh(); } return ''; },
+    snackcs: function(b, v){ if (has(SNACK_CS, v)){ ch.cs = v; saveCh(); } return ''; },
     prot: function(b, v){ if (has(PROT, v)){ ch[b.dataset.slot].prot = v; dropRecipes(ch); saveCh(); } return ''; },
     starch: function(b, v){ if (has(STARCH, v)){ ch[b.dataset.slot].starch = v; dropRecipes(ch); saveCh(); } return ''; },
     dessert: function(b, v){ if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } return ''; },

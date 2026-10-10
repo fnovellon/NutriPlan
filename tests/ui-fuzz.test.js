@@ -95,7 +95,7 @@ function scan(dom, label){
   type(dom, '#besoins input[data-key="deficit"]', 25); scan(dom, 'réglages, déficit 25 %');
   type(dom, '#besoins input[data-key="gras"]', 30); click(dom, '[data-action="prof"][data-key="mode"][data-value="auto"]'); scan(dom, 'réglages, masse grasse');
   click(dom, '#alim-list [data-kind="prot"][data-value="poulet"]'); click(dom, '#alim-list [data-kind="dessert"][data-value="chocolat"]'); scan(dom, 'réglages, aliments retirés');
-  ['avoine', 'sale', 'pain'].forEach(v => click(dom, '#alim-list [data-kind="pd"][data-value="' + v + '"]')); scan(dom, 'réglages, dernière base gardée');
+  ['avoine', 'sale', 'pancakes', 'painperdu', 'bircher', 'porridge', 'brouillade', 'smoothie', 'wrap', 'pain'].forEach(v => click(dom, '#alim-list [data-kind="pd"][data-value="' + v + '"]')); scan(dom, 'réglages, dernière base gardée');
   click(dom, '#sem-days [data-value="2"]'); click(dom, '#sem-acts [data-value="petite"]'); click(dom, '#sem-acts [data-value="longue"]'); click(dom, '#sem-lib [data-value="0"]'); scan(dom, 'réglages, semaine type');
   click(dom, '#help-regl'); scan(dom, 'aide');
   // Recettes (3.24.0) : la liste, filtrée, une fiche, prise pour demain soir (repas libre : pas de bouton)
@@ -199,6 +199,8 @@ function check(dom, log){
         (!('imprevu' in p) || (p.imprevu !== null && JSON.stringify(w.eval('cleanImprevu')(p.imprevu)) === JSON.stringify(p.imprevu))), 'plan enregistré invalide', () => JSON.stringify(p));
       // Recette enregistrée : toujours celle de la protéine et du féculent du repas
       if (p && p.ch) C.ok(['dej', 'diner'].every(sl => !p.ch[sl] || !('recette' in p.ch[sl]) || p.ch[sl].recette === p.ch[sl].prot + '-' + p.ch[sl].starch), 'recette enregistrée qui ne va pas', () => JSON.stringify(p.ch));
+      // Collation (3.29.0) : enregistrée seulement si elle est valide
+      if (p && p.ch) C.ok((!('co' in p.ch) || w.eval('SNACK_ORDER').includes(p.ch.co)) && (!('cs' in p.ch) || w.eval('SNACK_CS_ORDER').includes(p.ch.cs)), 'collation enregistrée invalide', () => JSON.stringify(p.ch));
     });
     const pr = JSON.parse(w.localStorage.getItem(PKEY) || '{}');
     Object.entries(pr).forEach(([k, v]) => C.ok(v !== null && (typeof v !== 'number' || isFinite(v)), 'profil enregistré invalide', () => k + '=' + v));
@@ -483,7 +485,8 @@ const ACTIONS = {
     else w.dispatchEvent(new w.PopStateEvent('popstate', { state: null }));
     C.ok(d.querySelector('#repas').hidden, 'formulaire resté ouvert', how);
     const after = bubbles();
-    if (how === 'valide') C.ok(after.every(x => want.includes(x)), 'formulaire validé : choix non appliqués', () => want.join(' ') + ' // ' + after.join(' '));
+    /* La collation (3.29.0) n'est pas dans le formulaire */
+    if (how === 'valide') C.ok(after.filter(x => !/^snack/.test(x)).every(x => want.includes(x)), 'formulaire validé : choix non appliqués', () => want.join(' ') + ' // ' + after.join(' '));
     else if (how === 'hasard'){
       const prot = slot => (after.find(x => x.startsWith('prot' + slot + '=')) || '').split('=')[1];
       // Même protéine seulement s'il n'en reste qu'une de proposée (réglages, « Tes aliments »)

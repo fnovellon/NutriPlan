@@ -46,8 +46,15 @@ function composeDay(plan, ch, pr, pf){
   const grosse = S.some(function(x){ return x.taille !== 'petite'; });
   const last = S.length ? S[S.length - 1].moment : null;
   const k = scaleOf(pr), kp = k * pf, shaker = pr.shaker === 'oui', protFloor = (1 - PROT_BAND) * protTarget(pr);
-  /* Œufs déjà au menu (petit-déjeuner salé hors sortie longue, « Œufs + jambon » midi ou soir) : pas d'œufs à la collation */
-  const oeufs = (ch.pdBase === 'sale' && !long) || ch.dej.prot === 'oeufs' || ch.diner.prot === 'oeufs';
+  /* Œufs déjà au menu (petit-déjeuner aux œufs, sauf une base salée un jour de sortie longue, « Œufs + jambon » midi ou soir) :
+     pas d'œufs durs ni de muffins à la collation */
+  const P0 = has(PD, ch.pdBase) ? PD[ch.pdBase] : {};
+  const oeufs = (P0.oeufs && !(long && P0.sale)) || ch.dej.prot === 'oeufs' || ch.diner.prot === 'oeufs';
+  /* Collation au choix (3.29.0) : ch.co (œufs durs par défaut), et ch.cs les jours de séance (banane et compote par défaut) */
+  const coKind = has(SNACK, ch.co) ? ch.co : 'oeufs', csKind = has(SNACK_CS, ch.cs) ? ch.cs : 'banane';
+  const snack = function(when, seance){
+    return {id:'co', title:'Collation', when:when, pick:'co', cs:seance && coKind !== 'rizaulait', items:snackItems(seance, grosse, k, oeufs, coKind, csKind)};
+  };
   const secs = [];
 
   const pd = {id:'pd', title:'Petit-déjeuner', when:null, pick:'pd', items:breakfast(long, grosse, ch.pdBase, k, kp)};
@@ -89,7 +96,7 @@ function composeDay(plan, ch, pr, pf){
   if (matin.length){
     bands(matin);
     if (!long && !soir.length){
-      co = {id:'co', title:'Collation', when:'juste après la séance', items:snackItems(true, grosse, k, oeufs)};
+      co = snack('juste après la séance', true);
       if (last === 'matin' && shaker) co.items.push(shakerItem(pr));
       secs.push(co);
     } else if (last === 'matin'){
@@ -108,8 +115,8 @@ function composeDay(plan, ch, pr, pf){
   secs.push(lunch);
   if (!co){
     if (long) co = {id:'co', title:'Goûter', when:null, items:gouterItems(k, kp)};
-    else if (soir.length) co = {id:'co', title:'Collation', when:'1h30 avant la séance', items:snackItems(true, grosse, k, oeufs)};
-    else co = {id:'co', title:'Collation', when:'dans l’après-midi', items:snackItems(S.length > 0, grosse, k, oeufs)};
+    else if (soir.length) co = snack('1h30 avant la séance', true);
+    else co = snack('dans l’après-midi', S.length > 0);
     if (!S.length && shaker) co.items.push(shakerItem(pr));
     secs.push(co);
   }
@@ -180,7 +187,7 @@ function composeDay(plan, ch, pr, pf){
     const delta = im.kcal - (place ? total(isec.items).kcal : 0);
     let left = delta;
     const line = it('imp', '≈' + NB + fmtInt(im.kcal), 'kcal d’imprévu', place ? 'à la place de ce repas' : 'en plus de ce repas', {kcal:im.kcal, p:0, c:0, f:0});
-    if (place){ isec.items = [line]; isec.pick = null; isec.recipe = null; isec.suggest = null; }
+    if (place){ isec.items = [line]; isec.pick = null; isec.cs = false; isec.recipe = null; isec.suggest = null; }
     else isec.items.push(line);
     isec.imprevu = im;
     const later = secs.slice(secs.indexOf(isec) + 1);

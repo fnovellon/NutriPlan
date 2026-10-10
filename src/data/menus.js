@@ -9,13 +9,34 @@ const DESSERT = {
   chocolat:{label:'Chocolat noir', item:function(){ return it('des', grams(20), 'chocolat noir', '70' + NB + '% ou plus, 2 à 4 carrés selon la tablette', mac('chocolat', 20)); }}
 };
 const DESSERT_ORDER = ['aucun','fruit','compote','fruitsSecs','chocolat'];
-/* Base du petit-déjeuner : avoine (ou muesli sans sucre ajouté, valeurs proches), pain complet, ou salé (pain, œufs, jambon) */
+/* Base du petit-déjeuner : avoine (ou muesli sans sucre ajouté, valeurs proches), pain complet, ou salé (pain, œufs, jambon) ;
+   depuis la 3.29.0, sept recettes (voir breakfast). sale : salée, version sucrée au pain les jours de sortie longue ;
+   oeufs : des œufs au menu (la collation n'en reprend pas) ; ham : une tranche de jambon (jambon par paquet du batch). */
 const PD = {
   avoine:{label:'Flocons d’avoine', sub:'ou muesli sans sucre ajouté'},
   pain:{label:'Pain complet'},
-  sale:{label:'Salé', sub:'pain complet, œufs, jambon'}
+  sale:{label:'Salé', sub:'pain complet, œufs, jambon', sale:true, oeufs:true, ham:true},
+  pancakes:{label:'Pancakes avoine-banane', oeufs:true},
+  painperdu:{label:'Pain perdu', sub:'sans beurre', oeufs:true},
+  bircher:{label:'Bircher', sub:'pomme-cannelle, préparé la veille'},
+  porridge:{label:'Porridge choco-banane'},
+  brouillade:{label:'Brouillade', sub:'épinards, champignons, pain complet', sale:true, oeufs:true},
+  smoothie:{label:'Smoothie à emporter'},
+  wrap:{label:'Wrap œufs-jambon', sale:true, oeufs:true, ham:true}
 };
-const PD_ORDER = ['avoine','pain','sale'];
+const PD_ORDER = ['avoine','pain','sale','pancakes','painperdu','bircher','porridge','brouillade','smoothie','wrap'];
+/* Collation (3.29.0) : la partie protéines (ch.co, œufs durs par défaut) et, les jours de séance, celle des glucides (ch.cs,
+   banane et compote par défaut) ; le riz au lait fait les deux */
+const SNACK = {
+  oeufs:{label:'Œufs durs'},
+  muffins:{label:'Muffins œuf-épinards'},
+  mugcake:{label:'Mug cake skyr-cacao'},
+  thon:{label:'Bouchées concombre-thon'},
+  rizaulait:{label:'Riz au lait protéiné', sub:'fait aussi la banane et la compote'}
+};
+const SNACK_ORDER = ['oeufs','muffins','mugcake','thon','rizaulait'];
+const SNACK_CS = {banane:{label:'Banane, compote', sub:'la compote avec une séance moyenne ou longue'}, boules:{label:'Boules d’énergie', sub:'flocons, fruits secs, amandes'}};
+const SNACK_CS_ORDER = ['banane','boules'];
 
 /* Protéines du déjeuner et du dîner, avec leur matière grasse : portions de référence (72 kg) mises à l'échelle k ;
    base(k, g) : g = [p1, p2] en grammes, poids fixés d'une boîte de batch cooking (voir fixedGrams), sinon null.

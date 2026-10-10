@@ -1,5 +1,14 @@
 # Nouveautés
 
+## 3.29.0, 10 octobre 2026
+
+- Sept nouveaux petits-déjeuners dans la bulle « Base » : pancakes avoine-banane, pain perdu sans beurre, bircher préparé la veille, porridge choco-banane, brouillade aux épinards et champignons, smoothie à emporter, wrap œufs-jambon. Les quantités suivent ton poids et ton objectif de protéines, comme avant.
+- Les jours de sortie longue, la brouillade et le wrap passent à une version sucrée au pain (plus digeste avant de partir), et les autres prennent un peu plus de flocons ou de pain, avec du miel.
+- La collation se choisit dans sa carte : œufs durs, muffins œuf-épinards, mug cake skyr-cacao, bouchées concombre-thon ou riz au lait protéiné. Les jours de séance, une deuxième bulle : banane et compote, ou boules d'énergie (le riz au lait fait les deux).
+- Ton total ne bouge pas : les féculents compensent. Avec des œufs au petit-déjeuner, les œufs durs ou les muffins de la collation laissent la place au skyr et aux amandes. « Décide pour moi » et les planifications gardent ta collation.
+- Le jambon du wrap compte dans « Ta semaine » et dans le paquet de 4 tranches du batch cooking, comme le salé.
+- Nouveaux aliments dans l'aide et les courses : cacao non sucré, riz rond, tortillas complètes, galettes de riz soufflé (et le thon des bouchées, en boîtes entières).
+
 ## 3.28.0, 9 octobre 2026
 
 - La veille d'une sortie longue, ta journée recharge un peu tes réserves : 0,5 g de glucides par kg et par heure de sortie en plus (≈ 70 g pour 2 h à 72 kg), en féculents, au dîner d'abord. La note sous le total te le dit.

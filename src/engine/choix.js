@@ -40,7 +40,9 @@ function withAllowed(c, off){
     if (recipeOf({prot:o.prot, starch:o.starch, recette:m.recette})) o.recette = m.recette;
     return o;
   };
-  return {pdBase:next('pd', c.pdBase), dej:meal(c.dej, dejProt), diner:meal(c.diner, next('prot', c.diner.prot, dejProt))};
+  const out = {pdBase:next('pd', c.pdBase), dej:meal(c.dej, dejProt), diner:meal(c.diner, next('prot', c.diner.prot, dejProt))};
+  ['co', 'cs'].forEach(function(f){ if (has(c, f)) out[f] = c[f]; });
+  return out;
 }
 /* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, sans doublon */
 function cleanRecipeIds(o){
@@ -64,10 +66,11 @@ function tieredPick(r, a, w){
   for (let i = a.length - 1; i >= 0; i--) if (ws[i] > 0) return a[i];
 }
 /* « Décide pour moi » : chaque choix tiré au hasard parmi les aliments proposés (rand : nombres dans [0, 1[, Math.random par
-   défaut), jamais la même protéine au déjeuner et au dîner (s'il en reste au moins deux), jamais « Œufs + jambon » avec le
-   petit-déjeuner salé (s'il reste autre chose). Avec bal (weekBalance du reste de la semaine) et k, le tirage équilibre :
-   poisson (et poisson gras) et légumes secs trois fois plus probables tant qu'il en manque, bœuf, « Œufs + jambon » et salé
-   écartés s'ils feraient dépasser la viande rouge ou la charcuterie. Sans bal : tirage uniforme. La recette du couple
+   défaut), jamais la même protéine au déjeuner et au dîner (s'il en reste au moins deux), jamais « Œufs + jambon » avec un
+   petit-déjeuner au jambon (salé, wrap ; s'il reste autre chose). Avec bal (weekBalance du reste de la semaine) et k, le
+   tirage équilibre : poisson (et poisson gras) et légumes secs trois fois plus probables tant qu'il en manque, bœuf,
+   « Œufs + jambon » et petits-déjeuners au jambon écartés s'ils feraient dépasser la viande rouge ou la charcuterie. La
+   collation (co, cs) n'est pas tirée : elle reste celle choisie. Sans bal : tirage uniforme. La recette du couple
    protéine × féculent est choisie d'office (tirée au hasard s'il y en a plusieurs).
    Avec prefs (3.25.0, recettes favorites et à éviter, seulement quand les plats sont des recettes) : chaque couple pèse le
    poids de sa recette (recipePref : 0 à éviter, 2 favorite), la protéine la part de ses couples (le tirage du couple garde
@@ -82,10 +85,12 @@ function randomChoices(rand, off, bal, k, prefs){
   /* 0 : écarté par les repères ; < 0 : écarté d'abord (œufs-jambon avec le salé) */
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
-  const pdBase = pick(allowed('pd', off), function(x){ return c && x === 'sale' && c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1; });
-  if (c && pdBase === 'sale') c.charcuterie += jambonSale;
+  /* Bases avec une tranche de jambon (salé, wrap, 3.29.0) */
+  const ham = function(x){ return has(PD, x) && PD[x].ham; };
+  const pdBase = pick(allowed('pd', off), function(x){ return c && ham(x) && c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1; });
+  if (c && ham(pdBase)) c.charcuterie += jambonSale;
   const protW = function(p){
-    if (p === 'oeufs' && pdBase === 'sale') return -1;
+    if (p === 'oeufs' && ham(pdBase)) return -1;
     if (!c) return 1;
     if (p === 'boeuf' && c.rouge + boeufCuit > WEEK_GOALS.rouge) return 0;
     if (p === 'oeufs' && c.charcuterie + jambonOeufs > WEEK_GOALS.charcuterie) return 0;

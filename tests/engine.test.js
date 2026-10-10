@@ -9,8 +9,10 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+// Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
+const isHam = b => !!PD[b].ham;
 
 const near = (a, b, tol, msg) => assert(Math.abs(a - b) <= tol, `${msg} : ${a} au lieu de ${b}`);
 const plain = x => JSON.parse(JSON.stringify(x));
@@ -111,13 +113,13 @@ assert.deepStrictEqual(old('repos', { natation: true }), { seances: [petite('mid
 assert.deepStrictEqual(old('longue', { natation: true }).seances.length, 1, 'pas de natation un jour de sortie longue');
 
 // 6. Toutes les combinaisons de plats avec le profil par défaut : apport ≈ objectif, planchers respectés
-// (base du petit-déjeuner en alternance : chaque couple de plats est vu avec l'avoine, le pain et le salé sur l'ensemble)
+// (base du petit-déjeuner et collation en alternance : chaque couple de plats est vu avec plusieurs bases et collations sur l'ensemble)
 let n = 0;
 for (const [name, set] of Object.entries(SETS)) {
   for (const [i1, p1] of PROT_ORDER.entries()) for (const s1 of STARCH_ORDER) for (const p2 of PROT_ORDER) for (const [i2, s2] of STARCH_ORDER.entries()) {
-    const pdBase = PD_ORDER[(i1 + i2 + n) % PD_ORDER.length];
-    const combo = `${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
-    const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
+    const pdBase = PD_ORDER[(i1 + i2 + n) % PD_ORDER.length], co = SNACK_ORDER[(i1 + 2 * i2 + n) % SNACK_ORDER.length], cs = n % 2 ? 'boules' : 'banane';
+    const combo = `${name}/${pdBase}/${co}+${cs}/${p1}+${s1}/${p2}+${s2}`;
+    const r = buildDay(day(set), { pdBase, co, cs, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } });
     assert(Math.abs(r.ecart) <= r.energy.target * 0.03, `${combo} : ${Math.round(r.tot.kcal)} kcal pour un objectif de ${r.energy.target}`);
     assert(protOk(r), `${combo} : ${Math.round(r.tot.p)} g de protéines (${Math.round(r.prot.low)} à ${Math.round(r.prot.high)}, facteur ${r.prot.factor.toFixed(2)})`);
     assert(r.tot.f >= 55 && r.tot.f <= fatCap(r, 1), `${combo} : ${r.tot.f.toFixed(1)} g de lipides`);
@@ -231,6 +233,115 @@ near(fatPd(sale), fatPd(pdOf('avoine', [])), 1, 'lipides du petit-déjeuner sal�
 for (const [name, set] of Object.entries(SETS)) {
   const t = PD_ORDER.map(pdBase => buildDay(day(set), Object.assign({}, DEFAULT_CHOICES[3], { pdBase })).tot.kcal);
   assert(Math.max(...t) - Math.min(...t) <= 40, `${name} : la base du petit-déjeuner change le total (${t.map(Math.round).join(', ')})`);
+}
+const aisleIds0 = SHOP_AISLES.flatMap(g => g.ids), lcg0 = seed => { let x = seed; return () => (x = (x * 16807) % 2147483647) / 2147483647; };
+// Petits-déjeuners en recettes (3.29.0) : lignes et portions à 72 kg, skyr ajusté à l'objectif de protéines (jamais sous
+// 100 g, ni sous 2,5 fois les flocons du bircher), œufs et jambon fixes, sortie longue, banane les jours de séance moyenne
+{
+  const pdR = (b, set, prof) => buildDay(day(set || []), Object.assign({}, DEFAULT_CHOICES[3], { pdBase: b }), prof || {});
+  const fixed = items => plain(items.filter(i => i.key !== 'skyr').map(i => [i.key, i.qty, i.name]));
+  const G = x => x + ' g';
+  const REF = {
+    pancakes: [[['base', G(40), 'flocons d’avoine'], ['fruit', '1', 'banane'], ['oeufs', '2', 'œufs'], ['fr', G(50), 'fruits rouges']], 100, 0],
+    painperdu: [[['base', G(80), 'pain complet'], ['oeufs', '1', 'œuf'], ['lait', G(100), 'lait demi-écrémé'], ['fruit', G(125), 'fruits rouges']], 150, 0],
+    bircher: [[['base', G(50), 'flocons d’avoine'], ['lait', G(60), 'lait demi-écrémé'], ['fruit', '1', 'pomme'], ['am', G(10), 'amandes']], 200, 130],
+    porridge: [[['base', G(50), 'flocons d’avoine'], ['lait', G(150), 'lait demi-écrémé'], ['cacao', G(8), 'cacao non sucré'], ['fruit', '1', 'banane']], 150, 0],
+    brouillade: [[['oeufs', '2', 'œufs'], ['epi', G(100), 'épinards'], ['chp', G(60), 'champignons de Paris'], ['pain', G(60), 'pain complet'], ['fruit', G(100), 'fruits rouges']], 150, 0],
+    smoothie: [[['fruit', '1', 'banane'], ['fr', G(100), 'fruits rouges'], ['lait', G(100), 'lait demi-écrémé'], ['base', G(30), 'flocons d’avoine']], 250, 0],
+    wrap: [[['tort', '1', 'tortilla complète'], ['oeufs', '2', 'œufs'], ['jambon', G(45), 'jambon blanc'], ['tom', G(80), 'tomate'], ['fruit', G(125), 'fruits rouges']], null, 0]
+  };
+  assert.deepStrictEqual(Object.keys(REF), plain(PD_ORDER.slice(3)), 'sept recettes de petit-déjeuner');
+  for (const [b, [lines, skyrRef, skyrMin]] of Object.entries(REF)) for (const [who, prof] of [['72 kg', {}], ['2,2 g/kg', { prot: 2.2, shaker: 'non' }]]) {
+    const r = pdR(b, [], prof), items = secOf(r, 'pd').items;
+    assert.deepStrictEqual(fixed(items), lines, `${b} (${who}) : lignes`);
+    const sk = items.find(i => i.key === 'skyr');
+    if (skyrRef === null) assert(!sk, `${b} : pas de skyr`);
+    else {
+      assert(sk.adj, `${b} : skyr ajusté à l’objectif de protéines`);
+      assert.strictEqual(sk.qty, G(Math.max(100, skyrMin, Math.max(10, Math.round(skyrRef * r.prot.factor / 10) * 10))), `${b} (${who}) : skyr ${sk.qty}, facteur ${r.prot.factor}`);
+    }
+    assert(!items.some(i => i.adj && i.key !== 'skyr'), `${b} : seul le skyr suit l’objectif de protéines`);
+    items.forEach(i => assert(i.m && i.buy, `${b} : ${i.key} sans valeurs ou sans achat`));
+  }
+  // Sortie longue : + 20 g de flocons (ou + 30 g de pain) et 15 g de miel ; brouillade et wrap passent au pain sucré, comme le salé
+  const LONG = { pancakes: ['base', G(60)], painperdu: ['base', G(110)], bircher: ['base', G(70)], porridge: ['base', G(70)], smoothie: ['base', G(50)] };
+  for (const [b, [key, qty]] of Object.entries(LONG)) {
+    const items = secOf(pdR(b, [longue(2)]), 'pd').items;
+    assert(items.find(i => i.key === key).qty === qty && items.find(i => i.key === 'miel').qty === G(15), `${b} : sortie longue`);
+  }
+  assert.strictEqual(secOf(pdR('bircher', [longue(2)]), 'pd').items.find(i => i.key === 'skyr').qty, G(180), 'bircher, sortie longue : skyr ≥ 2,5 fois les 70 g de flocons');
+  for (const b of ['brouillade', 'wrap']) {
+    const items = secOf(pdR(b, [longue(2)]), 'pd').items;
+    assert.deepStrictEqual(plain(items.map(i => [i.key, i.qty])), plain(secOf(pdR('pain', [longue(2)]), 'pd').items.map(i => [i.key, i.qty])), `${b} : version sucrée au pain les jours de sortie longue`);
+    assert(/en version sucrée avant la sortie longue/.test(items[0].note), `${b} : version sucrée dite`);
+  }
+  // Banane les jours de séance moyenne (pomme du bircher, banane des pancakes, du porridge et du smoothie : toujours)
+  for (const b of ['painperdu', 'brouillade', 'wrap']) assert.strictEqual(secOf(pdR(b, [moyenne('soir')]), 'pd').items.find(i => i.key === 'fruit').name, 'banane', `${b} : banane`);
+  assert.strictEqual(secOf(pdR('bircher', [moyenne('soir')]), 'pd').items.find(i => i.key === 'fruit').name, 'pomme', 'bircher : pomme');
+  // 52 kg : portions × k, un œuf (pancakes 30 g de flocons, wrap 35 g de jambon)
+  const p52 = b => plain(secOf(pdR(b, [], { sexe: 'f', poids: 52 }), 'pd').items.map(i => [i.key, i.qty]));
+  assert.deepStrictEqual(p52('pancakes').slice(0, 3), [['base', G(30)], ['fruit', '1'], ['oeufs', '1']], 'pancakes à 52 kg');
+  assert.deepStrictEqual(p52('wrap').slice(0, 3), [['tort', '1'], ['oeufs', '1'], ['jambon', G(35)]], 'wrap à 52 kg');
+  // Œufs au petit-déjeuner (pancakes, pain perdu, brouillade, wrap) : skyr et amandes à la collation ; sinon les œufs durs
+  for (const b of PD_ORDER) {
+    const co = secOf(pdR(b, []), 'co').items.map(i => i.key).join(' '), eggs = ['sale', 'pancakes', 'painperdu', 'brouillade', 'wrap'].includes(b);
+    assert(eggs ? /^csk cam/.test(co) : /^oe/.test(co), `${b} : collation ${co}`);
+    assert.strictEqual(!!PD[b].oeufs, eggs, `${b} : œufs`);
+  }
+  // Jambon du wrap compté dans la semaine (charcuterie), comme celui du salé
+  const wrapDay = pdR('wrap', []);
+  near(weekBalance([wrapDay]).charcuterie, 45, 1e-9, 'charcuterie : jambon du wrap');
+  assert.deepStrictEqual(plain(PD_ORDER.filter(isHam)), ['sale', 'wrap'], 'bases au jambon');
+}
+// Collation au choix (3.29.0) : la partie protéines (œufs durs par défaut), et les jours de séance les glucides (banane et
+// compote par défaut, ou boules d'énergie) ; le riz au lait fait les deux ; goûter de sortie longue inchangé
+{
+  const coR = (c, set, prof) => buildDay(day(set || []), Object.assign({}, DEFAULT_CHOICES[3], c), prof || {});
+  const G = x => x + '\u00a0g';
+  const coK = (c, set, prof) => keys(secOf(coR(c, set, prof), 'co')).replace(/ ?shk/, '');
+  const PROT_PART = { oeufs: 'oe', muffins: 'mfo mfe mfp', mugcake: 'mko mks mka mkc', thon: 'tht thc ths thg', rizaulait: 'rzr rzl rzs' };
+  assert.deepStrictEqual(Object.keys(PROT_PART), plain(SNACK_ORDER), 'cinq collations');
+  for (const [co, k0] of Object.entries(PROT_PART)) {
+    assert.strictEqual(coK({ co }), k0, `${co} : repos`);
+    const rice = co === 'rizaulait';
+    assert.strictEqual(coK({ co }, [petite('soir')]), k0 + (rice ? '' : ' ban'), `${co} : petite séance`);
+    assert.strictEqual(coK({ co }, [moyenne('soir')]), k0 + (rice ? '' : ' ban comp'), `${co} : séance moyenne`);
+    assert.strictEqual(coK({ co, cs: 'boules' }, [petite('soir')]), k0 + (rice ? '' : ' bof bos boa'), `${co} : boules d’énergie`);
+    // Avec des œufs ailleurs : œufs durs et muffins laissent la place au skyr et aux amandes ; le mug cake garde son œuf
+    assert.strictEqual(coK({ co, pdBase: 'sale' }), co === 'oeufs' || co === 'muffins' ? 'csk cam' : k0, `${co} : œufs déjà au menu`);
+    const s = secOf(coR({ co }, [petite('soir')]), 'co');
+    assert(s.pick === 'co' && s.cs === !rice, `${co} : choix de la collation`);
+    assert.strictEqual(keys(secOf(coR({ co, cs: 'boules' }, [longue(2)]), 'co')), 'skyr pom am', `${co} : goûter de sortie longue inchangé`);
+    assert(!secOf(coR({ co }, [longue(2)]), 'co').pick, `${co} : pas de choix au goûter`);
+  }
+  assert.strictEqual(coK({ co: 'x', cs: 'y' }, [petite('soir')]), 'oe ban', 'collation inconnue : œufs durs, banane');
+  // Boules d'énergie : 2 (20 g de flocons, 20 g de fruits secs, 10 g d'amandes), 3 avec une séance moyenne ou longue
+  const boules = set => plain(secOf(coR({ cs: 'boules' }, set), 'co').items.filter(i => /^bo/.test(i.key)).map(i => i.qty));
+  assert.deepStrictEqual(boules([petite('soir')]), [G(20), G(20), G(10)], '2 boules');
+  assert.deepStrictEqual(boules([moyenne('soir')]), [G(30), G(30), G(15)], '3 boules');
+  // Portions × k : riz au lait à 100 kg (40 g de riz, 280 g de lait, 140 g de skyr), mug cake à 52 kg (1 œuf, 60 g de skyr)
+  const q = (c, prof) => plain(secOf(coR(c, [], prof), 'co').items.filter(i => i.key !== 'shk').map(i => i.qty));
+  assert.deepStrictEqual(q({ co: 'rizaulait' }, { poids: 100 }), [G(40), G(280), G(140)], 'riz au lait à 100 kg');
+  assert.deepStrictEqual(q({ co: 'mugcake' }, { sexe: 'f', poids: 52 }), ['1', G(60), G(10), G(5)], 'mug cake à 52 kg');
+  assert.deepStrictEqual(q({ co: 'thon' }, { poids: 100 }), ['½', G(150), G(30), '2'], 'bouchées de thon : fixes');
+  // La collation ne change pas le total de la journée : les féculents compensent
+  for (const [name, set] of Object.entries(SETS)) {
+    const rs = SNACK_ORDER.flatMap(co => ['banane', 'boules'].map(cs => coR({ co, cs }, set)));
+    const t = rs.map(r => r.tot.kcal);
+    assert(Math.max(...t) - Math.min(...t) <= 40, `${name} : la collation change le total (${t.map(Math.round).join(', ')})`);
+  }
+  // Courses : une demi-boîte de thon par collation (2 jours → 1 boîte, 3 jours → 2), tortilla, galettes, cacao, riz rond
+  const shopOf = cs => shoppingList(cs.map(c => coR(c, []))).flatMap(g => g.lines);
+  const thonQ = n => shopOf(Array(n).fill({ co: 'thon' })).find(l => l.id === 'thon');
+  assert(thonQ(1).qty === '1' && thonQ(2).qty === '1' && thonQ(3).qty === '2' && thonQ(3).name === 'boîtes de thon au naturel', 'courses : boîtes de thon entières');
+  const l2 = shopOf([{ co: 'thon', pdBase: 'wrap' }, { co: 'rizaulait', pdBase: 'porridge' }, { co: 'mugcake', pdBase: 'wrap' }]);
+  const L = id => l2.find(l => l.id === id);
+  assert(L('tortilla').qty === '2' && L('tortilla').name === 'tortillas complètes' && L('galette').qty === '2' && L('galette').name === 'galettes de riz soufflé', 'courses : tortillas et galettes');
+  assert(L('cacao').qty === G(13) && L('cacao').name === 'cacao non sucré' && L('rizrond').qty === G(30) && L('rizrond').name === 'riz rond', 'courses : cacao et riz rond');
+  for (const id of ['tortilla', 'galette', 'cacao', 'rizrond', 'lait', 'epinards', 'champignon', 'tomate', 'concombre']) assert.strictEqual(aisleIds0.filter(x => x === id).length, 1, `courses : ${id} dans un rayon`);
+  // Choix gardés par withAllowed, jamais tirés
+  assert.deepStrictEqual([withAllowed(Object.assign({}, DEFAULT_CHOICES[3], { co: 'thon', cs: 'boules' }), []).co, withAllowed(Object.assign({}, DEFAULT_CHOICES[3], { co: 'thon', cs: 'boules' }), []).cs], ['thon', 'boules'], 'collation gardée');
+  assert(!('co' in randomChoices(() => 0.5, [])) && !('co' in batchChoices([{ libre: false }, { libre: false }], 3, [], 1, lcg0(3))[0]), 'collation jamais tirée');
 }
 // Un seul shaker par jour, juste après la dernière séance
 for (const [name, set] of Object.entries(SETS)) for (const libre of [false, true]) {
@@ -390,10 +501,12 @@ const FRIENDS = {
 let nf = 0;
 for (const [who, prof] of Object.entries(FRIENDS)) {
   const k = scaleOf(cleanProfile(prof));
-  for (const [name, set] of Object.entries(SETS)) for (const pdBase of PD_ORDER) {
-    for (const p1 of PROT_ORDER) for (const p2 of PROT_ORDER) for (const [s1, s2] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']]) {
-      const combo = `${who}/${name}/${pdBase}/${p1}+${s1}/${p2}+${s2}`;
-      const r = buildDay(day(set), { pdBase, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, prof);
+  /* Bases du petit-déjeuner et collations en alternance (3.29.0 : 10 bases, 5 collations) */
+  for (const [ns, [name, set]] of Object.entries(SETS).entries()) for (const rot of [0, 1, 2]) {
+    for (const [i1, p1] of PROT_ORDER.entries()) for (const [i2, p2] of PROT_ORDER.entries()) for (const [j, [s1, s2]] of [['riz', 'pdt'], ['lentilles', 'quinoa'], ['gnocchis', 'pates']].entries()) {
+      const pdBase = PD_ORDER[(i1 + 3 * i2 + j + ns + 4 * rot) % PD_ORDER.length], co = SNACK_ORDER[(i1 + i2 + 2 * j + rot) % SNACK_ORDER.length], cs = (i1 + j) % 2 ? 'boules' : 'banane';
+      const combo = `${who}/${name}/${pdBase}/${co}+${cs}/${p1}+${s1}/${p2}+${s2}`;
+      const r = buildDay(day(set), { pdBase, co, cs, dej: { prot: p1, starch: s1 }, diner: { prot: p2, starch: s2 } }, prof);
       assert(protOk(r), `${combo} : ${Math.round(r.tot.p)} g de protéines (${Math.round(r.prot.low)} à ${Math.round(r.prot.high)})`);
       assert(r.tot.f >= FAT_MIN * k - 0.5 && r.tot.f <= fatCap(r, k), `${combo} : ${r.tot.f.toFixed(1)} g de lipides (${Math.round(FAT_MIN * k)} à ${Math.round(fatCap(r, k))})`);
       assert(r.ecart >= -r.energy.target * 0.03, `${combo} : ${Math.round(-r.ecart)} kcal sous l'objectif`);
@@ -536,9 +649,9 @@ const seq = vals => { let i = 0; return () => vals[i++ % vals.length]; };
 for (let i = 0; i < 400; i++) {
   const rnd = seq([(i * 0.618) % 1, (i * 0.377) % 1, (i * 0.123) % 1, (i * 0.851) % 1]);
   const c = randomChoices(rnd, []);
-  if (c.pdBase === 'sale') assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'œufs + jambon avec le salé');
+  if (isHam(c.pdBase)) assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', 'œufs + jambon avec un petit-déjeuner au jambon');
   const full = randomChoices(seq([(i * 0.618) % 1, (i * 0.377) % 1]), [], { poisson: 2, gras: 1, legumes: 2, rouge: 480, charcuterie: 140 }, 1);
-  assert(full.pdBase !== 'sale' && ![full.dej.prot, full.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'semaine pleine : ni bœuf, ni charcuterie en plus');
+  assert(!isHam(full.pdBase) && ![full.dej.prot, full.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'semaine pleine : ni bœuf, ni charcuterie en plus');
 }
 const count = (bal, test, n = 3000) => { let x = 0, s = 1; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647; for (let i = 0; i < n; i++) if (test(randomChoices(rnd, [], bal, 1))) x++; return x / n; };
 const fishOf = c => [c.dej.prot, c.diner.prot].filter(p => ['poisson', 'saumon', 'thon'].includes(p)).length;
@@ -549,7 +662,7 @@ assert(count(empty, c => c.dej.prot === 'saumon' || c.diner.prot === 'saumon') >
 assert(count(empty, c => legOf(c) > 0) > count(done, c => legOf(c) > 0) + 0.2, 'légumes secs favorisés tant qu’il en manque');
 // Sans repère (bal absent) : tirage uniforme, comme avant ; aux bornes, premier et dernier choix proposés
 assert.deepStrictEqual(plain(randomChoices(() => 0, [])), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', dessert: 'aucun', recette: 'poulet-riz' }, diner: { prot: 'boeuf', starch: 'riz', dessert: 'aucun', recette: 'boeuf-riz' } }, 'tirage au plus bas (recette choisie d’office)');
-assert.deepStrictEqual(plain(randomChoices(() => 0.9999, [])), { pdBase: 'sale', dej: { prot: 'tofu', starch: 'gnocchis', dessert: 'chocolat', recette: 'tofu-gnocchis' }, diner: { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat', recette: 'thon-gnocchis' } }, 'tirage au plus haut (salé : pas d’« Œufs + jambon »)');
+assert.deepStrictEqual(plain(randomChoices(() => 0.9999, [])), { pdBase: 'wrap', dej: { prot: 'tofu', starch: 'gnocchis', dessert: 'chocolat', recette: 'tofu-gnocchis' }, diner: { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat', recette: 'thon-gnocchis' } }, 'tirage au plus haut (wrap au jambon : pas d’« Œufs + jambon »)');
 
 // Semaine type (3.11.0) : séances habituelles par jour et soir du repas libre ; un jour pas encore rempli les reprend
 const sem = cleanWeek({ jours: { 1: [petite('soir'), moyenne('matin')], 3: [longue(2.5), longue(3), petite('midi')], 5: [], 9: [petite('soir')], x: 1 }, libre: 0 });
@@ -670,7 +783,7 @@ for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; se
   cs.forEach((c, i) => {
     for (const slot of ['dej', 'diner']) assert(recipeOf(c[slot]) === c[slot].recette && RECIPES[c[slot].recette].box, `${combo} : recette qui se garde`);
     assert(c.dej.prot !== c.diner.prot, `${combo} : même protéine midi et soir le jour ${i}`);
-    if (c.pdBase === 'sale') assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', `${combo} : œufs-jambon avec le salé`);
+    if (isHam(c.pdBase)) assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', `${combo} : œufs-jambon avec un petit-déjeuner au jambon`);
     served.push({ i, id: c.dej.recette });
     if (!days[i].libre) served.push({ i, id: c.diner.recette });
   });
@@ -685,7 +798,7 @@ for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; se
   // deux par boîte d'œufs-jambon), jamais de salé avec les œufs-jambon (3.17.0)
   const res = cs.map((c, i) => buildDay({ seances: [], libre: days[i].libre }, c, { poids: 72 * k }));
   const bal = weekBalance(res);
-  const slicesH = cs.filter(c => c.pdBase === 'sale').length + 2 * cs.reduce((a, c, i) => a + [c.dej, c.diner].filter((m, j) => m.prot === 'oeufs' && !(j && days[i].libre)).length, 0);
+  const slicesH = cs.filter(c => isHam(c.pdBase)).length + 2 * cs.reduce((a, c, i) => a + [c.dej, c.diner].filter((m, j) => m.prot === 'oeufs' && !(j && days[i].libre)).length, 0);
   assert(bal.rouge <= 500.5 && [0, HAM_SLICES].includes(slicesH), `${combo} : ${JSON.stringify(bal)}, ${slicesH} tranches`);
   // Fiche : une recette par recette servie, boîtes = repas servis, totaux = somme des boîtes, frigo 3 jours après la veille
   const blocks = batchCook(res.map(r => ({ res: r })));
@@ -718,14 +831,14 @@ for (const n of [3, 4, 5]) for (const k of [0.65, 1, 1.4]) for (let seed = 1; se
           else assert.deepStrictEqual(plain(c[slot]), plain(was), `${sn} : autre repas changé`);
         }
         if (!days[i].libre) assert(c.dej.prot !== c.diner.prot, `${sn} : même protéine midi et soir le jour ${i}`);
-        if (c.pdBase === 'sale') assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', `${sn} : œufs-jambon avec le salé`);
-        assert(c.pdBase === cs[i].pdBase || (x.p === 'oeufs' && cs[i].pdBase === 'sale' && c.pdBase === 'avoine'), `${sn} : petit-déjeuner changé`);
+        if (isHam(c.pdBase)) assert(c.dej.prot !== 'oeufs' && c.diner.prot !== 'oeufs', `${sn} : œufs-jambon avec un petit-déjeuner au jambon`);
+        assert(c.pdBase === cs[i].pdBase || (x.p === 'oeufs' && isHam(cs[i].pdBase) && c.pdBase === 'avoine'), `${sn} : petit-déjeuner changé`);
         if (!x.gel) ['dej', 'diner'].forEach(slot => { if (cs[i][slot].recette === id && !(slot === 'diner' && days[i].libre)) assert(i < FRIDGE_DAYS, `${sn} : se congèle mal, le jour ${i}`); });
       });
       const meals = after.flatMap((c, i) => days[i].libre ? [c.dej] : [c.dej, c.diner]);
       const beef = meals.filter(m => m.prot === 'boeuf').length * Math.round(150 * k / 10) * 10 * 0.75;
       if (x.p === 'boeuf') assert(beef <= 500.5, `${sn} : viande rouge ${beef}`);
-      if (x.p === 'oeufs') assert(count[id] === 2 && after.every(c => c.pdBase !== 'sale'), `${sn} : œufs-jambon, ${count[id]} boîtes`);
+      if (x.p === 'oeufs') assert(count[id] === 2 && after.every(c => !isHam(c.pdBase)), `${sn} : œufs-jambon, ${count[id]} boîtes`);
       const fiche = batchCook(after.map((c, i) => ({ res: buildDay({ seances: [], libre: days[i].libre }, c, { poids: 72 * k }) })))[0].recipes;
       assert(fiche.find(r => r.id === nid).boxes.length === count[id] && !fiche.some(r => r.id === id), `${sn} : boîtes de la remplaçante`);
     }
@@ -766,7 +879,11 @@ assert(batchSwap(dSale, 'tofu-riz', 'oeufs-riz', ['pd:avoine'])[0].pdBase === 'p
 // Œufs-jambon pour 3 boîtes : 6 tranches, pas proposé ; ni s'il ne reste que le salé
 const dSale3 = dSale.slice(0, 2).concat([{ ch: { pdBase: 'avoine', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' }, diner: { prot: 'poulet', starch: 'pdt', recette: 'poulet-pdt' } }, libre: false }]);
 assert(!batchSwapOptions(dSale3, 'tofu-riz', [], 1).some(x => RECIPES[x].p === 'oeufs') && batchSwapOptions(dSale3, 'tofu-riz', [], 1).length > 0, 'changer : œufs-jambon pour 3 boîtes');
-assert(!batchSwapOptions(dSale, 'tofu-riz', ['pd:avoine', 'pd:pain'], 1).some(x => RECIPES[x].p === 'oeufs'), 'changer : œufs-jambon sans autre base que le salé');
+assert(!batchSwapOptions(dSale, 'tofu-riz', PD_ORDER.filter(x => !isHam(x)).map(x => 'pd:' + x), 1).some(x => RECIPES[x].p === 'oeufs'), 'changer : œufs-jambon sans autre base que le salé et le wrap');
+// Le wrap (une tranche de jambon, 3.29.0) passe aussi à une base sans jambon
+const dWrap = dSale.map((d, i) => ({ ch: Object.assign({}, d.ch, { pdBase: i ? 'wrap' : 'sale', co: 'mugcake' }), libre: false }));
+const swW = batchSwap(dWrap, 'tofu-riz', 'oeufs-riz', ['pd:avoine']);
+assert(swW.every(c => c.pdBase === 'pain' && c.co === 'mugcake'), 'changer : salé et wrap → base sans jambon, collation gardée');
 
 // 20. Batch cooking, chiffres ronds (3.17.0) : poids fixés d'une boîte (g, g2) et arrondi aux 100 g par recette
 {
@@ -873,7 +990,7 @@ assert(recipePref('poulet-riz', null) === 1 && recipePref('poulet-riz', { fav: [
   draws({ fav: ['boeuf-riz', 'oeufs-riz'], ban: [] }, 0);
   for (let i = 0; i < 300; i++) {
     const full = randomChoices(lcg(i + 1), [], { poisson: 2, gras: 1, legumes: 2, rouge: 480, charcuterie: 140 }, 1, { fav: ['boeuf-riz', 'boeuf-pates', 'oeufs-riz'], ban: [] });
-    assert(full.pdBase !== 'sale' && ![full.dej.prot, full.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'favorites : repères de la semaine gardés');
+    assert(!isHam(full.pdBase) && ![full.dej.prot, full.diner.prot].some(p => p === 'boeuf' || p === 'oeufs'), 'favorites : repères de la semaine gardés');
   }
   // La suggestion d'un repas n'est jamais une recette à éviter ; choisie à la main, elle reste
   const chP = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'pates', recette: 'boeuf-pates' } };

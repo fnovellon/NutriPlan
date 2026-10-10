@@ -15,7 +15,10 @@ const FOOD = {
   champignon:[22,2.4,1.9,0.2], epinards:[35,2.7,3.2,0.4], brocoli:[35,2.4,4,0.4], carotte:[40,0.6,7.6,0.5], petitspois:[71,5,8.3,0.4],
   haricotsverts:[31,1.8,3.6,0.1], concombre:[12,0.6,1.8,0.2], aubergine:[21,1,2.8,0.2], choufleur:[26,1.8,2.1,0.7], chou:[30,1.1,4.3,0.5],
   poireau:[29,2.1,3.4,0.3], salade:[14,1.3,1.4,0.2],
-  coco:[190,2,6.3,17.6], creme:[190,2.9,4.3,18], lait:[46,3.3,4.8,1.5], sesame:[640,17.7,9.3,56.4], tahini:[645,25,3.8,57], olives:[162,0.9,1.7,14]
+  coco:[190,2,6.3,17.6], creme:[190,2.9,4.3,18], lait:[46,3.3,4.8,1.5], sesame:[640,17.7,9.3,56.4], tahini:[645,25,3.8,57], olives:[162,0.9,1.7,14],
+  /* Petits-déjeuners et collations (3.29.0) : cacao en poudre non sucré (moyenne des étiquettes, glucides sans les fibres),
+     riz rond (Ciqual, riz blanc cru) */
+  cacao:[380,21,11,21], rizrond:[352,7,79,0.6]
 };
 /* Groupes d'aliments aux valeurs proches (pour 100 g crus : ≈ 10 % près en calories, ≈ 3 g près en protéines et lipides),
    proposés dans un seul choix avec les valeurs du premier : viande blanche maigre (poulet 110 kcal, dinde, filet mignon de porc
@@ -26,7 +29,10 @@ const FOOD = {
    coquille */
 const UNIT = {
   banane:[105,1.3,24,0.3], pomme:[80,0.4,17.5,0.3], compote:[60,0.3,13,0.2],
-  oeuf:[72,6.3,0.4,4.8]
+  oeuf:[72,6.3,0.4,4.8],
+  /* 3.29.0 : tortilla de blé complet ≈ 60 g (300 kcal, 9 g, 47 g, 7 g pour 100 g, moyenne des étiquettes), galette de riz
+     soufflé ≈ 9 g (Ciqual : 385 kcal, 8 g, 80 g, 3 g pour 100 g) */
+  tortilla:[180,5.4,28.2,4.2], galette:[35,0.7,7.2,0.3]
 };
 const STARCH = {
   riz:{cap:120, label:'Riz', f:[352,8.4,77,1], step:5, raw:'cru', cook:[[3, 'cuit']], name:'riz basmati'},
@@ -46,13 +52,13 @@ const STARCH_ORDER = ['riz','pates','pdt','patate','quinoa','semoule','boulgour'
 const REF_GROUPS = [
   {title:'Viandes, poissons, laitages', per:'pour 100' + NB + 'g', src:'food', rows:[['poulet','Viande blanche maigre (poulet, dinde, filet mignon de porc)'],['boeuf','Bœuf haché 5' + NB + '%'],['poisson','Poisson blanc'],['saumon','Poisson gras (saumon, maquereau, sardines à l’huile)'],['crevettes','Crevettes cuites'],['thon','Thon au naturel, égoutté'],['jambon','Jambon blanc'],['halloumi','Halloumi'],['tofu','Tofu ferme, nature'],['parmesan','Parmesan'],['skyr','Skyr nature']]},
   {title:'Féculents', per:'pour 100' + NB + 'g crus', src:'starch', rows:STARCH_ORDER.map(function(id){ return [id, STARCH[id].name.charAt(0).toUpperCase() + STARCH[id].name.slice(1)]; })},
-  {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine (ou muesli sans sucre ajouté)'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['fruitsSecs','Fruits secs (abricots, pruneaux, figues)'],['chocolat','Chocolat noir 70' + NB + '%']]},
+  {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine (ou muesli sans sucre ajouté)'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['fruitsSecs','Fruits secs (abricots, pruneaux, figues)'],['cacao','Cacao en poudre non sucré'],['rizrond','Riz rond (riz au lait)'],['chocolat','Chocolat noir 70' + NB + '%']]},
   {title:'Légumes, crus', per:'pour 100' + NB + 'g', src:'food', rows:[['legumes','Légumes verts (moyenne)'],['oignon','Oignon (ou échalote)'],['tomate','Tomate'],['pulpe','Pulpe de tomate, en conserve'],
     ['poivron','Poivron'],['courgette','Courgette'],['champignon','Champignon de Paris'],['epinards','Épinards'],['brocoli','Brocoli'],['carotte','Carotte'],['petitspois','Petits pois, cuits'],
     ['haricotsverts','Haricots verts'],['concombre','Concombre'],['aubergine','Aubergine'],['choufleur','Chou-fleur'],['chou','Chou rouge ou chinois'],['poireau','Poireau'],['salade','Salade verte']]},
   {title:'Matières grasses et sauces', per:'pour 100' + NB + 'g', src:'food', rows:[['huile','Huile d’olive'],['coco','Lait de coco'],['creme','Crème légère'],['lait','Lait demi-écrémé'],
     ['sesame','Graines de sésame'],['tahini','Tahini (purée de sésame)'],['olives','Olives noires']]},
-  {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf moyen'],['banane','Banane moyenne'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté, 100' + NB + 'g']]}
+  {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf moyen'],['banane','Banane moyenne'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté, 100' + NB + 'g'],['tortilla','Tortilla de blé complet, ≈' + NB + '60' + NB + 'g'],['galette','Galette de riz soufflé, ≈' + NB + '9' + NB + 'g']]}
 ];
 function refTable(){
   return REF_GROUPS.map(function(g){

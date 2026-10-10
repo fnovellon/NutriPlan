@@ -57,12 +57,16 @@
   let selDate = today, sel = todayJs, plan = null, ch = null, prevQty = new Map();
   const selIso = function(){ return isoDate(selDate); };
 
+  /* Collation choisie (3.29.0, co et cs, absentes = œufs durs, banane et compote) : reprise de from */
+  const keepSnack = function(c, from){ ['co', 'cs'].forEach(function(f){ if (from && has(from, f)) c[f] = from[f]; }); return c; };
   /* Choix des plats relus et validés ; ce qui manque vient de base (sinon des choix par défaut du jour de la semaine) */
   const cleanCh = function(c, js, base){
     const d = base || DEFAULT_CHOICES[js];
-    const out = {pdBase:d.pdBase, dej:Object.assign({}, d.dej), diner:Object.assign({}, d.diner)};
+    const out = keepSnack({pdBase:d.pdBase, dej:Object.assign({}, d.dej), diner:Object.assign({}, d.diner)}, d);
     if (c && typeof c === 'object'){
       if (has(PD, c.pdBase)) out.pdBase = c.pdBase;
+      if (has(SNACK, c.co)) out.co = c.co;
+      if (has(SNACK_CS, c.cs)) out.cs = c.cs;
       ['dej', 'diner'].forEach(function(s){
         if (c[s] && typeof c[s] === 'object'){
           if (has(PROT, c[s].prot)) out[s].prot = c[s].prot;

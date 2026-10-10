@@ -27,7 +27,7 @@
       if (recipeOf(c)){ o.recette = c.recette; ['g', 'g2'].forEach(function(f){ if (has(c, f)) o[f] = c[f]; }); }
       return o;
     };
-    draft = {pdBase:ch.pdBase, dej:copy(ch.dej), diner:copy(ch.diner)};
+    draft = keepSnack({pdBase:ch.pdBase, dej:copy(ch.dej), diner:copy(ch.diner)}, ch);
     renderRepas();
   };
   const openRepas = function(opener){ startDraft(); openScreen('repas', opener); };

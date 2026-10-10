@@ -1,54 +1,176 @@
 /* Lignes de chaque repas : petit-déjeuner, collation, shaker, goûter, ravito ; déjeuner et dîner (protéine, féculent dosé
    ensuite, légumes ou recette, ajout du soir). Portions × k (poids), × kp (k × facteur de protéines) pour celles ajustées. */
-/* Petit-déjeuner : menu de sortie longue si longue ; banane dès qu'il y a une séance moyenne ou longue */
+/* Petit-déjeuner : menu de sortie longue si long ; banane dès qu'il y a une séance moyenne ou longue (banane).
+   Bases (PD) : avoine, pain, salé, et depuis la 3.29.0 sept recettes. Portions × k ; le skyr × kp (ajusté à l'objectif de
+   protéines, jamais sous SKYR_MIN) ; œufs et jambon fixes (× k). Les bases salées (PD[base].sale) laissent la place, les
+   jours de sortie longue, à la version sucrée au pain (plus digeste 1h30 avant de partir) ; les recettes sucrées y prennent
+   un peu plus de flocons (+ 20 g) ou de pain (+ 30 g) et 15 g de miel. */
 function breakfast(long, banane, base, k, kp){
   const items = [];
-  /* Salé : pain complet, œufs et une tranche de jambon (portions fixes comme les œufs), sans skyr ni amandes.
-     Les jours de sortie longue, version sucrée au pain (plus digeste 1h30 avant de partir). */
+  const fruit = function(g){
+    if (banane || long) items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
+    else items.push(it('fruit', grams(g), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', g)));
+  };
+  /* Skyr ajusté à l'objectif de protéines, jamais sous un petit pot (ni sous min) */
+  const skyr = function(ref, note, min){ const g = Math.max(SKYR_MIN, min || 0, sc(ref, 10, kp)); items.push(adj(it('skyr', grams(g), 'skyr nature', note, mac('skyr', g)))); };
+  const miel = function(){ if (long){ const g = sc(15, 5, k); items.push(it('miel', grams(g), 'miel', null, mac('miel', g))); } };
+  const eggs = function(n, note1, noteN){ items.push(it('oeufs', String(n), n > 1 ? 'œufs' : 'œuf', n > 1 ? noteN : note1, unitMac('oeuf', n))); };
+  const oats = function(g, note){ items.push(it('base', grams(g), 'flocons d’avoine', note, mac('avoine', g))); };
+  const lait = function(g, note){ items.push(it('lait', grams(g), 'lait demi-écrémé', '≈' + NB + g + NB + 'ml' + (note ? ', ' + note : ''), mac('lait', g))); };
+  /* Salé : pain complet, œufs et une tranche de jambon (portions fixes comme les œufs), sans skyr ni amandes */
   if (base === 'sale' && !long){
     const g = sc(80, 10, k), n = pieces(2, k), j = sc(45, 5, k);
     items.push(it('base', grams(g), 'pain complet', slices(g, 40), mac('pain', g)));
-    items.push(it('oeufs', String(n), n > 1 ? 'œufs' : 'œuf', n > 1 ? 'à la coque, pochés ou brouillés sans matière grasse' : 'à la coque, poché ou brouillé sans matière grasse', unitMac('oeuf', n)));
+    eggs(n, 'à la coque, poché ou brouillé sans matière grasse', 'à la coque, pochés ou brouillés sans matière grasse');
     items.push(it('jambon', grams(j), 'jambon blanc', slices(j, 45), mac('jambon', j)));
-    if (banane) items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
-    else items.push(it('fruit', grams(125), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', 125)));
+    fruit(125);
     return items;
   }
-  if (base === 'pain' || base === 'sale'){
+  /* Brouillade (3.29.0) : œufs brouillés aux épinards et aux champignons, pain complet, skyr à côté */
+  if (base === 'brouillade' && !long){
+    const n = pieces(2, k), g = sc(60, 10, k);
+    eggs(n, 'brouillé à la poêle antiadhésive, sans matière grasse', 'brouillés à la poêle antiadhésive, sans matière grasse');
+    items.push(it('epi', grams(100), 'épinards', 'frais ou surgelés, tombés à la poêle avant les œufs', mac('epinards', 100)));
+    items.push(it('chp', grams(60), 'champignons de Paris', 'émincés, avec les épinards', mac('champignon', 60)));
+    items.push(it('pain', grams(g), 'pain complet', slices(g, 40) + ', grillé', mac('pain', g)));
+    skyr(150, 'à côté');
+    fruit(100);
+    return items;
+  }
+  /* Wrap œufs-jambon (3.29.0) : à emporter, roulé dans une tortilla complète */
+  if (base === 'wrap' && !long){
+    const n = pieces(2, k), j = sc(45, 5, k);
+    items.push(it('tort', '1', 'tortilla complète', 'garnie puis roulée, à emporter dans un papier', unitMac('tortilla', 1)));
+    eggs(n, 'en omelette fine, à la poêle antiadhésive sans matière grasse', 'en omelette fine, à la poêle antiadhésive sans matière grasse');
+    items.push(it('jambon', grams(j), 'jambon blanc', slices(j, 45), mac('jambon', j)));
+    items.push(it('tom', grams(80), 'tomate', 'en rondelles, ou de la salade', mac('tomate', 80)));
+    fruit(125);
+    return items;
+  }
+  /* Pancakes avoine-banane (3.29.0) : flocons, banane et œufs mixés, cuits sans matière grasse */
+  if (base === 'pancakes'){
+    oats(sc(long ? 60 : 40, 5, k), 'mixés avec la banane et les œufs, cuits en petits pancakes à la poêle antiadhésive');
+    items.push(it('fruit', '1', 'banane', 'écrasée dans la pâte', unitMac('banane', 1)));
+    eggs(pieces(2, k), 'dans la pâte', 'dans la pâte');
+    skyr(100, 'à côté, avec les fruits rouges');
+    items.push(it('fr', grams(50), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', 50)));
+    miel();
+    return items;
+  }
+  /* Pain perdu (3.29.0) : pain complet trempé dans l'œuf battu avec le lait et la cannelle, doré sans beurre */
+  if (base === 'painperdu'){
     const g = sc(long ? 110 : 80, 10, k);
-    items.push(it('base', grams(g), 'pain complet', slices(g, 40) + (base === 'sale' ? ', en version sucrée avant la sortie longue (plus digeste)' : ''), mac('pain', g)));
+    items.push(it('base', grams(g), 'pain complet', slices(g, 40) + ', rassis c’est mieux', mac('pain', g)));
+    eggs(pieces(1, k), typo('battu avec le lait et une pincée de cannelle ; le pain y trempe, puis dore à la poêle antiadhésive, sans beurre'), typo('battus avec le lait et une pincée de cannelle ; le pain y trempe, puis dore à la poêle antiadhésive, sans beurre'));
+    lait(sc(100, 10, k));
+    skyr(150, 'à côté, ou en nappage');
+    fruit(125);
+    miel();
+    return items;
+  }
+  /* Bircher (3.29.0) : flocons trempés la veille dans le skyr et le lait, pomme râpée, cannelle */
+  if (base === 'bircher'){
+    const g = sc(long ? 70 : 50, 5, k);
+    oats(g, 'trempés la veille au frigo dans le skyr et le lait, avec une pincée de cannelle');
+    skyr(200, null, Math.ceil(g * OATS_SKYR / 10) * 10);
+    lait(sc(60, 10, k));
+    items.push(it('fruit', '1', 'pomme', 'râpée le matin', unitMac('pomme', 1)));
+    const am = sc(10, 5, k);
+    items.push(it('am', grams(am), 'amandes', 'concassées', mac('amandes', am)));
+    miel();
+    return items;
+  }
+  /* Porridge choco-banane (3.29.0) : flocons cuits dans le lait avec le cacao, banane et skyr dessus */
+  if (base === 'porridge'){
+    oats(sc(long ? 70 : 50, 5, k), 'cuits 3 à 5' + NB + 'min dans le lait, avec le cacao');
+    lait(sc(150, 10, k));
+    items.push(it('cacao', grams(8), 'cacao non sucré', typo('1 c. à soupe rase'), mac('cacao', 8)));
+    items.push(it('fruit', '1', 'banane', 'en rondelles dessus', unitMac('banane', 1)));
+    skyr(150, 'dessus, une fois tiède');
+    miel();
+    return items;
+  }
+  /* Smoothie à emporter (3.29.0) : tout mixé, à boire en route */
+  if (base === 'smoothie'){
+    skyr(250, 'mixé avec le reste, à emporter dans une gourde');
+    items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
+    items.push(it('fr', grams(100), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', 100)));
+    lait(sc(100, 10, k));
+    oats(sc(long ? 50 : 30, 5, k), 'mixés avec le reste, ils épaississent');
+    miel();
+    return items;
+  }
+  /* Pain, ou une base salée les jours de sortie longue (version sucrée au pain) */
+  if (base === 'pain' || has(PD, base) && PD[base].sale){
+    const g = sc(long ? 110 : 80, 10, k);
+    items.push(it('base', grams(g), 'pain complet', slices(g, 40) + (base !== 'pain' ? ', en version sucrée avant la sortie longue (plus digeste)' : ''), mac('pain', g)));
   }
   /* Avec les flocons, jamais moins de 2,5 fois leur poids en skyr (3.19.0, arrondi à 10 g au-dessus) : sinon le porridge ou
      les flocons trempés ne se mangent pas. Comme SKYR_MIN, ce plancher ne suit pas l'objectif de protéines. */
   let skyrOats = 0;
-  if (base !== 'pain' && base !== 'sale'){
+  if (items.length === 0){
     const g = sc(long ? 80 : 60, 5, k);
     items.push(it('base', grams(g), 'flocons d’avoine ou muesli', 'muesli sans sucre ajouté. En porridge, ou trempés la veille dans le skyr', mac('avoine', g)));
     skyrOats = Math.ceil(g * OATS_SKYR / 10) * 10;
   }
-  const sk = Math.max(SKYR_MIN, skyrOats, sc(long ? 150 : 250, 10, kp));
-  items.push(adj(it('skyr', grams(sk), 'skyr nature', null, mac('skyr', sk))));
-  if (long || banane){
-    items.push(it('fruit', '1', 'banane', null, unitMac('banane', 1)));
-  } else {
-    items.push(it('fruit', grams(125), 'fruits rouges', 'surgelés, c’est parfait', mac('fruitsRouges', 125)));
-  }
-  if (long){ const mi = sc(15, 5, k); items.push(it('miel', grams(mi), 'miel', null, mac('miel', mi))); }
+  skyr(long ? 150 : 250, null, skyrOats);
+  fruit(125);
+  miel();
   const am = sc(15, 5, k);
   items.push(it('am', grams(am), 'amandes', null, mac('amandes', am)));
   return items;
 }
-/* Collation : œufs, + banane s'il y a une séance, + compote s'il y a une moyenne ou une longue */
-/* Déjà des œufs dans la journée (petit-déjeuner salé, « Œufs + jambon ») : skyr et amandes à la place, presque la même
-   chose (2 œufs : 144 kcal, 12,6 g de protéines, 9,6 g de lipides ; 100 g de skyr et 15 g d'amandes : 151, 14, 7,9) */
-function snackItems(seance, grosse, k, oeufs){
-  const n = pieces(2, k), items = [];
-  if (oeufs){
+/* Collation (3.29.0 : au choix, kind, ch.co) :
+   - œufs durs (par défaut) ou muffins œuf-épinards ; déjà des œufs dans la journée (petit-déjeuner aux œufs hors sortie
+     longue, « Œufs + jambon ») : skyr et amandes à la place, presque la même chose (2 œufs : 144 kcal, 12,6 g de
+     protéines, 9,6 g de lipides ; 100 g de skyr et 15 g d'amandes : 151, 14, 7,9) ;
+   - mug cake skyr-cacao (un œuf, il reste) ; bouchées concombre-thon (½ boîte) ;
+   - riz au lait protéiné : il fait aussi la partie glucides.
+   Puis, s'il y a une séance (carbs, ch.cs) : banane, + compote s'il y a une moyenne ou une longue ; ou boules d'énergie
+   (2, ou 3 avec une moyenne ou une longue). */
+function snackItems(seance, grosse, k, oeufs, kind, carbs){
+  const items = [], K = has(SNACK, kind) ? kind : 'oeufs';
+  if (K === 'rizaulait'){
+    const r = sc(30, 5, k), l = sc(200, 10, k), sk = Math.max(SKYR_MIN, sc(100, 10, k));
+    items.push(it('rzr', grams(r), 'riz rond', typo('cuit 25 min à feu doux dans le lait, avec vanille ou cannelle ; se prépare pour 3 jours'), mac('rizrond', r)));
+    items.push(it('rzl', grams(l), 'lait demi-écrémé', '≈' + NB + l + NB + 'ml', mac('lait', l)));
+    items.push(it('rzs', grams(sk), 'skyr nature', 'mélangé une fois tiède', mac('skyr', sk)));
+    return items;
+  }
+  if (oeufs && (K === 'oeufs' || K === 'muffins')){
     const sk = Math.max(SKYR_MIN, sc(100, 10, k)), am = sc(15, 5, k);
     items.push(it('csk', grams(sk), 'skyr nature', 'à la place des œufs, déjà au menu aujourd’hui', mac('skyr', sk)));
     items.push(it('cam', grams(am), 'amandes', null, mac('amandes', am)));
-  } else items.push(it('oe', String(n), n > 1 ? 'œufs' : 'œuf', n > 1 ? 'durs ou mollets, préparés à l’avance' : 'dur ou mollet, préparé à l’avance', unitMac('oeuf', n)));
-  if (seance) items.push(it('ban', '1', 'banane', null, unitMac('banane', 1)));
+  } else if (K === 'muffins'){
+    const n = pieces(2, k), pm = sc(10, 5, k);
+    items.push(it('mfo', String(n), n > 1 ? 'œufs' : 'œuf', typo('en muffins : battus avec les épinards hachés et le parmesan, 20 min à 180 °C ; une fournée se garde 3 jours au frigo'), unitMac('oeuf', n)));
+    items.push(it('mfe', grams(40), 'épinards', 'frais ou surgelés', mac('epinards', 40)));
+    items.push(it('mfp', grams(pm), 'parmesan', 'râpé', mac('parmesan', pm)));
+  } else if (K === 'mugcake'){
+    const n = pieces(1, k), sk = sc(80, 10, k), f = sc(15, 5, k);
+    items.push(it('mko', String(n), n > 1 ? 'œufs' : 'œuf', typo('mélangé dans un mug avec le skyr, les flocons et le cacao, 1 min 30 au micro-ondes'), unitMac('oeuf', n)));
+    items.push(it('mks', grams(sk), 'skyr nature', null, mac('skyr', sk)));
+    items.push(it('mka', grams(f), 'flocons d’avoine', null, mac('avoine', f)));
+    items.push(it('mkc', grams(5), 'cacao non sucré', typo('1 c. à café'), mac('cacao', 5)));
+  } else if (K === 'thon'){
+    const t = mac('thon', 55);
+    items.push(it('tht', '½', 'boîte de thon au naturel', 'environ 55' + NB + 'g égoutté, mélangé au skyr, sur les rondelles de concombre', t, null, {id:'thon', n:0.5}));
+    items.push(it('thc', grams(150), 'concombre', 'en rondelles épaisses', mac('concombre', 150)));
+    items.push(it('ths', grams(30), 'skyr nature', 'avec le thon, citron et poivre', mac('skyr', 30)));
+    items.push(it('thg', '2', 'galettes de riz soufflé', null, unitMac('galette', 2)));
+  } else {
+    const n = pieces(2, k);
+    items.push(it('oe', String(n), n > 1 ? 'œufs' : 'œuf', n > 1 ? 'durs ou mollets, préparés à l’avance' : 'dur ou mollet, préparé à l’avance', unitMac('oeuf', n)));
+  }
+  if (!seance) return items;
+  if (carbs === 'boules'){
+    const b = grosse ? 3 : 2, f = sc(10 * b, 5, k), s = sc(10 * b, 5, k), a = sc(5 * b, 5, k);
+    items.push(it('bof', grams(f), 'flocons d’avoine', typo('pour ' + b + ' boules d’énergie : mixés avec les fruits secs et les amandes, roulés en boules ; une fournée se garde une semaine au frais'), mac('avoine', f)));
+    items.push(it('bos', grams(s), 'fruits secs', 'abricots, pruneaux ou figues', mac('fruitsSecs', s)));
+    items.push(it('boa', grams(a), 'amandes', null, mac('amandes', a)));
+    return items;
+  }
+  items.push(it('ban', '1', 'banane', null, unitMac('banane', 1)));
   if (grosse) items.push(it('comp', '1', 'compote', 'sans sucre ajouté', unitMac('compote', 1)));
   return items;
 }

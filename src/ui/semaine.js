@@ -4,14 +4,18 @@
   const weekBal = function(d, skip){ return weekBalance(weekOf(d).map(isoDate).filter(function(iso){ return iso !== skip; }).map(dayResult)); };
   /* « Décide pour moi » d'une date : équilibré avec le reste de sa semaine */
   /* recettes : les plats seront des recettes (favorites et à éviter comptent, 3.25.0) */
-  const drawFor = function(iso, recettes){ const pr = cleanProfile(prof); return randomChoices(null, pr.off, weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null); };
+  /* La collation n'est pas tirée : elle reste celle de la date (3.29.0) */
+  const drawFor = function(iso, recettes){
+    const pr = cleanProfile(prof);
+    return keepSnack(randomChoices(null, pr.off, weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null), choicesFor(iso, fromIso(iso).getDay()));
+  };
   /* Un paquet de jambon (4 tranches, × k) : toléré au-delà du repère de 150 g de charcuterie (3.17.0) */
   const hamPack = function(){ return HAM_SLICES * sc(45, 5, scaleOf(cleanProfile(prof))); };
   const gr = function(x){ return '≈' + NB + Math.round(x / 10) * 10 + NB + 'g'; };
   /* Ce qui manque ou déborde, en une phrase */
   const weekMsg = function(b){
     const n = weekNeeds(b, hamPack())[0], left = function(x, one, two){ return x === 1 ? one : two; };
-    if (n === 'charcuterie') return 'Trop de charcuterie (' + gr(b.charcuterie) + ', 150' + NB + 'g au plus)' + NB + ': préfère le petit-déjeuner sucré et une autre protéine que les œufs-jambon.';
+    if (n === 'charcuterie') return 'Trop de charcuterie (' + gr(b.charcuterie) + ', 150' + NB + 'g au plus)' + NB + ': préfère un petit-déjeuner sans jambon et une autre protéine que les œufs-jambon.';
     if (n === 'rouge') return 'Beaucoup de viande rouge (' + gr(b.rouge) + ' cuits, 500' + NB + 'g au plus)' + NB + ': alterne avec la volaille, le poisson ou le tofu.';
     if (n === 'gras') return 'Il te manque un poisson gras (saumon, maquereau, sardines).';
     if (n === 'poisson') return left(WEEK_GOALS.poisson - b.poisson, 'Encore un poisson à prévoir.', 'Encore deux poissons à prévoir.');
@@ -36,7 +40,7 @@
   const crossMsg = function(before, after){
     const lim = Math.max(WEEK_GOALS.charcuterie, hamPack()) + 0.5;
     if (after.charcuterie > lim && before.charcuterie <= lim)
-      return 'Ça fait ' + gr(after.charcuterie) + ' de charcuterie cette semaine, 150' + NB + 'g au plus' + NB + ': le petit-déjeuner sucré ou une autre protéine équilibreraient.';
+      return 'Ça fait ' + gr(after.charcuterie) + ' de charcuterie cette semaine, 150' + NB + 'g au plus' + NB + ': un petit-déjeuner sans jambon ou une autre protéine équilibreraient.';
     if (after.rouge > WEEK_GOALS.rouge + 0.5 && before.rouge <= WEEK_GOALS.rouge + 0.5)
       return 'Ça fait ' + gr(after.rouge) + ' de viande rouge cuite cette semaine, 500' + NB + 'g au plus' + NB + ': alterne avec la volaille, le poisson ou le tofu.';
     return '';
