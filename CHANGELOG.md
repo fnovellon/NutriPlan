@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 3.31.0, 10 octobre 2026
+
+- 80 nouvelles recettes : il y en a maintenant deux par protéine et féculent, 160 en tout. Parmi elles, le poulet croustillant au air fryer avec ses frites maison et son coleslaw, et une salade de pommes de terre au poisson blanc, sauce moutarde. Et aussi du teriyaki, des currys, des pilafs, des taboulés, des gnocchis au four, un burger sans pain…
+- Sous un repas, la recette proposée change d'un jour à l'autre entre les deux recettes du couple, et « Une autre recette » te montre l'autre tout de suite.
+- « Décide pour moi », les planifications et le batch cooking piochent dans toutes les recettes. Une recette à éviter laisse la place à l'autre du même couple, une favorite revient deux fois plus souvent.
+- Les calculs ne changent pas : chaque recette garde 250 g de légumes et une petite matière grasse, et ton total du jour ne bouge pas.
+
 ## 3.30.0, 10 octobre 2026
 
 - Tes envies dans une planification : dans « Nouvelle planification », « Tes envies pour cette période ». Touche une protéine ou un féculent une fois pour « Je veux » (il revient au moins 2 fois par semaine), deux fois pour « Pas cette fois » (il n'est jamais tiré). Par exemple : du poisson blanc, et pas de riz cette semaine.

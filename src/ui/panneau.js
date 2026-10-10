@@ -45,8 +45,8 @@
     ($('sheet-rec').querySelector('.btn') || $('sheet').querySelector('.sheet-x')).focus({preventScroll:true});
   };
   /* Depuis la page : « Choisir cette recette » ou « Retirer la recette » */
-  const openRecipe = function(slot, trigger){
-    const cur = recipeOf(ch[slot]), id = cur || recipesFor(ch[slot].prot, ch[slot].starch)[0];
+  const openRecipe = function(slot, trigger, want){
+    const all = recipesFor(ch[slot].prot, ch[slot].starch), cur = recipeOf(ch[slot]), id = cur || (all.indexOf(want) >= 0 ? want : all[0]);
     if (!id) return;
     const x = RECIPES[id], on = cur === id, withRec = cleanCh(ch, sel), meal = slot === 'dej' ? 'déjeuner' : 'dîner';
     withRec[slot].recette = id;
@@ -54,7 +54,7 @@
     showRecipe(id, sec, on ? ' Choisie pour ce ' + meal + '.' : '', 'Pour ce ' + meal,
       on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
       on ? '<button type="button" class="btn wide" data-action="rec-off" data-slot="' + slot + '">Retirer la recette</button>'
-        : '<button type="button" class="btn main wide" data-action="rec-on" data-slot="' + slot + '">Choisir cette recette</button>',
+        : '<button type="button" class="btn main wide" data-action="rec-on" data-slot="' + slot + '" data-value="' + id + '">Choisir cette recette</button>',
       {kind:'recette', slot:slot, trigger:trigger && trigger.id ? trigger.id : null, back:'ft-' + slot, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'page'});
   };
   /* Recette favorite ou à éviter (3.25.0), dans sa fiche : l'une ou l'autre, enregistrée dans le profil (fav, ban) ; la page

@@ -2,6 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+// Une recette va avec son couple : identifiant protéine-féculent ou protéine-féculent-suffixe (3.31.0)
+const ofCouple = m => m.recette === m.prot + '-' + m.starch || String(m.recette).startsWith(m.prot + '-' + m.starch + '-');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
@@ -376,7 +378,7 @@ r.click('[data-action="repas-hasard"]');
 assert(!r.$('#page').hidden && r.$('#repas').hidden, 'récap non affiché après le tirage');
 assert.deepStrictEqual(everything(), ['wrap', 'tofu', 'gnocchis', 'chocolat', 'thon', 'gnocchis', 'chocolat'], 'tirage (dernier choix de chaque liste, protéine du dîner différente)');
 assert(r.chosen('snack') === 'muffins' && r.stored().choices[3].co === 'muffins', 'tirage : collation gardée');
-assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat', recette: 'thon-gnocchis' }, 'tirage non enregistré (recette choisie d’office)');
+assert.deepStrictEqual(r.stored().choices[3].diner, { prot: 'thon', starch: 'gnocchis', dessert: 'chocolat', recette: 'thon-gnocchis-courgettes' }, 'tirage non enregistré (recette choisie d’office)');
 assert(r.$('[aria-labelledby="h-dej"] .rec.is-on') && r.$('[aria-labelledby="h-diner"] .rec.is-on'), 'tirage : recettes choisies sur la page');
 assert(/tirés au hasard/.test(r.$('#hint').textContent), 'message du tirage : ' + r.$('#hint').textContent);
 r.click('#open-repas');
@@ -419,7 +421,12 @@ choose('starch', 'diner', 'pates');
 const recBox = slot => $(`[aria-labelledby="h-${slot}"] .rec`);
 const dinerNames = () => [...d.querySelectorAll('[aria-labelledby="h-diner"] .items li .name')].map(n => n.childNodes[0].textContent.trim());
 const kcalOf = el => Number(el.textContent.replace(/\D/g, ''));
-assert(/^Suggestion\s:\sPâtes à la bolognaise/.test(recBox('diner').textContent) && !recBox('diner').classList.contains('is-on'), 'suggestion du dîner : ' + recBox('diner').textContent);
+// 3.31.0 : deux recettes par couple, la suggestion tourne d'un jour à l'autre ; « Une autre recette » passe à la suivante
+assert(/^Suggestion\s:\sPâtes au bœuf façon goulash/.test(recBox('diner').textContent) && $('#rec-n-diner').textContent === 'Une autre recette' && $('#rec-n-diner').getAttribute('aria-label') === 'Une autre recette du dîner', 'suggestion du dîner ce mercredi : ' + recBox('diner').textContent);
+click('#rec-n-diner');
+assert(/^Suggestion\s:\sPâtes à la bolognaise/.test(recBox('diner').textContent) && !recBox('diner').classList.contains('is-on') && d.activeElement === $('#rec-n-diner') && !('recette' in stored().choices[3].diner), 'une autre recette : ' + recBox('diner').textContent);
+click('#rec-n-diner'); click('#rec-n-diner');
+assert(/Pâtes à la bolognaise/.test(recBox('diner').textContent), 'une autre recette : le tour revient');
 assert(/35\smin, se garde/.test(recBox('diner').textContent) && $('#rec-c-diner').getAttribute('aria-label') === 'Choisir la recette du dîner', 'temps et bouton de la suggestion');
 assert(dinerNames().includes('légumes') && dinerNames().includes('kcal pour la cuisine'), 'dîner sans recette : ' + dinerNames().join(', '));
 const totalR0 = kcalOf($('#sum-text strong'));
@@ -471,7 +478,7 @@ assert($('#sheet-rec [data-action="rec-off"]') && /Choisie pour ce dîner/.test(
 click('#sheet .sheet-x');
 // Changer de féculent : la recette est oubliée, celle du nouveau couple est proposée
 choose('starch', 'diner', 'riz');
-assert(/^Suggestion\s:\sChili de bœuf aux poivrons, riz/.test(recBox('diner').textContent) && !('recette' in stored().choices[3].diner) && dinerNames().includes('légumes'), 'féculent changé : recette oubliée');
+assert(/^Suggestion\s:\s(Chili de bœuf aux poivrons, riz|Bœuf sauté aux légumes)/.test(recBox('diner').textContent) && !('recette' in stored().choices[3].diner) && dinerNames().includes('légumes'), 'féculent changé : recette oubliée');
 choose('starch', 'diner', 'pates');
 assert(!recBox('diner').classList.contains('is-on'), 'revenir au féculent ne reprend pas la recette');
 // Repas libre : pas de recette au dîner
@@ -481,7 +488,7 @@ setSwitch('libre', false);
 // Rechargée : la recette choisie est relue (et refusée si elle ne va pas avec les plats enregistrés)
 const recSeed = (diner, extra) => ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner } } }, choices: {} }));
 const rl = tools(open(recSeed({ prot: 'saumon', starch: 'riz', recette: 'poulet-riz' })));
-assert(rl.$('[aria-labelledby="h-dej"] .rec.is-on') && !rl.$('[aria-labelledby="h-diner"] .rec.is-on') && /Poke bowl/.test(rl.$('[aria-labelledby="h-diner"] .rec').textContent), 'recettes relues et validées');
+assert(rl.$('[aria-labelledby="h-dej"] .rec.is-on') && !rl.$('[aria-labelledby="h-diner"] .rec.is-on') && /Poke bowl|Saumon teriyaki/.test(rl.$('[aria-labelledby="h-diner"] .rec').textContent), 'recettes relues et validées');
 const rl2 = tools(open(recSeed({ prot: 'saumon', starch: 'riz', recette: '__proto__' })));
 assert(!rl2.$('[aria-labelledby="h-diner"] .rec.is-on'), 'recette abîmée refusée');
 // Formulaire des repas : la recette suit le brouillon (gardée si le couple ne change pas, oubliée sinon)
@@ -1261,7 +1268,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   const st = bt.stored(), isos = ['2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13'];
   const meals = isos.flatMap(iso => { const c = st.plans[iso].ch; return iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]; });
   const count = {};
-  meals.forEach(m => { assert.strictEqual(m.recette, m.prot + '-' + m.starch, 'recette enregistrée'); count[m.recette] = (count[m.recette] || 0) + 1; });
+  meals.forEach(m => { assert(ofCouple(m), 'recette enregistrée : ' + JSON.stringify(m)); count[m.recette] = (count[m.recette] || 0) + 1; });
   assert(Object.keys(count).length === 3 && Object.values(count).sort().join() === '4,4,5', 'trois recettes, 13 boîtes : ' + JSON.stringify(count));
   isos.forEach(iso => { const c = st.plans[iso].ch; assert(c.dej.prot !== c.diner.prot, 'même protéine midi et soir : ' + iso); });
   assert.deepStrictEqual(st.choices[3], st.plans['2026-10-07'].ch, 'mémoire du mercredi');
@@ -1325,7 +1332,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
     last.click();
     assert(bt.$('#sheet').hidden && !bt.$('#courses').hasAttribute('inert'), 'panneau fermé après le choix');
     const st2 = bt.stored(), count2 = {};
-    isos.forEach(iso => { const c = st2.plans[iso].ch; (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).forEach(m => { assert.strictEqual(m.recette, m.prot + '-' + m.starch, 'recette enregistrée'); count2[m.recette] = (count2[m.recette] || 0) + 1; }); });
+    isos.forEach(iso => { const c = st2.plans[iso].ch; (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).forEach(m => { assert(ofCouple(m), 'recette enregistrée : ' + JSON.stringify(m)); count2[m.recette] = (count2[m.recette] || 0) + 1; }); });
     assert(!count2[oldId] && count2[nid] === count[oldId] && ids.filter(x => x !== oldId).every(x => count2[x] === count[x]), 'remplacée dans toutes ses boîtes : ' + JSON.stringify(count2));
     // Chiffres ronds : la nouvelle recette est arrondie à son tour (poids fixés sur toutes ses boîtes)
     if (!['thon', 'oeufs'].includes(nid.split('-')[0])) assert(isos.every(iso => { const c = st2.plans[iso].ch; return (iso === '2026-10-10' ? [c.dej] : [c.dej, c.diner]).filter(m => m.recette === nid).every(m => Number.isInteger(m.g)); }), 'recette changée arrondie : ' + nid);
@@ -1626,16 +1633,16 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.choose('dessert', 'dej', 'fruit');
   t.click('#nav-rec');
   assert(!t.$('#recettes').hidden && t.$('#page').hidden && t.$('#nav-rec').getAttribute('aria-current') === 'page' && t.d.activeElement === t.$('#lib-h'), 'recettes ouvertes par le menu');
-  assert(t.pressed('lib-for') === '0|dej' && /^70\srecettes\.$/.test(t.$('#lib-n').textContent) && ids().every(id => R[id].p !== 'thon'), 'ce midi, sans le thon (pas proposé) : ' + t.$('#lib-n').textContent);
+  assert(t.pressed('lib-for') === '0|dej' && /^140\srecettes\.$/.test(t.$('#lib-n').textContent) && ids().every(id => R[id].p !== 'thon'), 'ce midi, sans le thon (pas proposé) : ' + t.$('#lib-n').textContent);
   t.click('#lib-mine');
-  assert(ids().length === 80 && t.$('#lib-mine').getAttribute('aria-checked') === 'false', 'toutes les recettes');
+  assert(ids().length === 160 && t.$('#lib-mine').getAttribute('aria-checked') === 'false', 'toutes les recettes');
   t.click('#lib-mine');
   pick('#lib-prot', 'saumon');
-  assert(ids().length === 10 && ids().every(id => R[id].p === 'saumon'), 'filtre protéine');
+  assert(ids().length === 20 && ids().every(id => R[id].p === 'saumon'), 'filtre protéine');
   pick('#lib-starch', 'riz');
-  assert.deepStrictEqual(ids(), ['saumon-riz'], 'filtre féculent');
+  assert.deepStrictEqual(ids(), ['saumon-riz', 'saumon-riz-teriyaki'], 'filtre féculent : les deux recettes du couple, la première d’abord');
   pick('#lib-prot', ''); pick('#lib-starch', '__proto__');
-  assert(ids().length === 70 && t.$('#lib-starch').value === '', 'valeur inconnue ignorée');
+  assert(ids().length === 140 && t.$('#lib-starch').value === '', 'valeur inconnue ignorée');
   t.click('#lib-box');
   assert(ids().length === Object.values(R).filter(x => x.box && x.p !== 'thon').length && ids().every(id => R[id].box), 'se garde');
   t.click('#lib-quick');
@@ -1688,7 +1695,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.click('#gear'); t.click('#tab-appli'); t.click('[data-action="eff-ask"]'); t.click('[data-action="eff-ok"]'); t.click('[data-action="acc-skip"]');
   if (!t.$('#repas').hidden) t.click('#repas [data-action="fermer"]');
   t.click('#nav-rec');
-  assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 80, 'effacer : filtres remis');
+  assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 160, 'effacer : filtres remis');
 }
 
 // Recettes favorites et à éviter (3.25.0) : dans la fiche (page et bibliothèque), enregistrées dans le profil, l'une ou
@@ -1698,22 +1705,30 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   const t = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ age: 35, taille: 178, poids: 72 }))));
   const tw = t.d.defaultView, pf = () => JSON.parse(tw.localStorage.getItem(PKEY)), R = tw.eval('RECIPES');
   const esc = () => t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-  // Page : la suggestion du déjeuner (poulet, riz)
+  // Page : la suggestion du déjeuner (poulet, riz : l'une des deux recettes du couple, selon le jour)
+  const first = t.$('#rec-v-dej').dataset.value, other = ['poulet-riz', 'poulet-riz-teriyaki'].find(x => x !== first);
+  assert(['poulet-riz', 'poulet-riz-teriyaki'].includes(first), 'suggestion du déjeuner : ' + first);
   t.click('#rec-v-dej');
   assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'false' && t.$('#rp-ban').getAttribute('aria-pressed') === 'false' && t.$('#rp-s').textContent === '', 'fiche : ni favorite ni à éviter');
   t.click('#rp-fav');
   assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'true' && /deux fois plus souvent/.test(t.$('#rp-s').textContent) && t.d.activeElement === t.$('#rp-fav') && !t.$('#sheet').hidden, 'favorite');
-  assert.deepStrictEqual(pf().fav, ['poulet-riz'], 'favorite enregistrée');
+  assert.deepStrictEqual(pf().fav, [first], 'favorite enregistrée');
   t.click('#rp-ban');
   assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'false' && t.$('#rp-ban').getAttribute('aria-pressed') === 'true' && /ne la tire plus/.test(t.$('#rp-s').textContent), 'à éviter');
-  assert(!pf().fav && pf().ban.join() === 'poulet-riz', 'l’une ou l’autre : ' + JSON.stringify(pf()));
+  assert(!pf().fav && pf().ban.join() === first, 'l’une ou l’autre : ' + JSON.stringify(pf()));
+  // 3.31.0 : l'autre recette du couple est proposée ; les deux à éviter, plus de suggestion
+  assert(t.$('#rec-v-dej').dataset.value === other && !t.$('#rec-n-dej'), 'suggestion : l’autre recette du couple');
+  esc();
+  assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#rec-v-dej'), 'panneau fermé : focus sur la suggestion');
+  t.click('#rec-v-dej'); t.click('#rp-ban');
   assert(!t.$('#sec-dej .rec') && !t.$('#rec-v-dej'), 'plus de suggestion sous le déjeuner');
   esc();
   assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#ft-dej'), 'panneau fermé : focus sur le repère du repas');
+  t.click('#gear'); t.click('#tab-repas'); t.click('#rp-list [data-pref="ban"][data-value="' + other + '"]'); t.click('#nav-jour');
   // Bibliothèque : la recette à éviter en fin de liste ; une favorite avec son cœur et le filtre
   t.click('#nav-rec'); t.click('#lib-mine');
   const ids = () => [...t.d.querySelectorAll('#lib-list .lib-r')].map(b => b.dataset.value);
-  assert(ids()[ids().length - 1] === 'poulet-riz' && /, à éviter/.test(t.$('#lib-poulet-riz').textContent) && t.$('#lib-poulet-riz').classList.contains('is-ban'), 'à éviter en fin de liste');
+  assert(ids()[ids().length - 1] === first && /, à éviter/.test(t.$('#lib-' + first).textContent) && t.$('#lib-' + first).classList.contains('is-ban'), 'à éviter en fin de liste');
   t.click('#lib-saumon-riz'); t.click('#rp-fav'); esc();
   assert(t.$('#lib-saumon-riz .lib-h') && t.d.activeElement === t.$('#lib-saumon-riz'), 'favorite : cœur dans la liste');
   t.click('#lib-fav');
@@ -1723,10 +1738,10 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.click('#lib-boeuf-pates'); t.click('#rp-fav'); esc();
   t.click('#gear'); t.click('#tab-repas');
   const rows = k => [...t.d.querySelectorAll('#rp-list [data-action="rp-rm"][data-pref="' + k + '"]')].map(b => b.dataset.value);
-  assert.deepStrictEqual([rows('fav'), rows('ban')], [['saumon-riz', 'boeuf-pates'], ['poulet-riz']], 'réglages : les deux listes');
+  assert.deepStrictEqual([rows('fav'), rows('ban')], [['saumon-riz', 'boeuf-pates'], [first]], 'réglages : les deux listes');
   t.click('#rp-list [data-pref="fav"][data-value="saumon-riz"]');
   assert(rows('fav').join() === 'boeuf-pates' && t.d.activeElement === t.$('#rp-list [data-pref="fav"][data-value="boeuf-pates"]') && pf().fav.join() === 'boeuf-pates', 'retirée : focus sur la suivante');
-  t.click('#rp-list [data-pref="ban"][data-value="poulet-riz"]');
+  t.click('#rp-list [data-pref="ban"][data-value="' + first + '"]');
   assert(!rows('ban').length && /Aucune pour l’instant/.test(t.$('#rp-list').textContent) && t.d.activeElement === t.$('#rp-t') && !pf().ban, 'liste vide : focus sur le titre');
   t.click('#nav-jour');
   assert(t.$('#rec-v-dej'), 'suggestion revenue');
@@ -1960,14 +1975,14 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(ev.$('#chg-2026-10-08-dej') && ev.$('#chg-2026-10-08-diner') && ev.$('#chg-2026-10-10-dej') && !ev.$('#chg-2026-10-10-diner'), 'boutons Changer');
   ev.click('#chg-2026-10-08-dej');
   const opts = [...ev.d.querySelectorAll('#sheet .opt')];
-  assert(!ev.$('#sheet').hidden && ev.$('#sheet-t').textContent === 'Jeudi 8 octobre, midi' && opts[0].dataset.value === '*' && opts.slice(1).every(o => !/\|riz$/.test(o.dataset.value)), 'panneau Changer');
+  assert(!ev.$('#sheet').hidden && ev.$('#sheet-t').textContent === 'Jeudi 8 octobre, midi' && opts[0].dataset.value === '*' && opts.slice(1).every(o => o.dataset.value.split('|')[1] !== 'riz') && opts.length > 100, 'panneau Changer : ' + opts.length);
   const other = st.plans['2026-10-08'].ch.diner.prot, cur0 = st.plans['2026-10-08'].ch.dej;
-  assert(opts.slice(1).every(o => o.dataset.value.split('|')[0] !== other && o.dataset.value !== cur0.prot + '|' + cur0.starch), 'panneau : ni la protéine du soir, ni le plat actuel');
-  const target = opts.find(o => o.dataset.value === 'tofu|quinoa') || opts[1];
+  assert(opts.slice(1).every(o => o.dataset.value.split('|')[0] !== other && o.dataset.value !== cur0.prot + '|' + cur0.starch + '|' + cur0.recette) && opts.some(o => o.dataset.value.startsWith(cur0.prot + '|' + cur0.starch + '|')), 'panneau : ni la protéine du soir, ni la recette actuelle (l’autre du couple, si)');
+  const target = opts.find(o => o.dataset.value === 'tofu|quinoa|tofu-quinoa-saute') || opts[1];
   const tv = target.dataset.value;
   target.click();
   const after = ev.stored().plans['2026-10-08'].ch.dej;
-  assert(ev.$('#sheet').hidden && after.prot + '|' + after.starch === tv && after.recette === after.prot + '-' + after.starch && after.dessert === (cur0.dessert || 'aucun') && ev.stored().choices[4].dej.prot === after.prot, 'repas changé : ' + JSON.stringify(after));
+  assert(ev.$('#sheet').hidden && after.prot + '|' + after.starch + '|' + after.recette === tv && after.dessert === (cur0.dessert || 'aucun') && ev.stored().choices[4].dej.prot === after.prot, 'repas changé : ' + JSON.stringify(after));
   assert(/^Jeudi 8\soctobre, midi\s: /.test(ev.$('#courses-msg').textContent) && ew.document.activeElement === ev.$('#chg-2026-10-08-dej'), 'message et focus après Changer');
   ev.click('#chg-2026-10-09-diner'); ev.click('#sheet [data-value="*"]');
   const r2 = ev.stored().plans['2026-10-09'].ch;

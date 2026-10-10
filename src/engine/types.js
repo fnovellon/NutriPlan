@@ -16,8 +16,9 @@
  *   couple protéine × féculent ; libre : le repas libre qui remplace le dîner ; pick : le choix du repas (pd, dej, diner, co) ;
  *   cs : la collation a aussi sa partie glucides au choix (3.29.0).
  * @typedef {{taille:('petite'|'moyenne'|'longue'), moment:('matin'|'midi'|'soir'), duree?:number}} Seance
- * @typedef {{seances:Seance[], libre:boolean, imprevu?:{slot:string, kcal:number, mode:string}, veille?:number}} Plan  plan d'un jour (cleanPlan ;
- *   imprevu : 3.26.0 ; veille : durée en heures de la sortie longue du lendemain, ajoutée par l'interface, 3.28.0)
+ * @typedef {{seances:Seance[], libre:boolean, imprevu?:{slot:string, kcal:number, mode:string}, veille?:number, jour?:number}} Plan  plan d'un jour (cleanPlan ;
+ *   imprevu : 3.26.0 ; veille : durée en heures de la sortie longue du lendemain, ajoutée par l'interface, 3.28.0 ; jour : numéro du jour, pour faire tourner
+ *   la recette proposée, 3.31.0)
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
  * @typedef {{prot:string, starch:string, dessert?:string, recette?:string}} MealChoice  plats du déjeuner ou du dîner
  * @typedef {{pdBase:string, dej:MealChoice, diner:MealChoice, co?:string, cs?:string}} Choices  plats d'un jour ; co, cs : collation

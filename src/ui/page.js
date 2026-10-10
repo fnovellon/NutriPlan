@@ -60,23 +60,29 @@
   /* Sous la carte d'une recette choisie : le dessert, la compote et un imprévu en plus (3.27.0 : il n'entre pas dans ses macros) */
   const RECIPE_OUT = ['des', 'comp', 'imp'];
   const recipePart = function(s){ return s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) < 0; }); };
-  const recBtns = function(s, on){
-    const of = REPAS[s.id];
-    return '<div class="rec-b"><button type="button" class="reset' + (on ? ' is-main' : '') + '" id="rec-v-' + s.id + '" data-action="rec-view" data-slot="' + s.id + '" aria-haspopup="dialog" aria-label="Voir la recette ' + of + '">Voir la recette</button>' +
-      '<button type="button" class="reset' + (on ? '' : ' is-main') + '" id="rec-c-' + s.id + '" data-action="' + (on ? 'rec-off' : 'rec-on') + '" data-slot="' + s.id + '"' +
-      ' aria-label="' + (on ? 'Retirer la recette ' : 'Choisir la recette ') + of + '">' + (on ? 'Retirer' : 'Choisir') + '</button></div>';
+  /* Plusieurs recettes par couple (3.31.0) : « Une autre recette » passe à la suivante du couple, pour cette page seulement
+     (recAlt, par date et repas, pas enregistré) ; la recette proposée tourne d'elle-même d'un jour à l'autre */
+  let recAlt = {};
+  const recRound = function(s){ const c = ch[s.id]; return recipeRound(c.prot, c.starch, cleanProfile(prof)).filter(function(x, i, a){ return a.indexOf(x) === i; }); };
+  const shownSuggest = function(s){ const a = recAlt[selIso() + '|' + s.id]; return a && recRound(s).indexOf(a) >= 0 ? a : s.suggest; };
+  const recBtns = function(s, on, id){
+    const of = REPAS[s.id], more = !on && recRound(s).length > 1;
+    return '<div class="rec-b"><button type="button" class="reset' + (on ? ' is-main' : '') + '" id="rec-v-' + s.id + '" data-action="rec-view" data-slot="' + s.id + '" data-value="' + id + '" aria-haspopup="dialog" aria-label="Voir la recette ' + of + '">Voir la recette</button>' +
+      '<button type="button" class="reset' + (on ? '' : ' is-main') + '" id="rec-c-' + s.id + '" data-action="' + (on ? 'rec-off' : 'rec-on') + '" data-slot="' + s.id + '" data-value="' + id + '"' +
+      ' aria-label="' + (on ? 'Retirer la recette ' : 'Choisir la recette ') + of + '">' + (on ? 'Retirer' : 'Choisir') + '</button>' +
+      (more ? '<button type="button" class="reset" id="rec-n-' + s.id + '" data-action="rec-next" data-slot="' + s.id + '" aria-label="Une autre recette ' + of + '">Une autre recette</button>' : '') + '</div>';
   };
   const recMeta = function(x){ return '<p class="rec-m">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '</p>'; };
   const recHTML = function(s){
     if (s.libre || s.recipe || !s.suggest) return '';
-    const x = RECIPES[s.suggest];
-    return '<div class="rec"><p class="rec-t">Suggestion' + NB + ': <span class="rec-n">' + x.t + '</span></p>' + recMeta(x) + recBtns(s, false) + '</div>';
+    const id = shownSuggest(s), x = RECIPES[id];
+    return '<div class="rec"><p class="rec-t">Suggestion' + NB + ': <span class="rec-n">' + x.t + '</span></p>' + recMeta(x) + recBtns(s, false, id) + '</div>';
   };
   /* Recette choisie qui fait partie d'un batch cooking (3.21.0) : « Batch cooking » ouvre sa fiche (ui/courses.js) */
   const recCardHTML = function(s){
     const x = RECIPES[s.recipe], bt = dayBatch[s.id];
     return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' +
-      '<p class="rec-vol"><span class="vol">à volonté</span> des légumes en plus si tu as faim (≈' + NB + '30' + NB + 'kcal les 100' + NB + 'g)</p>' + recBtns(s, true) +
+      '<p class="rec-vol"><span class="vol">à volonté</span> des légumes en plus si tu as faim (≈' + NB + '30' + NB + 'kcal les 100' + NB + 'g)</p>' + recBtns(s, true, s.recipe) +
       (bt && bt.r.id === s.recipe ? '<button type="button" class="reset rec-batch" id="rec-b-' + s.id + '" data-action="rec-batch" data-slot="' + s.id + '"' +
         ' aria-label="Batch cooking de la recette ' + REPAS[s.id] + '">Batch cooking</button>' : '') + '</div>';
   };
@@ -541,17 +547,33 @@
     starch: function(b, v){ if (has(STARCH, v)){ ch[b.dataset.slot].starch = v; dropRecipes(ch); saveCh(); } return ''; },
     dessert: function(b, v){ if (has(DESSERT, v)){ ch[b.dataset.slot].dessert = v; saveCh(); } return ''; },
     /* Recette d'un repas : voir sa fiche, la choisir (celle proposée pour sa protéine et son féculent) ou la retirer */
-    'rec-view': function(b){ if (!has(REPAS, b.dataset.slot)) return; openRecipe(b.dataset.slot, b); },
+    'rec-view': function(b, v){ if (!has(REPAS, b.dataset.slot)) return; openRecipe(b.dataset.slot, b, v); },
+    /* Une autre recette du couple (3.31.0), la suivante du tour */
+    'rec-next': function(b){
+      const slot = b.dataset.slot, s = has(REPAS, slot) ? {id:slot, suggest:buildDay(plan, ch, prof).secs.find(function(z){ return z.id === slot; }).suggest} : null;
+      if (!s || !s.suggest) return;
+      const l = recRound(s), cur = shownSuggest(s);
+      if (l.length < 2) return;
+      recAlt[selIso() + '|' + slot] = l[(l.indexOf(cur) + 1) % l.length];
+      return '';
+    },
     /* La page du batch de cette recette (3.21.0) */
     'rec-batch': function(b){ const x = has(REPAS, b.dataset.slot) ? dayBatch[b.dataset.slot] : null; if (!x) return; renderBatchPage(x); openScreen('batch', b); },
     'rec-on': function(b){
-      const slot = b.dataset.slot, id = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch)[0] : null;
+      const slot = b.dataset.slot, all = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch) : [];
+      const id = all.indexOf(b.dataset.value) >= 0 ? b.dataset.value : all[0];
       if (!id) return;
       ch[slot].recette = id; saveCh();
       recFocus = slot;
       return '';
     },
-    'rec-off': function(b){ if (!has(REPAS, b.dataset.slot)) return; ['recette', 'g', 'g2'].forEach(function(f){ delete ch[b.dataset.slot][f]; }); saveCh(); recFocus = b.dataset.slot; return ''; },
+    /* Retirée : elle reste la recette proposée sous le repas (3.31.0), « Choisir » la reprend */
+    'rec-off': function(b){
+      const slot = b.dataset.slot;
+      if (!has(REPAS, slot)) return;
+      if (recipeOf(ch[slot])) recAlt[selIso() + '|' + slot] = ch[slot].recette;
+      ['recette', 'g', 'g2'].forEach(function(f){ delete ch[slot][f]; }); saveCh(); recFocus = slot; return '';
+    },
     /* Calendrier : un jour, la semaine d'avant ou d'après (même jour de la semaine, ou aujourd'hui), retour à aujourd'hui */
     day: function(b, v){
       const d = fromIso(v);

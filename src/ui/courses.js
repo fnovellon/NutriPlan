@@ -226,10 +226,9 @@
     prots.forEach(function(p){
       if (p === avoid) return;
       allowed('starch', off).forEach(function(s){
-        if (p === c[slot].prot && s === c[slot].starch) return;
-        const rec = recipesFor(p, s).filter(function(id){ return recipePref(id, pr) > 0; })[0] || null;
-        if (cur.type === 'recettes' && !rec) return;
-        out.push({prot:p, starch:s, recette:cur.type === 'recettes' ? rec : null});
+        /* Plats simples : un plat par couple ; recettes : chaque recette du couple (3.31.0), pas celle du repas */
+        if (cur.type !== 'recettes'){ if (!(p === c[slot].prot && s === c[slot].starch)) out.push({prot:p, starch:s, recette:null}); return; }
+        recipesFor(p, s).forEach(function(id){ if (recipePref(id, pr) > 0 && id !== recipeOf(c[slot])) out.push({prot:p, starch:s, recette:id}); });
       });
     });
     return out;
@@ -247,7 +246,7 @@
     $('sheet-list').innerHTML = opt('*', 'Un autre au hasard', 'avec tes envies et l’équilibre de la semaine') +
       PROT_ORDER.map(function(p){
         const mine = opts.filter(function(m){ return m.prot === p; });
-        return mine.length ? '<p class="rf-l">' + PROT[p].label + '</p>' + mine.map(function(m){ return opt(m.prot + '|' + m.starch, mealName(m), m.recette ? RECIPES[m.recette].min + NB + 'min' : null); }).join('') : '';
+        return mine.length ? '<p class="rf-l">' + PROT[p].label + '</p>' + mine.map(function(m){ return opt(m.prot + '|' + m.starch + (m.recette ? '|' + m.recette : ''), mealName(m), m.recette ? RECIPES[m.recette].min + NB + 'min' : null); }).join('') : '';
       }).join('');
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
@@ -327,10 +326,10 @@
         const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), bal = weekBal(d, iso);
         for (let i = 0; i < 30 && !m; i++){
           const c = randomChoices(null, off, bal, scaleOf(pr), cur.type === 'recettes' ? pr : null)[slot];
-          m = opts.find(function(x){ return x.prot === c.prot && x.starch === c.starch; }) || null;
+          m = opts.find(function(x){ return x.prot === c.prot && x.starch === c.starch && (!x.recette || x.recette === c.recette); }) || null;
         }
         if (!m) m = opts[Math.floor(Math.random() * opts.length)];
-      } else m = opts.find(function(x){ return x.prot + '|' + x.starch === v; }) || null;
+      } else m = opts.find(function(x){ return x.prot + '|' + x.starch + (x.recette ? '|' + x.recette : '') === v; }) || null;
       closePick(false);
       if (!m) return;
       const c = cleanCh(choicesFor(iso, js), js), before = weekBal(d);

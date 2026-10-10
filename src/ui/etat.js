@@ -110,6 +110,8 @@
   const planFor = function(iso){
     const p = basePlan(iso), l = basePlan(isoDate(addDays(fromIso(iso), 1))).seances.find(function(x){ return x.taille === 'longue'; });
     if (l) p.veille = l.duree;
+    /* Numéro du jour (3.31.0) : la recette proposée sous un repas tourne d'un jour à l'autre */
+    p.jour = Math.round(fromIso(iso).getTime() / 864e5);
     return p;
   };
   const loadSel = function(){ sel = selDate.getDay(); plan = planFor(selIso()); ch = choicesFor(selIso(), sel); };

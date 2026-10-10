@@ -66,7 +66,8 @@ function composeDay(plan, ch, pr, pf){
      3.25.0) */
   const meal = function(slot, title){
     const c = ch[slot];
-    return {id:slot, title:title, when:null, pick:slot, items:mainItems(slot, c, k, kp), recipe:recipeOf(c), suggest:recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0; })[0] || null};
+    return {id:slot, title:title, when:null, pick:slot, items:mainItems(slot, c, k, kp), recipe:recipeOf(c),
+      suggest:suggestFor(c.prot, c.starch, pr, Number.isInteger(plan.jour) ? plan.jour + (slot === 'diner' ? 1 : 0) : 0)};
   };
   const lunch = meal('dej', 'Déjeuner'), dinner = meal('diner', 'Dîner');
   let co = null, nb = 0;

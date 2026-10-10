@@ -55,6 +55,17 @@ function recipePref(id, prefs){
   if (prefs.ban && prefs.ban.indexOf(id) >= 0) return 0;
   return prefs.fav && prefs.fav.indexOf(id) >= 0 ? 2 : 1;
 }
+/* Plusieurs recettes par couple (3.31.0). Poids d'un couple : la moyenne de ses recettes (0 si toutes sont à éviter) ; la
+   recette est ensuite tirée selon son poids, une favorite revient donc deux fois plus souvent. Recette proposée sous un repas (suggestFor) : elles tournent d'un jour à l'autre (n : numéro du
+   jour, + 1 pour le dîner), celles à éviter jamais, les favorites deux fois dans le tour ; null s'il n'en reste aucune. */
+function couplePref(p, s, prefs){ const l = recipesFor(p, s); return l.length ? l.reduce(function(a, id){ return a + recipePref(id, prefs); }, 0) / l.length : 0; }
+function recipeRound(p, s, prefs){
+  return recipesFor(p, s).reduce(function(a, id){ for (let i = 0; i < recipePref(id, prefs); i++) a.push(id); return a; }, []);
+}
+function suggestFor(p, s, prefs, n){
+  const l = recipeRound(p, s, prefs), i = Number.isInteger(n) ? n : 0;
+  return l.length ? l[((i % l.length) + l.length) % l.length] : null;
+}
 /* Tirage pondéré (rand : nombres dans [0, 1[). Poids > 0 : tirage pondéré ; 0 : écarté (repères) ; < 0 : écarté d'abord.
    Sans poids positif, tirage parmi les poids nuls, sinon parmi tous. */
 function tieredPick(r, a, w){
@@ -85,7 +96,7 @@ function tieredPick(r, a, w){
 function randomChoices(rand, off, bal, k, prefs, force){
   const r = rand || Math.random, kk = k || 1, c = bal ? Object.assign({}, bal) : null;
   const pp = prefs && ((prefs.fav && prefs.fav.length) || (prefs.ban && prefs.ban.length)) ? prefs : null;
-  const cp = function(p, s){ return recipePref(recipesFor(p, s)[0], pp); };
+  const cp = function(p, s){ return couplePref(p, s, pp); };
   /* 0 : écarté par les repères ; < 0 : écarté d'abord (œufs-jambon avec le salé) */
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
@@ -122,8 +133,9 @@ function randomChoices(rand, off, bal, k, prefs, force){
       if (LEGUMES.indexOf(starch) >= 0) c.legumes++;
     }
     const o = {prot:prot, starch:starch, dessert:pick(allowed('dessert', off))}, recs = recipesFor(prot, starch);
+    /* Une recette du couple au hasard (3.31.0 : favorites deux fois plus souvent) */
     const okR = recs.filter(function(id){ return recipePref(id, pp) > 0; });
-    if (okR.length) o.recette = okR.length > 1 ? pick(okR) : okR[0];
+    if (okR.length) o.recette = okR.length > 1 ? pick(okR, function(id){ return recipePref(id, pp); }) : okR[0];
     return o;
   };
   const dej = meal(fz('diner', 'prot'), 'dej');

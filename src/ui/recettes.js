@@ -6,7 +6,7 @@
   const LIB_T = [['0|dej', 'Ce midi'], ['0|diner', 'Ce soir'], ['1|dej', 'Demain midi'], ['1|diner', 'Demain soir']];
   const LIB_QUICK = 20;
   const lib = {prot:'', starch:'', box:false, quick:false, favs:false, mine:true, target:'0|dej'};
-  const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return a.concat(STARCH_ORDER.map(function(s){ return p + '-' + s; }).filter(function(id){ return has(RECIPES, id); })); }, []);
+  const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return STARCH_ORDER.reduce(function(b, s){ return b.concat(recipesFor(p, s)); }, a); }, []);
   /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi */
   const resetLib = function(){
     const h = new Date().getHours();

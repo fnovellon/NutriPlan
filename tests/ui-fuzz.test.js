@@ -1,4 +1,6 @@
 // Tests de fond de l'interface (jsdom) : chaque écran relu (textes, typographie, accessibilité), changements d'heure,
+// Une recette va avec son couple : identifiant protéine-féculent ou protéine-féculent-suffixe (3.31.0)
+const ofCouple = m => m.recette === m.prot + '-' + m.starch || String(m.recette).startsWith(m.prot + '-' + m.starch + '-');
 // puis des centaines d'actions au hasard avec des vérifications après chacune (totaux affichés, stockage, rechargement).
 // Reproductible : graine fixe. Plus fort : FUZZ=10 npm test, ou npm run test:deep.
 process.env.TZ = 'Europe/Paris';   // avant toute date : les changements d'heure testés sont ceux de la France
@@ -198,7 +200,7 @@ function check(dom, log){
       C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch', 'imprevu'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || typeof p.libre === 'boolean') &&
         (!('imprevu' in p) || (p.imprevu !== null && JSON.stringify(w.eval('cleanImprevu')(p.imprevu)) === JSON.stringify(p.imprevu))), 'plan enregistré invalide', () => JSON.stringify(p));
       // Recette enregistrée : toujours celle de la protéine et du féculent du repas
-      if (p && p.ch) C.ok(['dej', 'diner'].every(sl => !p.ch[sl] || !('recette' in p.ch[sl]) || p.ch[sl].recette === p.ch[sl].prot + '-' + p.ch[sl].starch), 'recette enregistrée qui ne va pas', () => JSON.stringify(p.ch));
+      if (p && p.ch) C.ok(['dej', 'diner'].every(sl => !p.ch[sl] || !('recette' in p.ch[sl]) || ofCouple(p.ch[sl])), 'recette enregistrée qui ne va pas', () => JSON.stringify(p.ch));
       // Collation (3.29.0) : enregistrée seulement si elle est valide
       if (p && p.ch) C.ok((!('co' in p.ch) || w.eval('SNACK_ORDER').includes(p.ch.co)) && (!('cs' in p.ch) || w.eval('SNACK_CS_ORDER').includes(p.ch.cs)), 'collation enregistrée invalide', () => JSON.stringify(p.ch));
     });
@@ -424,7 +426,17 @@ const ACTIONS = {
     if (d.querySelector('#page').hidden) return 'recette -';
     const box = R.pick([...d.querySelectorAll('#day .rec')]);
     if (!box) return 'recette -';
-    const on = box.classList.contains('is-on'), slot = box.closest('.meal').getAttribute('aria-labelledby').slice(2), how = R.pick(['page', 'fiche', 'ferme']);
+    const on = box.classList.contains('is-on'), slot = box.closest('.meal').getAttribute('aria-labelledby').slice(2), how = R.pick(['page', 'fiche', 'ferme', 'autre']);
+    /* « Une autre recette » (3.31.0) : la suggestion passe à l'autre recette du couple, rien n'est choisi */
+    if (how === 'autre'){
+      const nx = box.querySelector('[data-action="rec-next"]');
+      if (!nx) return 'recette -';
+      const before = box.querySelector('[data-action="rec-view"]').dataset.value;
+      nx.click();
+      const after = d.querySelector('[aria-labelledby="h-' + slot + '"] .rec');
+      C.ok(after && !after.classList.contains('is-on') && after.querySelector('[data-action="rec-view"]').dataset.value !== before && d.activeElement === d.getElementById('rec-n-' + slot), 'une autre recette', () => slot + ' ' + before);
+      return 'recette ' + slot + ' autre';
+    }
     if (how === 'page') box.querySelector('[data-action="rec-on"], [data-action="rec-off"]').click();
     else {
       box.querySelector('[data-action="rec-view"]').click();
@@ -733,7 +745,8 @@ for (let run = 0; run < RUNS; run++){
     if (step % 30 === 29){
       const was = dom.window.document;
       // La carte affichée peut changer au rechargement (repas du moment), pas le contenu des cartes
-      const dayHTML = doc => doc.querySelector('#day').innerHTML.replace(/ bump/g, '').replace(/ hidden=""/g, '').replace(/ in-[lr]/g, '');
+      // « Une autre recette » (3.31.0) ne vaut que pour la visite : la recette proposée peut revenir à celle du jour
+      const dayHTML = doc => doc.querySelector('#day').innerHTML.replace(/ bump/g, '').replace(/ hidden=""/g, '').replace(/ in-[lr]/g, '').replace(/<div class="rec">.*?<\/div><\/div>/g, '');
       const before = dayHTML(was), sumText = was.querySelector('#sum-text').textContent;
       // Au chargement, la page montre aujourd'hui : comparable seulement si elle montrait aujourd'hui
       const onPage = !was.querySelector('#page').hidden && was.querySelector('#date').textContent.startsWith('Aujourd’hui');

@@ -44,7 +44,7 @@ function randPlan(js, libre){
 // Recette : souvent celle du couple (choisie), parfois une qui ne va pas (ignorée)
 const slot = () => {
   const o = { prot: R.pick(A.PROT_ORDER), starch: R.pick(A.STARCH_ORDER), dessert: R.pick(A.DESSERT_ORDER) };
-  if (R.chance(.4)) o.recette = o.prot + '-' + o.starch;
+  if (R.chance(.4)) o.recette = R.pick(A.recipesFor(o.prot, o.starch));
   else if (R.chance(.05)) o.recette = R.pick(Object.keys(A.RECIPES));
   return o;
 };
@@ -191,6 +191,8 @@ for (let i = 0; i < N; i++){
     if (BASE[1] && R.chance(.7)) ch[sl].g2 = R.chance(.9) ? near(BASE[1], 5) : R.pick([3, 'x', 1e6]);
   });
   if (R.chance(.2)) plan.veille = R.pick([1.5, 2, 2.5, 3, 4]);
+  /* Numéro du jour (3.31.0) : la recette proposée tourne */
+  if (R.chance(.6)) plan.jour = R.int(-30, 21000);
   const input = JSON.stringify([prof, plan, ch]), cas = () => input;
   let r;
   try { r = A.buildDay(plan, ch, prof); } catch (e){ C.ok(false, 'exception', e.message + ' ' + input); continue; }
@@ -282,7 +284,9 @@ for (let i = 0; i < N; i++){
     const s = sec(r, id); if (s.libre) return;
     const rec = ch[id].recette && A.RECIPES[ch[id].recette] && A.RECIPES[ch[id].recette].p === ch[id].prot && A.RECIPES[ch[id].recette].s === ch[id].starch ? ch[id].recette : null;
     const keys = s.items.map(x => x.key), lines = s.items.filter(x => /^[vfx]-/.test(x.key)), show = () => id + ' ' + qtys(s) + ' ' + input;
-    C.ok(s.recipe === rec && s.suggest === ch[id].prot + '-' + ch[id].starch, 'recette ou suggestion du repas', show);
+    /* Suggestion (3.31.0) : une recette du couple, celle du tour pour le numéro du jour (plan.jour), jamais une à éviter */
+    C.ok(s.recipe === rec && s.suggest === A.suggestFor(ch[id].prot, ch[id].starch, pr, Number.isInteger(plan.jour) ? plan.jour + (id === 'diner' ? 1 : 0) : 0) &&
+      (s.suggest === null || (A.recipesFor(ch[id].prot, ch[id].starch).includes(s.suggest) && !pr.ban.includes(s.suggest))), 'recette ou suggestion du repas', show);
     if (rec){
       const x = A.RECIPES[rec], want = Object.entries(x.leg).map(([v, g]) => 'v-' + v + ':' + g).concat(x.cuis.map(c => 'f-' + c[0] + ':' + c[1]), Object.entries(x.plus).map(([a, g]) => 'x-' + a + ':' + g));
       C.ok(lines.map(l => l.key + ':' + l.buy.g).join() === want.join() && !keys.includes('leg') && !keys.includes('marge'), 'lignes de la recette', show);
@@ -603,13 +607,14 @@ for (let i = 0; i < N / 3; i++){
 
 // --- « Décide pour moi » : tirages toujours valides, jamais la même protéine midi et soir, tous les choix possibles ---
 {
-  const seenOpt = new Set();
+  const seenOpt = new Set(), seenRec = new Set();
   for (let i = 0; i < N; i++){
     const c = A.randomChoices(R.next), show = () => JSON.stringify(c);
     C.ok(A.PD_ORDER.includes(c.pdBase), 'tirage : base invalide', show);
     ['dej', 'diner'].forEach(slot => {
       C.ok(has(A.PROT, c[slot].prot) && has(A.STARCH, c[slot].starch) && has(A.DESSERT, c[slot].dessert), 'tirage : choix invalide', show);
-      C.ok(c[slot].recette === c[slot].prot + '-' + c[slot].starch && A.recipeOf(c[slot]) === c[slot].recette, 'tirage : recette pas choisie d’office', show);
+      C.ok(A.recipesFor(c[slot].prot, c[slot].starch).includes(c[slot].recette) && A.recipeOf(c[slot]) === c[slot].recette, 'tirage : recette pas choisie d’office', show);
+      seenRec.add(c[slot].recette);
       seenOpt.add(slot + ':' + c[slot].prot).add(slot + ':' + c[slot].starch).add(slot + ':' + c[slot].dessert);
     });
     seenOpt.add(c.pdBase);
@@ -620,6 +625,8 @@ for (let i = 0; i < N / 3; i++){
   // Valeurs extrêmes du hasard (0 et presque 1) : toujours dans les listes
   [() => 0, () => 0.9999999999].forEach(f => { const c = A.randomChoices(f); C.ok(c.dej.prot !== c.diner.prot && has(A.STARCH, c.diner.starch) && has(A.DESSERT, c.diner.dessert), 'tirage aux bornes', () => JSON.stringify(c)); });
   C.ok(seenOpt.size === A.PD_ORDER.length + 2 * (A.PROT_ORDER.length + A.STARCH_ORDER.length + A.DESSERT_ORDER.length), 'tirage : des choix jamais tirés', () => seenOpt.size + ' choix tirés');
+  /* 3.31.0 : les deux recettes de chaque couple sortent (3 000 tirages, 6 000 repas pour 160 recettes) */
+  C.ok(seenRec.size === Object.keys(A.RECIPES).length || N < 3000, 'tirage : des recettes jamais tirées', () => seenRec.size + ' recettes tirées');
 }
 
 // --- Aliments proposés ou non (réglages) : retraits valides, jamais un aliment retiré tiré au hasard ni proposé à sa place --
@@ -853,8 +860,10 @@ for (let i = 0; i < N / 3; i++){
 
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------
 // Recettes : une par couple, légumes et matières grasses connus (table, nom, rayon des courses)
-A.PROT_ORDER.forEach(p => A.STARCH_ORDER.forEach(s => C.ok(JSON.stringify(A.recipesFor(p, s)) === JSON.stringify([p + '-' + s]), 'recette manquante', p + ' × ' + s)));
-C.ok(Object.keys(A.RECIPES).length === A.PROT_ORDER.length * A.STARCH_ORDER.length, 'recettes en trop', '');
+// 3.31.0 : deux par couple, la première d'identifiant protéine-féculent
+A.PROT_ORDER.forEach(p => A.STARCH_ORDER.forEach(s => { const l = A.recipesFor(p, s); C.ok(l.length === 2 && l[0] === p + '-' + s && l[1].startsWith(p + '-' + s + '-'), 'recette manquante', p + ' × ' + s); }));
+C.ok(Object.keys(A.RECIPES).length === 2 * A.PROT_ORDER.length * A.STARCH_ORDER.length, 'recettes en trop', '');
+C.ok(Object.keys(A.RECIPES).every(id => A.recipesFor(A.RECIPES[id].p, A.RECIPES[id].s).includes(id)), 'recette hors de son couple', '');
 const aisles = A.SHOP_AISLES.flatMap(g => g.ids), refKeys = A.refTable().flatMap(g => g.rows.map(x => x.key));
 Object.keys(A.RFOOD).forEach(id => C.ok(has(A.FOOD, id) && aisles.includes(id) && refKeys.includes(id), 'aliment de recette sans valeurs, rayon ou ligne de la table', id));
 Object.values(A.RECIPES).forEach(x => {
