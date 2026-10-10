@@ -473,6 +473,16 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .shop-day .note{grid-column:1/-1;font-size:14.5px;color:var(--muted);}
 /* Planifier (3.21.0) : la planification en cours en évidence, rayons des courses sous « Tes courses » */
 .pl-now{margin:0 0 6px;}
+/* Changer un repas d'une planification (3.30.0) */
+.co-meals{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 10px;border-bottom:1px solid var(--line);}
+.shop-days li:has(.co-meals) .shop-day{border-bottom:0;}
+/* Envies d'une planification (3.30.0) : je veux = plein, pas cette fois = barré */
+.pl-env{margin:0 0 14px;}
+.pl-env summary{font-family:var(--sans);font-weight:700;font-size:16px;padding:8px 0;cursor:pointer;}
+.pl-env .opts-list{margin:0 0 6px;}
+.opt.env-plus{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.opt.env-moins{color:var(--muted);text-decoration:line-through;border-style:dashed;}
+.opt.env-moins .opt-s{text-decoration:none;}
 .shop-day.is-cur{margin:4px 0 0;padding:14px 16px;border:2px solid var(--ink);border-radius:16px;}
 .shop-day.is-cur .d{font-size:19px;font-stretch:108%;font-weight:800;}
 .shop-day.is-cur .k{color:var(--beet);font-weight:700;}

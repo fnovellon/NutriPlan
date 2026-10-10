@@ -1927,5 +1927,64 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(again.$('#accueil').hidden && /Repos/.test(again.$('#sess').textContent), 'rechargée après l’effacement');
 }
 
+// Envies d'une planification (3.30.0) : bulles à trois états, phrase, refus de tout un type, création, récap, « Changer »
+{
+  const ev = tools(open()), ew = ev.d.defaultView;
+  ev.click('#plan-btn');
+  assert(ev.$('#pl-env') && !ev.$('#pl-env').open && /Pas d’envie particulière/.test(ev.$('#pl-env-sum').textContent), 'envies : bloc fermé, rien de choisi');
+  assert.strictEqual(ev.d.querySelectorAll('#pl-env [data-action="pl-env"]').length, 18, 'envies : 8 protéines et 10 féculents');
+  const envBtn = x => ev.$(`[data-action="pl-env"][data-value="${x}"]`);
+  ev.click('[data-action="pl-env"][data-value="prot:poisson"]');
+  assert(envBtn('prot:poisson').classList.contains('env-plus') && /Je veux/.test(envBtn('prot:poisson').textContent) && envBtn('prot:poisson').getAttribute('aria-label') === 'Poisson blanc : je veux' && ew.document.activeElement === envBtn('prot:poisson') && ev.$('#pl-env').open, 'envie : je veux, focus gardé, bloc ouvert');
+  ev.click('[data-action="pl-env"][data-value="starch:riz"]'); ev.click('[data-action="pl-env"][data-value="starch:riz"]');
+  assert(envBtn('starch:riz').classList.contains('env-moins') && /Pas cette fois/.test(envBtn('starch:riz').textContent), 'envie : pas cette fois');
+  assert.strictEqual(ev.$('#pl-env-sum').textContent, 'Au moins 2 fois par semaine : poisson blanc. Pas cette fois : riz.', 'phrase des envies');
+  ev.click('[data-action="pl-env"][data-value="starch:pates"]'); ev.click('[data-action="pl-env"][data-value="starch:pates"]'); ev.click('[data-action="pl-env"][data-value="starch:pates"]');
+  assert(!envBtn('starch:pates').classList.contains('env-plus') && !envBtn('starch:pates').classList.contains('env-moins'), 'envie : retour au neutre');
+  // Refuser toutes les protéines : la dernière est refusée avec un message
+  const prots = ['poulet', 'boeuf', 'saumon', 'crevettes', 'oeufs', 'thon', 'tofu'];
+  prots.forEach(x => { ev.click(`[data-action="pl-env"][data-value="prot:${x}"]`); ev.click(`[data-action="pl-env"][data-value="prot:${x}"]`); });
+  ev.click('[data-action="pl-env"][data-value="prot:poisson"]');
+  assert(!envBtn('prot:poisson').classList.contains('env-moins') && ev.$('#pl-env-warn').textContent === 'Garde au moins une protéine.', 'refus de toutes les protéines : ' + ev.$('#pl-env-warn').textContent);
+  prots.forEach(x => { ev.click(`[data-action="pl-env"][data-value="prot:${x}"]`); });
+  ev.click('[data-action="pl-env"][data-value="prot:poisson"]');
+  assert(envBtn('prot:poisson').classList.contains('env-plus'), 'poisson remis en envie');
+  // Création (recettes, 7 jours) : envies enregistrées, jamais de riz, poisson au moins 2 fois, dit dans le détail
+  ev.click('[data-action="pl-create"]');
+  const pl = planifsOf(ew).list[0], isos = ['2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13'];
+  assert.deepStrictEqual(pl.env, { plus: ['prot:poisson'], moins: ['starch:riz'] }, 'envies enregistrées');
+  const st = ev.stored(), meals = isos.flatMap(iso => ['dej', 'diner'].filter(sl => !(sl === 'diner' && iso === '2026-10-10')).map(sl => st.plans[iso].ch[sl]));
+  assert(meals.every(m => m.starch !== 'riz' && m.recette) && meals.filter(m => m.prot === 'poisson').length >= 2, 'plats tirés avec les envies : ' + JSON.stringify(meals.map(m => m.prot + '-' + m.starch)));
+  assert(/Au moins 2\sfois par semaine\s: poisson blanc\. Pas cette fois\s: riz\.$/.test(ev.$('#courses-span').textContent) && ev.$('#courses-msg').textContent === '', 'envies dans le détail : ' + ev.$('#courses-span').textContent);
+  // Changer un repas : midi et soir sauf le soir du repas libre (samedi), panneau au hasard puis par protéine, sans riz
+  assert(ev.$('#chg-2026-10-08-dej') && ev.$('#chg-2026-10-08-diner') && ev.$('#chg-2026-10-10-dej') && !ev.$('#chg-2026-10-10-diner'), 'boutons Changer');
+  ev.click('#chg-2026-10-08-dej');
+  const opts = [...ev.d.querySelectorAll('#sheet .opt')];
+  assert(!ev.$('#sheet').hidden && ev.$('#sheet-t').textContent === 'Jeudi 8 octobre, midi' && opts[0].dataset.value === '*' && opts.slice(1).every(o => !/\|riz$/.test(o.dataset.value)), 'panneau Changer');
+  const other = st.plans['2026-10-08'].ch.diner.prot, cur0 = st.plans['2026-10-08'].ch.dej;
+  assert(opts.slice(1).every(o => o.dataset.value.split('|')[0] !== other && o.dataset.value !== cur0.prot + '|' + cur0.starch), 'panneau : ni la protéine du soir, ni le plat actuel');
+  const target = opts.find(o => o.dataset.value === 'tofu|quinoa') || opts[1];
+  const tv = target.dataset.value;
+  target.click();
+  const after = ev.stored().plans['2026-10-08'].ch.dej;
+  assert(ev.$('#sheet').hidden && after.prot + '|' + after.starch === tv && after.recette === after.prot + '-' + after.starch && after.dessert === (cur0.dessert || 'aucun') && ev.stored().choices[4].dej.prot === after.prot, 'repas changé : ' + JSON.stringify(after));
+  assert(/^Jeudi 8\soctobre, midi\s: /.test(ev.$('#courses-msg').textContent) && ew.document.activeElement === ev.$('#chg-2026-10-08-dej'), 'message et focus après Changer');
+  ev.click('#chg-2026-10-09-diner'); ev.click('#sheet [data-value="*"]');
+  const r2 = ev.stored().plans['2026-10-09'].ch;
+  assert(r2.diner.starch !== 'riz' && r2.diner.prot !== r2.dej.prot && r2.diner.recette, 'au hasard : ' + JSON.stringify(r2.diner));
+  // Échap : rien ne change
+  const snapBefore = JSON.stringify(ev.stored());
+  ev.click('#chg-2026-10-11-dej'); ew.document.dispatchEvent(new ew.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert(ev.$('#sheet').hidden && JSON.stringify(ev.stored()) === snapBefore && ew.document.activeElement === ev.$('#chg-2026-10-11-dej'), 'Échap sans rien changer');
+  // Refaire : les envies restent
+  ev.click('#co-redo'); ev.click('#co-ok');
+  const st3 = ev.stored(), pl3 = planifsOf(ew).list.find(p => p.to === '2026-10-13');
+  assert(pl3.env && pl3.env.moins[0] === 'starch:riz' && isos.every(iso => ['dej', 'diner'].every(sl => st3.plans[iso].ch[sl].starch !== 'riz')), 'refaire avec les envies');
+  // Relue : envies abîmées nettoyées ; batch cooking : pas de « Changer » (sa fiche change les recettes)
+  const bad = tools(open(ls => ls.setItem(QKEY, JSON.stringify({ list: [{ from: '2026-10-07', to: '2026-10-13', type: 'recettes', n: 4, checked: [], env: { plus: ['prot:poisson', 'prot:x', 'starch:constructor', 5], moins: ['prot:poisson', 'starch:riz'] } }] }))));
+  bad.click('#plan-btn'); bad.click('[data-action="pl-open"][data-value="2026-10-07|2026-10-13"]');
+  assert(!bad.$('[data-action="co-meal"]') && /Pas cette fois\s: poisson blanc, riz\.$/.test(bad.$('#courses-span').textContent), 'batch : pas de Changer ; envies abîmées : ' + bad.$('#courses-span').textContent);
+}
+
 assert.deepStrictEqual(errors, [], 'erreurs JavaScript : ' + errors.join(' | '));
 console.log('interface OK');

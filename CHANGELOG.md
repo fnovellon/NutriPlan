@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 3.30.0, 10 octobre 2026
+
+- Tes envies dans une planification : dans « Nouvelle planification », « Tes envies pour cette période ». Touche une protéine ou un féculent une fois pour « Je veux » (il revient au moins 2 fois par semaine), deux fois pour « Pas cette fois » (il n'est jamais tiré). Par exemple : du poisson blanc, et pas de riz cette semaine.
+- Ça marche en plats simples, en recettes et en batch cooking ; tes envies restent avec la planification quand tu refais ses plats. Si l'appli n'a pas pu mettre une envie assez souvent, elle te le dit.
+- Dans le récap d'une planification en plats simples ou en recettes, « Changer le midi » et « Changer le soir » : un autre plat au hasard, ou celui que tu veux dans la liste.
+
 ## 3.29.0, 10 octobre 2026
 
 - Sept nouveaux petits-déjeuners dans la bulle « Base » : pancakes avoine-banane, pain perdu sans beurre, bircher préparé la veille, porridge choco-banane, brouillade aux épinards et champignons, smoothie à emporter, wrap œufs-jambon. Les quantités suivent ton poids et ton objectif de protéines, comme avant.

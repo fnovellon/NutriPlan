@@ -494,6 +494,16 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .shop-day .note{grid-column:1/-1;font-size:14.5px;color:var(--muted);}
 /* Planifier (3.21.0) : la planification en cours en évidence, rayons des courses sous « Tes courses » */
 .pl-now{margin:0 0 6px;}
+/* Changer un repas d'une planification (3.30.0) */
+.co-meals{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 10px;border-bottom:1px solid var(--line);}
+.shop-days li:has(.co-meals) .shop-day{border-bottom:0;}
+/* Envies d'une planification (3.30.0) : je veux = plein, pas cette fois = barré */
+.pl-env{margin:0 0 14px;}
+.pl-env summary{font-family:var(--sans);font-weight:700;font-size:16px;padding:8px 0;cursor:pointer;}
+.pl-env .opts-list{margin:0 0 6px;}
+.opt.env-plus{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.opt.env-moins{color:var(--muted);text-decoration:line-through;border-style:dashed;}
+.opt.env-moins .opt-s{text-decoration:none;}
 .shop-day.is-cur{margin:4px 0 0;padding:14px 16px;border:2px solid var(--ink);border-radius:16px;}
 .shop-day.is-cur .d{font-size:19px;font-stretch:108%;font-weight:800;}
 .shop-day.is-cur .k{color:var(--beet);font-weight:700;}
@@ -880,6 +890,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
     <ul>
       <li>Le calendrier, en haut de ta journée, montre la semaine&nbsp;: touche un jour pour voir ou changer ses séances et ses plats. Un point marque les jours déjà prévus.</li>
       <li><strong>Planifier</strong>, dans le menu en haut&nbsp;: ta planification en cours, puis les autres. «&nbsp;Nouvelle planification&nbsp;»&nbsp;: choisis les jours (31 au plus) et tes plats, simples (une protéine et un féculent) ou en recettes, avec l’option batch cooking. Tous les plats sont tirés d’un coup, équilibrés sur la semaine&nbsp;; tu peux ensuite changer chaque jour depuis ta journée.</li>
+      <li>«&nbsp;Tes envies pour cette période&nbsp;», dans le formulaire&nbsp;: touche une protéine ou un féculent une fois pour «&nbsp;Je veux&nbsp;» (il revient au moins 2&nbsp;fois par semaine), deux fois pour «&nbsp;Pas cette fois&nbsp;» (il n’est jamais tiré sur la période). Tes envies passent avant les repères de la semaine et restent avec la planification quand tu refais ses plats. Dans son récap, «&nbsp;Changer le midi&nbsp;» ou «&nbsp;Changer le soir&nbsp;» remplace un plat, au hasard ou choisi dans la liste (le batch cooking change ses recettes dans sa fiche).</li>
       <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas libre. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
       <li>Chaque planification a son récap jour par jour et <strong>ses courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
     </ul>
@@ -979,7 +990,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.29.0';
+const APP_VERSION = '3.30.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1847,8 +1858,12 @@ function tieredPick(r, a, w){
    donc les poids ci-dessus, multipliés) ; une recette à éviter n'est jamais tirée (s'il ne reste qu'elle, le couple vient
    sans recette).
    @param {function():number} [rand]  @param {string[]} [off] aliments retirés  @param {Object} [bal] weekBalance du reste de la semaine
-   @param {number} [k] facteur de portions  @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices} */
-function randomChoices(rand, off, bal, k, prefs){
+   Avec force (3.30.0, envies d'une planification, voir envPlan) : { dej: { prot?, starch? }, diner: { … } }, la protéine ou le
+   féculent imposés à ce repas (s'ils sont proposés) ; le reste est tiré comme d'habitude, l'autre repas évite la protéine
+   imposée, et un petit-déjeuner au jambon est écarté avec des « Œufs + jambon » imposés.
+   @param {number} [k] facteur de portions  @param {{fav:string[], ban:string[]}} [prefs]
+   @param {{dej:{prot?:string, starch?:string}, diner:{prot?:string, starch?:string}}} [force]  @returns {Choices} */
+function randomChoices(rand, off, bal, k, prefs, force){
   const r = rand || Math.random, kk = k || 1, c = bal ? Object.assign({}, bal) : null;
   const pp = prefs && ((prefs.fav && prefs.fav.length) || (prefs.ban && prefs.ban.length)) ? prefs : null;
   const cp = function(p, s){ return recipePref(recipesFor(p, s)[0], pp); };
@@ -1857,7 +1872,10 @@ function randomChoices(rand, off, bal, k, prefs){
   const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
   /* Bases avec une tranche de jambon (salé, wrap, 3.29.0) */
   const ham = function(x){ return has(PD, x) && PD[x].ham; };
-  const pdBase = pick(allowed('pd', off), function(x){ return c && ham(x) && c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1; });
+  /* Imposés (envies) : seulement des aliments proposés */
+  const fz = function(slot, kind){ const f = force && force[slot], v = f && f[kind]; return v && allowed(kind, off).indexOf(v) >= 0 ? v : null; };
+  const eggsForced = fz('dej', 'prot') === 'oeufs' || fz('diner', 'prot') === 'oeufs';
+  const pdBase = pick(allowed('pd', off), function(x){ return ham(x) && eggsForced ? -1 : c && ham(x) && c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1; });
   if (c && ham(pdBase)) c.charcuterie += jambonSale;
   const protW = function(p){
     if (p === 'oeufs' && ham(pdBase)) return -1;
@@ -1868,15 +1886,16 @@ function randomChoices(rand, off, bal, k, prefs){
     return 1;
   };
   const starchW = function(s){ return c && LEGUMES.indexOf(s) >= 0 && c.legumes < WEEK_GOALS.legumes ? 3 : 1; };
-  const meal = function(not){
+  const meal = function(not, slot){
     const prots = allowed('prot', off), other = prots.filter(function(p){ return p !== not; }), sts = allowed('starch', off);
+    const fp = fz(slot, 'prot'), fs = fz(slot, 'starch');
     /* Préférences : la protéine pèse la part pondérée de ses couples, le féculent le poids de la recette du couple */
     const share = function(p){
       const t = sts.reduce(function(a, s){ return a + starchW(s); }, 0), u = sts.reduce(function(a, s){ return a + starchW(s) * cp(p, s); }, 0);
       return t > 0 ? u / t : 1;
     };
-    const prot = pick(other.length ? other : prots, pp ? function(p){ const w = protW(p); return w > 0 ? w * share(p) : w; } : protW);
-    const starch = pick(sts, pp ? function(s){ return starchW(s) * cp(prot, s); } : starchW);
+    const prot = fp || pick(other.length ? other : prots, pp ? function(p){ const w = protW(p); return w > 0 ? w * share(p) : w; } : protW);
+    const starch = fs || pick(sts, pp ? function(s){ return starchW(s) * cp(prot, s); } : starchW);
     if (c){
       if (FISH.indexOf(prot) >= 0){ c.poisson++; if (prot === 'saumon') c.gras++; }
       if (prot === 'boeuf') c.rouge += boeufCuit;
@@ -1888,8 +1907,84 @@ function randomChoices(rand, off, bal, k, prefs){
     if (okR.length) o.recette = okR.length > 1 ? pick(okR) : okR[0];
     return o;
   };
-  const dej = meal(null);
-  return {pdBase:pdBase, dej:dej, diner:meal(dej.prot)};
+  const dej = meal(fz('diner', 'prot'), 'dej');
+  return {pdBase:pdBase, dej:dej, diner:meal(dej.prot, 'diner')};
+}
+/* Envies d'une planification (3.30.0) : { plus, moins }, entrées « prot:id » ou « starch:id ». moins : pas cette fois (jamais
+   tiré sur la période) ; plus : je veux (au moins 2 fois par bloc de 7 jours, 1 dans un bout de moins de 4 jours). Un aliment
+   n'est que dans l'une des deux ; les refus qui retireraient toutes les protéines (ou tous les féculents) sont oubliés. */
+const ENV_KINDS = ['prot', 'starch'];
+function cleanEnv(o){
+  const ok = function(x){
+    if (typeof x !== 'string') return false;
+    const i = x.indexOf(':'), k = x.slice(0, i);
+    return ENV_KINDS.indexOf(k) >= 0 && CHOICE_IDS[k].indexOf(x.slice(i + 1)) >= 0;
+  };
+  const list = function(a){ return Array.isArray(a) ? a.slice(0, 40).filter(function(x, i, arr){ return ok(x) && arr.indexOf(x) === i; }) : []; };
+  let moins = list(o && o.moins);
+  ENV_KINDS.forEach(function(k){
+    if (CHOICE_IDS[k].every(function(id){ return moins.indexOf(k + ':' + id) >= 0; })) moins = moins.filter(function(x){ return x.indexOf(k + ':') !== 0; });
+  });
+  return {plus:list(o && o.plus).filter(function(x){ return moins.indexOf(x) < 0; }), moins:moins};
+}
+function envEmpty(env){ return !env || (!env.plus.length && !env.moins.length); }
+/* Aliments retirés pour la période : ceux des réglages et les refus, s'il reste au moins un aliment de chaque type */
+function envOff(off, env){
+  const out = (off || []).slice();
+  if (!env) return out;
+  ENV_KINDS.forEach(function(k){
+    const add = env.moins.filter(function(x){ return x.indexOf(k + ':') === 0 && out.indexOf(x) < 0; }), all = out.concat(add);
+    if (CHOICE_IDS[k].some(function(id){ return all.indexOf(k + ':' + id) < 0; })) Array.prototype.push.apply(out, add);
+  });
+  return out;
+}
+/* Ce qui est voulu et encore proposé : [{ kind, id }], protéines d'abord */
+function envWants(env, off){
+  if (!env) return [];
+  return ENV_KINDS.reduce(function(a, k){
+    return a.concat(env.plus.filter(function(x){ return x.indexOf(k + ':') === 0 && allowed(k, off).indexOf(x.slice(k.length + 1)) >= 0; }).map(function(x){ return {kind:k, id:x.slice(k.length + 1)}; }));
+  }, []);
+}
+/* Fois voulues dans un bloc de len jours */
+function envNeed(len){ return len >= 4 ? 2 : 1; }
+/* Repas imposés d'une période (plats simples ou recettes) : days = [{ libre }] ; pour chaque bloc de 7 jours et chaque envie,
+   envNeed repas tirés au hasard (des jours différents si possible ; le dîner d'un repas libre ne compte pas), une protéine
+   jamais imposée aux deux repas d'un jour. Renvoie, par jour, { dej: { prot?, starch? }, diner: { … } } pour randomChoices.
+   @param {{libre:boolean}[]} days  @param {{kind:string, id:string}[]} wants  @param {function():number} [rand] */
+function envPlan(days, wants, rand){
+  const r = rand || Math.random, out = days.map(function(){ return {dej:{}, diner:{}}; });
+  for (let b = 0; b < days.length; b += BATCH_BLOCK){
+    const len = Math.min(BATCH_BLOCK, days.length - b), slots = [];
+    for (let i = b; i < b + len; i++){ slots.push({i:i, slot:'dej'}); if (!(days[i] && days[i].libre)) slots.push({i:i, slot:'diner'}); }
+    wants.forEach(function(w){
+      const used = [];
+      for (let n = 0; n < envNeed(len); n++){
+        const cand = slots.filter(function(s){
+          if (out[s.i][s.slot][w.kind]) return false;
+          return w.kind !== 'prot' || out[s.i][s.slot === 'dej' ? 'diner' : 'dej'].prot !== w.id;
+        });
+        if (!cand.length) break;
+        const fresh = cand.filter(function(s){ return used.indexOf(s.i) < 0; }), pool = fresh.length ? fresh : cand;
+        const s = pool[Math.min(pool.length - 1, Math.floor(r() * pool.length))];
+        out[s.i][s.slot][w.kind] = w.id;
+        used.push(s.i);
+      }
+    });
+  }
+  return out;
+}
+/* Envies pas tenues : celles qui reviennent moins de envNeed fois dans un bloc (repas libre exclu). chs : les plats de chaque
+   jour, days : [{ libre }]. Renvoie les envies concernées, sans doublon. */
+function envShort(chs, days, wants){
+  return wants.filter(function(w){
+    for (let b = 0; b < chs.length; b += BATCH_BLOCK){
+      const len = Math.min(BATCH_BLOCK, chs.length - b);
+      let n = 0;
+      for (let i = b; i < b + len; i++) ['dej', 'diner'].forEach(function(sl){ if (!(sl === 'diner' && days[i] && days[i].libre) && chs[i][sl][w.kind] === w.id) n++; });
+      if (n < envNeed(len)) return true;
+    }
+    return false;
+  });
 }
 /* Équilibre de la semaine (3.9.0) : repères (WEEK_GOALS), compte d'une semaine (weekBalance), ce qui manque (weekNeeds). */
 /* Repères de la semaine (Santé publique France, 2019) : poisson 2 fois dont 1 poisson gras, légumes secs au moins 2 fois,
@@ -2432,8 +2527,11 @@ const HAM_SLICES = 4;
    - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
      favorite pèse double.
    @param {{libre:boolean, long?:boolean}[]} days  @param {number} n  @param {string[]} [off]  @param {number} [k]  @param {function():number} [rand]
-   @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices[]} */
-function batchChoices(days, n, off, k, rand, prefs){
+   - envies (3.30.0, wants : envWants) : tant qu'une envie n'a pas de recette dans le bloc, la recette tirée est prise parmi
+     celles qui l'ont (protéine ou féculent), si l'une d'elles est permise ; chaque recette ayant au moins deux repas, l'envie
+     revient au moins deux fois. Les refus passent par off (envOff).
+   @param {{fav:string[], ban:string[]}} [prefs]  @param {{kind:string, id:string}[]} [wants]  @returns {Choices[]} */
+function batchChoices(days, n, off, k, rand, prefs, wants){
   const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
@@ -2460,7 +2558,7 @@ function batchChoices(days, n, off, k, rand, prefs){
     cnt.forEach(function(){
       const usedP = chosen.map(function(id){ return RECIPES[id].p; }), usedS = chosen.map(function(id){ return RECIPES[id].s; });
       const noGel = chosen.filter(function(id){ return !RECIPES[id].gel; }).length, fresh = pool.filter(function(id){ return chosen.indexOf(id) < 0; });
-      const id = pick(fresh.length ? fresh : pool, function(id){
+      const weight = function(id){
         const x = RECIPES[id];
         if (x.p === 'boeuf' && c.rouge + ct * boeufCuit > WEEK_GOALS.rouge) return -1;
         if (x.p === 'oeufs' && (cnt.some(function(q){ return q * 2 !== HAM_SLICES; }) || !sweet.length)) return -1;
@@ -2470,7 +2568,13 @@ function batchChoices(days, n, off, k, rand, prefs){
         if (FISH.indexOf(x.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= x.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
         if (LEGUMES.indexOf(x.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
         return w * recipePref(id, prefs);
-      });
+      };
+      /* Envies pas encore servies dans le bloc : d'abord les recettes qui en ont une, permises (poids > 0, sinon 0) */
+      const covers = function(id, w){ return (w.kind === 'prot' ? RECIPES[id].p : RECIPES[id].s) === w.id; };
+      const open = (wants || []).filter(function(w){ return !chosen.some(function(id){ return covers(id, w); }); });
+      const base = fresh.length ? fresh : pool, hit = base.filter(function(id){ return open.some(function(w){ return covers(id, w); }); });
+      const hitOk = hit.filter(function(id){ return weight(id) > 0; }), hit0 = hit.filter(function(id){ return weight(id) === 0; });
+      const id = pick(hitOk.length ? hitOk : hit0.length ? hit0 : base, weight);
       const x = RECIPES[id];
       if (FISH.indexOf(x.p) >= 0){ c.poisson += ct; if (x.p === 'saumon') c.gras += ct; }
       if (LEGUMES.indexOf(x.s) >= 0) c.legumes += ct;
@@ -3436,7 +3540,8 @@ if (typeof document !== 'undefined'){
       if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
       const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p ? p.type === 'recettes' : !!recipeOf(old);
       for (let i = 0; i < 20; i++){
-        const c = randomChoices(null, pr.off, bal, scaleOf(pr), rec ? pr : null)[slot];
+        /* Les refus de la planification du jour (3.30.0) comptent aussi */
+        const c = randomChoices(null, envOff(pr.off, p && p.env), bal, scaleOf(pr), rec ? pr : null)[slot];
         if (c.prot === old.prot && c.starch === old.starch) continue;
         if (c.prot === ch[other].prot && i < 19) continue;
         ch[slot] = {prot:c.prot, starch:c.starch, dessert:dessertOf(old)};
@@ -3708,8 +3813,11 @@ if (typeof document !== 'undefined'){
      planification » : la période, les plats (simples ou en recettes, avec l'option batch cooking et son nombre de recettes).
      Créer tire les plats de toute la période d'un coup (enregistrés pour chaque date), garde la planification et ouvre son
      détail (ui/courses.js). Plus d'assistant jour par jour : chaque jour se change depuis la journée. */
-  const planner = {from:'', to:'', type:'recettes', batch:false, n:4};
-  const resetPlanner = function(){ planner.from = isoDate(today); planner.to = isoDate(addDays(today, 6)); planner.type = 'recettes'; planner.batch = false; planner.n = 4; };
+  const planner = {from:'', to:'', type:'recettes', batch:false, n:4, env:{plus:[], moins:[]}, envOpen:false};
+  const resetPlanner = function(){
+    planner.from = isoDate(today); planner.to = isoDate(addDays(today, 6)); planner.type = 'recettes'; planner.batch = false; planner.n = 4;
+    planner.env = {plus:[], moins:[]}; planner.envOpen = false;
+  };
   resetPlanner();
   const PRESETS = [['7', 'Les 7 prochains jours'], ['semaine', 'Cette semaine'], ['suivante', 'La semaine prochaine']];
   const presetRange = function(k){
@@ -3764,13 +3872,41 @@ if (typeof document !== 'undefined'){
         '<span>Batch cooking</span><span class="knob" aria-hidden="true"></span></button></div>' +
         (planner.batch ? '<div class="opt-row pl-n"><span class="lbl" id="pl-n-l">Recettes différentes</span><div class="seg" role="group" aria-labelledby="pl-n-l">' +
           BATCH_N.map(function(n){ return seg('pl-nrec', n, n, planner.n === n); }).join('') + '</div></div>' : '') : '') +
-      '<p class="calc">' + PL_TEXT[recettes ? (planner.batch ? 'batch' : 'recettes') : 'simple'] + ' Les plats suivent tes aliments proposés et l’équilibre de la semaine.' +
+      envHTML() +
+      '<p class="calc">' + PL_TEXT[recettes ? (planner.batch ? 'batch' : 'recettes') : 'simple'] + ' Les plats suivent tes aliments proposés, tes envies et l’équilibre de la semaine.' +
         (Object.keys(semOf().jours).length ? ' Les jours gardent leurs séances, celles de ta semaine type s’ils ne sont pas encore remplis.' : '') + '</p>' +
       '<p class="warn" id="plan-over"></p>' +
       '<button type="button" class="btn main wide" data-action="pl-create">Créer la planification</button>';
     fillRange('plan', planner, 0, false);
     $('plan-over').textContent = planOver();
   };
+  /* Tes envies pour cette période (3.30.0) : une bulle par protéine et par féculent proposés, à trois états (neutre, « Je
+     veux », « Pas cette fois »), et une phrase qui les résume */
+  const ENV_STATE = {plus:'Je veux', moins:'Pas cette fois'};
+  const envState = function(x){ return planner.env.plus.indexOf(x) >= 0 ? 'plus' : planner.env.moins.indexOf(x) >= 0 ? 'moins' : ''; };
+  const envLabel = function(x){ const k = x.slice(0, x.indexOf(':')), id = x.slice(k.length + 1); return (k === 'prot' ? PROT : STARCH)[id].label; };
+  const envSummary = function(env){
+    const low = function(a){ return a.map(function(x){ return envLabel(x).toLowerCase(); }).join(', '); };
+    return (env.plus.length ? 'Au moins 2' + NB + 'fois par semaine' + NB + ': ' + low(env.plus) + '.' : '') + (env.plus.length && env.moins.length ? ' ' : '') +
+      (env.moins.length ? 'Pas cette fois' + NB + ': ' + low(env.moins) + '.' : '');
+  };
+  const envHTML = function(){
+    const off = cleanProfile(prof).off;
+    const group = function(kind, title, order){
+      return '<p class="rf-l">' + title + '</p><div class="opts-list" role="group" aria-label="' + title + '">' + allowed(kind, off).map(function(id){
+        const x = kind + ':' + id, st = envState(x), lab = (kind === 'prot' ? PROT : STARCH)[id].label;
+        return '<button type="button" class="opt env' + (st ? ' env-' + st : '') + '" data-action="pl-env" data-value="' + x + '" aria-label="' + lab + (st ? NB + ': ' + ENV_STATE[st].toLowerCase() : '') + '">' +
+          lab + (st ? '<span class="opt-s">' + ENV_STATE[st] + '</span>' : '') + '</button>';
+      }).join('') + '</div>';
+    };
+    const sum = envSummary(planner.env);
+    return '<details class="pl-env" id="pl-env"' + (planner.envOpen || sum ? ' open' : '') + '><summary>Tes envies pour cette période</summary>' +
+      '<p class="calc">Touche un aliment une fois pour «' + NB + 'Je veux' + NB + '» (au moins 2' + NB + 'fois par semaine), deux fois pour «' + NB + 'Pas cette fois' + NB + '».</p>' +
+      group('prot', 'Protéines') + group('starch', 'Féculents') +
+      '<p class="calc" id="pl-env-sum" role="status">' + (sum || 'Pas d’envie particulière' + NB + ': tout est possible.') + '</p><p class="warn" id="pl-env-warn" role="alert"></p></details>';
+  };
+  /* Le bloc des envies ouvert ou fermé reste comme tu l'as laissé tant que le formulaire est redessiné */
+  document.addEventListener('toggle', function(e){ if (e.target && e.target.id === 'pl-env') planner.envOpen = e.target.open; }, true);
   /* Après un réglage du formulaire : redessiné, le focus reste sur le bouton touché */
   const planKeep = function(b){
     renderPlan();
@@ -3778,19 +3914,33 @@ if (typeof document !== 'undefined'){
     if (same) same.focus({preventScroll:true});
   };
   /* Tire les plats de chaque date de la période : un jour après l'autre (équilibrés avec le reste de leur semaine), sans
-     recette pour les plats simples ; en batch cooking (n recettes), tout d'un coup puis arrondi aux 100 g sur les boîtes */
-  const drawPeriod = function(isos, type, n){
+     recette pour les plats simples ; en batch cooking (n recettes), tout d'un coup puis arrondi aux 100 g sur les boîtes.
+     Envies (3.30.0) : refus retirés des aliments proposés, envies imposées (envPlan) ou servies par une recette du batch.
+     Renvoie les envies qui n'ont pas pu revenir assez souvent (envShort). */
+  const drawPeriod = function(isos, type, n, env){
     const pr = cleanProfile(prof), save = function(iso, c){ const js = fromIso(iso).getDay(), x = cleanCh(c, js); writeDay(iso, {ch:x}); store.choices[js] = x; };
+    const e = env ? cleanEnv(env) : null, off = envOff(pr.off, e), wants = envWants(e, off);
+    const days = isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; });
     if (type === 'recettes' && n){
-      const cs = batchChoices(isos.map(function(iso){ const p = planFor(iso); return {libre:p.libre, long:p.seances.some(function(x){ return x.taille === 'longue'; })}; }), n, pr.off, scaleOf(pr), null, pr);
+      const cs = batchChoices(days, n, off, scaleOf(pr), null, pr, wants);
       /* La collation n'est pas tirée : elle reste celle de chaque date (3.29.0) */
       batchRound(isos.map(function(iso, j){ const js = fromIso(iso).getDay(); return {plan:planFor(iso), ch:cleanCh(keepSnack(cs[j], choicesFor(iso, js)), js)}; }), prof).forEach(function(c, j){ save(isos[j], c); });
-    } else isos.forEach(function(iso){
-      const c = drawFor(iso, type === 'recettes');
-      if (type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
-      save(iso, c);
-    });
+    } else {
+      const force = envPlan(days, wants);
+      isos.forEach(function(iso, j){
+        const c = drawFor(iso, type === 'recettes', e, force[j]);
+        if (type === 'simple') ['dej', 'diner'].forEach(function(sl){ ['recette', 'g', 'g2'].forEach(function(f){ delete c[sl][f]; }); });
+        save(iso, c);
+      });
+    }
     persist();
+    return envShort(isos.map(function(iso){ return choicesFor(iso, fromIso(iso).getDay()); }), days, wants);
+  };
+  /* Les envies qui n'ont pas pu revenir assez souvent, en une phrase (vide sinon) */
+  const shortMsg = function(short){
+    if (!short.length) return '';
+    return 'Je n’ai pas pu mettre assez souvent ' + short.map(function(w){ return (w.kind === 'prot' ? PROT : STARCH)[w.id].label.toLowerCase(); }).join(', ') +
+      ' (tes aliments, la semaine ou le batch cooking ne le permettent pas)' + NB + ': change un repas dans le récap si tu veux.';
   };
   /* Actions de Planifier : l'ouvrir (menu), une planification, le formulaire, créer */
   Object.assign(ACTIONS, {
@@ -3807,14 +3957,32 @@ if (typeof document !== 'undefined'){
     'pl-type': function(b, v){ if (PL_TYPES.indexOf(v) >= 0){ planner.type = v; planKeep(b); } },
     'pl-batch': function(){ planner.batch = !planner.batch; renderPlan(); $('pl-batch').focus({preventScroll:true}); },
     'pl-nrec': function(b, v){ if (BATCH_N.indexOf(+v) >= 0){ planner.n = +v; planKeep(b); } },
+    /* Une envie : neutre → je veux → pas cette fois → neutre ; un refus qui retirerait tout un type est refusé */
+    'pl-env': function(b, v){
+      const e = cleanEnv({plus:[v]});
+      if (!e.plus.length) return;
+      const st = envState(v), env = {plus:planner.env.plus.filter(function(x){ return x !== v; }), moins:planner.env.moins.filter(function(x){ return x !== v; })};
+      let warn = '';
+      if (st === '') env.plus.push(v);
+      else if (st === 'plus'){
+        const k = v.slice(0, v.indexOf(':'));
+        if (envOff(cleanProfile(prof).off, {plus:[], moins:env.moins.concat([v])}).indexOf(v) >= 0) env.moins.push(v);
+        else warn = k === 'prot' ? 'Garde au moins une protéine.' : 'Garde au moins un féculent.';
+      }
+      planner.env = env; planner.envOpen = true;
+      planKeep(b);
+      $('pl-env-warn').textContent = warn;
+    },
     'pl-create': function(b){
       if (fillRange('plan', planner, 0, true)) return;
       const p = {from:planner.from, to:planner.to, type:planner.type, n:planner.type === 'recettes' && planner.batch ? planner.n : 0, checked:[]};
-      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
+      if (!envEmpty(planner.env)) p.env = cleanEnv(planner.env);
+      const short = drawPeriod(rangeDays(p.from, p.to), p.type, p.n, p.env);
       addPlanif(p);
       loadSel(); prevQty = new Map(); render();
       renderPlan();
       openPlanif(p, b);
+      $('courses-msg').textContent = shortMsg(short);
     }
   });
   /* « Ta semaine » (page) et tirages équilibrés : repères du reste de la semaine d'une date, phrase, alerte d'un choix. */
@@ -3823,10 +3991,11 @@ if (typeof document !== 'undefined'){
   const weekBal = function(d, skip){ return weekBalance(weekOf(d).map(isoDate).filter(function(iso){ return iso !== skip; }).map(dayResult)); };
   /* « Décide pour moi » d'une date : équilibré avec le reste de sa semaine */
   /* recettes : les plats seront des recettes (favorites et à éviter comptent, 3.25.0) */
-  /* La collation n'est pas tirée : elle reste celle de la date (3.29.0) */
-  const drawFor = function(iso, recettes){
+  /* La collation n'est pas tirée : elle reste celle de la date (3.29.0). env : envies d'une planification (3.30.0, refus
+     retirés des aliments proposés) ; force : les plats imposés ce jour-là (envPlan) */
+  const drawFor = function(iso, recettes, env, force){
     const pr = cleanProfile(prof);
-    return keepSnack(randomChoices(null, pr.off, weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null), choicesFor(iso, fromIso(iso).getDay()));
+    return keepSnack(randomChoices(null, envOff(pr.off, env), weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null, force), choicesFor(iso, fromIso(iso).getDay()));
   };
   /* Un paquet de jambon (4 tranches, × k) : toléré au-delà du repère de 150 g de charcuterie (3.17.0) */
   const hamPack = function(){ return HAM_SLICES * sc(45, 5, scaleOf(cleanProfile(prof))); };
@@ -3873,8 +4042,12 @@ if (typeof document !== 'undefined'){
   const cleanPlanif = function(o){
     if (!o || typeof o !== 'object' || !isoOk(o.from) || !isoOk(o.to) || o.to < o.from || rangeDays(o.from, o.to).length > MAX_DAYS) return null;
     const type = PL_TYPES.indexOf(o.type) >= 0 ? o.type : 'recettes';
-    return {from:o.from, to:o.to, type:type, n:type === 'recettes' && BATCH_N.indexOf(o.n) >= 0 ? o.n : 0,
+    const p = {from:o.from, to:o.to, type:type, n:type === 'recettes' && BATCH_N.indexOf(o.n) >= 0 ? o.n : 0,
       checked:Array.isArray(o.checked) ? o.checked.filter(function(x){ return typeof x === 'string'; }).slice(0, 500) : []};
+    /* Envies (3.30.0) : gardées seulement s'il en reste */
+    const env = cleanEnv(o.env);
+    if (!envEmpty(env)) p.env = env;
+    return p;
   };
   const byFrom = function(a, b){ return a.from < b.from ? -1 : a.from > b.from ? 1 : 0; };
   /* Ancienne période des courses : recettes s'il y en a, batch cooking si des recettes qui se gardent reviennent */
@@ -3946,7 +4119,8 @@ if (typeof document !== 'undefined'){
     if (!cur) return;
     const days = rangeDays(cur.from, cur.to), res = days.map(dayResult), t = todayIso();
     $('courses-h').textContent = periodTitle(cur.from, cur.to);
-    $('courses-span').textContent = cap(planifLine(cur)) + (cur.from <= t && cur.to >= t ? ', en cours.' : cur.from > t ? ', à venir.' : ', passée.');
+    $('courses-span').textContent = cap(planifLine(cur)) + (cur.from <= t && cur.to >= t ? ', en cours.' : cur.from > t ? ', à venir.' : ', passée.') +
+      (cur.env ? ' ' + envSummary(cur.env) : '');
     $('courses-msg').textContent = '';
     $('co-text').hidden = true;
     coAsk(null);
@@ -3963,11 +4137,16 @@ if (typeof document !== 'undefined'){
     const low = function(x){ return x.charAt(0).toLowerCase() + x.slice(1); };
     /* Un repas : sa recette, sinon sa protéine et son féculent */
     const meal = function(c){ const r = recipeOf(c); return r ? RECIPES[r].t : low(PROT[c.prot].label) + ' et ' + low(STARCH[c.starch].label); };
+    /* Changer un repas (3.30.0) : plats simples et recettes (le batch cooking change ses recettes dans sa fiche), aujourd'hui
+       et après, pas le dîner d'un repas libre */
+    const change = !cur.n;
     $('courses-days').innerHTML = days.map(function(iso, j){
       const d = fromIso(iso), p = planFor(iso), c = choicesFor(iso, d.getDay()), r = res[j];
       const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', 'midi' + NB + ': ' + low(meal(c.dej)), r.libre ? 'repas libre le soir' : 'soir' + NB + ': ' + low(meal(c.diner))];
+      const btn = function(slot){ return '<button type="button" class="reset" id="chg-' + iso + '-' + slot + '" data-action="co-meal" data-value="' + iso + '|' + slot + '" aria-haspopup="dialog" aria-label="Changer le repas ' + REPAS[slot] + ', ' + dayLabel(d) + '">Changer le ' + (slot === 'dej' ? 'midi' : 'soir') + '</button>'; };
       return '<li><button type="button" class="shop-day" data-action="co-day" data-value="' + iso + '"><span class="d">' + cap(dayLabel(d)) + '</span>' +
-        '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + '.</span></button></li>';
+        '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + '.</span></button>' +
+        (change && iso >= t ? '<div class="co-meals">' + btn('dej') + (r.libre ? '' : btn('diner')) + '</div>' : '') + '</li>';
     }).join('');
   };
   const openPlanif = function(p, opener){ cur = p; renderCourses(); openScreen('courses', opener); };
@@ -4071,6 +4250,47 @@ if (typeof document !== 'undefined'){
     document.documentElement.style.overflow = 'hidden';
     $('sheet-list').querySelector('.opt').focus({preventScroll:true});
   };
+  /* Changer un repas d'une planification en plats simples ou en recettes (3.30.0) : « Un autre au hasard » (tiré avec les
+     envies de la planification et l'équilibre de la semaine), puis les plats possibles, par protéine : aliments proposés et
+     pas refusés, pas le plat actuel, pas la protéine de l'autre repas (s'il en reste une autre) ; en recettes, celles qui ne
+     sont pas à éviter. */
+  const mealOptions = function(iso, slot){
+    const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), c = choicesFor(iso, fromIso(iso).getDay()), o = c[slot === 'dej' ? 'diner' : 'dej'];
+    const lib = slot === 'dej' && planFor(iso).libre, prots = allowed('prot', off), avoid = !lib && prots.length > 1 ? o.prot : null;
+    const out = [];
+    prots.forEach(function(p){
+      if (p === avoid) return;
+      allowed('starch', off).forEach(function(s){
+        if (p === c[slot].prot && s === c[slot].starch) return;
+        const rec = recipesFor(p, s).filter(function(id){ return recipePref(id, pr) > 0; })[0] || null;
+        if (cur.type === 'recettes' && !rec) return;
+        out.push({prot:p, starch:s, recette:cur.type === 'recettes' ? rec : null});
+      });
+    });
+    return out;
+  };
+  const mealName = function(m){ return m.recette ? RECIPES[m.recette].t : PROT[m.prot].label + ', ' + STARCH[m.starch].label.toLowerCase(); };
+  const openMeal = function(iso, slot, trigger){
+    const opts = mealOptions(iso, slot);
+    if (!opts.length) return;
+    const opt = function(v, t, s){ return '<button type="button" class="opt" data-action="co-meal-to" data-value="' + v + '">' + t + (s ? '<span class="opt-s">' + s + '</span>' : '') + '</button>'; };
+    pick = {kind:'meal', iso:iso, slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'courses'};
+    $('sheet-t').textContent = cap(dayLabel(fromIso(iso))) + ', ' + (slot === 'dej' ? 'midi' : 'soir');
+    $('sheet-rec').hidden = true;
+    $('sheet-list').hidden = false;
+    $('sheet-list').className = 'opts-list swap';
+    $('sheet-list').innerHTML = opt('*', 'Un autre au hasard', 'avec tes envies et l’équilibre de la semaine') +
+      PROT_ORDER.map(function(p){
+        const mine = opts.filter(function(m){ return m.prot === p; });
+        return mine.length ? '<p class="rf-l">' + PROT[p].label + '</p>' + mine.map(function(m){ return opt(m.prot + '|' + m.starch, mealName(m), m.recette ? RECIPES[m.recette].min + NB + 'min' : null); }).join('') : '';
+      }).join('');
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    setInert(pick.view, true);
+    document.documentElement.style.overflow = 'hidden';
+    $('sheet-list').querySelector('.opt').focus({preventScroll:true});
+  };
   /* Actions du détail d'une planification : cocher une ligne, tout décocher, ouvrir un jour, changer une recette du batch */
   Object.assign(ACTIONS, {
     'co-check': function(b, v){
@@ -4109,11 +4329,12 @@ if (typeof document !== 'undefined'){
       if (v !== 'redo' || cur.to < todayIso()) return;
       /* Refaite à partir d'aujourd'hui : les jours passés gardent leurs plats (et restent une planification à part) */
       const t = todayIso(), p = {from:cur.from < t ? t : cur.from, to:cur.to, type:cur.type, n:cur.n, checked:[]};
-      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
+      if (cur.env) p.env = cur.env;
+      const short = drawPeriod(rangeDays(p.from, p.to), p.type, p.n, p.env);
       addPlanif(p); cur = p;
       loadSel(); prevQty = new Map(); render();
       renderCourses();
-      $('courses-msg').textContent = 'Plats refaits' + NB + ': ' + periodTitle(p.from, p.to).replace(/^D/, 'd') + '.';
+      $('courses-msg').textContent = 'Plats refaits' + NB + ': ' + periodTitle(p.from, p.to).replace(/^D/, 'd') + '.' + (short.length ? ' ' + shortMsg(short) : '');
       $('co-redo').focus({preventScroll:true});
     },
     'co-day': function(b, v){
@@ -4124,6 +4345,39 @@ if (typeof document !== 'undefined'){
       render();
       scroller().scrollTop = 0;
       $('title').focus({preventScroll:true});
+    },
+    'co-meal': function(b, v){
+      const q = String(v).split('|');
+      if (!cur || cur.n || !fromIso(q[0]) || !isoOk(q[0]) || q[0] < todayIso() || q[0] < cur.from || q[0] > cur.to || !has(REPAS, q[1])) return;
+      if (q[1] === 'diner' && planFor(q[0]).libre) return;
+      openMeal(q[0], q[1], b);
+    },
+    /* Le plat choisi (ou tiré) remplace celui de ce repas, enregistré pour la date et en mémoire pour son jour de la semaine ;
+       le dessert reste */
+    'co-meal-to': function(b, v){
+      if (!pick || pick.kind !== 'meal' || !cur) return;
+      const iso = pick.iso, slot = pick.slot, opts = mealOptions(iso, slot), d = fromIso(iso), js = d.getDay();
+      let m = null;
+      if (v === '*'){
+        const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), bal = weekBal(d, iso);
+        for (let i = 0; i < 30 && !m; i++){
+          const c = randomChoices(null, off, bal, scaleOf(pr), cur.type === 'recettes' ? pr : null)[slot];
+          m = opts.find(function(x){ return x.prot === c.prot && x.starch === c.starch; }) || null;
+        }
+        if (!m) m = opts[Math.floor(Math.random() * opts.length)];
+      } else m = opts.find(function(x){ return x.prot + '|' + x.starch === v; }) || null;
+      closePick(false);
+      if (!m) return;
+      const c = cleanCh(choicesFor(iso, js), js), before = weekBal(d);
+      c[slot] = {prot:m.prot, starch:m.starch, dessert:dessertOf(c[slot])};
+      if (m.recette) c[slot].recette = m.recette;
+      const cc = cleanCh(c, js);
+      writeDay(iso, {ch:cc}); store.choices[js] = cc; persist();
+      loadSel(); prevQty = new Map(); render();
+      renderCourses();
+      const cross = crossMsg(before, weekBal(d));
+      $('courses-msg').textContent = cap(dayLabel(d)) + ', ' + (slot === 'dej' ? 'midi' : 'soir') + NB + ': ' + mealName(m) + '.' + (cross ? ' ' + cross : '');
+      ($('chg-' + iso + '-' + slot) || $('courses-h')).focus({preventScroll:true});
     },
     'co-swap': function(b, v){
       const p = String(v).split('|');

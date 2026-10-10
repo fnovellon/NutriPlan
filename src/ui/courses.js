@@ -7,8 +7,12 @@
   const cleanPlanif = function(o){
     if (!o || typeof o !== 'object' || !isoOk(o.from) || !isoOk(o.to) || o.to < o.from || rangeDays(o.from, o.to).length > MAX_DAYS) return null;
     const type = PL_TYPES.indexOf(o.type) >= 0 ? o.type : 'recettes';
-    return {from:o.from, to:o.to, type:type, n:type === 'recettes' && BATCH_N.indexOf(o.n) >= 0 ? o.n : 0,
+    const p = {from:o.from, to:o.to, type:type, n:type === 'recettes' && BATCH_N.indexOf(o.n) >= 0 ? o.n : 0,
       checked:Array.isArray(o.checked) ? o.checked.filter(function(x){ return typeof x === 'string'; }).slice(0, 500) : []};
+    /* Envies (3.30.0) : gardées seulement s'il en reste */
+    const env = cleanEnv(o.env);
+    if (!envEmpty(env)) p.env = env;
+    return p;
   };
   const byFrom = function(a, b){ return a.from < b.from ? -1 : a.from > b.from ? 1 : 0; };
   /* Ancienne période des courses : recettes s'il y en a, batch cooking si des recettes qui se gardent reviennent */
@@ -80,7 +84,8 @@
     if (!cur) return;
     const days = rangeDays(cur.from, cur.to), res = days.map(dayResult), t = todayIso();
     $('courses-h').textContent = periodTitle(cur.from, cur.to);
-    $('courses-span').textContent = cap(planifLine(cur)) + (cur.from <= t && cur.to >= t ? ', en cours.' : cur.from > t ? ', à venir.' : ', passée.');
+    $('courses-span').textContent = cap(planifLine(cur)) + (cur.from <= t && cur.to >= t ? ', en cours.' : cur.from > t ? ', à venir.' : ', passée.') +
+      (cur.env ? ' ' + envSummary(cur.env) : '');
     $('courses-msg').textContent = '';
     $('co-text').hidden = true;
     coAsk(null);
@@ -97,11 +102,16 @@
     const low = function(x){ return x.charAt(0).toLowerCase() + x.slice(1); };
     /* Un repas : sa recette, sinon sa protéine et son féculent */
     const meal = function(c){ const r = recipeOf(c); return r ? RECIPES[r].t : low(PROT[c.prot].label) + ' et ' + low(STARCH[c.starch].label); };
+    /* Changer un repas (3.30.0) : plats simples et recettes (le batch cooking change ses recettes dans sa fiche), aujourd'hui
+       et après, pas le dîner d'un repas libre */
+    const change = !cur.n;
     $('courses-days').innerHTML = days.map(function(iso, j){
       const d = fromIso(iso), p = planFor(iso), c = choicesFor(iso, d.getDay()), r = res[j];
       const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', 'midi' + NB + ': ' + low(meal(c.dej)), r.libre ? 'repas libre le soir' : 'soir' + NB + ': ' + low(meal(c.diner))];
+      const btn = function(slot){ return '<button type="button" class="reset" id="chg-' + iso + '-' + slot + '" data-action="co-meal" data-value="' + iso + '|' + slot + '" aria-haspopup="dialog" aria-label="Changer le repas ' + REPAS[slot] + ', ' + dayLabel(d) + '">Changer le ' + (slot === 'dej' ? 'midi' : 'soir') + '</button>'; };
       return '<li><button type="button" class="shop-day" data-action="co-day" data-value="' + iso + '"><span class="d">' + cap(dayLabel(d)) + '</span>' +
-        '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + '.</span></button></li>';
+        '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + '.</span></button>' +
+        (change && iso >= t ? '<div class="co-meals">' + btn('dej') + (r.libre ? '' : btn('diner')) + '</div>' : '') + '</li>';
     }).join('');
   };
   const openPlanif = function(p, opener){ cur = p; renderCourses(); openScreen('courses', opener); };
@@ -205,6 +215,47 @@
     document.documentElement.style.overflow = 'hidden';
     $('sheet-list').querySelector('.opt').focus({preventScroll:true});
   };
+  /* Changer un repas d'une planification en plats simples ou en recettes (3.30.0) : « Un autre au hasard » (tiré avec les
+     envies de la planification et l'équilibre de la semaine), puis les plats possibles, par protéine : aliments proposés et
+     pas refusés, pas le plat actuel, pas la protéine de l'autre repas (s'il en reste une autre) ; en recettes, celles qui ne
+     sont pas à éviter. */
+  const mealOptions = function(iso, slot){
+    const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), c = choicesFor(iso, fromIso(iso).getDay()), o = c[slot === 'dej' ? 'diner' : 'dej'];
+    const lib = slot === 'dej' && planFor(iso).libre, prots = allowed('prot', off), avoid = !lib && prots.length > 1 ? o.prot : null;
+    const out = [];
+    prots.forEach(function(p){
+      if (p === avoid) return;
+      allowed('starch', off).forEach(function(s){
+        if (p === c[slot].prot && s === c[slot].starch) return;
+        const rec = recipesFor(p, s).filter(function(id){ return recipePref(id, pr) > 0; })[0] || null;
+        if (cur.type === 'recettes' && !rec) return;
+        out.push({prot:p, starch:s, recette:cur.type === 'recettes' ? rec : null});
+      });
+    });
+    return out;
+  };
+  const mealName = function(m){ return m.recette ? RECIPES[m.recette].t : PROT[m.prot].label + ', ' + STARCH[m.starch].label.toLowerCase(); };
+  const openMeal = function(iso, slot, trigger){
+    const opts = mealOptions(iso, slot);
+    if (!opts.length) return;
+    const opt = function(v, t, s){ return '<button type="button" class="opt" data-action="co-meal-to" data-value="' + v + '">' + t + (s ? '<span class="opt-s">' + s + '</span>' : '') + '</button>'; };
+    pick = {kind:'meal', iso:iso, slot:slot, trigger:trigger && trigger.id ? trigger.id : null, view:VIEWS.find(function(v){ return !$(v).hidden; }) || 'courses'};
+    $('sheet-t').textContent = cap(dayLabel(fromIso(iso))) + ', ' + (slot === 'dej' ? 'midi' : 'soir');
+    $('sheet-rec').hidden = true;
+    $('sheet-list').hidden = false;
+    $('sheet-list').className = 'opts-list swap';
+    $('sheet-list').innerHTML = opt('*', 'Un autre au hasard', 'avec tes envies et l’équilibre de la semaine') +
+      PROT_ORDER.map(function(p){
+        const mine = opts.filter(function(m){ return m.prot === p; });
+        return mine.length ? '<p class="rf-l">' + PROT[p].label + '</p>' + mine.map(function(m){ return opt(m.prot + '|' + m.starch, mealName(m), m.recette ? RECIPES[m.recette].min + NB + 'min' : null); }).join('') : '';
+      }).join('');
+    try { history.pushState({pick:true}, ''); } catch (e) {}
+    $('sheet').hidden = false;
+    $('sheet').querySelector('.panel').scrollTop = 0;
+    setInert(pick.view, true);
+    document.documentElement.style.overflow = 'hidden';
+    $('sheet-list').querySelector('.opt').focus({preventScroll:true});
+  };
   /* Actions du détail d'une planification : cocher une ligne, tout décocher, ouvrir un jour, changer une recette du batch */
   Object.assign(ACTIONS, {
     'co-check': function(b, v){
@@ -243,11 +294,12 @@
       if (v !== 'redo' || cur.to < todayIso()) return;
       /* Refaite à partir d'aujourd'hui : les jours passés gardent leurs plats (et restent une planification à part) */
       const t = todayIso(), p = {from:cur.from < t ? t : cur.from, to:cur.to, type:cur.type, n:cur.n, checked:[]};
-      drawPeriod(rangeDays(p.from, p.to), p.type, p.n);
+      if (cur.env) p.env = cur.env;
+      const short = drawPeriod(rangeDays(p.from, p.to), p.type, p.n, p.env);
       addPlanif(p); cur = p;
       loadSel(); prevQty = new Map(); render();
       renderCourses();
-      $('courses-msg').textContent = 'Plats refaits' + NB + ': ' + periodTitle(p.from, p.to).replace(/^D/, 'd') + '.';
+      $('courses-msg').textContent = 'Plats refaits' + NB + ': ' + periodTitle(p.from, p.to).replace(/^D/, 'd') + '.' + (short.length ? ' ' + shortMsg(short) : '');
       $('co-redo').focus({preventScroll:true});
     },
     'co-day': function(b, v){
@@ -258,6 +310,39 @@
       render();
       scroller().scrollTop = 0;
       $('title').focus({preventScroll:true});
+    },
+    'co-meal': function(b, v){
+      const q = String(v).split('|');
+      if (!cur || cur.n || !fromIso(q[0]) || !isoOk(q[0]) || q[0] < todayIso() || q[0] < cur.from || q[0] > cur.to || !has(REPAS, q[1])) return;
+      if (q[1] === 'diner' && planFor(q[0]).libre) return;
+      openMeal(q[0], q[1], b);
+    },
+    /* Le plat choisi (ou tiré) remplace celui de ce repas, enregistré pour la date et en mémoire pour son jour de la semaine ;
+       le dessert reste */
+    'co-meal-to': function(b, v){
+      if (!pick || pick.kind !== 'meal' || !cur) return;
+      const iso = pick.iso, slot = pick.slot, opts = mealOptions(iso, slot), d = fromIso(iso), js = d.getDay();
+      let m = null;
+      if (v === '*'){
+        const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), bal = weekBal(d, iso);
+        for (let i = 0; i < 30 && !m; i++){
+          const c = randomChoices(null, off, bal, scaleOf(pr), cur.type === 'recettes' ? pr : null)[slot];
+          m = opts.find(function(x){ return x.prot === c.prot && x.starch === c.starch; }) || null;
+        }
+        if (!m) m = opts[Math.floor(Math.random() * opts.length)];
+      } else m = opts.find(function(x){ return x.prot + '|' + x.starch === v; }) || null;
+      closePick(false);
+      if (!m) return;
+      const c = cleanCh(choicesFor(iso, js), js), before = weekBal(d);
+      c[slot] = {prot:m.prot, starch:m.starch, dessert:dessertOf(c[slot])};
+      if (m.recette) c[slot].recette = m.recette;
+      const cc = cleanCh(c, js);
+      writeDay(iso, {ch:cc}); store.choices[js] = cc; persist();
+      loadSel(); prevQty = new Map(); render();
+      renderCourses();
+      const cross = crossMsg(before, weekBal(d));
+      $('courses-msg').textContent = cap(dayLabel(d)) + ', ' + (slot === 'dej' ? 'midi' : 'soir') + NB + ': ' + mealName(m) + '.' + (cross ? ' ' + cross : '');
+      ($('chg-' + iso + '-' + slot) || $('courses-h')).focus({preventScroll:true});
     },
     'co-swap': function(b, v){
       const p = String(v).split('|');

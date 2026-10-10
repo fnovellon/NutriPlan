@@ -4,10 +4,11 @@
   const weekBal = function(d, skip){ return weekBalance(weekOf(d).map(isoDate).filter(function(iso){ return iso !== skip; }).map(dayResult)); };
   /* « Décide pour moi » d'une date : équilibré avec le reste de sa semaine */
   /* recettes : les plats seront des recettes (favorites et à éviter comptent, 3.25.0) */
-  /* La collation n'est pas tirée : elle reste celle de la date (3.29.0) */
-  const drawFor = function(iso, recettes){
+  /* La collation n'est pas tirée : elle reste celle de la date (3.29.0). env : envies d'une planification (3.30.0, refus
+     retirés des aliments proposés) ; force : les plats imposés ce jour-là (envPlan) */
+  const drawFor = function(iso, recettes, env, force){
     const pr = cleanProfile(prof);
-    return keepSnack(randomChoices(null, pr.off, weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null), choicesFor(iso, fromIso(iso).getDay()));
+    return keepSnack(randomChoices(null, envOff(pr.off, env), weekBal(fromIso(iso), iso), scaleOf(pr), recettes ? pr : null, force), choicesFor(iso, fromIso(iso).getDay()));
   };
   /* Un paquet de jambon (4 tranches, × k) : toléré au-delà du repère de 150 g de charcuterie (3.17.0) */
   const hamPack = function(){ return HAM_SLICES * sc(45, 5, scaleOf(cleanProfile(prof))); };

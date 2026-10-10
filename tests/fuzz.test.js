@@ -697,6 +697,36 @@ for (let i = 0; i < N / 3; i++){
   }
 }
 
+// --- Envies d'une planification (3.30.0) : envies et refus au hasard, plats simples (envPlan + randomChoices) et batch --------
+{
+  const ALL_E = ['prot', 'starch'].flatMap(k => A.CHOICE_IDS[k].map(id => k + ':' + id));
+  for (let i = 0; i < N / 5; i++){
+    const off0 = A.cleanOff(ALL_E.filter(() => R.chance(0.15))), raw = { plus: ALL_E.filter(() => R.chance(0.12)), moins: ALL_E.filter(() => R.chance(0.15)) };
+    if (R.chance(.1)) raw.plus.push('prot:x', 7); if (R.chance(.1)) raw.moins = A.CHOICE_IDS.prot.map(id => 'prot:' + id);
+    const env = A.cleanEnv(raw), off = A.envOff(off0, env), wants = A.envWants(env, off), show = () => JSON.stringify([off0, raw]);
+    C.ok(env.plus.every(x => !env.moins.includes(x)) && ['prot', 'starch'].every(k => A.allowed(k, off).length > 0), 'envies : refus de tout un type ou envie refusée', show);
+    // Refus d'un type : tous ajoutés aux aliments retirés, ou aucun s'ils retireraient tout ce type
+    ['prot', 'starch'].forEach(kd => {
+      const m = env.moins.filter(x => x.startsWith(kd + ':')), inn = m.filter(x => off.includes(x)).length;
+      C.ok(inn === m.length || (inn === m.filter(x => off0.includes(x)).length && A.CHOICE_IDS[kd].every(id => off0.concat(m).includes(kd + ':' + id))), 'envies : refus perdu', () => kd + ' ' + show());
+    });
+    const len = R.int(1, 31), days = Array.from({ length: len }, () => ({ libre: R.chance(.12), long: R.chance(.1) }));
+    const f = A.envPlan(days, wants, R.next), k = R.pick([0.65, 1, 1.4]);
+    const chs = f.map(x => A.randomChoices(R.next, off, null, k, null, x));
+    chs.forEach((c, d) => ['dej', 'diner'].forEach(sl => {
+      C.ok(A.allowed('prot', off).includes(c[sl].prot) && A.allowed('starch', off).includes(c[sl].starch), 'envies : refus ou aliment retiré tiré', show);
+      ['prot', 'starch'].forEach(kd => { if (f[d][sl][kd]) C.ok(c[sl][kd] === f[d][sl][kd], 'envies : plat imposé pas suivi', show); });
+    }));
+    chs.forEach(c => { if (A.allowed('prot', off).length > 1) C.ok(c.dej.prot !== c.diner.prot, 'envies : même protéine midi et soir', show); if (A.PD[c.pdBase].ham && [c.dej.prot, c.diner.prot].includes('oeufs') && A.allowed('pd', off).some(x => !A.PD[x].ham) && A.allowed('prot', off).filter(p => p !== 'oeufs').length >= 2) C.ok(false, 'envies : œufs-jambon avec un petit-déjeuner au jambon', show); });
+    // Plats simples : chaque envie tenue quand il y a la place (2 repas par envie au plus et protéines voulues distinctes de la place)
+    const slotsMin = Math.min(...Array.from({ length: Math.ceil(len / 7) }, (_, b) => days.slice(b * 7, b * 7 + 7).reduce((a, d) => a + (d.libre ? 1 : 2), 0)));
+    if (wants.filter(w => w.kind === 'prot').length * 2 <= slotsMin && wants.filter(w => w.kind === 'starch').length * 2 <= slotsMin && wants.filter(w => w.kind === 'prot').length <= 3)
+      C.ok(A.envShort(chs, days, wants).length === 0, 'envies : pas tenues alors qu’il y avait la place', () => show() + ' ' + JSON.stringify(A.envShort(chs, days, wants)));
+    const cs = A.batchChoices(days, R.pick([3, 4, 5]), off, k, R.next, null, wants);
+    C.ok(cs.length === len && cs.every(c => ['dej', 'diner'].every(sl => A.allowed('prot', off).includes(c[sl].prot) && A.allowed('starch', off).includes(c[sl].starch))), 'envies : batch avec un refus', show);
+  }
+}
+
 // --- Batch cooking : périodes, nombres de recettes, aliments retirés et corpulences au hasard ---------------------------
 {
   let roundSeen = 0, roundMiss = 0;

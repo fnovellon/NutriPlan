@@ -26,8 +26,11 @@ const HAM_SLICES = 4;
    - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
      favorite pèse double.
    @param {{libre:boolean, long?:boolean}[]} days  @param {number} n  @param {string[]} [off]  @param {number} [k]  @param {function():number} [rand]
-   @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices[]} */
-function batchChoices(days, n, off, k, rand, prefs){
+   - envies (3.30.0, wants : envWants) : tant qu'une envie n'a pas de recette dans le bloc, la recette tirée est prise parmi
+     celles qui l'ont (protéine ou féculent), si l'une d'elles est permise ; chaque recette ayant au moins deux repas, l'envie
+     revient au moins deux fois. Les refus passent par off (envOff).
+   @param {{fav:string[], ban:string[]}} [prefs]  @param {{kind:string, id:string}[]} [wants]  @returns {Choices[]} */
+function batchChoices(days, n, off, k, rand, prefs, wants){
   const r = rand || Math.random, kk = k || 1, nn = BATCH_N.indexOf(n) >= 0 ? n : 4;
   const pick = function(a, w){ return tieredPick(r, a, w); };
   const boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
@@ -54,7 +57,7 @@ function batchChoices(days, n, off, k, rand, prefs){
     cnt.forEach(function(){
       const usedP = chosen.map(function(id){ return RECIPES[id].p; }), usedS = chosen.map(function(id){ return RECIPES[id].s; });
       const noGel = chosen.filter(function(id){ return !RECIPES[id].gel; }).length, fresh = pool.filter(function(id){ return chosen.indexOf(id) < 0; });
-      const id = pick(fresh.length ? fresh : pool, function(id){
+      const weight = function(id){
         const x = RECIPES[id];
         if (x.p === 'boeuf' && c.rouge + ct * boeufCuit > WEEK_GOALS.rouge) return -1;
         if (x.p === 'oeufs' && (cnt.some(function(q){ return q * 2 !== HAM_SLICES; }) || !sweet.length)) return -1;
@@ -64,7 +67,13 @@ function batchChoices(days, n, off, k, rand, prefs){
         if (FISH.indexOf(x.p) >= 0 && c.poisson < WEEK_GOALS.poisson) w *= x.p === 'saumon' && c.gras < WEEK_GOALS.gras ? 6 : 3;
         if (LEGUMES.indexOf(x.s) >= 0 && c.legumes < WEEK_GOALS.legumes) w *= 3;
         return w * recipePref(id, prefs);
-      });
+      };
+      /* Envies pas encore servies dans le bloc : d'abord les recettes qui en ont une, permises (poids > 0, sinon 0) */
+      const covers = function(id, w){ return (w.kind === 'prot' ? RECIPES[id].p : RECIPES[id].s) === w.id; };
+      const open = (wants || []).filter(function(w){ return !chosen.some(function(id){ return covers(id, w); }); });
+      const base = fresh.length ? fresh : pool, hit = base.filter(function(id){ return open.some(function(w){ return covers(id, w); }); });
+      const hitOk = hit.filter(function(id){ return weight(id) > 0; }), hit0 = hit.filter(function(id){ return weight(id) === 0; });
+      const id = pick(hitOk.length ? hitOk : hit0.length ? hit0 : base, weight);
       const x = RECIPES[id];
       if (FISH.indexOf(x.p) >= 0){ c.poisson += ct; if (x.p === 'saumon') c.gras += ct; }
       if (LEGUMES.indexOf(x.s) >= 0) c.legumes += ct;

@@ -77,8 +77,12 @@ function tieredPick(r, a, w){
    donc les poids ci-dessus, multipliés) ; une recette à éviter n'est jamais tirée (s'il ne reste qu'elle, le couple vient
    sans recette).
    @param {function():number} [rand]  @param {string[]} [off] aliments retirés  @param {Object} [bal] weekBalance du reste de la semaine
-   @param {number} [k] facteur de portions  @param {{fav:string[], ban:string[]}} [prefs]  @returns {Choices} */
-function randomChoices(rand, off, bal, k, prefs){
+   Avec force (3.30.0, envies d'une planification, voir envPlan) : { dej: { prot?, starch? }, diner: { … } }, la protéine ou le
+   féculent imposés à ce repas (s'ils sont proposés) ; le reste est tiré comme d'habitude, l'autre repas évite la protéine
+   imposée, et un petit-déjeuner au jambon est écarté avec des « Œufs + jambon » imposés.
+   @param {number} [k] facteur de portions  @param {{fav:string[], ban:string[]}} [prefs]
+   @param {{dej:{prot?:string, starch?:string}, diner:{prot?:string, starch?:string}}} [force]  @returns {Choices} */
+function randomChoices(rand, off, bal, k, prefs, force){
   const r = rand || Math.random, kk = k || 1, c = bal ? Object.assign({}, bal) : null;
   const pp = prefs && ((prefs.fav && prefs.fav.length) || (prefs.ban && prefs.ban.length)) ? prefs : null;
   const cp = function(p, s){ return recipePref(recipesFor(p, s)[0], pp); };
@@ -87,7 +91,10 @@ function randomChoices(rand, off, bal, k, prefs){
   const jambonSale = sc(45, 5, kk), jambonOeufs = sc(90, 5, kk), boeufCuit = sc(150, 10, kk) * YIELD.boeuf;
   /* Bases avec une tranche de jambon (salé, wrap, 3.29.0) */
   const ham = function(x){ return has(PD, x) && PD[x].ham; };
-  const pdBase = pick(allowed('pd', off), function(x){ return c && ham(x) && c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1; });
+  /* Imposés (envies) : seulement des aliments proposés */
+  const fz = function(slot, kind){ const f = force && force[slot], v = f && f[kind]; return v && allowed(kind, off).indexOf(v) >= 0 ? v : null; };
+  const eggsForced = fz('dej', 'prot') === 'oeufs' || fz('diner', 'prot') === 'oeufs';
+  const pdBase = pick(allowed('pd', off), function(x){ return ham(x) && eggsForced ? -1 : c && ham(x) && c.charcuterie + jambonSale > WEEK_GOALS.charcuterie ? 0 : 1; });
   if (c && ham(pdBase)) c.charcuterie += jambonSale;
   const protW = function(p){
     if (p === 'oeufs' && ham(pdBase)) return -1;
@@ -98,15 +105,16 @@ function randomChoices(rand, off, bal, k, prefs){
     return 1;
   };
   const starchW = function(s){ return c && LEGUMES.indexOf(s) >= 0 && c.legumes < WEEK_GOALS.legumes ? 3 : 1; };
-  const meal = function(not){
+  const meal = function(not, slot){
     const prots = allowed('prot', off), other = prots.filter(function(p){ return p !== not; }), sts = allowed('starch', off);
+    const fp = fz(slot, 'prot'), fs = fz(slot, 'starch');
     /* Préférences : la protéine pèse la part pondérée de ses couples, le féculent le poids de la recette du couple */
     const share = function(p){
       const t = sts.reduce(function(a, s){ return a + starchW(s); }, 0), u = sts.reduce(function(a, s){ return a + starchW(s) * cp(p, s); }, 0);
       return t > 0 ? u / t : 1;
     };
-    const prot = pick(other.length ? other : prots, pp ? function(p){ const w = protW(p); return w > 0 ? w * share(p) : w; } : protW);
-    const starch = pick(sts, pp ? function(s){ return starchW(s) * cp(prot, s); } : starchW);
+    const prot = fp || pick(other.length ? other : prots, pp ? function(p){ const w = protW(p); return w > 0 ? w * share(p) : w; } : protW);
+    const starch = fs || pick(sts, pp ? function(s){ return starchW(s) * cp(prot, s); } : starchW);
     if (c){
       if (FISH.indexOf(prot) >= 0){ c.poisson++; if (prot === 'saumon') c.gras++; }
       if (prot === 'boeuf') c.rouge += boeufCuit;
@@ -118,6 +126,82 @@ function randomChoices(rand, off, bal, k, prefs){
     if (okR.length) o.recette = okR.length > 1 ? pick(okR) : okR[0];
     return o;
   };
-  const dej = meal(null);
-  return {pdBase:pdBase, dej:dej, diner:meal(dej.prot)};
+  const dej = meal(fz('diner', 'prot'), 'dej');
+  return {pdBase:pdBase, dej:dej, diner:meal(dej.prot, 'diner')};
+}
+/* Envies d'une planification (3.30.0) : { plus, moins }, entrées « prot:id » ou « starch:id ». moins : pas cette fois (jamais
+   tiré sur la période) ; plus : je veux (au moins 2 fois par bloc de 7 jours, 1 dans un bout de moins de 4 jours). Un aliment
+   n'est que dans l'une des deux ; les refus qui retireraient toutes les protéines (ou tous les féculents) sont oubliés. */
+const ENV_KINDS = ['prot', 'starch'];
+function cleanEnv(o){
+  const ok = function(x){
+    if (typeof x !== 'string') return false;
+    const i = x.indexOf(':'), k = x.slice(0, i);
+    return ENV_KINDS.indexOf(k) >= 0 && CHOICE_IDS[k].indexOf(x.slice(i + 1)) >= 0;
+  };
+  const list = function(a){ return Array.isArray(a) ? a.slice(0, 40).filter(function(x, i, arr){ return ok(x) && arr.indexOf(x) === i; }) : []; };
+  let moins = list(o && o.moins);
+  ENV_KINDS.forEach(function(k){
+    if (CHOICE_IDS[k].every(function(id){ return moins.indexOf(k + ':' + id) >= 0; })) moins = moins.filter(function(x){ return x.indexOf(k + ':') !== 0; });
+  });
+  return {plus:list(o && o.plus).filter(function(x){ return moins.indexOf(x) < 0; }), moins:moins};
+}
+function envEmpty(env){ return !env || (!env.plus.length && !env.moins.length); }
+/* Aliments retirés pour la période : ceux des réglages et les refus, s'il reste au moins un aliment de chaque type */
+function envOff(off, env){
+  const out = (off || []).slice();
+  if (!env) return out;
+  ENV_KINDS.forEach(function(k){
+    const add = env.moins.filter(function(x){ return x.indexOf(k + ':') === 0 && out.indexOf(x) < 0; }), all = out.concat(add);
+    if (CHOICE_IDS[k].some(function(id){ return all.indexOf(k + ':' + id) < 0; })) Array.prototype.push.apply(out, add);
+  });
+  return out;
+}
+/* Ce qui est voulu et encore proposé : [{ kind, id }], protéines d'abord */
+function envWants(env, off){
+  if (!env) return [];
+  return ENV_KINDS.reduce(function(a, k){
+    return a.concat(env.plus.filter(function(x){ return x.indexOf(k + ':') === 0 && allowed(k, off).indexOf(x.slice(k.length + 1)) >= 0; }).map(function(x){ return {kind:k, id:x.slice(k.length + 1)}; }));
+  }, []);
+}
+/* Fois voulues dans un bloc de len jours */
+function envNeed(len){ return len >= 4 ? 2 : 1; }
+/* Repas imposés d'une période (plats simples ou recettes) : days = [{ libre }] ; pour chaque bloc de 7 jours et chaque envie,
+   envNeed repas tirés au hasard (des jours différents si possible ; le dîner d'un repas libre ne compte pas), une protéine
+   jamais imposée aux deux repas d'un jour. Renvoie, par jour, { dej: { prot?, starch? }, diner: { … } } pour randomChoices.
+   @param {{libre:boolean}[]} days  @param {{kind:string, id:string}[]} wants  @param {function():number} [rand] */
+function envPlan(days, wants, rand){
+  const r = rand || Math.random, out = days.map(function(){ return {dej:{}, diner:{}}; });
+  for (let b = 0; b < days.length; b += BATCH_BLOCK){
+    const len = Math.min(BATCH_BLOCK, days.length - b), slots = [];
+    for (let i = b; i < b + len; i++){ slots.push({i:i, slot:'dej'}); if (!(days[i] && days[i].libre)) slots.push({i:i, slot:'diner'}); }
+    wants.forEach(function(w){
+      const used = [];
+      for (let n = 0; n < envNeed(len); n++){
+        const cand = slots.filter(function(s){
+          if (out[s.i][s.slot][w.kind]) return false;
+          return w.kind !== 'prot' || out[s.i][s.slot === 'dej' ? 'diner' : 'dej'].prot !== w.id;
+        });
+        if (!cand.length) break;
+        const fresh = cand.filter(function(s){ return used.indexOf(s.i) < 0; }), pool = fresh.length ? fresh : cand;
+        const s = pool[Math.min(pool.length - 1, Math.floor(r() * pool.length))];
+        out[s.i][s.slot][w.kind] = w.id;
+        used.push(s.i);
+      }
+    });
+  }
+  return out;
+}
+/* Envies pas tenues : celles qui reviennent moins de envNeed fois dans un bloc (repas libre exclu). chs : les plats de chaque
+   jour, days : [{ libre }]. Renvoie les envies concernées, sans doublon. */
+function envShort(chs, days, wants){
+  return wants.filter(function(w){
+    for (let b = 0; b < chs.length; b += BATCH_BLOCK){
+      const len = Math.min(BATCH_BLOCK, chs.length - b);
+      let n = 0;
+      for (let i = b; i < b + len; i++) ['dej', 'diner'].forEach(function(sl){ if (!(sl === 'diner' && days[i] && days[i].libre) && chs[i][sl][w.kind] === w.id) n++; });
+      if (n < envNeed(len)) return true;
+    }
+    return false;
+  });
 }

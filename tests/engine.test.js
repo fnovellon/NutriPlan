@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -884,6 +884,48 @@ assert(!batchSwapOptions(dSale, 'tofu-riz', PD_ORDER.filter(x => !isHam(x)).map(
 const dWrap = dSale.map((d, i) => ({ ch: Object.assign({}, d.ch, { pdBase: i ? 'wrap' : 'sale', co: 'mugcake' }), libre: false }));
 const swW = batchSwap(dWrap, 'tofu-riz', 'oeufs-riz', ['pd:avoine']);
 assert(swW.every(c => c.pdBase === 'pain' && c.co === 'mugcake'), 'changer : salé et wrap → base sans jambon, collation gardée');
+
+// 19 bis. Envies d'une planification (3.30.0) : je veux (au moins 2 fois par bloc de 7 jours), pas cette fois (jamais)
+assert.deepStrictEqual(plain(cleanEnv({ plus: ['prot:poisson', 'prot:poisson', 'prot:x', 'pd:avoine', 5, 'starch:riz'], moins: ['starch:riz', 'starch:constructor'] })), { plus: ['prot:poisson'], moins: ['starch:riz'] }, 'envies nettoyées (refus prioritaire)');
+assert.deepStrictEqual(plain(cleanEnv(null)), { plus: [], moins: [] }, 'pas d’envies');
+assert.deepStrictEqual(plain(cleanEnv({ moins: PROT_ORDER.map(p => 'prot:' + p).concat(['starch:riz']) })), { plus: [], moins: ['starch:riz'] }, 'toutes les protéines refusées : refus oubliés');
+assert.deepStrictEqual(plain(envOff(['prot:thon'], cleanEnv({ moins: ['starch:riz', 'prot:boeuf'] }))), ['prot:thon', 'prot:boeuf', 'starch:riz'], 'refus ajoutés aux aliments retirés');
+assert.deepStrictEqual(plain(envOff(PROT_ORDER.slice(1).map(p => 'prot:' + p), cleanEnv({ moins: ['prot:poulet'] }))), plain(PROT_ORDER.slice(1).map(p => 'prot:' + p)), 'un refus qui retirerait la dernière protéine est oublié');
+assert.deepStrictEqual(plain(envWants(cleanEnv({ plus: ['starch:quinoa', 'prot:saumon', 'prot:thon'] }), ['prot:thon'])), [{ kind: 'prot', id: 'saumon' }, { kind: 'starch', id: 'quinoa' }], 'envies encore proposées, protéines d’abord');
+assert(envNeed(7) === 2 && envNeed(4) === 2 && envNeed(3) === 1 && envNeed(1) === 1, 'fois voulues par bloc');
+{
+  const W = [{ kind: 'prot', id: 'poisson' }, { kind: 'prot', id: 'saumon' }, { kind: 'starch', id: 'quinoa' }];
+  for (let seed = 1; seed <= 200; seed++) {
+    const len = 1 + seed % 17, days = Array.from({ length: len }, (_, i) => ({ libre: i % 7 === 5 })), f = envPlan(days, W, lcg0(seed * 7919 + 1));
+    assert.strictEqual(f.length, len, 'envPlan : un jour par jour');
+    f.forEach((x, i) => { assert(!(days[i].libre && x.diner.prot) && !(days[i].libre && x.diner.starch), 'envPlan : rien au dîner d’un repas libre'); assert(!x.dej.prot || x.dej.prot !== x.diner.prot, 'envPlan : même protéine imposée midi et soir'); });
+    for (let b = 0; b < len; b += 7) for (const w of W) {
+      const blk = f.slice(b, b + 7), n = blk.reduce((a, x) => a + ['dej', 'diner'].filter(sl => x[sl][w.kind] === w.id).length, 0);
+      const ds = new Set(blk.map((x, i) => ['dej', 'diner'].some(sl => x[sl][w.kind] === w.id) ? i : -1).filter(i => i >= 0)).size;
+      assert(n === envNeed(blk.length) && (ds === n || blk.length < n), `envPlan ${len} jours, graine ${seed} : ${w.id} ${n} fois sur ${ds} jours`);
+    }
+    // randomChoices suit les plats imposés ; jamais œufs-jambon avec un petit-déjeuner au jambon ; ensuite plus rien ne manque
+    const chs = f.map((x, i) => randomChoices(lcg0(seed + i), ['starch:riz'], null, 1, null, x));
+    chs.forEach((c, i) => {
+      ['dej', 'diner'].forEach(sl => { if (f[i][sl].prot) assert.strictEqual(c[sl].prot, f[i][sl].prot, 'protéine imposée'); if (f[i][sl].starch) assert.strictEqual(c[sl].starch, f[i][sl].starch, 'féculent imposé'); assert(c[sl].starch !== 'riz', 'féculent retiré tiré'); });
+      assert(c.dej.prot !== c.diner.prot, 'même protéine midi et soir avec des plats imposés');
+    });
+    assert.deepStrictEqual(plain(envShort(chs, days, W)), [], `envShort ${len} jours, graine ${seed}`);
+  }
+  const fe = { dej: { prot: 'oeufs' }, diner: {} };
+  for (let seed = 1; seed <= 50; seed++) assert(!isHam(randomChoices(lcg0(seed), [], null, 1, null, fe).pdBase), 'œufs-jambon imposés avec un petit-déjeuner au jambon');
+  assert.strictEqual(randomChoices(() => 0, ['prot:tofu'], null, 1, null, { dej: { prot: 'tofu' }, diner: {} }).dej.prot, 'poulet', 'protéine imposée mais retirée : ignorée');
+  // Batch cooking : chaque envie servie par une recette du bloc (au moins 2 repas), les refus jamais tirés
+  let met = 0, tot = 0;
+  for (let seed = 1; seed <= 120; seed++) for (const want of [[{ kind: 'prot', id: 'poisson' }], [{ kind: 'starch', id: 'quinoa' }, { kind: 'prot', id: 'tofu' }]]) {
+    const days = Array.from({ length: 7 + seed % 8 }, (_, i) => ({ libre: i === 5 })), off = envOff([], cleanEnv({ moins: ['starch:riz', 'prot:boeuf'] }));
+    const cs = batchChoices(days, [3, 4, 5][seed % 3], off, 1, lcg0(seed * 31 + 7), null, want);
+    cs.forEach(c => ['dej', 'diner'].forEach(sl => assert(c[sl].starch !== 'riz' && c[sl].prot !== 'boeuf', 'batch : refus tiré')));
+    tot++; if (!envShort(cs, days, want).length) met++;
+  }
+  assert(met / tot >= 0.95, `batch : envies tenues ${met} sur ${tot}`);
+  assert.deepStrictEqual(plain(envShort([{ dej: { prot: 'poisson' }, diner: { prot: 'thon' } }, { dej: { prot: 'poulet' }, diner: { prot: 'poisson' } }, { dej: { prot: 'tofu' }, diner: { prot: 'thon' } }, { dej: { prot: 'tofu' }, diner: { prot: 'thon' } }], [{ libre: false }, { libre: true }, { libre: false }, { libre: false }], [{ kind: 'prot', id: 'poisson' }])), [{ kind: 'prot', id: 'poisson' }], 'envShort : le dîner d’un repas libre ne compte pas');
+}
 
 // 20. Batch cooking, chiffres ronds (3.17.0) : poids fixés d'une boîte (g, g2) et arrondi aux 100 g par recette
 {

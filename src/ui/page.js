@@ -484,7 +484,8 @@
       if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
       const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p ? p.type === 'recettes' : !!recipeOf(old);
       for (let i = 0; i < 20; i++){
-        const c = randomChoices(null, pr.off, bal, scaleOf(pr), rec ? pr : null)[slot];
+        /* Les refus de la planification du jour (3.30.0) comptent aussi */
+        const c = randomChoices(null, envOff(pr.off, p && p.env), bal, scaleOf(pr), rec ? pr : null)[slot];
         if (c.prot === old.prot && c.starch === old.starch) continue;
         if (c.prot === ch[other].prot && i < 19) continue;
         ch[slot] = {prot:c.prot, starch:c.starch, dessert:dessertOf(old)};
