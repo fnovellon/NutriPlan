@@ -930,6 +930,14 @@ assert(envNeed(7) === 2 && envNeed(4) === 2 && envNeed(3) === 1 && envNeed(1) ==
     tot++; if (!envShort(cs, days, want).length) met++;
   }
   assert(met / tot >= 0.95, `batch : envies tenues ${met} sur ${tot}`);
+  // Correctif 3.31.1 : poisson blanc voulu en batch alors que le quinoa, le boulgour et les lentilles sont retirés (avant :
+  // seules deux recettes de poisson blanc qui se gardent, et qui se congèlent mal, restaient ; le poisson ne sortait pas)
+  for (let seed = 1; seed <= 150; seed++) {
+    const off = ['starch:quinoa', 'starch:boulgour', 'starch:lentilles'], days = Array.from({ length: 7 }, (_, i) => ({ libre: i === 5, long: i === 6 }));
+    const want = [{ kind: 'prot', id: 'poisson' }], cs = batchChoices(days, [3, 4, 5][seed % 3], off, 1, lcg0(seed * 97 + 3), null, want);
+    assert.deepStrictEqual(plain(envShort(cs, days, want)), [], `batch, poisson blanc voulu sans quinoa ni boulgour ni lentilles, graine ${seed}`);
+  }
+  assert(PROT_ORDER.every(p => Object.values(RECIPES).filter(x => x.p === p && x.box).length >= 6), 'au moins 6 recettes qui se gardent par protéine');
   assert.deepStrictEqual(plain(envShort([{ dej: { prot: 'poisson' }, diner: { prot: 'thon' } }, { dej: { prot: 'poulet' }, diner: { prot: 'poisson' } }, { dej: { prot: 'tofu' }, diner: { prot: 'thon' } }, { dej: { prot: 'tofu' }, diner: { prot: 'thon' } }], [{ libre: false }, { libre: true }, { libre: false }, { libre: false }], [{ kind: 'prot', id: 'poisson' }])), [{ kind: 'prot', id: 'poisson' }], 'envShort : le dîner d’un repas libre ne compte pas');
 }
 

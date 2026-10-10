@@ -990,7 +990,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '3.31.0';
+const APP_VERSION = '3.31.1';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1383,7 +1383,7 @@ const RECIPES = (function(){
     'Cuis le quinoa 12 min.',
     'Fais griller courgette, poivron et oignon rouge en lamelles dans la moitié de l’huile.',
     'Poêle le poisson dans le reste ; mélange quinoa, légumes, tomates et herbes, citron.'], 'concassées dans le quinoa');
-  r('poisson', 'semoule', 'Poisson à la chermoula, semoule', 35, 0, {tomate:70, poivron:80, oignon:100}, [H2], 'coriandre, cumin, paprika, ail, citron', null, [
+  r('poisson', 'semoule', 'Poisson à la chermoula, semoule', 35,1, {tomate:70, poivron:80, oignon:100}, [H2], 'coriandre, cumin, paprika, ail, citron', null, [
     'Mixe coriandre, ail, cumin, paprika, citron et l’huile : c’est la chermoula. Enrobe le poisson.',
     'Dans un plat, tomates, poivron et oignon en lamelles, le poisson dessus : four à 200 °C, 20 min.',
     'Prépare la semoule à l’eau bouillante, 5 min à couvert.'], 'grillées, sur le poisson');
@@ -1391,7 +1391,7 @@ const RECIPES = (function(){
     'Fais revenir l’oignon, l’aubergine et la courgette en dés dans l’huile, 10 min, puis les tomates et le thym.',
     'Cuis le boulgour 10 min et mélange-le aux légumes.',
     'Pose le poisson dessus, couvre et laisse cuire 6 min à feu doux ; basilic.'], 'grillées, sur le plat');
-  r('poisson', 'lentilles', 'Cabillaud sur lit de lentilles, sauce moutarde', 35, 0, {carotte:60, oignon:50, epinards:140}, [H1, CREME], 'thym, laurier, moutarde à l’ancienne, persil', null, [
+  r('poisson', 'lentilles', 'Cabillaud sur lit de lentilles, sauce moutarde', 35,1, {carotte:60, oignon:50, epinards:140}, [H1, CREME], 'thym, laurier, moutarde à l’ancienne, persil', null, [
     'Cuis les lentilles 20 min avec la carotte et l’oignon en dés, le thym et le laurier.',
     'Poêle le poisson dans l’huile, 3 min de chaque côté ; fais tomber les épinards dans la même poêle.',
     'Sauce : crème, moutarde à l’ancienne, persil, sur les lentilles et le poisson.'], 'effilées sur les lentilles');
@@ -1693,7 +1693,7 @@ const RECIPES = (function(){
     'Fais revenir l’oignon et le poivron dans l’huile, puis le bœuf avec l’ail et le paprika.',
     'Ajoute les épinards et les gnocchis, mélange 2 min.'], 'râpé sur les gnocchis');
   /* Poisson blanc */
-  v('curry', 'poisson', 'riz', 'Curry de poisson blanc au lait de coco, riz', 25, 0, {poivron:80, epinards:70, oignon:50, tomate:50}, [H1, COCO], 'curry, curcuma, gingembre, ail, citron vert, coriandre', null, [
+  v('curry', 'poisson', 'riz', 'Curry de poisson blanc au lait de coco, riz', 25,1, {poivron:80, epinards:70, oignon:50, tomate:50}, [H1, COCO], 'curry, curcuma, gingembre, ail, citron vert, coriandre', null, [
     'Fais revenir l’oignon, l’ail, le gingembre et les épices dans l’huile, puis le poivron et la tomate.',
     'Ajoute le lait de coco et un peu d’eau, puis le poisson en gros morceaux ; 6 min à petit feu.',
     'Les épinards à la fin ; citron vert et coriandre, avec le riz.'], 'effilées sur le curry');
@@ -1713,7 +1713,7 @@ const RECIPES = (function(){
     'Cuis le quinoa 12 min et laisse tiédir.',
     'Grille le poisson à la poêle dans l’huile, 3 min par face.',
     'Sauce verte : skyr, herbes hachées, ail et citron ; bowl de quinoa, crudités, oignon rouge et poisson.'], 'grillées sur le bowl');
-  v('tajine', 'poisson', 'semoule', 'Tajine de poisson blanc aux légumes, semoule', 35, 0, {tomate:80, carotte:70, oignon:50, poivron:50}, [H1, OLIVE], 'cumin, paprika, curcuma, coriandre, citron', null, [
+  v('tajine', 'poisson', 'semoule', 'Tajine de poisson blanc aux légumes, semoule', 35,1, {tomate:80, carotte:70, oignon:50, poivron:50}, [H1, OLIVE], 'cumin, paprika, curcuma, coriandre, citron', null, [
     'Fais revenir l’oignon, la carotte et le poivron dans l’huile avec les épices.',
     'Ajoute la tomate en dés, les olives et un fond d’eau, 10 min, puis le poisson dessus ; 8 min à couvert.',
     'Sers sur la semoule, avec la coriandre et le citron.'], 'sur la semoule');
@@ -1721,11 +1721,11 @@ const RECIPES = (function(){
     'Cuis le boulgour fin 8 min et laisse-le refroidir.',
     'Hache beaucoup de persil et de menthe ; tomates, concombre et oignon en petits dés ; assaisonne avec la moitié de l’huile et le citron.',
     'Grille le poisson dans le reste de l’huile et pose-le dessus.'], 'concassées sur le taboulé');
-  v('dahl', 'poisson', 'lentilles', 'Dahl de lentilles corail et poisson poché', 30, 0, {oignon:50, pulpe:100, epinards:100}, [H1, COCO], 'curry, cumin, curcuma, gingembre, citron', null, [
+  v('dahl', 'poisson', 'lentilles', 'Dahl de lentilles corail et poisson poché', 30,1, {oignon:50, pulpe:100, epinards:100}, [H1, COCO], 'curry, cumin, curcuma, gingembre, citron', null, [
     'Fais revenir l’oignon et les épices dans l’huile.',
     'Ajoute les lentilles corail, la pulpe et trois fois leur volume d’eau ; 15 min, puis le lait de coco et les épinards.',
     'Pose le poisson sur le dahl, couvre et laisse pocher 6 min ; citron.'], 'effilées sur le dahl');
-  v('ragout', 'poisson', 'poischiches', 'Ragoût de poisson aux pois chiches, tomates et épinards', 30, 0, {oignon:50, pulpe:120, epinards:80}, [H1], 'ail, paprika fumé, cumin, persil', null, [
+  v('ragout', 'poisson', 'poischiches', 'Ragoût de poisson aux pois chiches, tomates et épinards', 30,1, {oignon:50, pulpe:120, epinards:80}, [H1], 'ail, paprika fumé, cumin, persil', null, [
     'Fais revenir l’oignon et l’ail dans l’huile avec le paprika et le cumin.',
     'Ajoute la pulpe et les pois chiches cuits, 10 min, puis les épinards.',
     'Pose le poisson dessus, couvre et laisse cuire 7 min ; persil.'], 'grillées par-dessus');

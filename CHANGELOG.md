@@ -1,5 +1,9 @@
 # Nouveautés
 
+## 3.31.1, 10 octobre 2026
+
+- Correction : en batch cooking, « Je veux » du poisson blanc pouvait ne rien donner, surtout si tu avais retiré le quinoa, le boulgour ou les lentilles. Six plats de poisson blanc en sauce (curry, tajine, chermoula, dahl, ragoût aux pois chiches, cabillaud aux lentilles) se gardent maintenant 2 à 3 jours au frigo et entrent dans le batch.
+
 ## 3.31.0, 10 octobre 2026
 
 - 80 nouvelles recettes : il y en a maintenant deux par protéine et féculent, 160 en tout. Parmi elles, le poulet croustillant au air fryer avec ses frites maison et son coleslaw, et une salade de pommes de terre au poisson blanc, sauce moutarde. Et aussi du teriyaki, des currys, des pilafs, des taboulés, des gnocchis au four, un burger sans pain…
