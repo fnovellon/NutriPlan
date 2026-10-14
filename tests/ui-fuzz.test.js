@@ -110,6 +110,14 @@ function scan(dom, label){
   // Favorite et à éviter (3.25.0) : la fiche, la liste, les réglages
   click(dom, '#lib-list .lib-r'); click(dom, '#rp-fav'); scan(dom, 'fiche, favorite'); click(dom, '#rp-ban'); scan(dom, 'fiche, à éviter'); click(dom, '#sheet .sheet-x');
   click(dom, '#lib-list .lib-r:last-child'); click(dom, '#lib-fav'); scan(dom, 'recettes, favorites');
+  // Petits-déjeuners et collations (4.1.0) : chaque onglet, une fiche de chaque, les boules d'énergie
+  click(dom, '#nav-rec'); click(dom, '#lib-fav'); click(dom, '#lib-tab-pd'); scan(dom, 'recettes, petits-déjeuners');
+  click(dom, '#lib-list .lib-r'); click(dom, '#rp-fav'); scan(dom, 'fiche d’un petit-déjeuner'); click(dom, '#sheet .sheet-x');
+  click(dom, '[data-action="lib-for"][data-value="1|pd"]'); click(dom, '#lib-list .lib-r:last-child'); scan(dom, 'fiche d’un petit-déjeuner, demain'); click(dom, '#sheet .sheet-x');
+  click(dom, '#lib-tab-co'); scan(dom, 'recettes, collations');
+  click(dom, '#lib-list .lib-r'); click(dom, '#rp-ban'); scan(dom, 'fiche d’une collation'); click(dom, '#sheet .sheet-x');
+  click(dom, '#lib-list .lib-r:last-child'); scan(dom, 'fiche des boules d’énergie'); click(dom, '[data-action="lib-take"]'); scan(dom, 'boules prises');
+  click(dom, '#lib-tab-meal');
   click(dom, '#gear'); click(dom, '#tab-repas'); scan(dom, 'réglages, tes recettes'); click(dom, '#nav-jour');
   // Imprévu (3.26.0) : le panneau, puis la carte et la note
   click(dom, '#imp-dej'); scan(dom, 'panneau de l’imprévu'); click(dom, '[data-action="imp-kcal"][data-value="1000"]'); scan(dom, 'panneau de l’imprévu, une valeur');
@@ -663,13 +671,18 @@ const ACTIONS = {
     const d = dom.window.document, w = dom.window;
     if (d.querySelector('#page').hidden) return 'recettes -';
     d.querySelector('#nav-rec').click();
+    // Un onglet (4.1.0) : midi et soir, petits-déjeuners, collations
+    const tab = R.pick(['meal', 'meal', 'pd', 'co']);
+    d.getElementById('lib-tab-' + tab).click();
     const pick = (sel, v) => { const el = d.querySelector(sel); el.value = v; el.dispatchEvent(new w.Event('change', { bubbles: true })); };
-    if (R.chance(.4)) pick('#lib-prot', R.pick(['', 'poulet', 'boeuf', 'saumon', 'thon', 'oeufs']));
-    if (R.chance(.4)) pick('#lib-starch', R.pick(['', 'riz', 'pates', 'lentilles']));
-    if (R.chance(.3)) d.querySelector(R.pick(['#lib-box', '#lib-quick', '#lib-mine'])).click();
+    if (tab === 'meal' && R.chance(.4)) pick('#lib-prot', R.pick(['', 'poulet', 'boeuf', 'saumon', 'thon', 'oeufs']));
+    if (tab === 'meal' && R.chance(.4)) pick('#lib-starch', R.pick(['', 'riz', 'pates', 'lentilles']));
+    if (R.chance(.3)){ const f = R.pick([...d.querySelectorAll('#lib-box, #lib-quick, #lib-mine')].filter(x => !x.hidden)); if (f) f.click(); }
+    C.ok(d.querySelector('#lib-sel').hidden === (tab !== 'meal'), 'recettes : filtres de l’onglet', tab);
     const tg = R.pick([...d.querySelectorAll('[data-action="lib-for"]')]); tg.click();
     const items = [...d.querySelectorAll('#lib-list .lib-r')], n = +(/^\d+/.exec(d.querySelector('#lib-n').textContent) || [0])[0];
-    C.ok(items.length === (n || 0) && (!items.length || /\srecettes?(\.|, mais)/.test(d.querySelector('#lib-n').textContent)), 'recettes : nombre affiché', () => n + ' / ' + items.length);
+    C.ok(items.length === (n || 0) && (!items.length || /\s(recettes?|petits?-déjeuners?|collations?)(\.|, mais)/.test(d.querySelector('#lib-n').textContent)), 'recettes : nombre affiché', () => n + ' / ' + items.length);
+    C.ok(items.every(x => tab === 'meal' ? !/:/.test(x.dataset.value) : x.dataset.value.indexOf(tab === 'pd' ? 'pd:' : 'c') === 0), 'recettes : liste de l’onglet', tab);
     const bans = items.map(x => x.classList.contains('is-ban'));
     C.ok(bans.every((x, i) => !x || bans.slice(i).every(Boolean)), 'recettes : celles à éviter en fin de liste', () => bans.join());
     const b = R.pick(items), out = () => { d.querySelector(R.pick(['#nav-jour', '#recettes [data-action="fermer"]'])).click(); };
@@ -679,8 +692,9 @@ const ACTIONS = {
     if (!take || R.chance(.3)){ d.querySelector('#sheet .sheet-x').click(); C.ok(d.activeElement === d.getElementById(b.id), 'recettes : focus après la fiche', b.id); out(); return 'recettes fiche'; }
     take.click();
     const q = tg.dataset.value.split('|'), x = new Date(clock.now + 864e5 * +q[0]), iso = x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
-    const st = JSON.parse(w.localStorage.getItem(KEY)), c = st.plans[iso] && st.plans[iso].ch && st.plans[iso].ch[q[1]];
-    C.ok(c && c.recette === b.dataset.value && d.querySelector('#sheet').hidden && d.activeElement && d.activeElement.id === b.id, 'recettes : prise', () => iso + ' ' + JSON.stringify(c) + ' ' + b.dataset.value);
+    const st = JSON.parse(w.localStorage.getItem(KEY)), ch = st.plans[iso] && st.plans[iso].ch, v = b.dataset.value;
+    const ok = ch && (v.indexOf('pd:') === 0 ? ch.pdBase === v.slice(3) : v.indexOf('co:') === 0 ? ch.co === v.slice(3) : v === 'cs:boules' ? ch.cs === 'boules' : ch[q[1]] && ch[q[1]].recette === v);
+    C.ok(ok && d.querySelector('#sheet').hidden && d.activeElement && d.activeElement.id === b.id, 'recettes : prise', () => iso + ' ' + JSON.stringify(ch) + ' ' + v);
     if (R.chance(.5)) d.querySelector('#lib-msg [data-action="lib-day"]').click(); else out();
     return 'recette prise ' + b.dataset.value + ' ' + tg.dataset.value;
   },

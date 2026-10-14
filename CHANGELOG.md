@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 4.1.0, 14 octobre 2026
+
+- Les petits-déjeuners et les collations ont leur place dans « Recettes » : trois onglets, « Midi et soir », « Petits-déjeuners » et « Collations » (avec les boules d'énergie des jours de séance).
+- Chacun a sa fiche : le temps de préparation, s'il se prépare à l'avance, les étapes (pancakes, pain perdu, bircher, porridge, muffins, mug cake, riz au lait, boules d'énergie…) et tes quantités pour ce matin, demain matin, aujourd'hui ou demain. Un jour de sortie longue, la fiche montre la version de ce jour-là et le dit.
+- « Prendre pour demain matin » (ou pour un jour) le met au menu de cette date, comme un choix dans ta journée.
+- « Favorite » et « À éviter » marchent aussi pour eux : dans tes planifications, « Surprends-moi » choisit deux fois plus souvent un favori et ne choisit plus un « à éviter ». Ils sont dans tes réglages avec tes recettes.
+
 ## 4.0.0, 14 octobre 2026
 
 - Planifier, nouvelle formule. En haut, ta planification en cours et la suivante, bien en vue avec leurs petits-déjeuners, collations et plats ; « Nouvelle planification » ; puis les autres, à venir et passées, en version compacte.

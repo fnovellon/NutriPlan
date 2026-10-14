@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -1243,6 +1243,33 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
   const pB = plain(pantryList([{ ch: Object.assign({}, chP, { pdBase: 'brouillade', dej: { prot: 'poulet', starch: 'pdt' }, diner: { prot: 'poulet', starch: 'pdt' } }), res: buildDay(day([]), Object.assign({}, chP, { pdBase: 'brouillade', dej: { prot: 'poulet', starch: 'pdt' }, diner: { prot: 'poulet', starch: 'pdt' } })) }]));
   assert.deepStrictEqual(pB, ['poivre', 'vanille'], 'brouillade : poivre');
   assert.deepStrictEqual(plain(pantryList([null, {}, { ch: null, res: resN }])).length > 0, true, 'entrées abîmées ignorées');
+}
+
+// Petits-déjeuners et collations dans la bibliothèque (4.1.0) : une fiche chacun, préférences (pd:base, co:collation)
+{
+  const keys = [...PD_ORDER].map(x => 'pd:' + x).concat([...SNACK_ORDER].map(x => 'co:' + x), ['cs:boules']);
+  assert.deepStrictEqual(plain(Object.keys(FICHE).sort()), plain(keys.slice().sort()), 'une fiche par petit-déjeuner, collation et pour les boules');
+  keys.forEach(k => assert(FICHE[k].min > 0 && FICHE[k].min <= 30 && typeof FICHE[k].veille === 'boolean' && FICHE[k].steps.length >= 2 && FICHE[k].steps.every(x => typeof x === 'string' && /\.$/.test(x)), 'fiche incomplète : ' + k));
+  assert(FICHE['pd:bircher'].veille && FICHE['co:rizaulait'].veille && !FICHE['co:mugcake'].veille, 'préparés à l’avance');
+  assert.deepStrictEqual(plain(cleanRecipeIds(['pd:avoine', 'pd:x', 'co:thon', 'co:__proto__', 'cs:boules', 'poulet-riz', 'pd:avoine', 'co:', 'pd:constructor'])), ['pd:avoine', 'co:thon', 'poulet-riz'], 'identifiants des préférences');
+  assert(!prefIdOk('cs:boules') && prefIdOk('co:rizaulait') && !prefIdOk(5), 'boules sans préférences');
+  assert.deepStrictEqual(plain(['pd:bircher', 'co:thon', 'cs:boules', 'poulet-riz'].map(prefName)), ['Bircher', 'Bouchées concombre-thon', SNACK_CS.boules.label, RECIPES['poulet-riz'].t], 'noms');
+  // Surprends-moi : jamais à éviter (sauf s'il ne reste que ceux-là), favorite deux fois plus souvent
+  const r = (() => { let x = 11; return () => (x = (x * 16807) % 2147483647) / 2147483647; })();
+  const ban = { fav: [], ban: PD_ORDER.filter(x => x !== 'pain' && x !== 'sale').map(x => 'pd:' + x).concat(['co:oeufs', 'co:muffins', 'co:mugcake']) };
+  const cnt = {};
+  for (let i = 0; i < 400; i++) {
+    const p = surprisePd([], [], r, ban).id, c = surpriseCo([], r, ban).id;
+    assert(['pain', 'sale'].includes(p) && ['thon', 'rizaulait'].includes(c), 'à éviter tiré : ' + p + ' ' + c);
+  }
+  const allBan = { fav: [], ban: PD_ORDER.map(x => 'pd:' + x) };
+  assert(PD_ORDER.includes(surprisePd([], [], r, allBan).id), 'tout à éviter : un petit-déjeuner quand même');
+  const fav = { fav: ['co:thon'], ban: [] };
+  for (let i = 0; i < 3000; i++) { const c = surpriseCo([], r, fav).id; cnt[c] = (cnt[c] || 0) + 1; }
+  near(cnt.thon / 3000, 2 / 6, 0.04, 'collation favorite deux fois plus souvent');
+  // Sans préférences : comme avant, uniforme
+  const n0 = {}; for (let i = 0; i < 3000; i++) { const p = surprisePd([], [], r).id; n0[p] = (n0[p] || 0) + 1; }
+  assert(Object.keys(n0).length === 10 && Object.values(n0).every(v => v > 200), 'sans préférences : uniforme ' + JSON.stringify(n0));
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

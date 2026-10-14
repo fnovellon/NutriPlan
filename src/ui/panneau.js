@@ -25,17 +25,19 @@
   /* Fiche d'une recette (même panneau) : tes quantités pour ce repas avec la recette (sec : la section de buildDay), le
      total, les aromates, les étapes ; meta, titre des quantités, note et bas (boutons) selon d'où elle s'ouvre (la page, la
      bibliothèque des recettes) ; p : le panneau ouvert (pick) */
+  /* Fiche d'une recette, ou (4.1.0) d'un petit-déjeuner (pd:base), d'une collation (co:collation) ou des boules d'énergie
+     (cs:boules) : sec est alors la liste de ses lignes, telles que la journée les donne */
   const showRecipe = function(id, sec, meta, head, note, foot, p){
-    const x = RECIPES[id], items = recipePart(sec), none = new Map();
+    const rec = has(RECIPES, id), x = rec ? RECIPES[id] : FICHE[id], items = rec ? recipePart(sec) : sec, none = new Map();
     pick = p;
-    $('sheet-t').textContent = x.t;
+    $('sheet-t').textContent = prefName(id);
     $('sheet-list').hidden = true;
     $('sheet-rec').hidden = false;
-    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '.' + meta + '</p>' + prefBtns(id) +
+    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : x.veille ? ', se prépare à l’avance' : '') + '.' + meta + '</p>' + (prefIdOk(id) ? prefBtns(id) : '') +
       '<h3 class="rec-h">' + head + '</h3>' +
       '<ul class="items">' + items.map(function(i){ return itemHTML('rec', i, none); }).join('') + '</ul>' +
       '<p class="rec-tot">En tout' + NB + ':' + macHTML(total(items)) + '</p>' + note +
-      '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' +
+      (rec ? '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' : '') +
       '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + x.steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>' + foot;
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
@@ -61,13 +63,16 @@
      (suggestions), la bibliothèque et les réglages suivent, le panneau reste ouvert */
   const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 20.5s-7.4-4.4-9.3-8.9C1.3 8.2 3.3 4.5 6.9 4.5c2.1 0 3.4 1.1 5.1 3 1.7-1.9 3-3 5.1-3 3.6 0 5.6 3.7 4.2 7.1-1.9 4.5-9.3 8.9-9.3 8.9z"/></svg>';
   const PREF_TEXT = {fav:'Elle revient deux fois plus souvent quand l’appli tire tes plats.', ban:'L’appli ne la tire plus et ne la propose plus sous tes repas. Tu peux toujours la choisir.'};
+  /* Petits-déjeuners et collations (4.1.0) : seulement pour « Surprends-moi » dans une planification */
+  const PREF_TEXT_PC = function(k, le){ return k === 'fav' ? '«' + NB + 'Surprends-moi' + NB + '» ' + le + ' choisit deux fois plus souvent dans tes planifications.' : '«' + NB + 'Surprends-moi' + NB + '» ne ' + le + ' choisit plus. Tu peux toujours ' + le + ' prendre.'; };
+  const prefText = function(id, k){ return !k ? '' : has(RECIPES, id) ? PREF_TEXT[k] : PREF_TEXT_PC(k, id.indexOf('pd:') === 0 ? 'le' : 'la'); };
   const prefOf = function(id){ const pr = cleanProfile(prof); return pr.fav.indexOf(id) >= 0 ? 'fav' : pr.ban.indexOf(id) >= 0 ? 'ban' : ''; };
   const prefBtns = function(id){
     const k = prefOf(id);
     return '<div class="opts-list rec-pref" role="group" aria-label="Cette recette dans les tirages">' +
       '<button type="button" class="opt" id="rp-fav" data-action="rec-pref" data-pref="fav" data-value="' + id + '" aria-pressed="' + (k === 'fav') + '">' + HEART + 'Favorite</button>' +
       '<button type="button" class="opt" id="rp-ban" data-action="rec-pref" data-pref="ban" data-value="' + id + '" aria-pressed="' + (k === 'ban') + '">À éviter</button></div>' +
-      '<p class="rec-pref-s" id="rp-s" role="status">' + (k ? PREF_TEXT[k] : '') + '</p>';
+      '<p class="rec-pref-s" id="rp-s" role="status">' + prefText(id, k) + '</p>';
   };
   /* k : fav ou ban ; on : la mettre (sinon l'enlever) ; elle quitte toujours l'autre liste */
   const setPref = function(id, k, on){
@@ -83,12 +88,12 @@
   Object.assign(ACTIONS, {
     'rec-pref': function(b, v){
       const k = b.dataset.pref;
-      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      if (!prefIdOk(v) || (k !== 'fav' && k !== 'ban')) return;
       setPref(v, k, prefOf(v) !== k);
       const now = prefOf(v);
       $('rp-fav').setAttribute('aria-pressed', String(now === 'fav'));
       $('rp-ban').setAttribute('aria-pressed', String(now === 'ban'));
-      $('rp-s').textContent = now ? PREF_TEXT[now] : '';
+      $('rp-s').textContent = prefText(v, now);
       b.focus({preventScroll:true});
     }
   });

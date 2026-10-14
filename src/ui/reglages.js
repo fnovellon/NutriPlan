@@ -80,8 +80,8 @@
     const pr = cleanProfile(prof);
     $('rp-list').innerHTML = PREF_G.map(function(g){
       return '<p class="rf-l" id="rp-' + g[0] + '-l">' + g[1] + '</p>' + (pr[g[0]].length ? '<ul class="rp-ul" aria-labelledby="rp-' + g[0] + '-l">' + pr[g[0]].map(function(id){
-        return '<li><span class="rp-n">' + RECIPES[id].t + '</span><button type="button" class="rm" data-action="rp-rm" data-pref="' + g[0] + '" data-value="' + id + '"' +
-          ' aria-label="Retirer «' + NB + RECIPES[id].t + NB + '» ' + g[2] + '">×</button></li>';
+        return '<li><span class="rp-n">' + prefName(id) + '</span><button type="button" class="rm" data-action="rp-rm" data-pref="' + g[0] + '" data-value="' + id + '"' +
+          ' aria-label="Retirer «' + NB + prefName(id) + NB + '» ' + g[2] + '">×</button></li>';
       }).join('') + '</ul>' : '<p class="calc rp-none">Aucune pour l’instant.</p>');
     }).join('');
   };
@@ -147,7 +147,7 @@
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, favs:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
+    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {tab:'meal', prot:'', starch:'', box:false, quick:false, favs:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();
@@ -195,7 +195,7 @@
     /* Une recette retirée de sa liste : le focus va sur la suivante (sinon la précédente, sinon le titre) */
     'rp-rm': function(b, v){
       const k = b.dataset.pref;
-      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      if (!prefIdOk(v) || (k !== 'fav' && k !== 'ban')) return;
       const all = [...$('rp-list').querySelectorAll('[data-action="rp-rm"][data-pref="' + k + '"]')].map(function(x){ return x.dataset.value; }), i = all.indexOf(v);
       setPref(v, k, false);
       const to = all[i + 1] || all[i - 1], nx = to ? $('rp-list').querySelector('[data-pref="' + k + '"][data-value="' + to + '"]') : null;

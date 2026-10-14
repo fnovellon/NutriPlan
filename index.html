@@ -247,6 +247,9 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 @keyframes in-l{from{opacity:0;transform:translateX(28px);}}
 @keyframes in-r{from{opacity:0;transform:translateX(-28px);}}
 /* Recettes (3.24.0) : le repas visé, les filtres, la liste (une ligne par recette, la choisie pour le repas visé marquée) */
+.lib-tabs{display:flex;width:100%;margin:0 0 14px;}
+.lib-tabs button{flex:1;padding:8px 6px;white-space:normal;font-size:14.5px;}
+.lib-sel[hidden],.lib-f .opt[hidden],#lib-mine[hidden]{display:none;}
 .lib-l{margin:6px 0 8px;}
 .lib-for{margin:0 0 16px;}
 .lib-sel{margin:4px 0 12px;}
@@ -832,7 +835,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       </section>
       <section class="needs" id="rec-prefs" aria-labelledby="rp-t">
         <h2 class="needs-t" id="rp-t" tabindex="-1">Tes recettes</h2>
-        <p class="needs-s">Dans la fiche d’une recette, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats, «&nbsp;À éviter&nbsp;» ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas.</p>
+        <p class="needs-s">Dans la fiche d’une recette, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats, «&nbsp;À éviter&nbsp;» ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas. Pour un petit-déjeuner ou une collation, c’est «&nbsp;Surprends-moi&nbsp;» des planifications qui en tient compte.</p>
         <div class="needs-body" id="rp-list"></div>
       </section>
       <section class="needs" aria-labelledby="shaker-t">
@@ -911,7 +914,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent (il y en a deux par couple, elles tournent d’un jour à l’autre&nbsp;; «&nbsp;Une autre recette&nbsp;» montre la suivante). «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
-      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 160 recettes de l’appli, deux par protéine et féculent, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus.</li>
+      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 160 recettes de l’appli, deux par protéine et féculent, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus. Deux autres onglets, «&nbsp;Petits-déjeuners&nbsp;» et «&nbsp;Collations&nbsp;» (avec les boules d’énergie)&nbsp;: leur préparation, tes quantités pour ce matin, demain matin, aujourd’hui ou demain, et «&nbsp;Prendre pour…&nbsp;». Un petit-déjeuner ou une collation favori revient deux fois plus souvent dans «&nbsp;Surprends-moi&nbsp;» de tes planifications, un «&nbsp;à éviter&nbsp;» n’y revient plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
       <li>Un repas ne s’est pas passé comme prévu&nbsp;? «&nbsp;Un imprévu&nbsp;?&nbsp;», en bas de sa carte&nbsp;: à la place du repas ou en plus, une estimation en kcal. La suite de ta journée s’ajuste (les féculents d’après baissent)&nbsp;; ce qui ne peut pas être repris reste, sans rien rattraper le lendemain.</li>
@@ -1009,11 +1012,12 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 
 <main class="app lib" id="recettes" hidden>
   <h1 id="lib-h" tabindex="-1">Recettes</h1>
-  <p class="repas-p">Les 160 recettes de l’appli, deux par protéine et féculent. Touche-en une pour voir tes quantités et la prendre pour un repas.</p>
+  <div class="seg lib-tabs" id="lib-tabs" role="group" aria-label="Quelles recettes"></div>
+  <p class="repas-p" id="lib-p"></p>
   <p class="lbl lib-l" id="lib-for-l">Pour quel repas&nbsp;?</p>
   <div class="opts-list lib-for" id="lib-for" role="group" aria-labelledby="lib-for-l"></div>
   <p class="intro" id="lib-msg" role="status"></p>
-  <div class="fields lib-sel">
+  <div class="fields lib-sel" id="lib-sel">
     <label class="field"><span>Protéine</span><span class="inp"><select id="lib-prot" data-lib="prot"></select></span></label>
     <label class="field"><span>Féculent</span><span class="inp"><select id="lib-starch" data-lib="starch"></select></span></label>
   </div>
@@ -1043,7 +1047,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.1.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1230,6 +1234,26 @@ const SNACK = {
 const SNACK_ORDER = ['oeufs','muffins','mugcake','thon','rizaulait'];
 const SNACK_CS = {banane:{label:'Banane, compote', sub:'la compote avec une séance moyenne ou longue'}, boules:{label:'Boules d’énergie', sub:'flocons, fruits secs, amandes'}};
 const SNACK_CS_ORDER = ['banane','boules'];
+/* Fiches des petits-déjeuners et des collations (4.1.0, bibliothèque des recettes) : temps de préparation, préparée à
+   l'avance (veille) et étapes. Clés : pd:base, co:collation, cs:boules (les boules d'énergie des jours de séance). */
+const FICHE = {
+  'pd:avoine':{min:5, veille:false, steps:["En porridge\u00a0: fais cuire les flocons 3 à 4\u00a0min dans un peu d’eau ou de lait, en remuant.", "Ou la veille\u00a0: mélange les flocons au skyr et laisse toute la nuit au frigo.", "Ajoute le skyr, le fruit et les amandes concassées."]},
+  'pd:pain':{min:5, veille:false, steps:["Toaste le pain complet si tu veux.", "Sers avec le skyr, le fruit et les amandes."]},
+  'pd:sale':{min:10, veille:false, steps:["Fais cuire les œufs\u00a0: 6\u00a0min dans l’eau bouillante pour des œufs à la coque, pochés, ou brouillés à la poêle antiadhésive sans matière grasse.", "Toaste le pain et ajoute le jambon.", "Le fruit à côté."]},
+  'pd:pancakes':{min:15, veille:false, steps:["Écrase la banane à la fourchette, ajoute les œufs et les flocons (mixe le tout si tu préfères une pâte lisse).", "Fais cuire de petits pancakes 2\u00a0min de chaque côté dans une poêle antiadhésive bien chaude, sans matière grasse.", "Sers avec le skyr et les fruits rouges."]},
+  'pd:painperdu':{min:15, veille:false, steps:["Bats l’œuf avec le lait et une pincée de cannelle.", "Trempe les tranches de pain des deux côtés.", "Dore-les 2 à 3\u00a0min de chaque côté à la poêle antiadhésive, sans beurre.", "Sers avec le skyr et le fruit."]},
+  'pd:bircher':{min:10, veille:true, steps:["La veille\u00a0: mélange les flocons, le lait, la moitié du skyr et la pomme râpée, avec une pincée de cannelle.", "Laisse toute la nuit au frigo, couvert.", "Le matin\u00a0: ajoute le reste du skyr et les amandes concassées."]},
+  'pd:porridge':{min:10, veille:false, steps:["Fais cuire les flocons dans le lait 4 à 5\u00a0min à feu doux, en remuant.", "Hors du feu, ajoute le cacao et la moitié de la banane écrasée.", "Sers avec le skyr et le reste de la banane en rondelles."]},
+  'pd:brouillade':{min:15, veille:false, steps:["Fais revenir les champignons émincés 3\u00a0min à la poêle antiadhésive, puis les épinards jusqu’à ce qu’ils tombent.", "Ajoute les œufs battus et remue doucement à feu doux jusqu’à ce qu’ils soient crémeux\u00a0; poivre.", "Sers avec le pain grillé, le skyr et le fruit à côté."]},
+  'pd:smoothie':{min:5, veille:false, steps:["Mixe le skyr, la banane, les fruits rouges, le lait et les flocons jusqu’à ce que ce soit bien lisse.", "Verse dans une gourde ou un bocal\u00a0: il se garde quelques heures au frais."]},
+  'pd:wrap':{min:10, veille:false, steps:["Fais cuire les œufs brouillés à la poêle antiadhésive, sans matière grasse.", "Garnis la tortilla\u00a0: jambon, œufs, tomate en dés.", "Roule bien serré\u00a0; le fruit à côté."]},
+  'co:oeufs':{min:12, veille:true, steps:["Plonge les œufs dans l’eau bouillante\u00a0: 6\u00a0min pour des œufs mollets, 10\u00a0min pour des œufs durs.", "Refroidis-les dans l’eau froide.", "Durs, ils se gardent une semaine au frigo dans leur coquille\u00a0; mollets, mange-les dans les 2\u00a0jours."]},
+  'co:muffins':{min:25, veille:true, steps:["Préchauffe le four à 180\u00a0°C.", "Bats les œufs avec les épinards hachés, le parmesan et du poivre.", "Verse dans des moules à muffins en silicone et fais cuire 20\u00a0min.", "Une fournée se garde 3\u00a0jours au frigo\u00a0: froids ou réchauffés."]},
+  'co:mugcake':{min:5, veille:false, steps:["Dans un grand mug, mélange l’œuf, le skyr, les flocons et le cacao.", "Fais cuire 1\u00a0min\u00a030 au micro-ondes, à pleine puissance.", "Laisse tiédir une minute avant de le démouler."]},
+  'co:thon':{min:5, veille:false, steps:["Égoutte le thon et mélange-le au skyr, avec un filet de citron et du poivre.", "Coupe le concombre en rondelles épaisses.", "Garnis les rondelles\u00a0; les galettes de riz à côté."]},
+  'co:rizaulait':{min:30, veille:true, steps:["Porte le lait à frémissement avec un peu de vanille (ou de cannelle).", "Ajoute le riz rond et fais cuire 25\u00a0min à feu doux, en remuant souvent.", "Laisse tiédir, puis mélange le skyr. Il se garde 3\u00a0jours au frigo\u00a0: fais-en pour plusieurs collations."]},
+  'cs:boules':{min:15, veille:true, steps:["Mixe les flocons, les fruits secs et les amandes jusqu’à obtenir une pâte qui se tient (une cuillère d’eau si besoin).", "Roule-la en boules de la taille d’une noix.", "Une fournée se garde une semaine au frais, dans une boîte fermée."]}
+};
 
 /* Protéines du déjeuner et du dîner, avec leur matière grasse : portions de référence (72 kg) mises à l'échelle k ;
    base(k, g) : g = [p1, p2] en grammes, poids fixés d'une boîte de batch cooking (voir fixedGrams), sinon null.
@@ -2213,10 +2237,24 @@ function withAllowed(c, off){
   ['co', 'cs'].forEach(function(f){ if (has(c, f)) out[f] = c[f]; });
   return out;
 }
-/* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, sans doublon */
+/* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, et depuis la 4.1.0 des petits-déjeuners (pd:base) et
+   des collations (co:collation) ; sans doublon */
+function prefIdOk(x){
+  if (typeof x !== 'string') return false;
+  if (x.indexOf('pd:') === 0) return has(PD, x.slice(3));
+  if (x.indexOf('co:') === 0) return has(SNACK, x.slice(3));
+  return has(RECIPES, x);
+}
+/* Nom d'une recette, d'un petit-déjeuner, d'une collation ou des boules d'énergie (cs:boules) */
+function prefName(x){
+  if (x.indexOf('pd:') === 0) return PD[x.slice(3)].label;
+  if (x.indexOf('co:') === 0) return SNACK[x.slice(3)].label;
+  if (x === 'cs:boules') return SNACK_CS.boules.label;
+  return RECIPES[x].t;
+}
 function cleanRecipeIds(o){
   if (!Array.isArray(o)) return [];
-  return o.slice(0, 200).filter(function(x, i, a){ return typeof x === 'string' && has(RECIPES, x) && a.indexOf(x) === i; });
+  return o.slice(0, 200).filter(function(x, i, a){ return prefIdOk(x) && a.indexOf(x) === i; });
 }
 /* Poids d'une recette dans les tirages : 0 à éviter (jamais tirée), 2 favorite, 1 sinon ; prefs : { fav, ban } (le profil) */
 function recipePref(id, prefs){
@@ -3339,16 +3377,16 @@ function cleanCards(o){
   });
   return out;
 }
-/* Surprises : au hasard parmi les aliments proposés (off), pas une carte déjà prise (s'il en reste) */
-function surprisePd(cards, off, rand){
+/* Surprises : au hasard parmi les aliments proposés (off), pas une carte déjà prise (s'il en reste) ; préférences (4.1.0,
+   prefs : le profil) : un petit-déjeuner ou une collation à éviter jamais tiré (sauf s'il ne reste que ceux-là), une favorite
+   deux fois plus souvent */
+function surprisePd(cards, off, rand, prefs){
   const r = rand || Math.random, ok = allowed('pd', off), fresh = ok.filter(function(id){ return !cards.some(function(c){ return c.id === id; }); });
-  const l = fresh.length ? fresh : ok;
-  return {id:l[Math.min(l.length - 1, Math.floor(r() * l.length))], s:true};
+  return {id:tieredPick(r, fresh.length ? fresh : ok, function(id){ return recipePref('pd:' + id, prefs); }), s:true};
 }
-function surpriseCo(cards, rand){
+function surpriseCo(cards, rand, prefs){
   const r = rand || Math.random, fresh = SNACK_ORDER.filter(function(id){ return !cards.some(function(c){ return c.id === id; }); });
-  const l = fresh.length ? fresh : SNACK_ORDER;
-  return {id:l[Math.min(l.length - 1, Math.floor(r() * l.length))], cs:'banane', s:true};
+  return {id:tieredPick(r, fresh.length ? fresh : SNACK_ORDER, function(id){ return recipePref('co:' + id, prefs); }), cs:'banane', s:true};
 }
 /* Un repas surprise : fix = { prot } ou { starch } (surprise partielle, l'autre est tiré) ou {} (complète). La protéine évite
    celles déjà prises, le poisson est favorisé s'il n'y en a pas encore (× 3), les légumes secs aussi ; un féculent déjà pris
@@ -4624,8 +4662,8 @@ if (typeof document !== 'undefined'){
   };
   const surprise = function(kind, fix, others){
     const pr = cleanProfile(prof);
-    if (kind === 'pd') return surprisePd(others, pr.off);
-    if (kind === 'co') return surpriseCo(others);
+    if (kind === 'pd') return surprisePd(others, pr.off, null, pr);
+    if (kind === 'co') return surpriseCo(others, null, pr);
     return surpriseMeal(others, fix, pr.off, pr);
   };
   /* Valider : le repas libre de chaque jour, enregistré tel que le récap le montre (un par semaine, aussi hors de la
@@ -5253,17 +5291,19 @@ if (typeof document !== 'undefined'){
   /* Fiche d'une recette (même panneau) : tes quantités pour ce repas avec la recette (sec : la section de buildDay), le
      total, les aromates, les étapes ; meta, titre des quantités, note et bas (boutons) selon d'où elle s'ouvre (la page, la
      bibliothèque des recettes) ; p : le panneau ouvert (pick) */
+  /* Fiche d'une recette, ou (4.1.0) d'un petit-déjeuner (pd:base), d'une collation (co:collation) ou des boules d'énergie
+     (cs:boules) : sec est alors la liste de ses lignes, telles que la journée les donne */
   const showRecipe = function(id, sec, meta, head, note, foot, p){
-    const x = RECIPES[id], items = recipePart(sec), none = new Map();
+    const rec = has(RECIPES, id), x = rec ? RECIPES[id] : FICHE[id], items = rec ? recipePart(sec) : sec, none = new Map();
     pick = p;
-    $('sheet-t').textContent = x.t;
+    $('sheet-t').textContent = prefName(id);
     $('sheet-list').hidden = true;
     $('sheet-rec').hidden = false;
-    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : '') + '.' + meta + '</p>' + prefBtns(id) +
+    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : x.veille ? ', se prépare à l’avance' : '') + '.' + meta + '</p>' + (prefIdOk(id) ? prefBtns(id) : '') +
       '<h3 class="rec-h">' + head + '</h3>' +
       '<ul class="items">' + items.map(function(i){ return itemHTML('rec', i, none); }).join('') + '</ul>' +
       '<p class="rec-tot">En tout' + NB + ':' + macHTML(total(items)) + '</p>' + note +
-      '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' +
+      (rec ? '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' : '') +
       '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + x.steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>' + foot;
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;
@@ -5289,13 +5329,16 @@ if (typeof document !== 'undefined'){
      (suggestions), la bibliothèque et les réglages suivent, le panneau reste ouvert */
   const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 20.5s-7.4-4.4-9.3-8.9C1.3 8.2 3.3 4.5 6.9 4.5c2.1 0 3.4 1.1 5.1 3 1.7-1.9 3-3 5.1-3 3.6 0 5.6 3.7 4.2 7.1-1.9 4.5-9.3 8.9-9.3 8.9z"/></svg>';
   const PREF_TEXT = {fav:'Elle revient deux fois plus souvent quand l’appli tire tes plats.', ban:'L’appli ne la tire plus et ne la propose plus sous tes repas. Tu peux toujours la choisir.'};
+  /* Petits-déjeuners et collations (4.1.0) : seulement pour « Surprends-moi » dans une planification */
+  const PREF_TEXT_PC = function(k, le){ return k === 'fav' ? '«' + NB + 'Surprends-moi' + NB + '» ' + le + ' choisit deux fois plus souvent dans tes planifications.' : '«' + NB + 'Surprends-moi' + NB + '» ne ' + le + ' choisit plus. Tu peux toujours ' + le + ' prendre.'; };
+  const prefText = function(id, k){ return !k ? '' : has(RECIPES, id) ? PREF_TEXT[k] : PREF_TEXT_PC(k, id.indexOf('pd:') === 0 ? 'le' : 'la'); };
   const prefOf = function(id){ const pr = cleanProfile(prof); return pr.fav.indexOf(id) >= 0 ? 'fav' : pr.ban.indexOf(id) >= 0 ? 'ban' : ''; };
   const prefBtns = function(id){
     const k = prefOf(id);
     return '<div class="opts-list rec-pref" role="group" aria-label="Cette recette dans les tirages">' +
       '<button type="button" class="opt" id="rp-fav" data-action="rec-pref" data-pref="fav" data-value="' + id + '" aria-pressed="' + (k === 'fav') + '">' + HEART + 'Favorite</button>' +
       '<button type="button" class="opt" id="rp-ban" data-action="rec-pref" data-pref="ban" data-value="' + id + '" aria-pressed="' + (k === 'ban') + '">À éviter</button></div>' +
-      '<p class="rec-pref-s" id="rp-s" role="status">' + (k ? PREF_TEXT[k] : '') + '</p>';
+      '<p class="rec-pref-s" id="rp-s" role="status">' + prefText(id, k) + '</p>';
   };
   /* k : fav ou ban ; on : la mettre (sinon l'enlever) ; elle quitte toujours l'autre liste */
   const setPref = function(id, k, on){
@@ -5311,12 +5354,12 @@ if (typeof document !== 'undefined'){
   Object.assign(ACTIONS, {
     'rec-pref': function(b, v){
       const k = b.dataset.pref;
-      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      if (!prefIdOk(v) || (k !== 'fav' && k !== 'ban')) return;
       setPref(v, k, prefOf(v) !== k);
       const now = prefOf(v);
       $('rp-fav').setAttribute('aria-pressed', String(now === 'fav'));
       $('rp-ban').setAttribute('aria-pressed', String(now === 'ban'));
-      $('rp-s').textContent = now ? PREF_TEXT[now] : '';
+      $('rp-s').textContent = prefText(v, now);
       b.focus({preventScroll:true});
     }
   });
@@ -5347,50 +5390,85 @@ if (typeof document !== 'undefined'){
     'open-pick': function(b){ openPick(b.dataset.kind, b.dataset.slot || null, b.dataset.ctx || 'page', b); },
     'close-pick': function(){ closePick(false); }
   });
-  /* Recettes (3.24.0) : la bibliothèque des 80 recettes, une par protéine × féculent, filtrables (protéine, féculent, celles
-     qui se gardent, les rapides, seulement tes aliments). Le repas visé (ce midi, ce soir, demain midi, demain soir) donne
-     les quantités de la fiche ; « Prendre pour … » met la recette dans ce repas (protéine, féculent, recette ; le dessert
-     reste), enregistrée pour la date et en mémoire pour son jour de la semaine. Filtres gardés pendant la visite de l'appli,
-     repas visé remis à l'heure à chaque ouverture. */
-  const LIB_T = [['0|dej', 'Ce midi'], ['0|diner', 'Ce soir'], ['1|dej', 'Demain midi'], ['1|diner', 'Demain soir']];
+  /* Recettes (3.24.0) : la bibliothèque, en trois onglets depuis la 4.1.0 : « Midi et soir » (les 160 recettes, deux par
+     protéine × féculent, filtrables : protéine, féculent, celles qui se gardent), « Petits-déjeuners » (les dix bases, pd:base)
+     et « Collations » (les cinq, co:collation, et les boules d'énergie des jours de séance, cs:boules). Filtres communs : les
+     rapides, les favorites, seulement tes aliments. Le repas visé de l'onglet (ce midi, ce soir, demain midi, demain soir ;
+     ce matin, demain matin ; aujourd'hui, demain) donne les quantités de la fiche ; « Prendre pour … » la met dans ce repas
+     (le dessert reste), enregistrée pour la date et en mémoire pour son jour de la semaine. Filtres et onglet gardés pendant
+     la visite de l'appli, repas visés remis à l'heure à chaque ouverture. */
+  const LIB_TT = {
+    meal:[['0|dej', 'Ce midi'], ['0|diner', 'Ce soir'], ['1|dej', 'Demain midi'], ['1|diner', 'Demain soir']],
+    pd:[['0|pd', 'Ce matin'], ['1|pd', 'Demain matin']],
+    co:[['0|co', 'Aujourd’hui'], ['1|co', 'Demain']]
+  };
+  const LIB_TABS = [['meal', 'Midi et soir'], ['pd', 'Petits-déjeuners'], ['co', 'Collations']];
+  const LIB_P = {
+    meal:'Les 160 recettes de l’appli, deux par protéine et féculent. Touche-en une pour voir tes quantités et la prendre pour un repas.',
+    pd:'Les dix petits-déjeuners, avec leur préparation. Touche-en un pour voir tes quantités et le prendre pour un matin.',
+    co:'Les cinq collations et les boules d’énergie des jours de séance. Touche-en une pour voir tes quantités et la prendre pour un jour.'
+  };
   const LIB_QUICK = 20;
-  const lib = {prot:'', starch:'', box:false, quick:false, favs:false, mine:true, target:'0|dej'};
+  const lib = {tab:'meal', prot:'', starch:'', box:false, quick:false, favs:false, mine:true, target:'0|dej', tpd:'0|pd', tco:'0|co'};
   const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return STARCH_ORDER.reduce(function(b, s){ return b.concat(recipesFor(p, s)); }, a); }, []);
-  /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi */
+  const LIB_PD = PD_ORDER.map(function(x){ return 'pd:' + x; }), LIB_CO = SNACK_ORDER.map(function(x){ return 'co:' + x; }).concat(['cs:boules']);
+  /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi ; avant 10 h ce matin, sinon demain matin ;
+     avant 18 h la collation d'aujourd'hui, sinon celle de demain */
   const resetLib = function(){
     const h = new Date().getHours();
     lib.target = h < 14 ? '0|dej' : h < 21 ? '0|diner' : '1|dej';
+    lib.tpd = h < 10 ? '0|pd' : '1|pd';
+    lib.tco = h < 18 ? '0|co' : '1|co';
     $('lib-msg').textContent = '';
   };
+  const libKey = function(){ return lib.tab === 'pd' ? 'tpd' : lib.tab === 'co' ? 'tco' : 'target'; };
   const libTarget = function(){
-    const q = lib.target.split('|'), iso = isoDate(addDays(today, +q[0]));
-    return {iso:iso, slot:q[1], day:+q[0], label:LIB_T.find(function(t){ return t[0] === lib.target; })[1].toLowerCase(), libre:q[1] === 'diner' && planFor(iso).libre};
+    const v = lib[libKey()], q = v.split('|'), iso = isoDate(addDays(today, +q[0]));
+    return {iso:iso, slot:q[1], day:+q[0], label:LIB_TT[lib.tab].find(function(t){ return t[0] === v; })[1].toLowerCase(), libre:q[1] === 'diner' && planFor(iso).libre};
   };
-  const libChosen = function(tg){ return recipeOf(choicesFor(tg.iso, fromIso(tg.iso).getDay())[tg.slot]); };
+  /* Ce qui est déjà choisi pour le repas visé : la recette, la base du petit-déjeuner, la collation (et ses boules) */
+  const libChosen = function(tg){
+    const c = choicesFor(tg.iso, fromIso(tg.iso).getDay());
+    if (tg.slot === 'pd') return 'pd:' + c.pdBase;
+    if (tg.slot === 'co') return c.cs === 'boules' && c.co !== 'rizaulait' ? ['co:' + (c.co || 'oeufs'), 'cs:boules'] : 'co:' + (c.co || 'oeufs');
+    return recipeOf(c[tg.slot]);
+  };
+  const libIsOn = function(id, tg){ const x = libChosen(tg); return !tg.libre && (Array.isArray(x) ? x.indexOf(id) >= 0 : x === id); };
+  const libMin = function(id){ return has(RECIPES, id) ? RECIPES[id].min : FICHE[id].min; };
   const libList = function(){
-    const pr = cleanProfile(prof), off = pr.off, okP = allowed('prot', off), okS = allowed('starch', off);
+    const pr = cleanProfile(prof), off = pr.off, okP = allowed('prot', off), okS = allowed('starch', off), okPd = allowed('pd', off);
+    const all = lib.tab === 'pd' ? LIB_PD : lib.tab === 'co' ? LIB_CO : LIB_ALL;
     /* Les recettes à éviter en fin de liste (3.25.0) */
-    return LIB_ALL.filter(function(id){
+    return all.filter(function(id){
+      if ((lib.quick && libMin(id) > LIB_QUICK) || (lib.favs && pr.fav.indexOf(id) < 0)) return false;
+      if (lib.tab === 'pd') return !lib.mine || okPd.indexOf(id.slice(3)) >= 0;
+      if (lib.tab === 'co') return true;
       const x = RECIPES[id];
-      return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) && (!lib.quick || x.min <= LIB_QUICK) &&
-        (!lib.favs || pr.fav.indexOf(id) >= 0) && (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
-    }).sort(function(a, b){ return (pr.ban.indexOf(a) >= 0) - (pr.ban.indexOf(b) >= 0) || LIB_ALL.indexOf(a) - LIB_ALL.indexOf(b); });
+      return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) &&
+        (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
+    }).sort(function(a, b){ return (pr.ban.indexOf(a) >= 0) - (pr.ban.indexOf(b) >= 0) || all.indexOf(a) - all.indexOf(b); });
   };
   /* Les filtres (listes de choix) une fois pour toutes ; le reste à chaque dessin. Favorites : 3.25.0 */
   $('lib-prot').innerHTML = '<option value="">Toutes</option>' + PROT_ORDER.map(function(p){ return '<option value="' + p + '">' + PROT[p].label + '</option>'; }).join('');
   $('lib-starch').innerHTML = '<option value="">Tous</option>' + STARCH_ORDER.map(function(s){ return '<option value="' + s + '">' + STARCH[s].label + '</option>'; }).join('');
   const renderLib = function(){
-    const tg = libTarget(), cur = libChosen(tg), list = libList();
-    $('lib-for').innerHTML = LIB_T.map(function(t){ return '<button type="button" class="opt" data-action="lib-for" data-value="' + t[0] + '" aria-pressed="' + (t[0] === lib.target) + '">' + t[1] + '</button>'; }).join('');
+    const tg = libTarget(), list = libList(), meal = lib.tab === 'meal', tv = lib[libKey()];
+    $('lib-tabs').innerHTML = LIB_TABS.map(function(t){ return '<button type="button" id="lib-tab-' + t[0] + '" data-action="lib-tab" data-value="' + t[0] + '" aria-pressed="' + (t[0] === lib.tab) + '">' + t[1] + '</button>'; }).join('');
+    $('lib-p').textContent = LIB_P[lib.tab];
+    $('lib-for-l').textContent = meal ? 'Pour quel repas' + NB + '?' : lib.tab === 'pd' ? 'Pour quel matin' + NB + '?' : 'Pour quel jour' + NB + '?';
+    $('lib-for').innerHTML = LIB_TT[lib.tab].map(function(t){ return '<button type="button" class="opt" data-action="lib-for" data-value="' + t[0] + '" aria-pressed="' + (t[0] === tv) + '">' + t[1] + '</button>'; }).join('');
+    $('lib-sel').hidden = !meal; $('lib-box').hidden = !meal;
+    $('lib-mine').hidden = lib.tab === 'co';
     $('lib-prot').value = lib.prot; $('lib-starch').value = lib.starch;
     [['lib-box', lib.box], ['lib-quick', lib.quick], ['lib-fav', lib.favs]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
     $('lib-mine').setAttribute('aria-checked', String(lib.mine));
-    $('lib-n').textContent = list.length ? list.length + NB + 'recette' + (list.length > 1 ? 's' : '') + (tg.libre ? ', mais ' + tg.label + ', c’est ton repas libre.' : '.') : 'Aucune recette avec ces filtres.';
+    const word = meal ? ['recette', 'recettes'] : lib.tab === 'pd' ? ['petit-déjeuner', 'petits-déjeuners'] : ['collation', 'collations'];
+    $('lib-n').textContent = list.length ? list.length + NB + word[list.length > 1 ? 1 : 0] + (tg.libre ? ', mais ' + tg.label + ', c’est ton repas libre.' : '.') : (meal ? 'Aucune recette' : 'Rien') + ' avec ces filtres.';
     $('lib-list').innerHTML = list.map(function(id){
-      const x = RECIPES[id], on = id === cur && !tg.libre, k = prefOf(id);
+      const x = has(RECIPES, id) ? RECIPES[id] : FICHE[id], on = libIsOn(id, tg), k = prefOf(id);
       return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + (k === 'ban' ? ' is-ban' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
-        '<span class="lib-t">' + (k === 'fav' ? '<span class="lib-h" role="img" aria-label="Favorite">' + HEART + '</span>' : '') + x.t + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : '') + (k === 'ban' ? ', à éviter' : '') +
-        (on ? '<span class="lib-c">Choisie pour ' + tg.label + '</span>' : '') + '</span></button></li>';
+        '<span class="lib-t">' + (k === 'fav' ? '<span class="lib-h" role="img" aria-label="Favorite">' + HEART + '</span>' : '') + prefName(id) + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : x.veille ? ', se prépare à l’avance' : '') + (k === 'ban' ? ', à éviter' : '') +
+        (on ? '<span class="lib-c">' + (meal ? 'Choisie pour ' : 'Au menu ') + tg.label + '</span>' : '') + '</span></button></li>';
     }).join('');
   };
   /* Listes de choix : la liste suit tout de suite */
@@ -5407,14 +5485,47 @@ if (typeof document !== 'undefined'){
     c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:id};
     return buildDay(planForMeal(planFor(tg.iso), tg.slot), c, prof).secs.find(function(z){ return z.id === tg.slot; });
   };
+  /* Un petit-déjeuner, une collation ou les boules d'énergie pour le jour visé (4.1.0) : leurs lignes, telles que la journée de
+     cette date les donne avec eux, et une note quand ce jour-là les change (sortie longue, pas de séance) ; ch : les plats */
+  const SNACK_KEYS = ['rzr', 'rzl', 'rzs', 'csk', 'cam', 'mfo', 'mfe', 'mfp', 'mko', 'mks', 'mka', 'mkc', 'tht', 'thc', 'ths', 'thg', 'oe'];
+  const libPart = function(id, tg){
+    const js = fromIso(tg.iso).getDay(), c = cleanCh(choicesFor(tg.iso, js), js), p0 = planForMeal(planFor(tg.iso), tg.slot);
+    const long = p0.seances.some(function(x){ return x.taille === 'longue'; }), noLong = Object.assign({}, p0, {seances:p0.seances.filter(function(x){ return x.taille !== 'longue'; })});
+    const k = id.slice(3);
+    let plan = p0, note = '', keys = null;
+    if (id.indexOf('pd:') === 0){
+      c.pdBase = k;
+      if (long) note = PD[k].sale ? 'Ce jour-là, sortie longue' + NB + ': la version sucrée au pain, plus digeste avant de partir.' : 'Ce jour-là, sortie longue' + NB + ': un peu plus de flocons ou de pain, et du miel.';
+    } else if (id === 'cs:boules'){
+      /* Avec le riz au lait (il fait aussi les glucides), les quantités d'une autre collation ; elle reste à prendre */
+      if (c.co === 'rizaulait'){ c.co = 'oeufs'; note = 'Avec le riz au lait, pas de boules d’énergie' + NB + ': il fait déjà les glucides. Elles reviennent avec une autre collation.'; }
+      c.cs = 'boules'; keys = ['bof', 'bos', 'boa'];
+      if (!noLong.seances.length){ plan = Object.assign({}, noLong, {seances:[{taille:'petite', moment:'soir'}]}); note = (note ? note + ' ' : '') + 'Les boules d’énergie sont pour les jours de séance' + NB + ': voici les quantités avec une petite séance.'; }
+      else if (long) plan = noLong;
+    } else {
+      c.co = k; keys = SNACK_KEYS;
+      if (long){ plan = noLong; note = 'Ce jour-là, sortie longue' + NB + ': le goûter remplace la collation. Voici les quantités d’un jour sans elle.'; }
+    }
+    const sec = buildDay(plan, c, prof).secs.find(function(z){ return z.id === tg.slot; });
+    return {items:sec ? sec.items.filter(function(i){ return !keys || keys.indexOf(i.key) >= 0; }) : [], note:note, ch:c};
+  };
   Object.assign(ACTIONS, {
     recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },
-    'lib-for': function(b, v){ if (!LIB_T.some(function(t){ return t[0] === v; })) return; lib.target = v; $('lib-msg').textContent = ''; renderLib(); $('lib-for').querySelector('[data-value="' + v + '"]').focus({preventScroll:true}); },
+    'lib-tab': function(b, v){ if (!has(LIB_TT, v)) return; lib.tab = v; $('lib-msg').textContent = ''; renderLib(); $('lib-tab-' + v).focus({preventScroll:true}); },
+    'lib-for': function(b, v){ if (!LIB_TT[lib.tab].some(function(t){ return t[0] === v; })) return; lib[libKey()] = v; $('lib-msg').textContent = ''; renderLib(); $('lib-for').querySelector('[data-value="' + v + '"]').focus({preventScroll:true}); },
     'lib-f': function(b, v){ if (['box', 'quick', 'favs', 'mine'].indexOf(v) < 0) return; lib[v] = !lib[v]; renderLib(); },
     /* Fiche de la recette, avec tes quantités pour le repas visé */
     'lib-open': function(b, v){
-      if (!has(RECIPES, v)) return;
-      const tg = libTarget(), on = libChosen(tg) === v && !tg.libre;
+      if (!has(RECIPES, v) && !has(FICHE, v)) return;
+      const tg = libTarget(), on = libIsOn(v, tg);
+      if (!has(RECIPES, v)){
+        const x = libPart(v, tg);
+        showRecipe(v, x.items, on ? ' Au menu ' + tg.label + '.' : '', 'Pour ' + tg.label,
+          (x.note ? '<p class="rec-tot">' + x.note + '</p>' : '') + (on ? '' : '<p class="rec-tot">Les féculents s’ajustent' + NB + ': ta journée garde le même total.</p>'),
+          on ? '' : '<button type="button" class="btn main wide" data-action="lib-take" data-value="' + v + '">Prendre pour ' + tg.label + '</button>',
+          {kind:'lib', slot:tg.slot, trigger:b && b.id ? b.id : null, view:'recettes'});
+        return;
+      }
       showRecipe(v, libSec(v, tg), on ? ' Choisie pour ' + tg.label + '.' : '', 'Pour ' + tg.label,
         tg.libre ? '<p class="warn">' + cap(tg.label) + ', c’est ton repas libre' + NB + ': choisis un autre repas pour la prendre.</p>'
           : on ? '' : '<p class="rec-tot">Le féculent s’ajuste à la recette' + NB + ': ta journée garde le même total.</p>',
@@ -5424,22 +5535,25 @@ if (typeof document !== 'undefined'){
     /* « Prendre pour … » : la recette dans ce repas, le message, le panneau fermé (focus sur la recette dans la liste) */
     'lib-take': function(b, v){
       const tg = libTarget();
-      if (!has(RECIPES, v) || tg.libre) return;
-      const x = RECIPES[v], d = fromIso(tg.iso), js = d.getDay(), before = weekBal(d), c = cleanCh(choicesFor(tg.iso, js), js);
-      c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:v};
+      if ((!has(RECIPES, v) && !has(FICHE, v)) || tg.libre) return;
+      const d = fromIso(tg.iso), js = d.getDay(), before = weekBal(d);
+      let c = cleanCh(choicesFor(tg.iso, js), js);
+      if (has(RECIPES, v)){ const x = RECIPES[v]; c[tg.slot] = {prot:x.p, starch:x.s, dessert:dessertOf(c[tg.slot]), recette:v}; }
+      else if (v === 'cs:boules') c.cs = 'boules';
+      else c = libPart(v, tg).ch;
       const cc = cleanCh(c, js);
       writeDay(tg.iso, {ch:cc}); store.choices[js] = cc; persist();
       loadSel(); prevQty = new Map(); render();
       const cross = crossMsg(before, weekBal(d));
       renderLib();
       closePick(false);
-      $('lib-msg').innerHTML = '«' + NB + x.t + NB + '» prise pour ' + tg.label + '.' + (cross ? ' ' + cross : '') +
+      $('lib-msg').innerHTML = '«' + NB + prefName(v) + NB + '» ' + (has(RECIPES, v) ? 'prise pour ' : 'au menu ') + tg.label + '.' + (cross ? ' ' + cross : '') +
         ' <button type="button" class="link" data-action="lib-day" data-value="' + tg.iso + '|' + tg.slot + '">Voir ' + (tg.day ? 'demain' : 'ma journée') + '</button>';
     },
     /* « Voir ma journée » (ou demain) : la page sur cette date, la carte du repas */
     'lib-day': function(b, v){
       const q = String(v).split('|'), d = fromIso(q[0]);
-      if (!d || !has(REPAS, q[1])) return;
+      if (!d || ['dej', 'diner', 'pd', 'co'].indexOf(q[1]) < 0) return;
       closeAllScreens();
       selDate = d; loadSel(); prevQty = new Map(); fsel = q[1];
       render();
@@ -5740,8 +5854,8 @@ if (typeof document !== 'undefined'){
     const pr = cleanProfile(prof);
     $('rp-list').innerHTML = PREF_G.map(function(g){
       return '<p class="rf-l" id="rp-' + g[0] + '-l">' + g[1] + '</p>' + (pr[g[0]].length ? '<ul class="rp-ul" aria-labelledby="rp-' + g[0] + '-l">' + pr[g[0]].map(function(id){
-        return '<li><span class="rp-n">' + RECIPES[id].t + '</span><button type="button" class="rm" data-action="rp-rm" data-pref="' + g[0] + '" data-value="' + id + '"' +
-          ' aria-label="Retirer «' + NB + RECIPES[id].t + NB + '» ' + g[2] + '">×</button></li>';
+        return '<li><span class="rp-n">' + prefName(id) + '</span><button type="button" class="rm" data-action="rp-rm" data-pref="' + g[0] + '" data-value="' + id + '"' +
+          ' aria-label="Retirer «' + NB + prefName(id) + NB + '» ' + g[2] + '">×</button></li>';
       }).join('') + '</ul>' : '<p class="calc rp-none">Aucune pour l’instant.</p>');
     }).join('');
   };
@@ -5807,7 +5921,7 @@ if (typeof document !== 'undefined'){
       keys.forEach(function(k){ localStorage.removeItem(k); });
     } catch (e) {}
     store = {plans:{}, choices:{}}; prof = {}; prof.mode = cleanProfile(prof).mode;
-    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {prot:'', starch:'', box:false, quick:false, favs:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
+    planifs = []; cur = null; resetPlanner(); eaten = {}; Object.assign(lib, {tab:'meal', prot:'', starch:'', box:false, quick:false, favs:false, mine:true}); repasVu = null; draft = null; WEEK_ED.sem.sel = todayJs;
     effShow(false);
     closeAllScreens();
     selDate = today; loadSel(); prevQty = new Map();
@@ -5855,7 +5969,7 @@ if (typeof document !== 'undefined'){
     /* Une recette retirée de sa liste : le focus va sur la suivante (sinon la précédente, sinon le titre) */
     'rp-rm': function(b, v){
       const k = b.dataset.pref;
-      if (!has(RECIPES, v) || (k !== 'fav' && k !== 'ban')) return;
+      if (!prefIdOk(v) || (k !== 'fav' && k !== 'ban')) return;
       const all = [...$('rp-list').querySelectorAll('[data-action="rp-rm"][data-pref="' + k + '"]')].map(function(x){ return x.dataset.value; }), i = all.indexOf(v);
       setPref(v, k, false);
       const to = all[i + 1] || all[i - 1], nx = to ? $('rp-list').querySelector('[data-pref="' + k + '"][data-value="' + to + '"]') : null;

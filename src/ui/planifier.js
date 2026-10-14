@@ -228,8 +228,8 @@
   };
   const surprise = function(kind, fix, others){
     const pr = cleanProfile(prof);
-    if (kind === 'pd') return surprisePd(others, pr.off);
-    if (kind === 'co') return surpriseCo(others);
+    if (kind === 'pd') return surprisePd(others, pr.off, null, pr);
+    if (kind === 'co') return surpriseCo(others, null, pr);
     return surpriseMeal(others, fix, pr.off, pr);
   };
   /* Valider : le repas libre de chaque jour, enregistré tel que le récap le montre (un par semaine, aussi hors de la

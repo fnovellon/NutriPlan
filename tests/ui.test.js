@@ -1819,6 +1819,84 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 160, 'effacer : filtres remis');
 }
 
+// Bibliothèque (4.1.0) : petits-déjeuners et collations en onglets, leurs fiches (quantités du jour visé, préparation, notes
+// d'un jour de sortie longue ou sans séance), « Prendre pour » un matin ou un jour, favorites et à éviter
+{
+  const t = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-08': { seances: [{ taille: 'longue', moment: 'matin', duree: 2 }] } }, choices: {} })))), tw = t.d.defaultView;
+  const ids = () => [...t.d.querySelectorAll('#lib-list .lib-r')].map(b => b.dataset.value), byId = i => t.d.getElementById(i);
+  const lines = () => [...t.d.querySelectorAll('#sheet-rec .items li')].map(li => li.textContent);
+  const PDO = tw.eval('PD_ORDER'), DEF = tw.eval('DEFAULT_CHOICES');
+  t.click('#nav-rec');
+  assert.deepStrictEqual([...t.d.querySelectorAll('#lib-tabs button')].map(b => b.textContent), ['Midi et soir', 'Petits-déjeuners', 'Collations'], 'onglets');
+  assert(t.pressed('lib-tab') === 'meal' && ids().length === 160 && !t.$('#lib-sel').hidden, 'midi et soir par défaut');
+  t.click('#lib-tab-pd');
+  assert(t.pressed('lib-tab') === 'pd' && t.d.activeElement === t.$('#lib-tab-pd') && t.$('#lib-sel').hidden && t.$('#lib-box').hidden && !t.$('#lib-mine').hidden, 'onglet des petits-déjeuners');
+  assert.deepStrictEqual([...t.d.querySelectorAll('#lib-for .opt')].map(b => b.dataset.value), ['0|pd', '1|pd'], 'ce matin, demain matin');
+  assert(t.pressed('lib-for') === '0|pd' && t.$('#lib-for-l').textContent === 'Pour quel matin ?' && t.$('#lib-n').textContent === '10 petits-déjeuners.', 'à 9 h, ce matin');
+  assert.deepStrictEqual(ids(), [...PDO].map(x => 'pd:' + x), 'les dix bases');
+  assert(/Au menu ce matin/.test(byId('lib-pd:' + DEF[3].pdBase).textContent) && /se prépare à l’avance/.test(byId('lib-pd:bircher').textContent), 'au menu, préparé à l’avance');
+  // Fiche : quantités du jour, préparation, pas d'aromates ; bouton pour ce matin
+  t.click('#lib-pd\\:bircher');
+  assert(t.$('#sheet-t').textContent === 'Bircher' && /^10\smin, se prépare à l’avance\.$/.test(t.$('#sheet-rec .rec-meta').textContent) && t.$('#sheet-rec h3').textContent === 'Pour ce matin', 'fiche du bircher');
+  const fl = parseInt(lines().find(l => /flocons/.test(l)), 10), sk = parseInt(lines().find(l => /gskyr nature/.test(l)), 10);
+  assert(fl === 50 && sk >= 2.5 * fl && lines().some(l => /pomme/.test(l)) && t.d.querySelectorAll('#sheet-rec .rec-steps li').length === 3 && !/Aromates/.test(t.$('#sheet-rec').textContent), 'lignes et préparation : ' + lines().join(' | '));
+  assert(t.$('[data-action="lib-take"]').textContent === 'Prendre pour ce matin' && t.d.activeElement === t.$('[data-action="lib-take"]'), 'bouton prendre');
+  // Favorite : pour « Surprends-moi »
+  t.click('#rp-fav');
+  assert(JSON.parse(tw.localStorage.getItem(PKEY)).fav.join() === 'pd:bircher' && /le choisit deux fois plus souvent/.test(t.$('#rp-s').textContent), 'petit-déjeuner favori');
+  t.click('#sheet .sheet-x');
+  assert(byId('lib-pd:bircher').querySelector('.lib-h'), 'cœur dans la liste');
+  // Demain, sortie longue : le salé passe à la version sucrée au pain
+  t.click('[data-action="lib-for"][data-value="1|pd"]');
+  t.click('#lib-pd\\:sale');
+  assert(/version sucrée au pain/.test(t.$('#sheet-rec').textContent) && lines().some(l => /miel/.test(l)) && !lines().some(l => /jambon/.test(l)), 'salé un jour de sortie longue : ' + lines().join(' | '));
+  t.click('#sheet .sheet-x');
+  t.click('#lib-pd\\:pancakes'); t.click('[data-action="lib-take"]');
+  let st = t.stored();
+  assert(st.plans['2026-10-08'].ch.pdBase === 'pancakes' && st.choices[4].pdBase === 'pancakes' && st.plans['2026-10-08'].seances.length === 1, 'pris pour demain matin');
+  assert(/^«\sPancakes avoine-banane\s» au menu demain matin\. Voir demain$/.test(t.$('#lib-msg').textContent) && /Au menu demain matin/.test(byId('lib-pd:pancakes').textContent) && t.d.activeElement === byId('lib-pd:pancakes'), 'message : ' + t.$('#lib-msg').textContent);
+  t.click('#lib-msg [data-action="lib-day"]');
+  assert(!t.$('#page').hidden && t.$('#date').textContent.startsWith('Demain') && t.d.activeElement === t.$('#ft-pd') && t.chosen('pd') === 'pancakes', 'voir demain matin');
+  // Collations : les cinq et les boules d'énergie ; pas de filtre des aliments
+  t.click('#nav-rec'); t.click('#lib-tab-co');
+  assert.deepStrictEqual(ids(), ['co:oeufs', 'co:muffins', 'co:mugcake', 'co:thon', 'co:rizaulait', 'cs:boules'], 'collations');
+  assert(t.$('#lib-mine').hidden && t.$('#lib-n').textContent === '6 collations.' && t.pressed('lib-for') === '0|co' && /Au menu aujourd’hui/.test(byId('lib-co:oeufs').textContent), 'onglet des collations');
+  t.click('#lib-co\\:thon');
+  assert(lines().length === 4 && lines().every(l => !/banane/.test(l)) && t.d.querySelectorAll('#sheet-rec .rec-steps li').length === 3, 'bouchées de thon : ' + lines().join(' | '));
+  t.click('#rp-ban');
+  assert(JSON.parse(tw.localStorage.getItem(PKEY)).ban.join() === 'co:thon' && /ne la choisit plus/.test(t.$('#rp-s').textContent), 'collation à éviter');
+  t.click('#sheet .sheet-x');
+  assert(ids()[ids().length - 1] === 'co:thon' && byId('lib-co:thon').classList.contains('is-ban'), 'à éviter en fin de liste');
+  // Boules d'énergie : pas de préférences ; aujourd'hui sans séance, les quantités d'un jour avec une petite séance
+  t.click('#lib-cs\\:boules');
+  assert(!t.$('#rp-fav') && /jours de séance/.test(t.$('#sheet-rec').textContent) && lines().length === 3 && /pour 2 boules/.test(lines()[0]), 'boules d’énergie : ' + lines().join(' | '));
+  t.click('#sheet .sheet-x');
+  // Demain, sortie longue : le goûter remplace la collation (la fiche le dit) ; prendre le mug cake et les boules
+  t.click('[data-action="lib-for"][data-value="1|co"]');
+  t.click('#lib-co\\:mugcake');
+  assert(/le goûter remplace la collation/.test(t.$('#sheet-rec').textContent) && lines().length === 4, 'mug cake un jour de sortie longue');
+  t.click('[data-action="lib-take"]');
+  t.click('#lib-cs\\:boules'); t.click('[data-action="lib-take"]');
+  st = t.stored();
+  assert(st.plans['2026-10-08'].ch.co === 'mugcake' && st.plans['2026-10-08'].ch.cs === 'boules' && st.plans['2026-10-08'].ch.pdBase === 'pancakes', 'collation et boules prises : ' + JSON.stringify(st.plans['2026-10-08'].ch));
+  assert(/Au menu demain/.test(byId('lib-cs:boules').textContent) && /Au menu demain/.test(byId('lib-co:mugcake').textContent), 'au menu demain : mug cake et boules');
+  // Riz au lait : il fait les glucides, les boules ne sont plus au menu
+  t.click('#lib-co\\:rizaulait'); t.click('[data-action="lib-take"]');
+  assert(!/Au menu/.test(byId('lib-cs:boules').textContent), 'riz au lait : boules plus au menu');
+  t.click('#lib-cs\\:boules');
+  assert(/Avec le riz au lait, pas de boules d’énergie/.test(t.$('#sheet-rec').textContent), 'boules avec le riz au lait');
+  t.click('#sheet .sheet-x');
+  // Réglages : les deux listes les montrent, retirables
+  t.click('#gear'); t.click('#tab-repas');
+  assert(/Bircher/.test(t.$('#rp-list').textContent) && /Bouchées concombre-thon/.test(t.$('#rp-list').textContent), 'réglages : ' + t.$('#rp-list').textContent);
+  t.click('#rp-list [data-pref="ban"][data-value="co:thon"]');
+  assert(!JSON.parse(tw.localStorage.getItem(PKEY)).ban, 'retirée des collations à éviter');
+  // Identifiants relus et validés
+  const bad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ fav: ['pd:avoine', 'pd:x', 'co:constructor', 'cs:boules', 'pd:__proto__', 5], ban: ['co:thon', 'pd:avoine'] }))));
+  bad.click('#gear'); bad.click('#tab-repas');
+  assert.deepStrictEqual([...bad.d.querySelectorAll('#rp-list .rp-n')].map(x => x.textContent), ['Flocons d’avoine', 'Bouchées concombre-thon'], 'identifiants abîmés ignorés');
+}
+
 // Recettes favorites et à éviter (3.25.0) : dans la fiche (page et bibliothèque), enregistrées dans le profil, l'une ou
 // l'autre ; la suggestion disparaît, la bibliothèque les marque (favorites : filtre et cœur ; à éviter : en fin de liste) ;
 // réglages « Tes recettes » ; les tirages en recettes ne prennent jamais une recette à éviter

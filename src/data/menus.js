@@ -37,6 +37,26 @@ const SNACK = {
 const SNACK_ORDER = ['oeufs','muffins','mugcake','thon','rizaulait'];
 const SNACK_CS = {banane:{label:'Banane, compote', sub:'la compote avec une séance moyenne ou longue'}, boules:{label:'Boules d’énergie', sub:'flocons, fruits secs, amandes'}};
 const SNACK_CS_ORDER = ['banane','boules'];
+/* Fiches des petits-déjeuners et des collations (4.1.0, bibliothèque des recettes) : temps de préparation, préparée à
+   l'avance (veille) et étapes. Clés : pd:base, co:collation, cs:boules (les boules d'énergie des jours de séance). */
+const FICHE = {
+  'pd:avoine':{min:5, veille:false, steps:["En porridge\u00a0: fais cuire les flocons 3 à 4\u00a0min dans un peu d’eau ou de lait, en remuant.", "Ou la veille\u00a0: mélange les flocons au skyr et laisse toute la nuit au frigo.", "Ajoute le skyr, le fruit et les amandes concassées."]},
+  'pd:pain':{min:5, veille:false, steps:["Toaste le pain complet si tu veux.", "Sers avec le skyr, le fruit et les amandes."]},
+  'pd:sale':{min:10, veille:false, steps:["Fais cuire les œufs\u00a0: 6\u00a0min dans l’eau bouillante pour des œufs à la coque, pochés, ou brouillés à la poêle antiadhésive sans matière grasse.", "Toaste le pain et ajoute le jambon.", "Le fruit à côté."]},
+  'pd:pancakes':{min:15, veille:false, steps:["Écrase la banane à la fourchette, ajoute les œufs et les flocons (mixe le tout si tu préfères une pâte lisse).", "Fais cuire de petits pancakes 2\u00a0min de chaque côté dans une poêle antiadhésive bien chaude, sans matière grasse.", "Sers avec le skyr et les fruits rouges."]},
+  'pd:painperdu':{min:15, veille:false, steps:["Bats l’œuf avec le lait et une pincée de cannelle.", "Trempe les tranches de pain des deux côtés.", "Dore-les 2 à 3\u00a0min de chaque côté à la poêle antiadhésive, sans beurre.", "Sers avec le skyr et le fruit."]},
+  'pd:bircher':{min:10, veille:true, steps:["La veille\u00a0: mélange les flocons, le lait, la moitié du skyr et la pomme râpée, avec une pincée de cannelle.", "Laisse toute la nuit au frigo, couvert.", "Le matin\u00a0: ajoute le reste du skyr et les amandes concassées."]},
+  'pd:porridge':{min:10, veille:false, steps:["Fais cuire les flocons dans le lait 4 à 5\u00a0min à feu doux, en remuant.", "Hors du feu, ajoute le cacao et la moitié de la banane écrasée.", "Sers avec le skyr et le reste de la banane en rondelles."]},
+  'pd:brouillade':{min:15, veille:false, steps:["Fais revenir les champignons émincés 3\u00a0min à la poêle antiadhésive, puis les épinards jusqu’à ce qu’ils tombent.", "Ajoute les œufs battus et remue doucement à feu doux jusqu’à ce qu’ils soient crémeux\u00a0; poivre.", "Sers avec le pain grillé, le skyr et le fruit à côté."]},
+  'pd:smoothie':{min:5, veille:false, steps:["Mixe le skyr, la banane, les fruits rouges, le lait et les flocons jusqu’à ce que ce soit bien lisse.", "Verse dans une gourde ou un bocal\u00a0: il se garde quelques heures au frais."]},
+  'pd:wrap':{min:10, veille:false, steps:["Fais cuire les œufs brouillés à la poêle antiadhésive, sans matière grasse.", "Garnis la tortilla\u00a0: jambon, œufs, tomate en dés.", "Roule bien serré\u00a0; le fruit à côté."]},
+  'co:oeufs':{min:12, veille:true, steps:["Plonge les œufs dans l’eau bouillante\u00a0: 6\u00a0min pour des œufs mollets, 10\u00a0min pour des œufs durs.", "Refroidis-les dans l’eau froide.", "Durs, ils se gardent une semaine au frigo dans leur coquille\u00a0; mollets, mange-les dans les 2\u00a0jours."]},
+  'co:muffins':{min:25, veille:true, steps:["Préchauffe le four à 180\u00a0°C.", "Bats les œufs avec les épinards hachés, le parmesan et du poivre.", "Verse dans des moules à muffins en silicone et fais cuire 20\u00a0min.", "Une fournée se garde 3\u00a0jours au frigo\u00a0: froids ou réchauffés."]},
+  'co:mugcake':{min:5, veille:false, steps:["Dans un grand mug, mélange l’œuf, le skyr, les flocons et le cacao.", "Fais cuire 1\u00a0min\u00a030 au micro-ondes, à pleine puissance.", "Laisse tiédir une minute avant de le démouler."]},
+  'co:thon':{min:5, veille:false, steps:["Égoutte le thon et mélange-le au skyr, avec un filet de citron et du poivre.", "Coupe le concombre en rondelles épaisses.", "Garnis les rondelles\u00a0; les galettes de riz à côté."]},
+  'co:rizaulait':{min:30, veille:true, steps:["Porte le lait à frémissement avec un peu de vanille (ou de cannelle).", "Ajoute le riz rond et fais cuire 25\u00a0min à feu doux, en remuant souvent.", "Laisse tiédir, puis mélange le skyr. Il se garde 3\u00a0jours au frigo\u00a0: fais-en pour plusieurs collations."]},
+  'cs:boules':{min:15, veille:true, steps:["Mixe les flocons, les fruits secs et les amandes jusqu’à obtenir une pâte qui se tient (une cuillère d’eau si besoin).", "Roule-la en boules de la taille d’une noix.", "Une fournée se garde une semaine au frais, dans une boîte fermée."]}
+};
 
 /* Protéines du déjeuner et du dîner, avec leur matière grasse : portions de référence (72 kg) mises à l'échelle k ;
    base(k, g) : g = [p1, p2] en grammes, poids fixés d'une boîte de batch cooking (voir fixedGrams), sinon null.

@@ -44,10 +44,24 @@ function withAllowed(c, off){
   ['co', 'cs'].forEach(function(f){ if (has(c, f)) out[f] = c[f]; });
   return out;
 }
-/* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, sans doublon */
+/* Recettes favorites et à éviter (3.25.0) : identifiants de RECIPES, et depuis la 4.1.0 des petits-déjeuners (pd:base) et
+   des collations (co:collation) ; sans doublon */
+function prefIdOk(x){
+  if (typeof x !== 'string') return false;
+  if (x.indexOf('pd:') === 0) return has(PD, x.slice(3));
+  if (x.indexOf('co:') === 0) return has(SNACK, x.slice(3));
+  return has(RECIPES, x);
+}
+/* Nom d'une recette, d'un petit-déjeuner, d'une collation ou des boules d'énergie (cs:boules) */
+function prefName(x){
+  if (x.indexOf('pd:') === 0) return PD[x.slice(3)].label;
+  if (x.indexOf('co:') === 0) return SNACK[x.slice(3)].label;
+  if (x === 'cs:boules') return SNACK_CS.boules.label;
+  return RECIPES[x].t;
+}
 function cleanRecipeIds(o){
   if (!Array.isArray(o)) return [];
-  return o.slice(0, 200).filter(function(x, i, a){ return typeof x === 'string' && has(RECIPES, x) && a.indexOf(x) === i; });
+  return o.slice(0, 200).filter(function(x, i, a){ return prefIdOk(x) && a.indexOf(x) === i; });
 }
 /* Poids d'une recette dans les tirages : 0 à éviter (jamais tirée), 2 favorite, 1 sinon ; prefs : { fav, ban } (le profil) */
 function recipePref(id, prefs){

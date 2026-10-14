@@ -31,16 +31,16 @@ function cleanCards(o){
   });
   return out;
 }
-/* Surprises : au hasard parmi les aliments proposés (off), pas une carte déjà prise (s'il en reste) */
-function surprisePd(cards, off, rand){
+/* Surprises : au hasard parmi les aliments proposés (off), pas une carte déjà prise (s'il en reste) ; préférences (4.1.0,
+   prefs : le profil) : un petit-déjeuner ou une collation à éviter jamais tiré (sauf s'il ne reste que ceux-là), une favorite
+   deux fois plus souvent */
+function surprisePd(cards, off, rand, prefs){
   const r = rand || Math.random, ok = allowed('pd', off), fresh = ok.filter(function(id){ return !cards.some(function(c){ return c.id === id; }); });
-  const l = fresh.length ? fresh : ok;
-  return {id:l[Math.min(l.length - 1, Math.floor(r() * l.length))], s:true};
+  return {id:tieredPick(r, fresh.length ? fresh : ok, function(id){ return recipePref('pd:' + id, prefs); }), s:true};
 }
-function surpriseCo(cards, rand){
+function surpriseCo(cards, rand, prefs){
   const r = rand || Math.random, fresh = SNACK_ORDER.filter(function(id){ return !cards.some(function(c){ return c.id === id; }); });
-  const l = fresh.length ? fresh : SNACK_ORDER;
-  return {id:l[Math.min(l.length - 1, Math.floor(r() * l.length))], cs:'banane', s:true};
+  return {id:tieredPick(r, fresh.length ? fresh : SNACK_ORDER, function(id){ return recipePref('co:' + id, prefs); }), cs:'banane', s:true};
 }
 /* Un repas surprise : fix = { prot } ou { starch } (surprise partielle, l'autre est tiré) ou {} (complète). La protéine évite
    celles déjà prises, le poisson est favorisé s'il n'y en a pas encore (× 3), les légumes secs aussi ; un féculent déjà pris

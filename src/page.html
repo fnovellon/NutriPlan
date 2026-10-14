@@ -278,7 +278,7 @@
       </section>
       <section class="needs" id="rec-prefs" aria-labelledby="rp-t">
         <h2 class="needs-t" id="rp-t" tabindex="-1">Tes recettes</h2>
-        <p class="needs-s">Dans la fiche d’une recette, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats, «&nbsp;À éviter&nbsp;» ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas.</p>
+        <p class="needs-s">Dans la fiche d’une recette, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats, «&nbsp;À éviter&nbsp;» ne la tire plus et ne la propose plus sous tes repas. Les plats simples ne changent pas. Pour un petit-déjeuner ou une collation, c’est «&nbsp;Surprends-moi&nbsp;» des planifications qui en tient compte.</p>
         <div class="needs-body" id="rp-list"></div>
       </section>
       <section class="needs" aria-labelledby="shaker-t">
@@ -357,7 +357,7 @@
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent (il y en a deux par couple, elles tournent d’un jour à l’autre&nbsp;; «&nbsp;Une autre recette&nbsp;» montre la suivante). «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
-      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 160 recettes de l’appli, deux par protéine et féculent, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus.</li>
+      <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 160 recettes de l’appli, deux par protéine et féculent, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus. Deux autres onglets, «&nbsp;Petits-déjeuners&nbsp;» et «&nbsp;Collations&nbsp;» (avec les boules d’énergie)&nbsp;: leur préparation, tes quantités pour ce matin, demain matin, aujourd’hui ou demain, et «&nbsp;Prendre pour…&nbsp;». Un petit-déjeuner ou une collation favori revient deux fois plus souvent dans «&nbsp;Surprends-moi&nbsp;» de tes planifications, un «&nbsp;à éviter&nbsp;» n’y revient plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
       <li>Un repas ne s’est pas passé comme prévu&nbsp;? «&nbsp;Un imprévu&nbsp;?&nbsp;», en bas de sa carte&nbsp;: à la place du repas ou en plus, une estimation en kcal. La suite de ta journée s’ajuste (les féculents d’après baissent)&nbsp;; ce qui ne peut pas être repris reste, sans rien rattraper le lendemain.</li>
@@ -455,11 +455,12 @@
 
 <main class="app lib" id="recettes" hidden>
   <h1 id="lib-h" tabindex="-1">Recettes</h1>
-  <p class="repas-p">Les 160 recettes de l’appli, deux par protéine et féculent. Touche-en une pour voir tes quantités et la prendre pour un repas.</p>
+  <div class="seg lib-tabs" id="lib-tabs" role="group" aria-label="Quelles recettes"></div>
+  <p class="repas-p" id="lib-p"></p>
   <p class="lbl lib-l" id="lib-for-l">Pour quel repas&nbsp;?</p>
   <div class="opts-list lib-for" id="lib-for" role="group" aria-labelledby="lib-for-l"></div>
   <p class="intro" id="lib-msg" role="status"></p>
-  <div class="fields lib-sel">
+  <div class="fields lib-sel" id="lib-sel">
     <label class="field"><span>Protéine</span><span class="inp"><select id="lib-prot" data-lib="prot"></select></span></label>
     <label class="field"><span>Féculent</span><span class="inp"><select id="lib-starch" data-lib="starch"></select></span></label>
   </div>

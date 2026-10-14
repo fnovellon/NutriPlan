@@ -888,7 +888,7 @@ Object.entries(A.PROFILE_RANGES).forEach(([key, b]) => { const d = A.PROFILE_DEF
 // Textes des données : typographie française (espace insécable avant : ; ? ! % et les unités, apostrophe courbe)
 const strs = [];
 const walk = o => { if (typeof o === 'string') strs.push(o); else if (o && typeof o === 'object') Object.values(o).forEach(walk); };
-walk([A.RECIPES, A.RFOOD, A.STARCH, A.SIZES, A.DUREES, A.MOMENTS, A.refTable(), A.PROT_ORDER.map(p => A.PROT[p].label), A.DESSERT_ORDER.map(d => A.DESSERT[d].label)]);
+walk([A.FICHE, A.RECIPES, A.RFOOD, A.STARCH, A.SIZES, A.DUREES, A.MOMENTS, A.refTable(), A.PROT_ORDER.map(p => A.PROT[p].label), A.DESSERT_ORDER.map(d => A.DESSERT[d].label)]);
 A.DESSERT_ORDER.filter(d => d !== 'aucun').forEach(d => walk(A.DESSERT[d].item()));
 strs.forEach(s => {
   C.ok(!/\d (g|kcal|km|%|h)\b/.test(s) && !/ [:;?!%»]/.test(s) && !/« /.test(s), 'typographie des données', () => JSON.stringify(s));

@@ -226,6 +226,9 @@ h1{margin:0 0 16px;font-family:var(--sans);font-weight:800;font-stretch:112%;fon
 @keyframes in-l{from{opacity:0;transform:translateX(28px);}}
 @keyframes in-r{from{opacity:0;transform:translateX(-28px);}}
 /* Recettes (3.24.0) : le repas visé, les filtres, la liste (une ligne par recette, la choisie pour le repas visé marquée) */
+.lib-tabs{display:flex;width:100%;margin:0 0 14px;}
+.lib-tabs button{flex:1;padding:8px 6px;white-space:normal;font-size:14.5px;}
+.lib-sel[hidden],.lib-f .opt[hidden],#lib-mine[hidden]{display:none;}
 .lib-l{margin:6px 0 8px;}
 .lib-for{margin:0 0 16px;}
 .lib-sel{margin:4px 0 12px;}
