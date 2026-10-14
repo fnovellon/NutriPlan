@@ -50,6 +50,7 @@
     return d.toLocaleDateString('fr-FR', {weekday:'long'}) + ' ' + (d.getDate() === 1 ? '1er' : d.getDate()) + NB + d.toLocaleDateString('fr-FR', {month:'long'});
   };
   const cap = function(t){ return t.charAt(0).toUpperCase() + t.slice(1); };
+  const low = function(t){ return t.charAt(0).toLowerCase() + t.slice(1); };
   /* « aujourd'hui », « demain », « hier » ou « jeudi 8 octobre » */
   const dayRel = function(d){ const r = {'-1':'hier', '0':'aujourd’hui', '1':'demain'}[dayDiff(d)]; return r || dayLabel(d); };
 

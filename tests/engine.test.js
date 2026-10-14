@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -1160,6 +1160,89 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
   // Plus que les féculents ne peuvent prendre : le reste en encas
   const big = buildDay(day([moyenne('soir'), petite('matin')], { veille: 4 }), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'poulet', starch: 'pates' } });
   assert(Math.abs(big.tot.kcal - big.energy.target) <= 0.03 * big.energy.target, 'recharge : objectif tenu');
+}
+
+// Planification par cartes (4.0.0) : cartes relues, surprises, répartition sur les jours, épices et petits trucs
+{
+  // Cartes : identifiants validés (propriété propre), au plus 3, 3 et 5, sans doublon ; recette qui ne va pas → plat simple
+  const cc = plain(cleanCards({
+    pd: [{ id: 'avoine', s: true }, { id: 'constructor' }, { id: 'avoine' }, { id: 'pain' }, { id: 'sale' }, { id: 'wrap' }],
+    co: [{ id: 'oeufs', cs: 'boules' }, { id: 'thon', cs: '__proto__' }, null, { id: 'thon' }],
+    meal: [{ prot: 'poulet', starch: 'riz', recette: 'boeuf-riz', s: 'prot' }, { prot: 'poulet', starch: 'riz' }, { prot: 'toString', starch: 'riz' },
+      { prot: 'tofu', starch: 'pates', recette: 'tofu-pates', s: 'nope' }, { prot: 'saumon', starch: 'riz' }, { prot: 'thon', starch: 'riz' }, { prot: 'boeuf', starch: 'riz' }, { prot: 'oeufs', starch: 'riz' }]
+  }));
+  assert.deepStrictEqual(cc, {
+    pd: [{ id: 'avoine', s: true }, { id: 'pain' }, { id: 'sale' }],
+    co: [{ id: 'oeufs', cs: 'boules' }, { id: 'thon', cs: 'banane' }],
+    meal: [{ prot: 'poulet', starch: 'riz', recette: null, s: 'prot' }, { prot: 'tofu', starch: 'pates', recette: 'tofu-pates' }, { prot: 'saumon', starch: 'riz', recette: null },
+      { prot: 'thon', starch: 'riz', recette: null }, { prot: 'boeuf', starch: 'riz', recette: null }]
+  }, 'cartes relues : ' + JSON.stringify(cc));
+  [null, 5, 'x', [], { pd: 'x', co: {}, meal: [5] }].forEach(bad => assert.deepStrictEqual(plain(cleanCards(bad)), { pd: [], co: [], meal: [] }, 'cartes abîmées : ' + JSON.stringify(bad)));
+  assert.deepStrictEqual(plain(PLAN_MAX), { pd: 3, co: 3, meal: 5 }, 'nombre de cartes');
+  // Surprises : parmi les aliments proposés, pas une carte déjà prise (s'il en reste) ; recettes à éviter jamais tirées
+  const r = (() => { let x = 7; return () => (x = (x * 16807) % 2147483647) / 2147483647; })();
+  for (let i = 0; i < 200; i++) {
+    const p = surprisePd([{ id: 'avoine' }], ['pd:pain'], r);
+    assert(p.s === true && PD_ORDER.includes(p.id) && p.id !== 'avoine' && p.id !== 'pain', 'surprise du petit-déjeuner : ' + p.id);
+    const c = surpriseCo([{ id: 'oeufs' }, { id: 'muffins' }, { id: 'mugcake' }, { id: 'thon' }], r);
+    assert(c.id === 'rizaulait' && c.cs === 'banane' && c.s === true, 'surprise de la collation : ' + c.id);
+    const off = ['prot:poulet', 'starch:riz'], prefs = { ban: RECIPES ? Object.keys(RECIPES).filter(id => /^saumon-/.test(id)) : [] };
+    const m = surpriseMeal([{ prot: 'tofu', starch: 'pates' }], {}, off, prefs, r);
+    assert(m.s === 'full' && m.prot !== 'poulet' && m.prot !== 'tofu' && m.starch !== 'riz' && (!m.recette || recipeOf(m) === m.recette) && !(m.recette && /^saumon-/.test(m.recette)), 'surprise d’un plat : ' + JSON.stringify(m));
+    const mp = surpriseMeal([], { prot: 'boeuf' }, off, null, r), ms = surpriseMeal([{ prot: 'boeuf', starch: 'pates' }], { starch: 'pates' }, off, null, r);
+    assert(mp.prot === 'boeuf' && mp.s === 'prot' && mp.starch !== 'riz' && ms.starch === 'pates' && ms.s === 'starch' && ms.prot !== 'boeuf' && ms.prot !== 'poulet', 'surprise partielle : ' + JSON.stringify([mp, ms]));
+  }
+  // Pas de poisson ni de légumes secs dans les cartes : favorisés (× 3)
+  let fish = 0, leg = 0;
+  for (let i = 0; i < 600; i++) { const m = surpriseMeal([{ prot: 'poulet', starch: 'riz' }], {}, [], null, r); if (FISH.includes(m.prot)) fish++; if (LEGUMES.includes(m.starch)) leg++; }
+  assert(fish / 600 > 0.5 && leg / 600 > 0.3, 'poisson et légumes secs favorisés : ' + fish + ' / ' + leg);
+  // Répartition : petits-déjeuners et collations en alternance ; plats autant de fois chacun (écart d'une au plus), par
+  // blocs de 7 jours, jamais la même protéine midi et soir si c'est possible ; le dîner d'un repas libre a une carte
+  const cards = { pd: [{ id: 'avoine' }, { id: 'sale' }], co: [{ id: 'oeufs', cs: 'boules' }],
+    meal: [{ prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, { prot: 'saumon', starch: 'patate', recette: 'saumon-patate' }, { prot: 'tofu', starch: 'riz', recette: null }] };
+  const days = Array.from({ length: 10 }, (x, i) => ({ libre: i === 3 }));
+  const pl = plain(planDays(days, cards));
+  assert.deepStrictEqual(pl.map(x => x.pdBase), ['avoine', 'sale', 'avoine', 'sale', 'avoine', 'sale', 'avoine', 'sale', 'avoine', 'sale'], 'petits-déjeuners en alternance');
+  assert(pl.every(x => x.co === 'oeufs' && x.cs === 'boules'), 'collation');
+  const key = m => m.prot + '|' + m.starch + '|' + (m.recette || '');
+  const ok = cards.meal.map(key);
+  pl.forEach((x, i) => { assert(ok.includes(key(x.dej)) && ok.includes(key(x.diner)) && x.dej.prot !== x.diner.prot, 'jour ' + i + ' : ' + JSON.stringify(x)); });
+  [[0, 7], [7, 10]].forEach(([a, b]) => {
+    const cnt = {};
+    pl.slice(a, b).forEach((x, i) => [x.dej].concat(days[a + i].libre ? [] : [x.diner]).forEach(m => { cnt[key(m)] = (cnt[key(m)] || 0) + 1; }));
+    const v = Object.values(cnt);
+    assert(Math.max(...v) - Math.min(...v) <= 1 && v.reduce((s, y) => s + y, 0) === (b - a) * 2 - (a === 0 ? 1 : 0), 'autant de fois chacun : ' + JSON.stringify(cnt));
+  });
+  // Recettes qui se congèlent mal : servies dans les 3 premiers jours ; même plat pas deux repas de suite si possible
+  const gelBad = Object.keys(RECIPES).find(id => RECIPES[id].box && !RECIPES[id].gel && RECIPES[id].p === 'poisson');
+  const pg = plain(planDays(Array.from({ length: 7 }, () => ({ libre: false })), { pd: [{ id: 'avoine' }], co: [], meal: [{ prot: 'poisson', starch: RECIPES[gelBad].s, recette: gelBad }, { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, { prot: 'boeuf', starch: 'riz', recette: 'boeuf-riz' }, { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' }, { prot: 'saumon', starch: 'patate', recette: 'saumon-patate' }] }));
+  pg.forEach((x, i) => { if (i >= FRIDGE_DAYS) assert(x.dej.recette !== gelBad && x.diner.recette !== gelBad, 'se congèle mal : jour ' + i); });
+  assert(pg.every(x => !('co' in x)), 'sans collation choisie : rien');
+  const flat = pg.flatMap(x => [x.dej, x.diner]).map(key);
+  assert(flat.every((k, i) => i === 0 || k !== flat[i - 1]), 'deux fois de suite le même plat : ' + flat.join(' '));
+  // Deux cartes de la même protéine : leurs parts en plus vont aux autres, pour ne jamais l'avoir midi et soir
+  const two = plain(planDays([{}, {}, {}], { pd: [{ id: 'avoine' }], co: [], meal: [{ prot: 'tofu', starch: 'poischiches', recette: 'tofu-poischiches-rotis' }, { prot: 'poisson', starch: 'poischiches', recette: null }, { prot: 'crevettes', starch: 'gnocchis', recette: 'crevettes-gnocchis-tomate' }, { prot: 'crevettes', starch: 'patate', recette: null }] }));
+  assert(two.every(x => x.dej.prot !== x.diner.prot) && two.flatMap(x => [x.dej, x.diner]).filter(m => m.prot === 'crevettes').length === 3, 'même protéine sur deux cartes : ' + two.map(x => x.dej.prot + '/' + x.diner.prot));
+  // Une seule carte : répétée partout ; sans carte de plat : rien
+  const one = plain(planDays([{ libre: false }, { libre: true }], { pd: [{ id: 'pain' }], co: [{ id: 'thon', cs: 'banane' }], meal: [{ prot: 'oeufs', starch: 'pdt', recette: null }] }));
+  assert(one.every(x => x.dej.prot === 'oeufs' && x.diner.prot === 'oeufs' && !x.dej.recette), 'une seule carte');
+  assert.deepStrictEqual(plain(planDays([{}], { pd: [], co: [], meal: [] })), [{}], 'aucune carte');
+  // Épices et petits trucs : aromates des recettes servies (pas un dîner de repas libre), petits-déjeuners et collations qui
+  // en demandent ; noms ramenés à l'essentiel, triés
+  assert.deepStrictEqual(['ail en chemise', 'persil plat (beaucoup)', 'citron confit', 'paprika doux', 'basilic'].map(pantryName), ['ail', 'persil', 'citron', 'paprika', 'basilic'], 'noms des épices');
+  const chP = { pdBase: 'bircher', co: 'rizaulait', cs: 'banane', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz' } };
+  const resN = buildDay(day([]), chP), resL = buildDay(day([], { libre: true }), chP);
+  const aro = id => RECIPES[id].aro.split(/,\s*/).map(pantryName);
+  const pn = plain(pantryList([{ ch: chP, res: resN }]));
+  assert(pn.includes('cannelle') && pn.includes('vanille') && aro('poulet-riz').concat(aro('tofu-riz')).every(a => pn.includes(a)) && pn.every((x, i) => i === 0 || x.localeCompare(pn[i - 1], 'fr') > 0), 'épices : ' + pn);
+  const pl2 = plain(pantryList([{ ch: chP, res: resL }]));
+  assert(aro('poulet-riz').every(a => pl2.includes(a)) && aro('tofu-riz').some(a => !pl2.includes(a)), 'repas libre : pas les aromates du dîner');
+  // Brouillade un jour de sortie longue (version sucrée au pain) : pas de poivre
+  const pLong = plain(pantryList([{ ch: Object.assign({}, chP, { pdBase: 'brouillade', dej: { prot: 'poulet', starch: 'pdt' }, diner: { prot: 'poulet', starch: 'pdt' } }), res: buildDay(day([longue(2)]), Object.assign({}, chP, { pdBase: 'brouillade', dej: { prot: 'poulet', starch: 'pdt' }, diner: { prot: 'poulet', starch: 'pdt' } })) }]));
+  assert.deepStrictEqual(pLong, [], 'sortie longue : brouillade en version sucrée (pas de poivre), goûter à la place du riz au lait (pas de vanille)');
+  const pB = plain(pantryList([{ ch: Object.assign({}, chP, { pdBase: 'brouillade', dej: { prot: 'poulet', starch: 'pdt' }, diner: { prot: 'poulet', starch: 'pdt' } }), res: buildDay(day([]), Object.assign({}, chP, { pdBase: 'brouillade', dej: { prot: 'poulet', starch: 'pdt' }, diner: { prot: 'poulet', starch: 'pdt' } })) }]));
+  assert.deepStrictEqual(pB, ['poivre', 'vanille'], 'brouillade : poivre');
+  assert.deepStrictEqual(plain(pantryList([null, {}, { ch: null, res: resN }])).length > 0, true, 'entrées abîmées ignorées');
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

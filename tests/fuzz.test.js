@@ -895,5 +895,42 @@ strs.forEach(s => {
   C.ok(!/'/.test(s), 'apostrophe droite dans les données', () => JSON.stringify(s));
 });
 
+// Planification par cartes (4.0.0) : cartes et jours au hasard ; chaque jour tiré des cartes, petits-déjeuners et collations
+// en alternance, plats autant de fois chacun par bloc de 7 jours (écart d'une au plus), jamais la même protéine midi et soir
+// avec des cartes de protéines différentes (qui se congèlent) ; surprises dans les aliments proposés
+{
+  const recIds = Object.keys(A.RECIPES);
+  for (let i = 0; i < Math.round(N / 10); i++){
+    const off = R.chance(.5) ? [] : ['prot:' + R.pick(A.PROT_ORDER), 'starch:' + R.pick(A.STARCH_ORDER)];
+    const cards = { pd: [], co: [], meal: [] };
+    for (let j = R.int(1, 3); j > 0; j--) cards.pd.push(R.chance(.5) ? A.surprisePd(cards.pd, off, R.next) : { id: R.pick(A.PD_ORDER) });
+    for (let j = R.int(1, 3); j > 0; j--) cards.co.push(R.chance(.5) ? A.surpriseCo(cards.co, R.next) : { id: R.pick(A.SNACK_ORDER), cs: R.pick(['banane', 'boules']) });
+    for (let j = R.int(1, 5); j > 0; j--){
+      const fix = R.pick([{}, { prot: R.pick(A.PROT_ORDER) }, { starch: R.pick(A.STARCH_ORDER) }]);
+      if (R.chance(.5)){
+        const m = A.surpriseMeal(cards.meal, fix, off, null, R.next);
+        C.ok((fix.prot ? m.prot === fix.prot && m.s === 'prot' : !off.includes('prot:' + m.prot)) && (fix.starch ? m.starch === fix.starch && m.s === 'starch' : !off.includes('starch:' + m.starch)) && (!m.recette || A.recipeOf(m) === m.recette), 'surprise d’un plat hors des aliments proposés', () => JSON.stringify([off, fix, m]));
+        cards.meal.push(m);
+      } else { const id = R.pick(recIds), r = A.RECIPES[id]; cards.meal.push(R.chance(.5) ? { prot: r.p, starch: r.s, recette: id } : { prot: r.p, starch: r.s, recette: null }); }
+    }
+    const cc = A.cleanCards(cards), n = R.int(1, 31), days = Array.from({ length: n }, () => ({ libre: R.chance(.12) }));
+    const pl = A.planDays(days, cards), key = m => m.prot + '|' + m.starch + '|' + (m.recette || ''), keys = cc.meal.map(key);
+    const where = () => JSON.stringify(cc.meal.map(key)) + ' ' + JSON.stringify(days.map(d => d.libre ? 1 : 0));
+    C.ok(pl.length === n, 'planDays : un jour manquant', where);
+    pl.forEach((x, k) => {
+      C.ok(x.pdBase === cc.pd[k % cc.pd.length].id && x.co === cc.co[k % cc.co.length].id && x.cs === cc.co[k % cc.co.length].cs, 'planDays : petit-déjeuner ou collation pas en alternance', where);
+      C.ok(keys.includes(key(x.dej)) && keys.includes(key(x.diner)), 'planDays : plat hors des cartes', where);
+    });
+    for (let b = 0; b < n; b += A.BATCH_BLOCK){
+      const cnt = {};
+      pl.slice(b, b + A.BATCH_BLOCK).forEach((x, k) => [x.dej].concat(days[b + k].libre ? [] : [x.diner]).forEach(m => { cnt[key(m)] = (cnt[key(m)] || 0) + 1; }));
+      const v = Object.values(cnt), slots = pl.slice(b, b + A.BATCH_BLOCK).length * 2 - days.slice(b, b + A.BATCH_BLOCK).filter(d => d.libre).length;
+      C.ok(Math.max(...v) - Math.min(...v) <= 1 && v.length === Math.min(cc.meal.length, slots), 'planDays : cartes pas autant de fois chacune', () => JSON.stringify(cnt) + ' ' + where());
+    }
+    const prots = new Set(cc.meal.map(m => m.prot));
+    if (prots.size === cc.meal.length && prots.size >= 2 && cc.meal.every(m => !m.recette || A.RECIPES[m.recette].gel)) pl.forEach((x, k) => C.ok(days[k].libre || x.dej.prot !== x.diner.prot, 'planDays : même protéine midi et soir', where));
+  }
+}
+
 assert(C.checks > N * 50, 'trop peu de vérifications : ' + C.checks);
 C.done(N + ' journées au hasard, ' + Math.round(N / 3) + ' comparaisons, ' + N * 2 + ' données abîmées, ' + C.checks + ' vérifications, graine ' + seed);

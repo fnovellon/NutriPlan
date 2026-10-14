@@ -488,7 +488,7 @@
     redo: function(b){
       const slot = b.dataset.slot, other = slot === 'dej' ? 'diner' : 'dej';
       if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
-      const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p ? p.type === 'recettes' : !!recipeOf(old);
+      const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p && p.type ? p.type === 'recettes' : !!recipeOf(old);
       for (let i = 0; i < 20; i++){
         /* Les refus de la planification du jour (3.30.0) comptent aussi */
         const c = randomChoices(null, envOff(pr.off, p && p.env), bal, scaleOf(pr), rec ? pr : null)[slot];

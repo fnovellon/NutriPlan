@@ -1,5 +1,15 @@
 # Nouveautés
 
+## 4.0.0, 14 octobre 2026
+
+- Planifier, nouvelle formule. En haut, ta planification en cours et la suivante, bien en vue avec leurs petits-déjeuners, collations et plats ; « Nouvelle planification » ; puis les autres, à venir et passées, en version compacte.
+- Une planification se crée en étapes : les jours, puis 1 à 3 petits-déjeuners, 1 à 3 collations et 1 à 5 plats (pas de différence entre midi et soir). Cherche dans les recettes et les plats simples, ou laisse-toi surprendre : complètement, ou en choisissant seulement la protéine ou le féculent. Chaque choix devient une carte que tu peux changer, passer en plat simple ou en recette, ou retirer. Une surprise est tirée une fois, puis elle revient comme les autres.
+- L'appli répartit tes cartes sur les jours : les petits-déjeuners et les collations en alternance, chaque plat autant de fois, jamais la même protéine midi et soir quand c'est possible. Le récap montre chaque jour et te laisse choisir le soir du repas libre (un par semaine). Valide : tes courses s'ouvrent.
+- Plus besoin de choisir le batch cooking : quand une recette qui se garde revient plusieurs fois, ta planification te dit quand la cuisiner et ce que contient chaque boîte, avec les chiffres ronds, comme avant.
+- Tes courses ont une partie à part, « Épices et petits trucs » : ail, citron, herbes, épices, sauce soja… sans quantités, à vérifier dans tes placards. Elle est aussi dans la liste partagée.
+- « Modifier » remplace « Refaire les plats » : il rouvre les étapes avec les cartes de la planification, à partir d'aujourd'hui. Les envies (« Je veux », « Pas cette fois ») disparaissent : tu choisis directement tes plats.
+- Tes planifications d'avant restent là, avec leurs plats et leurs courses ; une ancienne planification en batch cooking garde « Changer de recette » dans sa fiche.
+
 ## 3.31.1, 10 octobre 2026
 
 - Correction : en batch cooking, « Je veux » du poisson blanc pouvait ne rien donner, surtout si tu avais retiré le quinoa, le boulgour ou les lentilles. Six plats de poisson blanc en sauce (curry, tajine, chermoula, dahl, ragoût aux pois chiches, cabillaud aux lentilles) se gardent maintenant 2 à 3 jours au frigo et entrent dans le batch.

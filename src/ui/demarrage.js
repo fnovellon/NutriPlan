@@ -6,7 +6,8 @@
     purge(); loadSel(); prevQty = new Map(); fsel = null;
     if (purgePlanifs()) saveQ();
     const ne = Object.keys(eaten).length; purgeEaten(); if (Object.keys(eaten).length !== ne) saveEaten();
-    resetPlanner();
+    /* L'assistant d'une planification ouvert garde ses cartes */
+    if (topScreen() !== 'wiz') resetPlanner();
     $('hint').textContent = '';
     if (topScreen() === 'repas') startDraft();
     render();

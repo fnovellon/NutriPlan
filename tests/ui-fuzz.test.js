@@ -4,7 +4,7 @@ const ofCouple = m => m.recette === m.prot + '-' + m.starch || String(m.recette)
 // puis des centaines d'actions au hasard avec des vérifications après chacune (totaux affichés, stockage, rechargement).
 // Reproductible : graine fixe. Plus fort : FUZZ=10 npm test, ou npm run test:deep.
 process.env.TZ = 'Europe/Paris';   // avant toute date : les changements d'heure testés sont ceux de la France
-const { openPage, rng, settings, checker } = require('./lib');
+const { openPage, rng, settings, checker, loadEngine } = require('./lib');
 
 const { factor, seed } = settings(7102026);
 const R = rng(seed);
@@ -123,15 +123,31 @@ function scan(dom, label){
   click(dom, '#wk-next'); scan(dom, 'page, semaine suivante');
   click(dom, '#today-btn');
   click(dom, '#plan-btn'); scan(dom, 'planifier, aucune planification');
-  type(dom, 'input[data-range="plan"][data-end="to"]', '2027-01-30'); scan(dom, 'planifier, période trop longue');
-  click(dom, '[data-action="pl-preset"][data-value="suivante"]');
-  click(dom, '[data-action="pl-type"][data-value="simple"]'); scan(dom, 'planifier, plats simples');
-  click(dom, '[data-action="pl-create"]'); scan(dom, 'planification à venir, plats simples');
+  // L'assistant (4.0.0), chaque étape
+  click(dom, '#pl-new'); scan(dom, 'assistant, jours');
+  type(dom, 'input[data-range="wiz"][data-end="to"]', '2027-01-30'); scan(dom, 'assistant, période trop longue');
+  click(dom, '[data-action="wiz-preset"][data-value="suivante"]');
+  click(dom, '#wiz-next'); click(dom, '#wiz-next'); scan(dom, 'assistant, petits-déjeuners, aucun');
+  click(dom, '[data-action="wiz-pick"][data-value="sale"]'); click(dom, '#wiz-sur'); click(dom, '#wc-edit-0'); scan(dom, 'assistant, petits-déjeuners, une carte à changer');
+  click(dom, '#wc-edit-no-0'); click(dom, '#wiz-next');
+  click(dom, '[data-action="wiz-pick"][data-value="rizaulait"]'); click(dom, '[data-action="wiz-pick"][data-value="oeufs"]'); scan(dom, 'assistant, collations');
+  click(dom, '#wiz-next'); scan(dom, 'assistant, plats, sans recherche');
+  click(dom, '[data-action="wiz-qp"][data-value="oeufs"]'); scan(dom, 'assistant, plats, recherche');
+  click(dom, '#wiz-res .wr'); click(dom, '[data-action="wiz-part"][data-value="starch"]'); scan(dom, 'assistant, plats, je choisis le féculent');
+  click(dom, '[data-action="wiz-sur"][data-value="starch|lentilles"]'); click(dom, '#wiz-sur'); scan(dom, 'assistant, plats, trois cartes');
+  type(dom, '#wiz-q', 'xyz'); scan(dom, 'assistant, plats, rien trouvé');
+  click(dom, '#wiz-next'); scan(dom, 'assistant, récap');
+  click(dom, '[data-action="wiz-libre"]'); scan(dom, 'assistant, récap, repas libre');
+  click(dom, '#wiz-next'); scan(dom, 'planification à venir');
   click(dom, '#courses-list .chk'); scan(dom, 'planification, ligne cochée');
+  click(dom, '#chg-2026-10-13-dej'); scan(dom, 'planification, changer un repas'); click(dom, '#sheet [data-value="*"]');
   click(dom, '#courses [data-action="fermer"]'); scan(dom, 'planifier, une planification à venir');
-  click(dom, '[data-action="pl-preset"][data-value="7"]'); scan(dom, 'planifier, jours déjà prévus');
-  click(dom, '[data-action="pl-type"][data-value="recettes"]'); click(dom, '#pl-batch'); scan(dom, 'planifier, batch cooking');
-  click(dom, '[data-action="pl-create"]'); scan(dom, 'planification en cours, batch cooking');
+  click(dom, '#pl-new'); click(dom, '[data-action="wiz-preset"][data-value="7"]'); scan(dom, 'assistant, jours déjà prévus');
+  click(dom, '#wiz-next');
+  for (const k of ['pd', 'co']) { click(dom, '#wiz-sur'); click(dom, '#wiz-next'); }
+  type(dom, '#wiz-q', 'poulet riz'); click(dom, '[data-action="wiz-pick"][data-value="poulet|riz|poulet-riz"]'); click(dom, '#wiz-next');
+  click(dom, '#wiz-next'); scan(dom, 'planification en cours');
+  click(dom, '#co-edit'); scan(dom, 'assistant, modification'); click(dom, '#wiz-back');
   click(dom, '#plan-btn'); scan(dom, 'planifier, en cours et à venir');
   click(dom, '#nav-jour');
   const bb = dom.window.document.querySelector('#rec-b-dej, #rec-b-diner');
@@ -331,6 +347,27 @@ function swapRecipe(dom){
   swaps++;
 }
 let swaps = 0;
+// Assistant (4.0.0) : les étapes des cartes, quelques actions au hasard à chacune (choisir, surprise complète ou partielle,
+// changer une carte, la retirer, plat simple ↔ recette, glucides de la collation, chercher, revenir), au moins une carte,
+// jusqu'au récap ; edit : depuis « Modifier » (les cartes sont déjà là)
+function wizCards(dom, edit){
+  const d = dom.window.document, $ = s => d.querySelector(s), all = s => [...d.querySelectorAll(s)];
+  for (let guard = 0; $('#wiz-h').textContent !== 'Ton récap' && guard < 12; guard++){
+    for (let i = R.int(edit ? 0 : 1, 4); i > 0; i--){
+      const a = R.pick(['pick', 'pick', 'sur', 'part', 'edit', 'rm', 'toggle', 'cs', 'q']);
+      const b = a === 'pick' ? R.pick(all('#wiz-res .wr, [data-action="wiz-qp"]')) : a === 'sur' ? $('#wiz-sur') : a === 'part' ? R.pick(all('[data-action="wiz-part"], .wpart .opt'))
+        : a === 'edit' ? R.pick(all('[data-action="wiz-edit"], [data-action="wiz-edit-no"]')) : a === 'rm' ? R.pick(all('[data-action="wiz-rm"], [data-action="wiz-again"]'))
+        : a === 'toggle' ? R.pick(all('[data-action="wiz-simple"], [data-action="wiz-recette"]')) : a === 'cs' ? R.pick(all('[data-action="wiz-cs"]')) : null;
+      if (a === 'q' && $('#wiz-q')) type(dom, '#wiz-q', R.pick(['poulet', 'riz', 'curry', 'saumon pates', 'œuf', 'tofu', 'zz', '']));
+      else if (b) b.click();
+      C.ok(d.querySelectorAll('.wcard').length <= 5, 'assistant : trop de cartes', a);
+    }
+    if (!$('.wcard')) $('#wiz-sur').click();
+    if (R.chance(.1) && !/^Étape 2/.test($('#wiz-step').textContent)) $('#wiz-back').click();
+    $('#wiz-next').click();
+  }
+  if ($('#wiz-h').textContent !== 'Ton récap') throw new Error('assistant : récap pas atteint, ' + $('#wiz-h').textContent + ' ' + $('#wiz-msg').textContent);
+}
 const ACTIONS = {
   // Séances (3.20.0) : « + Séance » puis une taille et un moment ; une pastille puis son moment, sa durée ou « Retirer »
   add: dom => {
@@ -520,52 +557,86 @@ const ACTIONS = {
     C.ok(on && d.querySelectorAll('#week [aria-pressed="true"]').length === 1, 'calendrier : un seul jour choisi', b.id || b.dataset.value);
     return 'calendrier ' + (b.dataset.value || b.id);
   },
-  // Planifier (3.21.0) : une nouvelle planification (période, plats simples, recettes ou batch cooking) puis son détail ;
-  // ou une planification de la liste ; dans le détail : cocher, changer une recette du batch, ouvrir un jour ou revenir
+  // Planifier (4.0.0) : une nouvelle planification par l'assistant (jours, cartes au hasard : choix, surprises, changer,
+  // retirer, plat simple ↔ recette, repas libre) puis ses courses ; ou une planification de la liste ; dans le détail : cocher,
+  // changer un repas, partager, modifier ou retirer, ouvrir un jour ou revenir
   planifier: dom => {
     const d = dom.window.document, w = dom.window, QK = 'repas-du-jour:planifs:v1';
     if (d.querySelector('#page').hidden) return 'planifier -';
     d.querySelector('#plan-btn').click();
     const open = [...d.querySelectorAll('[data-action="pl-open"]')];
     let how = 'liste';
-    if (open.length && R.chance(.3)) R.pick(open).click();
+    if (open.length && R.chance(.45)) R.pick(open).click();
     else {
-      if (R.chance(.6)) R.pick([...d.querySelectorAll('[data-action="pl-preset"]')]).click();
-      else type(dom, 'input[data-range="plan"][data-end="' + R.pick(['from', 'to']) + '"]', R.pick(['2026-10-09', '2026-10-20', '2026-12-31', '', '2026-10-01']));
-      how = R.pick(['simple', 'recettes', 'batch', 'batch']);
-      d.querySelector('[data-action="pl-type"][data-value="' + (how === 'simple' ? 'simple' : 'recettes') + '"]').click();
-      const sw = d.querySelector('#pl-batch');
-      if (sw && (sw.getAttribute('aria-checked') === 'true') !== (how === 'batch')) d.querySelector('#pl-batch').click();
-      if (how === 'batch') R.pick([...d.querySelectorAll('[data-action="pl-nrec"]')]).click();
-      const err = d.querySelector('#plan-err').textContent, before = w.localStorage.getItem(QK);
-      const from = d.querySelector('input[data-range="plan"][data-end="from"]').value, to = d.querySelector('input[data-range="plan"][data-end="to"]').value;
-      d.querySelector('[data-action="pl-create"]').click();
-      if (err){ C.ok(!d.querySelector('#plan').hidden && w.localStorage.getItem(QK) === before, 'planification créée malgré l’erreur', err); d.querySelector('#nav-jour').click(); return 'planifier refusé'; }
-      // La nouvelle planification : enregistrée, ses jours tirés selon leur type
+      d.querySelector('#pl-new').click();
+      if (R.chance(.6)) R.pick([...d.querySelectorAll('[data-action="wiz-preset"]')]).click();
+      else type(dom, 'input[data-range="wiz"][data-end="' + R.pick(['from', 'to']) + '"]', R.pick(['2026-10-09', '2026-10-20', '2026-12-31', '', '2026-10-01']));
+      const err = d.querySelector('#wiz-err').textContent, before = w.localStorage.getItem(QK);
+      const from = d.querySelector('input[data-range="wiz"][data-end="from"]').value, to = d.querySelector('input[data-range="wiz"][data-end="to"]').value;
+      d.querySelector('#wiz-next').click();
+      if (err){ C.ok(d.querySelector('#wiz-step').textContent === 'Étape 1 sur 5' && w.localStorage.getItem(QK) === before, 'planification créée malgré l’erreur', err); d.querySelector('#nav-jour').click(); return 'planifier refusé'; }
+      wizCards(dom);
+      // Récap : quelques repas libres basculés, un seul par semaine dans la période
+      for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('[data-action="wiz-libre"]')]); if (b) b.click(); }
+      const libres = [...d.querySelectorAll('[data-action="wiz-libre"][aria-checked="true"]')].map(b => b.dataset.value);
+      d.querySelector('#wiz-next').click();
+      how = 'nouvelle';
+      // La nouvelle planification : enregistrée avec ses cartes, chaque jour tiré de ses cartes
       const q = JSON.parse(w.localStorage.getItem(QK)), p = q.list.find(x => x.from === from && x.to === to);
-      C.ok(!d.querySelector('#courses').hidden && p && p.type === (how === 'simple' ? 'simple' : 'recettes') && (p.n > 0) === (how === 'batch'), 'planification : détail ou enregistrement', () => how + ' ' + from + ' ' + to + ' ' + JSON.stringify(q.list));
-      const st = JSON.parse(w.localStorage.getItem(KEY));
-      if (how === 'simple' && p) C.ok(Object.keys(st.plans).filter(k => k >= p.from && k <= p.to).every(k => !st.plans[k].ch.dej.recette && !st.plans[k].ch.diner.recette), 'plats simples avec une recette', () => JSON.stringify(p));
+      C.ok(!d.querySelector('#courses').hidden && p && p.cards && /^Planification créée/.test(d.querySelector('#courses-msg').textContent), 'planification : détail ou enregistrement', () => from + ' ' + to + ' ' + JSON.stringify(q.list));
+      if (p && p.cards){
+        const st = JSON.parse(w.localStorage.getItem(KEY)), key = m => m.prot + '|' + m.starch + '|' + (m.recette || '');
+        const meals = p.cards.meal.map(key), days = Object.keys(st.plans).filter(k => k >= p.from && k <= p.to);
+        C.ok(days.length === Math.round((new Date(p.to) - new Date(p.from)) / 864e5) + 1, 'planification : un jour sans plats', () => JSON.stringify(p));
+        days.forEach(k => {
+          const c = st.plans[k].ch;
+          C.ok(p.cards.pd.some(x => x.id === c.pdBase) && p.cards.co.some(x => x.id === c.co && x.cs === c.cs) && meals.includes(key(c.dej)) && meals.includes(key(c.diner)), 'planification : plat hors des cartes', () => k + ' ' + JSON.stringify(c) + ' ' + JSON.stringify(p.cards));
+          C.ok((st.plans[k].libre === true) === libres.includes(k), 'planification : repas libre du récap', () => k + ' ' + JSON.stringify(libres));
+        });
+        const weeks = {};
+        libres.forEach(k => { const x = new Date(k + 'T12:00:00'), mon = new Date(x - ((x.getDay() + 6) % 7) * 864e5).toDateString(); weeks[mon] = (weeks[mon] || 0) + 1; });
+        C.ok(Object.values(weeks).every(n => n === 1), 'récap : deux repas libres la même semaine', () => libres.join());
+      }
       // Planifications : pas de chevauchement, triées
       C.ok(q.list.every((x, i) => i === 0 || q.list[i - 1].to < x.from), 'planifications qui se chevauchent', () => JSON.stringify(q.list));
     }
     if (d.querySelector('#courses').hidden) throw new Error('détail de la planification non ouvert');
     for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('#courses-list .chk')]); if (b) b.click(); }
     if (R.chance(.5)) swapRecipe(dom);
-    // Partager la liste, refaire les plats ou retirer la planification (3.22.0), avec ou sans confirmer
-    const m = R.pick(['partage', 'refaire', 'retirer', '-', '-']), QK2 = 'repas-du-jour:planifs:v1';
+    // Changer un repas (3.30.0) : un plat de la liste, au hasard, ou Échap
+    const chg = R.pick([...d.querySelectorAll('[data-action="co-meal"]')]);
+    if (chg && R.chance(.4)){
+      chg.click();
+      const opts = [...d.querySelectorAll('#sheet .opt')], bf = w.localStorage.getItem(KEY);
+      if (R.chance(.2)){ d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); C.ok(w.localStorage.getItem(KEY) === bf, 'changer un repas : Échap a changé les plats', ''); }
+      else (R.chance(.3) ? opts[0] : R.pick(opts)).click();
+      C.ok(d.querySelector('#sheet').hidden && d.activeElement && d.activeElement.id === chg.id, 'changer un repas : panneau ou focus', chg.id);
+    }
+    // Partager la liste, modifier (4.0.0) ou retirer la planification
+    const m = R.pick(['partage', 'modifier', 'retirer', '-', '-']), QK2 = 'repas-du-jour:planifs:v1';
     if (m === 'partage'){ d.querySelector('#co-share').click(); C.ok(!d.querySelector('#co-text').hidden && /^Courses, /.test(d.querySelector('#co-text').value), 'partage de la liste', ''); }
-    else if (m !== '-' && !d.querySelector(m === 'refaire' ? '#co-redo' : '#co-del').hidden){
-      d.querySelector(m === 'refaire' ? '#co-redo' : '#co-del').click();
+    else if (m === 'modifier' && !d.querySelector('#co-edit').hidden){
+      d.querySelector('#co-edit').click();
+      if (d.querySelector('#wiz').hidden) throw new Error('modifier : assistant non ouvert');
+      const before = w.localStorage.getItem(QK2);
+      if (R.chance(.3)){
+        while (!d.querySelector('#wiz').hidden) d.querySelector('#wiz-back').click();
+        C.ok(w.localStorage.getItem(QK2) === before && !d.querySelector('#courses').hidden, 'modifier annulé : rien ne change', '');
+      } else {
+        wizCards(dom, true);
+        d.querySelector('#wiz-next').click();
+        const q2 = JSON.parse(w.localStorage.getItem(QK2)).list;
+        C.ok(!d.querySelector('#courses').hidden && /^Planification modifiée/.test(d.querySelector('#courses-msg').textContent) && q2.every((x, i) => i === 0 || q2[i - 1].to < x.from), 'planification modifiée', () => JSON.stringify(q2));
+      }
+    } else if (m === 'retirer'){
+      d.querySelector('#co-del').click();
       if (d.querySelector('#co-confirm').hidden) throw new Error('pas de confirmation : ' + m);
       if (R.chance(.3)){ const before = w.localStorage.getItem(QK2); d.querySelector('#co-no').click(); C.ok(w.localStorage.getItem(QK2) === before && d.querySelector('#co-confirm').hidden, 'confirmation annulée : rien ne change', m); }
       else {
         const n = JSON.parse(w.localStorage.getItem(QK2)).list.length;
         d.querySelector('#co-ok').click();
         const q2 = JSON.parse(w.localStorage.getItem(QK2)).list;
-        C.ok(q2.every((x, i) => i === 0 || q2[i - 1].to < x.from), 'planifications qui se chevauchent après ' + m, () => JSON.stringify(q2));
-        if (m === 'retirer'){ C.ok(q2.length === n - 1 && !d.querySelector('#plan').hidden && d.querySelector('#courses').hidden, 'planification non retirée', ''); d.querySelector('#nav-jour').click(); return 'planifier retirée'; }
-        C.ok(!d.querySelector('#courses').hidden && /^Plats refaits/.test(d.querySelector('#courses-msg').textContent), 'plats non refaits', '');
+        C.ok(q2.length === n - 1 && !d.querySelector('#plan').hidden && d.querySelector('#courses').hidden, 'planification non retirée', ''); d.querySelector('#nav-jour').click(); return 'planifier retirée';
       }
     }
     const day = R.pick([...d.querySelectorAll('#courses-days .shop-day')]), end = R.pick(['jour', 'liste', 'menu', 'retour']);
@@ -576,6 +647,16 @@ const ACTIONS = {
     if (!d.querySelector('#plan').hidden && R.chance(.5)) d.querySelector('#nav-jour').click();
     C.ok(d.querySelector('#courses').hidden, 'détail resté ouvert', end);
     return 'planifier ' + how + ' ' + end;
+  },
+  // Planification en batch cooking d'avant la 4.0.0 (sessions paires) : « Changer de recette » dans sa fiche
+  ancienne: dom => {
+    const d = dom.window.document;
+    if (d.querySelector('#page').hidden) return 'ancienne -';
+    d.querySelector('#plan-btn').click();
+    const b = d.querySelector('[data-action="pl-open"][data-value="2026-10-07|2026-10-13"]');
+    if (b){ b.click(); for (let i = R.int(1, 2); i > 0; i--) swapRecipe(dom); }
+    d.querySelector('#nav-jour').click();
+    return 'ancienne' + (b ? '' : ' -');
   },
   // Recettes (3.24.0) : quelques filtres, une recette prise pour un repas (ou fiche fermée), la date enregistrée suit
   recettes: dom => {
@@ -734,7 +815,17 @@ let actions = 0;
 for (let run = 0; run < RUNS; run++){
   clock.now = new Date(2026, 9, 7, 9).getTime();
   const prof = [{}, { age: 35, taille: 178, poids: 71 }, { sexe: 'f', age: 26, taille: 160, poids: 50, shaker: 'non', marge: 0 }, { poids: 110, prot: 2.4 }][run];
-  let dom = open({ [PKEY]: JSON.stringify(prof) });
+  // Deux sessions sur quatre commencent avec une planification en batch cooking d'avant la 4.0.0 (ses plats tirés par
+  // batchChoices) : « Changer de recette » reste possible dans sa fiche
+  const start = { [PKEY]: JSON.stringify(prof) };
+  if (run % 2 === 0){
+    const E = loadEngine(), isos = [7, 8, 9, 10, 11, 12, 13].map(n => '2026-10-' + String(n).padStart(2, '0'));
+    const chs = E.batchChoices(isos.map(iso => ({ libre: iso === '2026-10-10', long: false })), 4, [], 1, R.next, null, null), plans = {};
+    isos.forEach((iso, j) => { plans[iso] = { ch: chs[j] }; });
+    start[KEY] = JSON.stringify({ plans, choices: {} });
+    start['repas-du-jour:planifs:v1'] = JSON.stringify({ list: [{ from: isos[0], to: isos[6], type: 'recettes', n: 4, checked: [] }] });
+  }
+  let dom = open(start);
   const log = [];
   for (let step = 0; step < STEPS; step++){
     const a = R.pick(Object.keys(ACTIONS));

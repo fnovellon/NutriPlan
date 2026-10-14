@@ -31,11 +31,11 @@
     $(which + '-span').textContent = err ? '' : spanText(st.from, st.to);
     return err;
   };
-  /* Champs Du / Au d'une nouvelle planification */
+  /* Champs Du / Au d'une nouvelle planification (assistant) */
   const rangeInput = function(e){
     const el = e.target;
-    if (!el.dataset || el.dataset.range !== 'plan') return;
-    planner[el.dataset.end === 'to' ? 'to' : 'from'] = isoOk(el.value) ? el.value : '';
+    if (!el.dataset || el.dataset.range !== 'wiz') return;
+    wiz[el.dataset.end === 'to' ? 'to' : 'from'] = isoOk(el.value) ? el.value : '';
     planFormUpdate();
   };
   document.addEventListener('input', rangeInput);

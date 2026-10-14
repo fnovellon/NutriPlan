@@ -429,7 +429,7 @@ h3.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;}
 h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17px;}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
-/* Planifier : raccourcis, dates
+/* Planifier : raccourcis, dates */
 .plan .fields input{font-size:16px;font-weight:600;}
 .plan-presets{margin:0 0 18px;}
 /* Batch cooking : fiche par recette dans une planification */
@@ -471,25 +471,70 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .shop-day .d{font-family:var(--sans);font-weight:700;font-size:16px;}
 .shop-day .k{font-family:var(--sans);font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .shop-day .note{grid-column:1/-1;font-size:14.5px;color:var(--muted);}
-/* Planifier (3.21.0) : la planification en cours en évidence, rayons des courses sous « Tes courses » */
-.pl-now{margin:0 0 6px;}
 /* Changer un repas d'une planification (3.30.0) */
 .co-meals{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 10px;border-bottom:1px solid var(--line);}
 .shop-days li:has(.co-meals) .shop-day{border-bottom:0;}
-/* Envies d'une planification (3.30.0) : je veux = plein, pas cette fois = barré */
-.pl-env{margin:0 0 14px;}
-.pl-env summary{font-family:var(--sans);font-weight:700;font-size:16px;padding:8px 0;cursor:pointer;}
-.pl-env .opts-list{margin:0 0 6px;}
-.opt.env-plus{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
-.opt.env-moins{color:var(--muted);text-decoration:line-through;border-style:dashed;}
-.opt.env-moins .opt-s{text-decoration:none;}
-.shop-day.is-cur{margin:4px 0 0;padding:14px 16px;border:2px solid var(--ink);border-radius:16px;}
-.shop-day.is-cur .d{font-size:19px;font-stretch:108%;font-weight:800;}
-.shop-day.is-cur .k{color:var(--beet);font-weight:700;}
-.shop-day.is-cur .note{font-size:15px;color:var(--ink);}
 .shop-a{margin:18px 0 6px;font-family:var(--sans);font-weight:700;font-size:17px;line-height:1.25;}
-.plan .switches{margin:0 0 12px;}
-.plan .pl-n{margin:0 0 12px;}
+/* Planifier (4.0.0) : la planification en cours (cadre encre) et la suivante (cadre fin), puis les autres en lignes */
+.pl-card{margin:0 0 14px;padding:14px 16px 16px;border:1.5px solid var(--line);border-radius:16px;}
+.pl-card.is-now{border:2px solid var(--ink);}
+.pl-when{margin:0 0 2px;font-family:var(--sans);font-weight:700;font-size:14.5px;color:var(--muted);}
+.pl-card.is-now .pl-when{color:var(--beet);}
+.plan .pl-card h2{margin:0 0 8px;}
+.pl-sum{margin:0 0 14px;padding:0;list-style:none;font-size:16px;line-height:1.4;}
+.pl-sum li{padding:3px 0;}
+.pl-l{display:block;font-family:var(--sans);font-weight:600;font-size:13.5px;color:var(--muted);}
+.pl-new{margin:4px 0 6px;}
+.plan h2.pl-lh{margin:24px 0 4px;font-size:17px;}
+.pl-rows{margin:0;padding:0;list-style:none;}
+.pl-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%;padding:9px 0;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;}
+.pl-row .d{font-family:var(--sans);font-weight:600;font-size:15.5px;}
+.pl-row .k{flex:none;font-family:var(--sans);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;}
+/* Assistant d'une planification : étape, cartes choisies, surprises, recherche, récap */
+.wiz-step{margin:0 0 6px;font-family:var(--sans);font-weight:600;font-size:14.5px;color:var(--beet);}
+.wcards{display:grid;gap:10px;margin:0 0 8px;padding:0;list-style:none;}
+.wcard{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1.5px solid var(--ink);border-radius:14px;}
+.wcard.is-edit{border-color:var(--beet);border-style:dashed;}
+.wc-m{font-family:var(--sans);font-weight:700;font-size:16.5px;line-height:1.3;}
+.wc-s{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--beet);color:var(--paper);font-weight:700;font-size:12.5px;line-height:1.6;vertical-align:1px;}
+.wc-t{font-size:16px;line-height:1.35;}
+.wc-a{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.wc-a .reset{margin:0;padding:6px 12px;}
+.wc-cs{margin:6px 0 0;}
+.wc-cs .lbl{min-width:0;font-size:14px;}
+.wc-cs .seg{flex-wrap:wrap;max-width:100%;border-radius:18px;}
+.wc-cs .seg button{padding:6px 9px;font-size:13.5px;}
+.wc-none{margin:0 0 8px;font-style:italic;color:var(--muted);}
+.wc-n{margin:0 0 14px;}
+.wsur{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;}
+.wsur .reset{margin:0;}
+.wsur .reset[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink);}
+.wpart{margin:0 0 14px;}
+.wpart .calc{margin:0 0 8px;}
+.wiz-q{margin:6px 0 10px;}
+.wiz-q input{font-size:17px;font-weight:600;}
+.wres{margin:0;padding:0;list-style:none;border-top:1px solid var(--line);}
+.wr{display:flex;flex-direction:column;gap:1px;width:100%;padding:10px 2px 10px 34px;position:relative;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);text-align:left;}
+.wr::before{content:"";position:absolute;left:4px;top:13px;width:18px;height:18px;border:2px solid var(--line);border-radius:50%;}
+.wr[aria-pressed="true"]::before{border-color:var(--ink);background:var(--ink);box-shadow:inset 0 0 0 3px var(--paper);}
+.wr-t{font-size:17px;font-weight:600;line-height:1.3;}
+.wr-s{font-size:14px;font-style:italic;color:var(--muted);}
+.wiz-t{width:100%;margin:0 0 6px;border-collapse:collapse;font-size:15px;line-height:1.35;}
+.wiz-t th,.wiz-t td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;}
+.wiz-t thead th{font-family:var(--sans);font-weight:600;font-size:13.5px;color:var(--muted);}
+.wiz-t tbody th{width:3.4rem;font-family:var(--sans);font-weight:700;white-space:nowrap;}
+.wiz-t td:last-child,.wiz-t thead th:last-child{width:50px;padding-right:0;text-align:right;}
+.wt-d{display:block;font-weight:600;font-size:13.5px;color:var(--muted);}
+.wt-r{display:block;}
+.wt-l{font-family:var(--sans);font-weight:600;font-size:13px;color:var(--muted);}
+.is-lib .wt-r:last-child{color:var(--beet);}
+.wt-sw{display:inline-flex;padding:4px 0;border:0;background:none;}
+.wt-sw[aria-checked="true"] .knob{background:var(--beet);}
+.wt-sw[aria-checked="true"] .knob::after{transform:translateX(18px);}
+.wiz .acc-nav{position:sticky;bottom:0;margin:22px -18px 0;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line);}
+/* Épices et petits trucs : sans quantités */
+.shop.pantry .chk{grid-template-columns:26px minmax(0,1fr);}
+.shop.pantry .q{display:none;}
 /* Recette choisie d'un batch : le bouton de sa fiche, sous les autres */
 .rec .rec-batch{margin-top:8px;color:var(--beet);border-color:var(--beet);}
 .batchp .calc strong{color:var(--ink);}
