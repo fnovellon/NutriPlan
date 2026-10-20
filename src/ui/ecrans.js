@@ -4,10 +4,10 @@
      revient d'un cran) et la position dans la page est rétablie au retour. Le menu en haut (3.20.0, #nav, caché pendant
      l'accueil) surligne l'écran affiché ; un écran du menu remplace celui du dessus, « Journée » ferme tout. */
   let stack = [], pageScroll = 0;
-  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'wiz', 'courses', 'batch', 'recettes'];
-  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', wiz:'wiz-h', courses:'courses-h', batch:'batchp-h', recettes:'lib-h'};
+  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'wiz', 'courses', 'batch', 'recettes', 'equiv'];
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', wiz:'wiz-h', courses:'courses-h', batch:'batchp-h', recettes:'lib-h', equiv:'eq-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', wiz:'plan-btn', courses:'plan-btn', recettes:'nav-rec', aide:'help', reglages:'gear'};
+  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', wiz:'plan-btn', courses:'plan-btn', recettes:'nav-rec', equiv:'nav-eq', aide:'help', reglages:'gear'};
   const setView = function(v){
     VIEWS.forEach(function(id){ $(id).hidden = id !== v; });
     $('nav').hidden = v === 'accueil';

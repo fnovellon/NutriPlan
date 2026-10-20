@@ -51,7 +51,11 @@
     const q = '<span class="q"><span class="qty' + (changed ? ' bump' : '') + '">' + i.qty + '</span>' +
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
-    return '<li>' + q + '<span class="name">' + i.name + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
+    /* Équivalences (4.2.0) : un bouton ⇄ sur les féculents, protéines et matières grasses du déjeuner et du dîner */
+    const e = (secId === 'dej' || secId === 'diner') && i.m ? eqOfBuy(i.buy) : null;
+    const eb = e ? ' <button type="button" class="eqb" id="eqb-' + secId + '-' + i.key + '" data-action="eq-open" data-value="' + e.group + '|' + e.id + '|' + e.qty + '|' + e.unit + '"' +
+      ' aria-label="Équivalences de ' + i.qty + ' ' + i.name + '"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg></button>' : '';
+    return '<li>' + q + '<span class="name">' + i.name + eb + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
       (i.m && ['lib', 'marge', 'encas', 'imp'].indexOf(i.key) < 0 ? macHTML(i.m) : '') + '</span></li>';
   };
   /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et

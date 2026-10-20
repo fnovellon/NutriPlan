@@ -119,6 +119,7 @@
   <button type="button" id="nav-jour" data-action="jour"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M19 21V3c-2.5 1.5-4 4.5-4 9 0 1.5 1 2.5 4 2.5"/></svg></span><span class="nav-l">Journée</span></button>
   <button type="button" id="plan-btn" data-action="plan"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg></span><span class="nav-l">Planifier</span></button>
   <button type="button" id="nav-rec" data-action="recettes"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h6a4 4 0 0 1 4 4V21a3 3 0 0 0-3-3H2z"/><path d="M22 4.5h-6a4 4 0 0 0-4 4V21a3 3 0 0 1 3-3h7z"/></svg></span><span class="nav-l">Recettes</span></button>
+  <button type="button" id="nav-eq" data-action="equiv"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg></span><span class="nav-l">Convertir</span></button>
   <button type="button" id="help" data-action="aide"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span class="nav-l">Aide</span></button>
   <button type="button" id="gear" data-action="needs"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-l">Réglages</span></button>
 </nav>
@@ -357,6 +358,7 @@
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent (il y en a deux par couple, elles tournent d’un jour à l’autre&nbsp;; «&nbsp;Une autre recette&nbsp;» montre la suivante). «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
+      <li><strong>Convertir</strong>, dans le menu en haut&nbsp;: combien d’un autre aliment pour remplacer le tien. Les féculents et les matières grasses à calories égales (40&nbsp;g de riz cru, c’est 180&nbsp;g de pommes de terre), les protéines à protéines égales, avec les calories de chacune. Saisis en grammes crus, cuits ou en pièces. Dans ta journée, le bouton ⇄ d’une ligne du déjeuner ou du dîner ouvre l’outil avec sa quantité.</li>
       <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 160 recettes de l’appli, deux par protéine et féculent, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus. Deux autres onglets, «&nbsp;Petits-déjeuners&nbsp;» et «&nbsp;Collations&nbsp;» (avec les boules d’énergie)&nbsp;: leur préparation, tes quantités pour ce matin, demain matin, aujourd’hui ou demain, et «&nbsp;Prendre pour…&nbsp;». Un petit-déjeuner ou une collation favori revient deux fois plus souvent dans «&nbsp;Surprends-moi&nbsp;» de tes planifications, un «&nbsp;à éviter&nbsp;» n’y revient plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
@@ -453,6 +455,24 @@
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
+<main class="app eqs" id="equiv" hidden>
+  <h1 id="eq-h" tabindex="-1">Équivalences</h1>
+  <p class="repas-p">Combien d’un autre aliment pour remplacer le tien&nbsp;? Choisis ta portion&nbsp;: la liste te donne l’équivalent pour chaque aliment de la même famille.</p>
+  <div class="seg lib-tabs" id="eq-tabs" role="group" aria-label="Famille d’aliments"></div>
+  <div class="fields eq-in">
+    <label class="field eq-food"><span>Ton aliment</span><span class="inp"><select id="eq-food"></select></span></label>
+    <label class="field"><span>Quantité</span><span class="inp"><input id="eq-qty" type="text" inputmode="decimal" autocomplete="off" maxlength="8"></span></label>
+    <label class="field"><span>Unité</span><span class="inp"><select id="eq-unit"></select></span></label>
+  </div>
+  <p class="warn" id="eq-err" role="alert"></p>
+  <h2 class="shop-t eq-t" id="eq-ref-t">Ta portion</h2>
+  <ul class="b-list eq-list" id="eq-ref" aria-labelledby="eq-ref-t"></ul>
+  <h2 class="shop-t eq-t" id="eq-list-t">Ses équivalents</h2>
+  <p class="calc" id="eq-basis" role="status"></p>
+  <ul class="b-list eq-list" id="eq-list" aria-labelledby="eq-list-t"></ul>
+  <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
+</main>
+
 <main class="app lib" id="recettes" hidden>
   <h1 id="lib-h" tabindex="-1">Recettes</h1>
   <div class="seg lib-tabs" id="lib-tabs" role="group" aria-label="Quelles recettes"></div>
@@ -501,6 +521,7 @@
 {{inclure engine/batch.js}}
 {{inclure engine/courses.js}}
 {{inclure engine/planif.js}}
+{{inclure engine/equiv.js}}
 
 {{# Interface : seulement dans un navigateur (le moteur reste testable sans DOM). Un fichier par écran ; chacun ajoute les }}
 {{# actions de ses boutons à ACTIONS (déclaré dans ui/etat.js, le clic est traité dans ui/actions.js). }}
@@ -515,6 +536,7 @@ if (typeof document !== 'undefined'){
 {{inclure ui/courses.js}}
 {{inclure ui/panneau.js}}
 {{inclure ui/recettes.js}}
+{{inclure ui/equiv.js}}
 {{inclure ui/semtype.js}}
 {{inclure ui/accueil.js}}
 {{inclure ui/actions.js}}

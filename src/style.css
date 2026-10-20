@@ -556,3 +556,17 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 
 @media (min-width:640px){.app{padding-top:36px;}.nav:not([hidden]) ~ .app{padding-top:24px;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
+
+/* Équivalences (4.2.0) : saisie, portion et liste ; bouton ⇄ sur les lignes du déjeuner et du dîner ; six boutons au menu */
+.eq-in{grid-template-columns:1fr 1fr;}
+.eq-in .eq-food{grid-column:1/-1;}
+.eq-in input{font-size:18px;}
+.eqs h2.eq-t{margin:18px 0 6px;font-size:18px;}
+.eq-list{margin:0 0 6px;}
+.eq-list li{grid-template-columns:5.2rem minmax(0,1fr);padding:7px 0;border-bottom:1px solid var(--line);}
+.eq-list .b-q{font-size:17px;}
+.eq-n{font-style:italic;font-size:14px;color:var(--muted);}
+.eqb{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin:-4px 0 -6px 2px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--muted);vertical-align:middle;}
+.eqb svg{width:16px;height:16px;}
+.nav .ic{width:min(54px,100%);}
+@media (max-width:400px){.nav button{font-size:11.5px;}}

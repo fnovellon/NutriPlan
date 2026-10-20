@@ -779,7 +779,7 @@ assert(view() === 'page', 'bouton retour depuis les réglages');
   assert(cur() === 'plan-btn' && !p.$('#plan').hidden && view() === '' && pw.history.state.screen === 'plan', 'menu : Planifier à la place des réglages');
   pw.dispatchEvent(new pw.PopStateEvent('popstate', { state: null }));
   assert(view() === 'page' && p.$('#plan').hidden && cur() === 'nav-jour', 'menu : le retour ramène à la journée');
-  assert.deepStrictEqual([...p.d.querySelectorAll('#nav button')].map(b => b.textContent.trim()), ['Journée', 'Planifier', 'Recettes', 'Aide', 'Réglages'], 'menu : cinq boutons (3.24.0)');
+  assert.deepStrictEqual([...p.d.querySelectorAll('#nav button')].map(b => b.textContent.trim()), ['Journée', 'Planifier', 'Recettes', 'Convertir', 'Aide', 'Réglages'], 'menu : six boutons (4.2.0)');
   p.click('#gear'); p.click('#help-regl');
   assert(view() === 'aide' && cur() === 'help', 'menu : aide depuis les réglages');
   p.click('#gear');
@@ -1895,6 +1895,58 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   const bad = tools(open(ls => ls.setItem(PKEY, JSON.stringify({ fav: ['pd:avoine', 'pd:x', 'co:constructor', 'cs:boules', 'pd:__proto__', 5], ban: ['co:thon', 'pd:avoine'] }))));
   bad.click('#gear'); bad.click('#tab-repas');
   assert.deepStrictEqual([...bad.d.querySelectorAll('#rp-list .rp-n')].map(x => x.textContent), ['Flocons d’avoine', 'Bouchées concombre-thon'], 'identifiants abîmés ignorés');
+}
+
+// Équivalences (4.2.0) : « Convertir » dans le menu ; trois familles, un aliment, une quantité et son unité ; la liste des
+// équivalents ; ouvert depuis une ligne du déjeuner ou du dîner, rempli avec sa quantité
+{
+  const t = tools(open()), tw = t.d.defaultView;
+  const rows = sel => [...t.d.querySelectorAll(sel + ' li')].map(li => [li.querySelector('.b-q').textContent, li.querySelector('.name').childNodes[0].textContent.trim()]);
+  const qty = (name, list) => (list || rows('#eq-list')).find(r => r[1] === name)[0];
+  const setQ = v => { const el = t.$('#eq-qty'); el.value = v; el.dispatchEvent(new tw.Event('input', { bubbles: true })); };
+  const setSel = (id, v) => { const el = t.$(id); el.value = v; el.dispatchEvent(new tw.Event('change', { bubbles: true })); };
+  t.click('#nav-eq');
+  assert(!t.$('#equiv').hidden && t.$('#page').hidden && t.$('#nav-eq').getAttribute('aria-current') === 'page' && t.d.activeElement === t.$('#eq-h'), 'équivalences ouvertes par le menu');
+  assert.deepStrictEqual([...t.d.querySelectorAll('#eq-tabs button')].map(b => b.textContent), ['Féculents', 'Protéines', 'Matières grasses'], 'trois familles');
+  assert(t.pressed('eq-tab') === 'starch' && t.$('#eq-food').value === 'riz' && t.$('#eq-qty').value === '80' && t.$('#eq-unit').value === 'g', 'par défaut : 80 g de riz cru');
+  assert.deepStrictEqual([...t.$('#eq-unit').options].map(o => o.textContent), ['g cru', 'g cuit'], 'unités du riz');
+  assert(/^À calories égales\s:\s282\skcal\./.test(t.$('#eq-basis').textContent) && t.$('#eq-ref-t').textContent === 'Ta portion de riz basmati', 'à calories égales : ' + t.$('#eq-basis').textContent);
+  // 40 g de riz cru (141 kcal) : 40 g de pâtes, 180 g de pommes de terre, 80 g de gnocchis, 1 ½ tranche de pain, 4 galettes
+  setQ('40');
+  assert(t.$('#eq-qty').value === '40' && /141\skcal/.test(t.$('#eq-basis').textContent), 'la liste suit la frappe');
+  assert.deepStrictEqual(['pâtes', 'pommes de terre', 'gnocchis frais', 'pain complet', 'flocons d’avoine'].map(n => qty(n)), ['40\u00a0g', '180\u00a0g', '80\u00a0g', '60\u00a0g', '40\u00a0g'], 'féculents à 40 g de riz');
+  assert(/≈\s90\sg cuites/.test(t.$('#eq-list li').textContent) && rows('#eq-list').some(r => r[0] === '4' && r[1] === 'galettes de riz soufflé'), 'poids cuit et pièces');
+  assert(/≈\s1\s½\stranche[^s]/.test([...t.d.querySelectorAll('#eq-list li')].find(li => /pain complet/.test(li.textContent)).textContent), 'pain en tranches (pluriel à partir de 2)');
+  // En poids cuit : la même portion (120 g cuits), la même liste
+  setSel('#eq-unit', 'cuit:0');
+  assert(t.$('#eq-qty').value === '120' && qty('pâtes') === '40\u00a0g' && t.d.activeElement === t.$('#eq-unit'), 'en poids cuit');
+  setQ('1,5,'); assert(/Entre une quantité/.test(t.$('#eq-err').textContent) && !t.d.querySelector('#eq-list li') && t.$('#eq-qty').getAttribute('aria-invalid') === 'true', 'quantité invalide');
+  setQ('0'); assert(/Entre une quantité/.test(t.$('#eq-err').textContent), 'zéro refusé');
+  setQ('360'); assert(!t.$('#eq-err').textContent && qty('pâtes') === '120\u00a0g', 'virgule et cuit : 360 g cuits = 120 g crus');
+  // Protéines : à protéines égales ; changer d'aliment garde la même valeur
+  t.click('#eq-tab-prot');
+  assert(t.pressed('eq-tab') === 'prot' && t.$('#eq-food').value === 'poulet' && t.$('#eq-qty').value === '150' && t.d.activeElement === t.$('#eq-tab-prot'), 'protéines : 150 g de poulet');
+  assert(/^À protéines égales\s:\s35\sg de protéines\./.test(t.$('#eq-basis').textContent) && !rows('#eq-list').some(r => /parmesan/.test(r[1])), 'à protéines égales');
+  assert.deepStrictEqual(['poisson blanc', 'thon au naturel, égoutté', 'skyr nature'].map(n => qty(n)), ['190\u00a0g', '140\u00a0g', '330\u00a0g'], 'protéines à 150 g de poulet');
+  assert(rows('#eq-list').some(r => r[0] === '5\u00a0½' && r[1] === 'œufs'), 'œufs en pièces');
+  setSel('#eq-food', 'oeuf');
+  assert(t.$('#eq-unit').value === 'unit' && t.$('#eq-qty').value === '5,5' && rows('#eq-ref')[0][1] === 'œufs' && t.d.activeElement === t.$('#eq-food'), 'changer d’aliment : la même valeur, en pièces');
+  setQ('1');
+  assert(rows('#eq-ref')[0][0] === '1' && rows('#eq-ref')[0][1] === 'œuf', 'un œuf');
+  // Matières grasses : une cuillère à soupe d'huile
+  t.click('#eq-tab-fat');
+  assert(t.$('#eq-food').value === 'huile' && t.$('#eq-unit').value === 'unit' && /90\skcal/.test(t.$('#eq-basis').textContent) && qty('amandes') === '15\u00a0g', 'une cuillère d’huile = 15 g d’amandes');
+  t.click('#equiv [data-action="fermer"]');
+  assert(!t.$('#page').hidden && t.$('#equiv').hidden, 'retour à la journée');
+  // Depuis une ligne du déjeuner : le bouton ⇄ ouvre l'outil rempli ; le retour rend le focus au bouton
+  t.click('#ft-dej');
+  const btns = [...t.d.querySelectorAll('#sec-dej .eqb')];
+  assert(btns.length >= 2 && btns.every(b => /^Équivalences de /.test(b.getAttribute('aria-label'))) && !t.d.querySelector('#sec-pd .eqb'), 'boutons ⇄ au déjeuner seulement : ' + btns.length);
+  const st = btns.find(b => b.dataset.value.indexOf('starch|') === 0), g = st.dataset.value.split('|')[2];
+  st.click();
+  assert(!t.$('#equiv').hidden && t.pressed('eq-tab') === 'starch' && t.$('#eq-qty').value === g && t.$('#eq-unit').value === 'g' && t.d.activeElement === t.$('#eq-h'), 'ouvert depuis la ligne du féculent');
+  t.click('#equiv [data-action="fermer"]');
+  assert(!t.$('#page').hidden && t.d.activeElement === t.d.getElementById(st.id), 'retour : focus sur le bouton');
 }
 
 // Recettes favorites et à éviter (3.25.0) : dans la fiche (page et bibliothèque), enregistrées dans le profil, l'une ou

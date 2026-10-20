@@ -1,5 +1,12 @@
 # Nouveautés
 
+## 4.2.0, 20 octobre 2026
+
+- Nouvel outil « Convertir », dans le menu : combien d'un autre aliment pour remplacer le tien. Choisis ta portion, par exemple 40 g de riz cru, et la liste te donne l'équivalent en pâtes, pommes de terre, gnocchis, pain, flocons…
+- Trois familles : les féculents et les matières grasses à calories égales (une cuillère à soupe d'huile, c'est 15 g d'amandes), les protéines à protéines égales, ce qui compte en sèche, avec les calories de chacune pour voir la différence (le saumon en apporte plus que le poulet).
+- Saisis ta portion en grammes crus, en grammes cuits ou en pièces (tranches, œufs, boîte de thon, cuillère). Chaque équivalent donne aussi son poids cuit et ses pièces.
+- Dans ta journée, le bouton ⇄ à côté d'une ligne du déjeuner ou du dîner ouvre l'outil avec sa quantité.
+
 ## 4.1.0, 14 octobre 2026
 
 - Les petits-déjeuners et les collations ont leur place dans « Recettes » : trois onglets, « Midi et soir », « Petits-déjeuners » et « Collations » (avec les boules d'énergie des jours de séance).

@@ -888,7 +888,7 @@ Object.entries(A.PROFILE_RANGES).forEach(([key, b]) => { const d = A.PROFILE_DEF
 // Textes des données : typographie française (espace insécable avant : ; ? ! % et les unités, apostrophe courbe)
 const strs = [];
 const walk = o => { if (typeof o === 'string') strs.push(o); else if (o && typeof o === 'object') Object.values(o).forEach(walk); };
-walk([A.FICHE, A.RECIPES, A.RFOOD, A.STARCH, A.SIZES, A.DUREES, A.MOMENTS, A.refTable(), A.PROT_ORDER.map(p => A.PROT[p].label), A.DESSERT_ORDER.map(d => A.DESSERT[d].label)]);
+walk([A.FICHE, A.EQ_GROUPS, A.RECIPES, A.RFOOD, A.STARCH, A.SIZES, A.DUREES, A.MOMENTS, A.refTable(), A.PROT_ORDER.map(p => A.PROT[p].label), A.DESSERT_ORDER.map(d => A.DESSERT[d].label)]);
 A.DESSERT_ORDER.filter(d => d !== 'aucun').forEach(d => walk(A.DESSERT[d].item()));
 strs.forEach(s => {
   C.ok(!/\d (g|kcal|km|%|h)\b/.test(s) && !/ [:;?!%»]/.test(s) && !/« /.test(s), 'typographie des données', () => JSON.stringify(s));
@@ -929,6 +929,31 @@ strs.forEach(s => {
     }
     const prots = new Set(cc.meal.map(m => m.prot));
     if (prots.size === cc.meal.length && prots.size >= 2 && cc.meal.every(m => !m.recette || A.RECIPES[m.recette].gel)) pl.forEach((x, k) => C.ok(days[k].libre || x.dej.prot !== x.diner.prot, 'planDays : même protéine midi et soir', where));
+  }
+}
+
+// Équivalences (4.2.0) : saisies au hasard ; chaque équivalent apporte la même valeur (calories ou protéines) à un pas près,
+// ses macros sont celles de ses grammes, la portion saisie se retrouve (cru ↔ cuit ↔ pièces)
+{
+  for (let i = 0; i < Math.round(N / 3); i++){
+    const g = R.pick(A.EQ_ORDER), x = R.pick(A.EQ_GROUPS[g].items), u = R.pick(A.eqUnits(x)).v, q = R.chance(.1) ? R.pick([0, -1, NaN, 9999]) : R.between(0.25, 400, 0.25);
+    const r = A.equivalents(g, x.id, q, u), b = A.EQ_GROUPS[g].basis, show = () => g + ' ' + x.id + ' ' + q + ' ' + u;
+    const raw = A.eqRaw(x, q, u), m = /^cuit:(\d)$/.exec(u);
+    /* Grammes crus recalculés à la main : cuits ÷ rendement, pièces × poids d'une pièce */
+    const hand = !(q > 0 && q <= 5000) ? null : u === 'unit' ? q * x.unit.g : m ? q / x.cook[+m[1]][0] : q;
+    C.ok(raw === null ? hand === null : Math.abs(raw - hand) < 1e-9, 'équivalences : grammes crus', show);
+    C.ok((r === null) === (raw === null), 'équivalences : saisie acceptée ou refusée à tort', show);
+    if (!r) continue;
+    C.ok(Math.abs(r.value - x.f[b] * raw / 100) < 1e-6 && Math.abs(r.ref.m.kcal - x.f[0] * raw / 100) < 1e-6, 'équivalences : valeur de la portion', show);
+    r.lines.forEach(l => {
+      const y = A.eqItem(g, l.id), v = y.f[b] * l.g / 100;
+      C.ok(l.g % y.step === 0 && l.g >= y.step, 'équivalences : arrondi au pas', () => show() + ' ' + l.id + ' ' + l.g);
+      C.ok(Math.abs(v - r.value) <= y.f[b] * y.step / 200 + 1e-6 || (l.g === y.step && v >= r.value), 'équivalences : valeur différente', () => show() + ' ' + l.id + ' ' + v + ' / ' + r.value);
+      C.ok(Math.abs(l.m.kcal - y.f[0] * l.g / 100) < 1e-6 && Math.abs(l.m.p - y.f[1] * l.g / 100) < 1e-6, 'équivalences : macros', () => show() + ' ' + l.id);
+      C.ok(!y.unit || Math.abs(l.n - l.g / y.unit.g) <= 0.125 + 1e-9, 'équivalences : pièces', () => show() + ' ' + l.id + ' ' + l.n);
+      C.ok((y.cook || []).every((c, j) => Math.abs(l.cooked[j].g - l.g * c[0]) <= 2.5 + 1e-9), 'équivalences : poids cuit', () => show() + ' ' + l.id);
+    });
+    C.ok(r.lines.length === A.EQ_GROUPS[g].items.length - 1, 'équivalences : un aliment manquant', show);
   }
 }
 

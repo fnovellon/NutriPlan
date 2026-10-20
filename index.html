@@ -577,6 +577,20 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 
 @media (min-width:640px){.app{padding-top:36px;}.nav:not([hidden]) ~ .app{padding-top:24px;}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
+
+/* Équivalences (4.2.0) : saisie, portion et liste ; bouton ⇄ sur les lignes du déjeuner et du dîner ; six boutons au menu */
+.eq-in{grid-template-columns:1fr 1fr;}
+.eq-in .eq-food{grid-column:1/-1;}
+.eq-in input{font-size:18px;}
+.eqs h2.eq-t{margin:18px 0 6px;font-size:18px;}
+.eq-list{margin:0 0 6px;}
+.eq-list li{grid-template-columns:5.2rem minmax(0,1fr);padding:7px 0;border-bottom:1px solid var(--line);}
+.eq-list .b-q{font-size:17px;}
+.eq-n{font-style:italic;font-size:14px;color:var(--muted);}
+.eqb{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin:-4px 0 -6px 2px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--muted);vertical-align:middle;}
+.eqb svg{width:16px;height:16px;}
+.nav .ic{width:min(54px,100%);}
+@media (max-width:400px){.nav button{font-size:11.5px;}}
 </style>
 </head>
 <body>
@@ -676,6 +690,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
   <button type="button" id="nav-jour" data-action="jour"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a3 3 0 0 0 6 0V3"/><path d="M7 3v18"/><path d="M19 21V3c-2.5 1.5-4 4.5-4 9 0 1.5 1 2.5 4 2.5"/></svg></span><span class="nav-l">Journée</span></button>
   <button type="button" id="plan-btn" data-action="plan"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg></span><span class="nav-l">Planifier</span></button>
   <button type="button" id="nav-rec" data-action="recettes"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h6a4 4 0 0 1 4 4V21a3 3 0 0 0-3-3H2z"/><path d="M22 4.5h-6a4 4 0 0 0-4 4V21a3 3 0 0 1 3-3h7z"/></svg></span><span class="nav-l">Recettes</span></button>
+  <button type="button" id="nav-eq" data-action="equiv"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg></span><span class="nav-l">Convertir</span></button>
   <button type="button" id="help" data-action="aide"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span class="nav-l">Aide</span></button>
   <button type="button" id="gear" data-action="needs"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-l">Réglages</span></button>
 </nav>
@@ -914,6 +929,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li>Un dessert est pris sur le féculent du même repas&nbsp;: ton total ne bouge pas.</li>
       <li>La marge cuisine réserve des calories pour l’huile de cuisson, les sauces, le fromage râpé.</li>
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent (il y en a deux par couple, elles tournent d’un jour à l’autre&nbsp;; «&nbsp;Une autre recette&nbsp;» montre la suivante). «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
+      <li><strong>Convertir</strong>, dans le menu en haut&nbsp;: combien d’un autre aliment pour remplacer le tien. Les féculents et les matières grasses à calories égales (40&nbsp;g de riz cru, c’est 180&nbsp;g de pommes de terre), les protéines à protéines égales, avec les calories de chacune. Saisis en grammes crus, cuits ou en pièces. Dans ta journée, le bouton ⇄ d’une ligne du déjeuner ou du dîner ouvre l’outil avec sa quantité.</li>
       <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 160 recettes de l’appli, deux par protéine et féculent, à filtrer par protéine, féculent, celles qui se gardent ou les rapides. Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus. Deux autres onglets, «&nbsp;Petits-déjeuners&nbsp;» et «&nbsp;Collations&nbsp;» (avec les boules d’énergie)&nbsp;: leur préparation, tes quantités pour ce matin, demain matin, aujourd’hui ou demain, et «&nbsp;Prendre pour…&nbsp;». Un petit-déjeuner ou une collation favori revient deux fois plus souvent dans «&nbsp;Surprends-moi&nbsp;» de tes planifications, un «&nbsp;à éviter&nbsp;» n’y revient plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
@@ -1010,6 +1026,24 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
   <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
 </main>
 
+<main class="app eqs" id="equiv" hidden>
+  <h1 id="eq-h" tabindex="-1">Équivalences</h1>
+  <p class="repas-p">Combien d’un autre aliment pour remplacer le tien&nbsp;? Choisis ta portion&nbsp;: la liste te donne l’équivalent pour chaque aliment de la même famille.</p>
+  <div class="seg lib-tabs" id="eq-tabs" role="group" aria-label="Famille d’aliments"></div>
+  <div class="fields eq-in">
+    <label class="field eq-food"><span>Ton aliment</span><span class="inp"><select id="eq-food"></select></span></label>
+    <label class="field"><span>Quantité</span><span class="inp"><input id="eq-qty" type="text" inputmode="decimal" autocomplete="off" maxlength="8"></span></label>
+    <label class="field"><span>Unité</span><span class="inp"><select id="eq-unit"></select></span></label>
+  </div>
+  <p class="warn" id="eq-err" role="alert"></p>
+  <h2 class="shop-t eq-t" id="eq-ref-t">Ta portion</h2>
+  <ul class="b-list eq-list" id="eq-ref" aria-labelledby="eq-ref-t"></ul>
+  <h2 class="shop-t eq-t" id="eq-list-t">Ses équivalents</h2>
+  <p class="calc" id="eq-basis" role="status"></p>
+  <ul class="b-list eq-list" id="eq-list" aria-labelledby="eq-list-t"></ul>
+  <button type="button" class="btn main wide" data-action="fermer">Voir ma journée</button>
+</main>
+
 <main class="app lib" id="recettes" hidden>
   <h1 id="lib-h" tabindex="-1">Recettes</h1>
   <div class="seg lib-tabs" id="lib-tabs" role="group" aria-label="Quelles recettes"></div>
@@ -1047,7 +1081,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '4.1.0';
+const APP_VERSION = '4.2.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -3503,6 +3537,96 @@ function pantryList(entries){
   });
   return Object.keys(set).sort(function(a, b){ return a.localeCompare(b, 'fr'); });
 }
+/* Équivalences (4.2.0) : pour un aliment et une quantité, la quantité de chaque aliment de la même famille qui apporte
+   autant de calories (féculents, matières grasses) ou de protéines (protéines). Valeurs de la table (FOOD, UNIT, STARCH),
+   aucune nouvelle valeur. Un aliment : id, name, f (pour 100 g crus : kcal, protéines, glucides, lipides), step (arrondi en
+   grammes), cook (poids cuits : [[facteur, mot]], depuis le poids cru, « cru » sinon raw), unit ({ g, one, many } : une pièce,
+   une tranche, une boîte, une cuillère ; piece : compté d'abord en pièces, œufs et galettes). */
+function perPiece(u, g){ const v = UNIT[u]; return v.map(function(x){ return x * 100 / g; }); }
+const EQ_GROUPS = {
+  starch:{label:'Féculents', basis:0, items:STARCH_ORDER.map(function(id){
+    const S = STARCH[id];
+    return {id:id, name:S.name, f:S.f, step:S.step, raw:S.raw || null, cook:S.cook || null};
+  }).concat([
+    {id:'pain', name:'pain complet', f:FOOD.pain, step:5, unit:{g:40, one:'tranche', many:'tranches'}},
+    {id:'avoine', name:'flocons d’avoine', f:FOOD.avoine, step:5},
+    {id:'galette', name:'galettes de riz soufflé', f:perPiece('galette', 9), step:1, unit:{g:9, one:'galette de riz soufflé', many:'galettes de riz soufflé', piece:true}}
+  ])},
+  prot:{label:'Protéines', basis:1, items:[
+    {id:'poulet', name:'viande blanche maigre', note:'poulet, dinde, filet mignon de porc', f:FOOD.poulet, step:5, raw:'cru', cook:[[YIELD.poulet, 'cuit']]},
+    {id:'boeuf', name:'bœuf haché 5' + NB + '%', f:FOOD.boeuf, step:5, raw:'cru', cook:[[YIELD.boeuf, 'cuit']]},
+    {id:'poisson', name:'poisson blanc', note:'cabillaud, colin…', f:FOOD.poisson, step:5, raw:'cru', cook:[[YIELD.poisson, 'cuit']]},
+    {id:'saumon', name:'poisson gras', note:'saumon, maquereau, sardines à l’huile', f:FOOD.saumon, step:5, raw:'cru', cook:[[YIELD.saumon, 'cuit']]},
+    {id:'crevettes', name:'crevettes cuites', f:FOOD.crevettes, step:5},
+    {id:'thon', name:'thon au naturel, égoutté', f:FOOD.thon, step:5, unit:{g:110, one:'boîte', many:'boîtes'}},
+    {id:'oeuf', name:'œufs', f:perPiece('oeuf', 50), step:1, unit:{g:50, one:'œuf', many:'œufs', piece:true}},
+    {id:'jambon', name:'jambon blanc', f:FOOD.jambon, step:5, unit:{g:45, one:'tranche', many:'tranches'}},
+    {id:'tofu', name:'tofu ferme', f:FOOD.tofu, step:5},
+    {id:'skyr', name:'skyr nature', f:FOOD.skyr, step:10},
+    {id:'halloumi', name:'halloumi', f:FOOD.halloumi, step:5}
+  ]},
+  fat:{label:'Matières grasses', basis:0, items:[
+    {id:'huile', name:'huile d’olive', f:FOOD.huile, step:1, unit:{g:10, one:'cuillère à soupe', many:'cuillères à soupe'}},
+    {id:'amandes', name:'amandes', f:FOOD.amandes, step:5},
+    {id:'parmesan', name:'parmesan', f:FOOD.parmesan, step:5},
+    {id:'olives', name:'olives noires', f:FOOD.olives, step:5},
+    {id:'tahini', name:'tahini', note:'purée de sésame', f:FOOD.tahini, step:5},
+    {id:'sesame', name:'graines de sésame', f:FOOD.sesame, step:5},
+    {id:'creme', name:'crème légère', f:FOOD.creme, step:5},
+    {id:'coco', name:'lait de coco', f:FOOD.coco, step:5},
+    {id:'chocolat', name:'chocolat noir 70' + NB + '%', f:FOOD.chocolat, step:5}
+  ]}
+};
+const EQ_ORDER = ['starch', 'prot', 'fat'];
+function eqItem(group, id){
+  if (!has(EQ_GROUPS, group)) return null;
+  return EQ_GROUPS[group].items.find(function(x){ return x.id === id; }) || null;
+}
+/* Unités possibles d'un aliment : 'g' (cru, ou tel quel), 'cuit:i' (le i-e poids cuit), 'unit' (pièces) */
+function eqUnits(x){
+  const out = [{v:'g', label:'g' + (x.raw ? ' ' + x.raw : '')}];
+  (x.cook || []).forEach(function(c, i){ out.push({v:'cuit:' + i, label:'g ' + c[1]}); });
+  if (x.unit) out.push({v:'unit', label:x.unit.many});
+  return out;
+}
+/* Quantité saisie → grammes crus (null si elle ne va pas) */
+function eqRaw(x, qty, unit){
+  if (typeof qty !== 'number' || !isFinite(qty) || qty <= 0 || qty > 5000) return null;
+  if (unit === 'unit' && x.unit) return qty * x.unit.g;
+  const m = /^cuit:(\d)$/.exec(unit || '');
+  if (m && x.cook && x.cook[+m[1]]) return qty / x.cook[+m[1]][0];
+  return unit === 'g' || unit === undefined ? qty : null;
+}
+function eqMac(x, g){ const k = g / 100; return {kcal:x.f[0] * k, p:x.f[1] * k, c:x.f[2] * k, f:x.f[3] * k}; }
+/* Une ligne : grammes arrondis au pas, poids cuits (à 5 g), pièces (au quart), macros des grammes affichés */
+function eqLine(x, raw){
+  const g = Math.max(x.step, Math.round(raw / x.step) * x.step);
+  return {id:x.id, name:x.name, note:x.note || null, g:g, raw:x.raw || null, m:eqMac(x, g),
+    cooked:(x.cook || []).map(function(c){ return {g:Math.round(g * c[0] / 5) * 5, adj:c[1]}; }),
+    n:x.unit ? Math.round(g / x.unit.g * 4) / 4 : null, unit:x.unit || null};
+}
+/* Les équivalents : { ref, value, basis, lines } (ref : la portion saisie, lines : les autres aliments de la famille, à
+   calories ou à protéines égales) ; null si la saisie ne va pas */
+function equivalents(group, id, qty, unit){
+  const x = eqItem(group, id), raw = x ? eqRaw(x, qty, unit) : null;
+  if (raw === null) return null;
+  const G = EQ_GROUPS[group], b = G.basis, value = x.f[b] * raw / 100;
+  return {ref:Object.assign(eqLine(x, raw), {g:Math.round(raw * 10) / 10, m:eqMac(x, raw)}), value:value, basis:b === 1 ? 'p' : 'kcal',
+    lines:G.items.filter(function(y){ return y.id !== id && y.f[b] > 0; }).map(function(y){ return eqLine(y, value / y.f[b] * 100); })};
+}
+/* L'aliment d'une ligne de la journée (son achat, buy : { id, g } ou { id, n }) dans sa famille (amandes, parmesan, huile :
+   matières grasses) ; null s'il n'y en a pas */
+function eqOfBuy(buy){
+  if (!buy || !buy.id) return null;
+  const map = {oeuf:['prot', 'oeuf'], galette:['starch', 'galette']};
+  const at = has(map, buy.id) ? map[buy.id] : has(STARCH, buy.id) ? ['starch', buy.id] : ['huile', 'amandes', 'parmesan', 'olives', 'tahini', 'sesame', 'creme', 'coco', 'chocolat'].indexOf(buy.id) >= 0 ? ['fat', buy.id]
+    : eqItem('prot', buy.id) ? ['prot', buy.id] : eqItem('starch', buy.id) ? ['starch', buy.id] : null;
+  if (!at) return null;
+  const x = eqItem(at[0], at[1]);
+  if (typeof buy.n === 'number' && x.unit) return {group:at[0], id:at[1], qty:buy.n, unit:'unit'};
+  if (typeof buy.g === 'number') return {group:at[0], id:at[1], qty:buy.g, unit:'g'};
+  return null;
+}
 
 if (typeof document !== 'undefined'){
   /* Interface (tout ce fichier et les suivants sont dans if (typeof document !== 'undefined'){ … }, voir src/page.html).
@@ -3708,7 +3832,11 @@ if (typeof document !== 'undefined'){
     const q = '<span class="q"><span class="qty' + (changed ? ' bump' : '') + '">' + i.qty + '</span>' +
       (i.cook ? '<span class="ck">' + i.cook.raw + '</span>' +
         i.cook.ways.map(function(w){ return '<span class="ck">≈' + NB + grams(w.g) + ' ' + w.adj + '</span>'; }).join('') : '') + '</span>';
-    return '<li>' + q + '<span class="name">' + i.name + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
+    /* Équivalences (4.2.0) : un bouton ⇄ sur les féculents, protéines et matières grasses du déjeuner et du dîner */
+    const e = (secId === 'dej' || secId === 'diner') && i.m ? eqOfBuy(i.buy) : null;
+    const eb = e ? ' <button type="button" class="eqb" id="eqb-' + secId + '-' + i.key + '" data-action="eq-open" data-value="' + e.group + '|' + e.id + '|' + e.qty + '|' + e.unit + '"' +
+      ' aria-label="Équivalences de ' + i.qty + ' ' + i.name + '"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg></button>' : '';
+    return '<li>' + q + '<span class="name">' + i.name + eb + (i.key === 'leg' ? ' <span class="vol">à volonté</span>' : '') + (i.note ? '<span class="note">' + i.note + '</span>' : '') +
       (i.m && ['lib', 'marge', 'encas', 'imp'].indexOf(i.key) < 0 ? macHTML(i.m) : '') + '</span></li>';
   };
   /* Recette d'un repas (pas au repas libre). Proposée : sous les lignes du repas, « Suggestion : … », « Voir la recette » et
@@ -4263,10 +4391,10 @@ if (typeof document !== 'undefined'){
      revient d'un cran) et la position dans la page est rétablie au retour. Le menu en haut (3.20.0, #nav, caché pendant
      l'accueil) surligne l'écran affiché ; un écran du menu remplace celui du dessus, « Journée » ferme tout. */
   let stack = [], pageScroll = 0;
-  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'wiz', 'courses', 'batch', 'recettes'];
-  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', wiz:'wiz-h', courses:'courses-h', batch:'batchp-h', recettes:'lib-h'};
+  const VIEWS = ['accueil', 'page', 'reglages', 'aide', 'repas', 'plan', 'wiz', 'courses', 'batch', 'recettes', 'equiv'];
+  const HEAD = {reglages:'regl-h', aide:'aide-h', repas:'repas-h', plan:'plan-h', wiz:'wiz-h', courses:'courses-h', batch:'batchp-h', recettes:'lib-h', equiv:'eq-h'};
   const scroller = function(){ return document.scrollingElement || document.documentElement; };
-  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', wiz:'plan-btn', courses:'plan-btn', recettes:'nav-rec', aide:'help', reglages:'gear'};
+  const NAV = {page:'nav-jour', repas:'nav-jour', batch:'nav-jour', plan:'plan-btn', wiz:'plan-btn', courses:'plan-btn', recettes:'nav-rec', equiv:'nav-eq', aide:'help', reglages:'gear'};
   const setView = function(v){
     VIEWS.forEach(function(id){ $(id).hidden = id !== v; });
     $('nav').hidden = v === 'accueil';
@@ -5559,6 +5687,100 @@ if (typeof document !== 'undefined'){
       render();
       scroller().scrollTop = 0;
       ($('ft-' + q[1]) || $('title')).focus({preventScroll:true});
+    }
+  });
+  /* Équivalences (4.2.0, écran #equiv, « Convertir » dans le menu) : trois familles (féculents et matières grasses à calories
+     égales, protéines à protéines égales), un aliment, une quantité et son unité (g crus, g cuits, pièces) ; la liste des
+     autres aliments de la famille, en grammes, avec leur poids cuit, leurs pièces et leurs macros. Ouvert aussi depuis une
+     ligne du déjeuner ou du dîner (bouton ⇄), rempli avec sa quantité. Rien n'est enregistré. */
+  const EQ_DEFAULT = {starch:['riz', 80, 'g'], prot:['poulet', 150, 'g'], fat:['huile', 1, 'unit']};
+  const eq = {group:'starch', id:'riz', qty:80, unit:'g', text:'80'};
+  const eqSet = function(group, id, qty, unit){
+    const x = eqItem(group, id);
+    if (!x) return false;
+    eq.group = group; eq.id = id; eq.qty = qty; eq.unit = eqUnits(x).some(function(u){ return u.v === unit; }) ? unit : 'g';
+    eq.text = isFinite(qty) ? String(Math.round(qty * 100) / 100).replace('.', ',') : '';
+    return true;
+  };
+  /* « 1 », « 1 ½ », « ¾ » */
+  const quarter = function(n){
+    const w = Math.floor(n), r = Math.round((n - w) * 4) / 4, fr = {0.25:'¼', 0.5:'½', 0.75:'¾'}[r] || '';
+    return (w ? String(w) : '') + (w && fr ? NB : '') + fr || '0';
+  };
+  /* Pluriel à partir de 2, comme en français (« 1 ½ tranche ») */
+  const pieceText = function(l){ return quarter(l.n) + NB + (l.n >= 2 ? l.unit.many : l.unit.one); };
+  const EQ_BASIS = {
+    starch:function(v){ return 'À calories égales' + NB + ': ' + fmtInt(v) + NB + 'kcal. Comme dans ta journée, où changer de féculent ne change pas le total.'; },
+    prot:function(v){ return 'À protéines égales' + NB + ': ' + fmtInt(v) + NB + 'g de protéines. Les calories changent d’un aliment à l’autre' + NB + ': regarde-les sous chacun.'; },
+    fat:function(v){ return 'À calories égales' + NB + ': ' + fmtInt(v) + NB + 'kcal.'; }
+  };
+  /* Une ligne : la quantité (en pièces pour les œufs et les galettes), le nom, le poids cuit ou les pièces, les macros */
+  const eqLineHTML = function(l){
+    const byPiece = !!(l.unit && l.unit.piece);
+    const q = byPiece ? quarter(l.n) : grams(Math.round(l.g * 10) / 10), name = byPiece ? (l.n >= 2 ? l.unit.many : l.unit.one) : l.name;
+    const more = (l.raw ? [l.raw] : []).concat(l.cooked.map(function(c){ return '≈' + NB + grams(c.g) + ' ' + c.adj; }), l.unit && !byPiece ? ['≈' + NB + pieceText(l)] : [], byPiece ? ['≈' + NB + grams(Math.round(l.g))] : []);
+    return '<li><span class="b-q">' + q + '</span><span class="name">' + name + (l.note ? ' <span class="eq-n">(' + l.note + ')</span>' : '') +
+      (more.length ? '<span class="note">' + more.join(', ') + '</span>' : '') + macHTML(l.m) + '</span></li>';
+  };
+  const renderEqList = function(){
+    const x = eqItem(eq.group, eq.id), r = equivalents(eq.group, eq.id, eq.qty, eq.unit);
+    $('eq-err').textContent = r ? '' : 'Entre une quantité, par exemple 80.';
+    $('eq-qty').setAttribute('aria-invalid', String(!r));
+    if (!r){ $('eq-basis').textContent = ''; $('eq-ref').innerHTML = ''; $('eq-list').innerHTML = ''; return; }
+    $('eq-basis').textContent = EQ_BASIS[eq.group](r.value);
+    $('eq-ref').innerHTML = eqLineHTML(r.ref);
+    $('eq-list').innerHTML = r.lines.map(eqLineHTML).join('');
+    $('eq-ref-t').textContent = 'Ta portion de ' + x.name;
+  };
+  const renderEq = function(){
+    $('eq-tabs').innerHTML = EQ_ORDER.map(function(g){ return '<button type="button" id="eq-tab-' + g + '" data-action="eq-tab" data-value="' + g + '" aria-pressed="' + (g === eq.group) + '">' + EQ_GROUPS[g].label + '</button>'; }).join('');
+    $('eq-food').innerHTML = EQ_GROUPS[eq.group].items.map(function(x){ return '<option value="' + x.id + '"' + (x.id === eq.id ? ' selected' : '') + '>' + cap(x.name) + '</option>'; }).join('');
+    $('eq-unit').innerHTML = eqUnits(eqItem(eq.group, eq.id)).map(function(u){ return '<option value="' + u.v + '"' + (u.v === eq.unit ? ' selected' : '') + '>' + u.label + '</option>'; }).join('');
+    $('eq-qty').value = eq.text;
+    renderEqList();
+  };
+  /* Saisie : la liste suit à chaque frappe (virgule ou point) ; aliment et unité changés : tout est redessiné */
+  const eqParse = function(t){ const v = parseFloat(String(t).replace(',', '.').replace(/\s/g, '')); return /^\s*\d+([.,]\d*)?\s*$/.test(t) ? v : NaN; };
+  document.addEventListener('input', function(e){
+    if (!e.target || e.target.id !== 'eq-qty') return;
+    eq.text = e.target.value.slice(0, 8); eq.qty = eqParse(eq.text);
+    renderEqList();
+  });
+  document.addEventListener('change', function(e){
+    const t = e.target;
+    if (!t || (t.id !== 'eq-food' && t.id !== 'eq-unit')) return;
+    if (t.id === 'eq-food'){
+      const x = eqItem(eq.group, t.value);
+      if (!x) return;
+      /* Même valeur (calories ou protéines) pour le nouvel aliment : la portion reste comparable */
+      const r = equivalents(eq.group, eq.id, eq.qty, eq.unit), l = r && r.lines.find(function(y){ return y.id === x.id; });
+      const piece = !!(x.unit && x.unit.piece);
+      eqSet(eq.group, x.id, l ? (piece ? l.n : l.g) : EQ_DEFAULT[eq.group][1], l && piece ? 'unit' : 'g');
+    } else {
+      const x = eqItem(eq.group, eq.id), raw = eqRaw(x, eq.qty, eq.unit);
+      if (!eqUnits(x).some(function(u){ return u.v === t.value; })) return;
+      /* La même portion dans la nouvelle unité */
+      const m = /^cuit:(\d)$/.exec(t.value), v = raw === null ? null : t.value === 'unit' ? Math.round(raw / x.unit.g * 4) / 4 : m ? Math.round(raw * x.cook[+m[1]][0]) : Math.round(raw);
+      eqSet(eq.group, eq.id, v === null ? eq.qty : v, t.value);
+    }
+    renderEq();
+    $(t.id).focus({preventScroll:true});
+  });
+  Object.assign(ACTIONS, {
+    equiv: function(b){ if (topScreen() === 'equiv') return; renderEq(); navTo('equiv', b); },
+    'eq-tab': function(b, v){
+      if (!has(EQ_GROUPS, v) || v === eq.group) return;
+      const d = EQ_DEFAULT[v];
+      eqSet(v, d[0], d[1], d[2]);
+      renderEq();
+      $('eq-tab-' + v).focus({preventScroll:true});
+    },
+    /* Depuis une ligne de la journée : l'outil rempli avec cet aliment et sa quantité */
+    'eq-open': function(b, v){
+      const q = String(v).split('|');
+      if (!eqSet(q[0], q[1], parseFloat(q[2]), q[3])) return;
+      renderEq();
+      openScreen('equiv', b);
     }
   });
   /* Éditeur de semaine type (3.18.0), le même dans les réglages (préfixe sem, onglet « Sport ») et à l'accueil (préfixe acs,

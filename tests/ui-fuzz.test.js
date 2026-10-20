@@ -119,6 +119,12 @@ function scan(dom, label){
   click(dom, '#lib-list .lib-r:last-child'); scan(dom, 'fiche des boules d’énergie'); click(dom, '[data-action="lib-take"]'); scan(dom, 'boules prises');
   click(dom, '#lib-tab-meal');
   click(dom, '#gear'); click(dom, '#tab-repas'); scan(dom, 'réglages, tes recettes'); click(dom, '#nav-jour');
+  // Équivalences (4.2.0) : chaque famille, une unité cuite, une saisie refusée, depuis une ligne du déjeuner
+  click(dom, '#nav-eq'); scan(dom, 'équivalences, féculents');
+  { const el = dom.window.document.querySelector('#eq-unit'); el.value = 'cuit:0'; el.dispatchEvent(new dom.window.Event('change', { bubbles: true })); } scan(dom, 'équivalences, poids cuit');
+  type(dom, '#eq-qty', 'abc'); scan(dom, 'équivalences, saisie refusée');
+  click(dom, '#eq-tab-prot'); scan(dom, 'équivalences, protéines'); click(dom, '#eq-tab-fat'); scan(dom, 'équivalences, matières grasses');
+  click(dom, '#nav-jour'); click(dom, '#ft-dej'); click(dom, '#sec-dej .eqb'); scan(dom, 'équivalences depuis le déjeuner'); click(dom, '#nav-jour');
   // Imprévu (3.26.0) : le panneau, puis la carte et la note
   click(dom, '#imp-dej'); scan(dom, 'panneau de l’imprévu'); click(dom, '[data-action="imp-kcal"][data-value="1000"]'); scan(dom, 'panneau de l’imprévu, une valeur');
   click(dom, '[data-action="imp-ok"]'); scan(dom, 'page, imprévu');
@@ -655,6 +661,24 @@ const ACTIONS = {
     if (!d.querySelector('#plan').hidden && R.chance(.5)) d.querySelector('#nav-jour').click();
     C.ok(d.querySelector('#courses').hidden, 'détail resté ouvert', end);
     return 'planifier ' + how + ' ' + end;
+  },
+  // Équivalences (4.2.0) : par le menu ou une ligne du déjeuner ou du dîner, une famille, un aliment, une quantité, une unité ;
+  // la liste a un équivalent par autre aliment de la famille, ou la saisie est refusée avec un message
+  convertir: dom => {
+    const d = dom.window.document, w = dom.window;
+    if (d.querySelector('#page').hidden) return 'convertir -';
+    const line = R.chance(.4) ? R.pick([...d.querySelectorAll('#day .eqb')]) : null;
+    if (line){ const v = line.dataset.value.split('|'); line.click(); C.ok(!d.querySelector('#equiv').hidden && d.querySelector('#eq-food').value === v[1] && d.querySelector('#eq-unit').value === v[3], 'convertir : ouvert depuis une ligne', line.id); }
+    else d.querySelector('#nav-eq').click();
+    if (R.chance(.4)) R.pick([...d.querySelectorAll('[data-action="eq-tab"]')]).click();
+    const sel = (id, opts) => { const el = d.querySelector(id), v = R.pick([...el.options]).value; el.value = v; el.dispatchEvent(new w.Event('change', { bubbles: true })); };
+    if (R.chance(.5)) sel('#eq-food');
+    if (R.chance(.4)) sel('#eq-unit');
+    if (R.chance(.5)) type(dom, '#eq-qty', R.pick(['40', '1,5', '250', '0', '', 'x', '12.5', '3']));
+    const g = d.querySelector('[data-action="eq-tab"][aria-pressed="true"]').dataset.value, n = w.eval('EQ_GROUPS')[g].items.length, li = d.querySelectorAll('#eq-list li').length;
+    C.ok(li === n - 1 ? !d.querySelector('#eq-err').textContent : li === 0 && /Entre une quantité/.test(d.querySelector('#eq-err').textContent), 'convertir : liste ou message', () => g + ' ' + li + ' ' + d.querySelector('#eq-qty').value);
+    d.querySelector(R.pick(['#nav-jour', '#equiv [data-action="fermer"]'])).click();
+    return 'convertir ' + g;
   },
   // Planification en batch cooking d'avant la 4.0.0 (sessions paires) : « Changer de recette » dans sa fiche
   ancienne: dom => {

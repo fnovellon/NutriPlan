@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -1270,6 +1270,47 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
   // Sans préférences : comme avant, uniforme
   const n0 = {}; for (let i = 0; i < 3000; i++) { const p = surprisePd([], [], r).id; n0[p] = (n0[p] || 0) + 1; }
   assert(Object.keys(n0).length === 10 && Object.values(n0).every(v => v > 200), 'sans préférences : uniforme ' + JSON.stringify(n0));
+}
+
+// Équivalences (4.2.0) : féculents et matières grasses à calories égales, protéines à protéines égales ; valeurs de la table
+{
+  assert.deepStrictEqual(plain(EQ_ORDER), ['starch', 'prot', 'fat'], 'trois familles');
+  EQ_ORDER.forEach(g => EQ_GROUPS[g].items.forEach(x => assert(x.f.length === 4 && x.f.every(v => v >= 0) && x.step > 0 && x.name, 'aliment incomplet : ' + g + '.' + x.id)));
+  assert(STARCH_ORDER.every(id => eqItem('starch', id)) && ['pain', 'avoine', 'galette'].every(id => eqItem('starch', id)), 'tous les féculents, pain, flocons, galettes');
+  assert(['poulet', 'boeuf', 'poisson', 'saumon', 'crevettes', 'thon', 'oeuf', 'jambon', 'tofu', 'skyr', 'halloumi'].every(id => eqItem('prot', id)) && !eqItem('prot', 'parmesan'), 'protéines');
+  assert(!eqItem('nope', 'riz') && !eqItem('starch', 'constructor') && !eqItem('__proto__', 'x'), 'familles et aliments inconnus');
+  // 40 g de riz cru : 352 × 0,4 = 140,8 kcal ; pâtes 140,8 / 3,55 = 39,7 → 40 g ; pommes de terre 176 → 180 g ; gnocchis 82,3 → 80 g
+  const r = equivalents('starch', 'riz', 40, 'g'), L = id => r.lines.find(l => l.id === id);
+  near(r.value, 140.8, 1e-9, 'valeur du riz');
+  assert(r.basis === 'kcal' && L('pates').g === 40 && L('pdt').g === 180 && L('gnocchis').g === 80 && L('pain').g === 60 && L('pain').n === 1.5 && L('galette').n === 4, 'féculents : ' + JSON.stringify(r.lines.map(l => l.id + ' ' + l.g)));
+  assert.deepStrictEqual(plain(L('pates').cooked), [{ g: 90, adj: 'cuites' }], 'pâtes cuites : 40 × 2,3 = 92 → 90 g');
+  assert.deepStrictEqual(plain(L('pdt').cooked.map(c => c.g)), [180, 135], 'pommes de terre à l’eau et au four');
+  near(L('pates').m.kcal, 142, 1e-9, 'macros de la ligne : celles des grammes affichés');
+  assert(!r.lines.some(l => l.id === 'riz') && r.lines.length === 12, 'les autres aliments de la famille');
+  // Poids cuit : 120 g de riz cuit = 40 g cru
+  near(equivalents('starch', 'riz', 120, 'cuit:0').value, 140.8, 1e-9, 'riz cuit');
+  near(eqRaw(eqItem('starch', 'pdt'), 150, 'cuit:1'), 200, 1e-9, 'pommes de terre au four : 150 / 0,75');
+  // 150 g de poulet cru : 34,5 g de protéines ; poisson blanc 34,5 / 0,18 = 191,7 → 190 g ; œufs 34,5 / 6,3 = 5,48 → 5 ½
+  const p = equivalents('prot', 'poulet', 150, 'g'), P = id => p.lines.find(l => l.id === id);
+  near(p.value, 34.5, 1e-9, 'protéines du poulet');
+  assert(p.basis === 'p' && P('poisson').g === 190 && P('thon').g === 140 && P('oeuf').n === 5.5 && P('skyr').g === 330, 'protéines : ' + JSON.stringify(p.lines.map(l => l.id + ' ' + l.g)));
+  assert.deepStrictEqual(plain(p.ref.cooked), [{ g: 115, adj: 'cuit' }], 'poulet cuit : 150 × 0,75 = 112,5 → 115 g');
+  near(equivalents('prot', 'oeuf', 2, 'unit').value, 2 * UNIT.oeuf[1], 1e-9, 'deux œufs');
+  near(equivalents('prot', 'thon', 1, 'unit').value, 27.5, 1e-9, 'une boîte de thon (110 g égouttés)');
+  // Une cuillère à soupe d'huile (10 g, 90 kcal) : 15 g d'amandes
+  const f = equivalents('fat', 'huile', 1, 'unit');
+  assert(f.basis === 'kcal' && f.value === 90 && f.lines.find(l => l.id === 'amandes').g === 15, 'matières grasses');
+  // Unités : g cru, g cuits, pièces ; saisies refusées
+  assert.deepStrictEqual(plain(eqUnits(eqItem('starch', 'pdt')).map(u => u.v)), ['g', 'cuit:0', 'cuit:1'], 'unités des pommes de terre');
+  assert.deepStrictEqual(plain(eqUnits(eqItem('prot', 'jambon')).map(u => u.label)), ['g', 'tranches'], 'unités du jambon');
+  [[0, 'g'], [-5, 'g'], [NaN, 'g'], [6000, 'g'], ['40', 'g'], [40, 'cuit:3'], [40, 'unit'], [40, 'x']].forEach(([q, u]) => assert.strictEqual(equivalents('starch', 'riz', q, u), null, 'saisie refusée : ' + q + ' ' + u));
+  assert.strictEqual(equivalents('starch', 'nope', 40, 'g'), null, 'aliment inconnu');
+  // Une ligne de la journée → son aliment
+  assert.deepStrictEqual(plain(eqOfBuy({ id: 'riz', g: 100 })), { group: 'starch', id: 'riz', qty: 100, unit: 'g' }, 'féculent');
+  assert.deepStrictEqual(plain(eqOfBuy({ id: 'oeuf', n: 3 })), { group: 'prot', id: 'oeuf', qty: 3, unit: 'unit' }, 'œufs');
+  assert.deepStrictEqual(plain(eqOfBuy({ id: 'thon', n: 1 })), { group: 'prot', id: 'thon', qty: 1, unit: 'unit' }, 'thon');
+  assert.deepStrictEqual(plain(eqOfBuy({ id: 'parmesan', g: 15 })), { group: 'fat', id: 'parmesan', qty: 15, unit: 'g' }, 'parmesan : matière grasse');
+  assert(eqOfBuy({ id: 'legumes', g: 250 }) === null && eqOfBuy(null) === null && eqOfBuy({ id: 'constructor', g: 5 }) === null && eqOfBuy({ id: 'riz' }) === null, 'pas d’équivalence');
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);
