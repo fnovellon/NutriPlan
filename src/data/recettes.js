@@ -7,6 +7,8 @@ const RFOOD = {
   carotte:['carottes', null], petitspois:['petits pois', 'surgelés'], haricotsverts:['haricots verts', 'frais ou surgelés'], concombre:['concombre', null],
   aubergine:['aubergine', null], choufleur:['chou-fleur', 'frais ou surgelé'], chou:['chou', 'rouge ou chinois'], poireau:['poireaux', null],
   salade:['salade verte', 'roquette, mâche…'],
+  courge:['courge', 'butternut ou potimarron'], panais:['panais', null], celeri:['céleri-rave', null], bruxelles:['choux de Bruxelles', 'frais ou surgelés'],
+  fenouil:['fenouil', null],
   coco:['lait de coco', null], creme:['crème légère', null], lait:['lait demi-écrémé', null], sesame:['graines de sésame', null],
   tahini:['tahini', 'purée de sésame'], olives:['olives noires', 'dénoyautées']
 };
@@ -18,7 +20,7 @@ function onionQty(g){ const h = Math.max(1, Math.round(g * 2 / ONION_G)), n = Ma
 function onionName(g){ return Math.round(g * 2 / ONION_G) >= 4 ? 'oignons' : 'oignon'; }
 function onionNote(g){ const e = Math.round(g / 25); return '≈' + NB + grams(g) + (g <= ONION_G ? ', ou ' + e + NB + 'échalote' + (e > 1 ? 's' : '') : ''); }
 const VEG_IDS = ['oignon', 'tomate', 'pulpe', 'poivron', 'courgette', 'champignon', 'epinards', 'brocoli', 'carotte', 'petitspois', 'haricotsverts',
-  'concombre', 'aubergine', 'choufleur', 'chou', 'poireau', 'salade'];
+  'concombre', 'aubergine', 'choufleur', 'chou', 'poireau', 'salade', 'courge', 'panais', 'celeri', 'bruxelles', 'fenouil'];
 /* Recettes (3.12.0) : une par couple protéine × féculent (deux depuis la 3.31.0, voir v), proposée sous le déjeuner et le dîner, choisie ou non.
    Choisie : ses légumes (250 g en tout, comme la ligne « légumes ») et sa matière grasse remplacent la ligne « légumes » et la
    marge cuisine du repas, ses ajouts (skyr, miel) sont comptés ; les féculents s'ajustent, le total du jour ne bouge pas.
@@ -698,6 +700,72 @@ const RECIPES = (function(){
     'Dore le tofu en dés dans l’huile.',
     'Ajoute l’oignon, l’ail, la courgette, la pulpe et les olives ; 10 min.',
     'Ajoute les gnocchis, 3 min ; basilic.']);
+  /* De saison, l'automne (4.3.0) : courge, champignons, céleri-rave, panais, choux de Bruxelles, fenouil, châtaignes */
+  v('butternut', 'poulet', 'quinoa', 'Poulet, butternut rôtie, champignons et châtaignes', 35, 1, {courge:150, champignon:50, oignon:50}, [H2], 'sauge, thym, ail', {chataigne:40}, [
+    'Courge en cubes et oignon rouge en quartiers, avec l’huile, le thym et la sauge : four à 200 °C, 25 min.',
+    'Poêle le poulet en dés avec les champignons et l’ail, puis ajoute les châtaignes émiettées 2 min.',
+    'Mélange au quinoa avec la courge rôtie.'], 'concassées sur la courge');
+  v('risotto', 'poulet', 'riz', 'Risotto crémeux au poulet et aux champignons', 35, 1, {champignon:150, poireau:50, oignon:50}, [H1, PARM], 'ail, thym, bouillon de volaille (1 cube pour 750 ml)', null, [
+    'Fais revenir l’oignon et le poireau émincés dans l’huile, ajoute le riz (rond ou arborio) et nacre-le 2 min.',
+    'Mouille au bouillon chaud louche après louche pendant 18 min en remuant ; ajoute les champignons et le poulet en dés à mi-cuisson.',
+    'Hors du feu, le parmesan et le thym : il doit rester bien crémeux.'], 'concassées sur le risotto');
+  v('champignons', 'poulet', 'gnocchis', 'Gnocchis poêlés au poulet, champignons et sauge', 20, 0, {champignon:150, epinards:50, oignon:50}, [H1, CREME], 'sauge, ail, muscade', null, [
+    'Dore les gnocchis à sec dans une poêle antiadhésive, 6 min, et réserve.',
+    'Dans l’huile, le poulet en lanières, l’oignon, l’ail et les champignons émincés ; 6 min.',
+    'Ajoute les épinards, la crème, la sauge et les gnocchis ; 2 min, muscade.'], 'concassées sur les gnocchis');
+  v('celeri', 'saumon', 'pdt', 'Saumon, écrasé céleri-pommes de terre et poireaux fondants', 35, 0, {celeri:150, poireau:100}, [H1, LAIT], 'muscade, aneth, citron', null, [
+    'Cuis le céleri-rave et les pommes de terre en morceaux 20 min à l’eau, puis écrase-les avec le lait et la muscade.',
+    'Fais fondre les poireaux émincés dans l’huile, 10 min à couvert.',
+    'Cuis le saumon 4 min de chaque côté et sers sur l’écrasé, avec les poireaux, l’aneth et le citron.']);
+  v('mijote', 'boeuf', 'pdt', 'Bœuf mijoté aux carottes, panais et châtaignes', 50, 1, {carotte:100, panais:100, oignon:50}, [H1], 'thym, laurier, ail, bouillon de bœuf', {chataigne:40}, [
+    'Fais revenir le bœuf en boulettes, puis l’oignon dans l’huile, dans une cocotte.',
+    'Ajoute les carottes, le panais et les pommes de terre en morceaux, l’ail, le thym, le laurier et le bouillon à hauteur ; 35 min à couvert.',
+    'Ajoute les châtaignes 5 min avant la fin.'], 'râpé sur le mijoté');
+  v('bruxelles', 'tofu', 'riz', 'Tofu laqué, choux de Bruxelles rôtis et riz', 30, 1, {bruxelles:200, oignon:50}, [HSES, SES], 'sauce soja, gingembre, ail, piment', {miel:5}, [
+    'Choux de Bruxelles coupés en deux et oignon en pétales, avec l’huile : four à 200 °C, 20 min.',
+    'Dore le tofu en dés à sec, puis laque-le avec la sauce soja, le miel, le gingembre et l’ail.',
+    'Sers sur le riz avec les choux, parsemé de sésame.']);
+  v('potimarron', 'poisson', 'quinoa', 'Poisson blanc en croûte d’herbes, potimarron et fenouil rôtis', 35, 0, {courge:150, fenouil:100}, [H2], 'persil, thym, citron, ail', null, [
+    'Potimarron en quartiers (avec la peau) et fenouil en lamelles, avec l’huile : four à 200 °C, 20 min.',
+    'Pose le poisson sur la plaque, couvert de persil, de thym et d’ail hachés et de zeste de citron ; 12 min de plus.',
+    'Sers avec le quinoa et un filet de citron.'], 'concassées sur le poisson');
+  v('butternut', 'crevettes', 'pates', 'Pâtes crémeuses à la butternut, crevettes et halloumi', 30, 1, {courge:150, epinards:50, oignon:50}, [H1, PARM], 'sauge, ail, muscade', null, [
+    'Cuis la courge en cubes et l’oignon 15 min à couvert dans l’huile avec un fond d’eau, puis mixe en sauce.',
+    'Dore le halloumi en dés à sec, ajoute les crevettes et les épinards 2 min.',
+    'Mélange les pâtes à la sauce, ajoute les crevettes, le halloumi, le parmesan et la sauge.']);
+  /* À la cuillère (4.3.0) : en bouillon ou en sauce, avec des morceaux ; le bouillon (cube) compte sans compter */
+  v('ramen', 'poulet', 'pates', 'Bouillon façon ramen au poulet, nouilles et champignons', 25, 1, {champignon:100, chou:100, carotte:50}, [HSES], 'bouillon de volaille (1 cube pour 500 ml), gingembre, ail, sauce soja, ciboule', null, [
+    'Porte 500 ml de bouillon à frémissement avec le gingembre, l’ail et la sauce soja.',
+    'Ajoute le poulet en fines lanières, les champignons, le chou émincé et la carotte en julienne ; 8 min.',
+    'Verse sur les nouilles (ou des pâtes) cuites dans de grands bols, avec un filet d’huile de sésame et la ciboule.'], 'grillées, à part');
+  v('pho', 'boeuf', 'riz', 'Pho au bœuf, vermicelles de riz et herbes fraîches', 30, 1, {oignon:50, chou:100, champignon:50, carotte:50}, [HSES], 'bouillon de bœuf (1 cube pour 500 ml), badiane, cannelle, gingembre, nuoc-mâm, citron vert, coriandre, menthe', null, [
+    'Fais infuser 15 min le bouillon avec l’oignon coupé en deux, la badiane, la cannelle et le gingembre.',
+    'Ajoute le chou émincé, les champignons et la carotte en julienne ; 5 min, puis le bœuf en petites boulettes, 3 min.',
+    'Verse sur les vermicelles de riz (ou du riz) dans de grands bols, avec le nuoc-mâm, le citron vert et les herbes.'], 'râpé, à part');
+  v('thai', 'crevettes', 'riz', 'Curry thaï coco-butternut aux crevettes, à la cuillère', 30, 1, {courge:150, poivron:50, oignon:50}, [H1, COCO], 'pâte de curry rouge, gingembre, citronnelle, citron vert, coriandre, bouillon de légumes', null, [
+    'Fais revenir l’oignon et la pâte de curry dans l’huile, ajoute la courge en cubes, le poivron, le lait de coco et 300 ml de bouillon ; 15 min.',
+    'Ajoute le halloumi en dés et les crevettes, 3 min.',
+    'Sers en assiette creuse sur le riz, avec le citron vert et la coriandre.']);
+  v('minestrone', 'tofu', 'lentilles', 'Minestrone épais aux haricots rouges, tofu et chou', 35, 1, {poireau:50, carotte:50, chou:100, pulpe:50}, [H1, PARM], 'bouillon de légumes (1 cube pour 500 ml), ail, thym, basilic', null, [
+    'Fais revenir le poireau, la carotte et l’ail dans l’huile, ajoute le chou émincé, la pulpe et 500 ml de bouillon ; 20 min.',
+    'Ajoute les haricots rouges cuits et le tofu en dés, 5 min : il doit rester épais, avec des morceaux.',
+    'Sers en assiette creuse avec le parmesan et le basilic.']);
+  v('potee', 'boeuf', 'pdt', 'Potée au bœuf, poireaux, chou et pommes de terre', 45, 1, {poireau:100, chou:100, carotte:50}, [H1], 'bouillon de bœuf (1 cube pour 750 ml), laurier, thym, moutarde', null, [
+    'Dore le bœuf en boulettes dans l’huile au fond d’une cocotte.',
+    'Ajoute les pommes de terre en morceaux, les poireaux, le chou, la carotte, le laurier, le thym et 750 ml de bouillon ; 30 min.',
+    'Sers en assiette creuse avec un peu de bouillon et la moutarde à côté.'], 'râpé, à part');
+  v('chorba', 'poulet', 'poischiches', 'Chorba au poulet, pois chiches et céleri', 35, 1, {pulpe:100, celeri:50, carotte:50, oignon:50}, [H2], 'ras-el-hanout, cannelle, coriandre, menthe, bouillon de volaille', null, [
+    'Fais revenir l’oignon et le poulet en dés dans l’huile avec le ras-el-hanout et la cannelle.',
+    'Ajoute la pulpe, le céleri et la carotte en petits dés, les pois chiches et 600 ml de bouillon ; 25 min.',
+    'Sers en assiette creuse avec la coriandre, la menthe et un filet de citron.'], 'grillées, à part');
+  v('miso', 'tofu', 'pates', 'Bouillon miso, tofu, nouilles et champignons', 20, 1, {champignon:100, epinards:100, poireau:50}, [HSES, SES], 'miso (1 c. à café par bol), bouillon de légumes, gingembre, sauce soja, ciboule', null, [
+    'Fais frémir 500 ml de bouillon avec le gingembre, ajoute le poireau émincé et les champignons ; 6 min.',
+    'Ajoute le tofu en dés et les épinards 2 min, puis hors du feu le miso délayé.',
+    'Verse sur les nouilles (ou des pâtes) dans de grands bols, avec le sésame et la ciboule.']);
+  v('marmite', 'poisson', 'pdt', 'Marmite de poisson, pommes de terre et fenouil', 35, 1, {fenouil:100, poireau:50, pulpe:50, oignon:50}, [H2], 'safran, ail, thym, zeste d’orange, bouillon de poisson', null, [
+    'Fais revenir l’oignon, le poireau et le fenouil émincés dans l’huile, ajoute la pulpe, le safran et 600 ml de bouillon.',
+    'Ajoute les pommes de terre en rondelles, 15 min, puis le poisson en gros morceaux, 6 min à frémissement.',
+    'Sers en assiette creuse avec le thym et le zeste d’orange.'], 'grillées, à part');
   return out;
 })();
 /* Recettes d'un couple protéine × féculent, dans l'ordre (la première d'abord) */
@@ -711,6 +779,8 @@ function recipeOf(choice){
   return x.p === choice.prot && x.s === choice.starch ? choice.recette : null;
 }
 /* Lignes d'une recette choisie : légumes, matière grasse, ajouts (quantités fixes, comme les légumes et la marge cuisine) */
+/* Ajouts d'une recette : skyr, miel, et châtaignes cuites (4.3.0, comptées comme le reste : le féculent s'ajuste) */
+const PLUS_NAMES = {skyr:['skyr nature', 'pour la sauce'], miel:['miel', 'pour la sauce'], chataigne:['châtaignes cuites', 'sous vide, en morceaux']};
 function recipeItems(id){
   const x = RECIPES[id];
   return Object.keys(x.leg).map(function(v){
@@ -718,5 +788,5 @@ function recipeItems(id){
     return v === 'oignon' ? it('v-oignon', onionQty(g), onionName(g), onionNote(g), mac(v, g)) : it('v-' + v, grams(g), RFOOD[v][0], RFOOD[v][1], mac(v, g));
   })
     .concat(x.cuis.map(function(c){ return it('f-' + c[0], grams(c[1]), c[2], c[3], mac(c[0], c[1])); }))
-    .concat(Object.keys(x.plus).map(function(a){ return it('x-' + a, grams(x.plus[a]), a === 'skyr' ? 'skyr nature' : 'miel', 'pour la sauce', mac(a, x.plus[a])); }));
+    .concat(Object.keys(x.plus).map(function(a){ return it('x-' + a, grams(x.plus[a]), PLUS_NAMES[a][0], PLUS_NAMES[a][1], mac(a, x.plus[a])); }));
 }

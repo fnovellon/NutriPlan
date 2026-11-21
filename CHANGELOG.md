@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 4.3.0, 21 novembre 2026
+
+- 16 nouvelles recettes (176 en tout) : 8 d'automne, avec de la butternut, du potimarron, des champignons, du céleri, des choux de Bruxelles et des châtaignes, et 8 plats « à la cuillère », dans leur bouillon mais avec des morceaux : ramen au poulet, pho au bœuf, curry thaï aux crevettes, minestrone au tofu, potée, chorba, bouillon miso, marmite de poisson.
+- Chaque recette a ses saisons, d'après ses légumes. Beaucoup sont de toute l'année (sauce tomate, carottes, champignons de Paris…) ; les autres ont une petite feuille quand elles sont de saison, et leur fiche dit lesquelles (« De saison : automne et hiver »).
+- Dans « Recettes », le filtre « De saison » garde celles de la saison du repas choisi et celles de toute l'année.
+- En planifiant, à l'étape des plats, « Seulement de saison » : la recherche et « Surprends-moi » ne te proposent plus que des recettes de saison (et de toute l'année).
+- Les châtaignes cuites arrivent dans tes courses, au rayon épicerie. Tes calculs ne changent pas.
+
 ## 4.2.0, 20 octobre 2026
 
 - Nouvel outil « Convertir », dans le menu : combien d'un autre aliment pour remplacer le tien. Choisis ta portion, par exemple 40 g de riz cru, et la liste te donne l'équivalent en pâtes, pommes de terre, gnocchis, pain, flocons…

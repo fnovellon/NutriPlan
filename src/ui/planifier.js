@@ -5,7 +5,7 @@
      Valider écrit les plats de chaque date (planDays), garde la planification et ouvre ses courses (ui/courses.js). */
   const WIZ_STEPS = ['dates', 'pd', 'co', 'meal', 'recap'];
   const WIZ_T = {dates:'Quels jours' + NB + '?', pd:'Tes petits-déjeuners', co:'Tes collations', meal:'Tes plats', recap:'Ton récap'};
-  const wiz = {from:'', to:'', step:0, cards:{pd:[], co:[], meal:[]}, q:'', edit:null, part:null, libre:{}, editing:false};
+  const wiz = {from:'', to:'', step:0, cards:{pd:[], co:[], meal:[]}, q:'', edit:null, part:null, libre:{}, editing:false, season:false};
   /* Premier jour proposé : aujourd'hui, sinon le lendemain des planifications qui couvrent déjà aujourd'hui et la suite */
   const nextFree = function(){
     let d = isoDate(today), p;
@@ -14,7 +14,7 @@
   };
   const resetPlanner = function(){
     const from = nextFree();
-    Object.assign(wiz, {from:from, to:isoDate(addDays(fromIso(from), 6)), step:0, cards:{pd:[], co:[], meal:[]}, q:'', edit:null, part:null, libre:{}, editing:false});
+    Object.assign(wiz, {from:from, to:isoDate(addDays(fromIso(from), 6)), step:0, cards:{pd:[], co:[], meal:[]}, q:'', edit:null, part:null, libre:{}, editing:false, season:false});
   };
   const PRESETS = [['7', 'Les 7 prochains jours'], ['semaine', 'Cette semaine'], ['suivante', 'La semaine prochaine']];
   const presetRange = function(k){
@@ -90,15 +90,18 @@
     return SNACK_ORDER.map(function(id){ return {key:id, card:{id:id, cs:'banane'}, title:SNACK[id].label, sub:SNACK[id].sub || '', text:SNACK[id].label + ' ' + (SNACK[id].sub || '')}; });
   };
   const mealKey = function(c){ return c.prot + '|' + c.starch + '|' + (c.recette || ''); };
+  /* Saison de la planification (4.3.0) : celle de son premier jour ; avec « Seulement de saison », null sinon */
+  const wizSeason = function(){ return seasonOf(fromIso(wiz.from) || today); };
+  const wizOnly = function(){ return wiz.season ? wizSeason() : null; };
   const mealItems = function(){
-    const pr = cleanProfile(prof), out = [];
+    const pr = cleanProfile(prof), out = [], only = wizOnly();
     allowed('prot', pr.off).forEach(function(p){
       allowed('starch', pr.off).forEach(function(s){
         const more = ' ' + (PROT[p].sub || '') + ' ' + STARCH[s].label;
         recipesFor(p, s).forEach(function(id){
-          if (recipePref(id, pr) === 0) return;
+          if (recipePref(id, pr) === 0 || (only && !inSeason(id, only))) return;
           const c = {prot:p, starch:s, recette:id};
-          out.push({key:mealKey(c), card:c, title:RECIPES[id].t, sub:mealMain(c) + ', ' + RECIPES[id].min + NB + 'min', text:RECIPES[id].t + ' ' + mealMain(c) + more + ' recette'});
+          out.push({key:mealKey(c), card:c, title:RECIPES[id].t, leaf:leafFor(id, fromIso(wiz.from) || today), sub:mealMain(c) + ', ' + RECIPES[id].min + NB + 'min', text:RECIPES[id].t + ' ' + mealMain(c) + more + ' recette'});
         });
         const c = {prot:p, starch:s, recette:null};
         out.push({key:mealKey(c), card:c, title:mealTitle(c), sub:'Plat simple' + NB + ': des légumes et ta marge cuisine', text:mealTitle(c) + more + ' plat simple'});
@@ -118,9 +121,9 @@
       if (c.id === 'rizaulait') t = SNACK[c.id].sub;
       else extra = '<div class="opt-row wc-cs"><span class="lbl" id="wcs-' + i + '">Jours de séance</span><div class="seg" role="group" aria-labelledby="wcs-' + i + '">' +
         SNACK_CS_ORDER.map(function(x){ return '<button type="button" data-action="wiz-cs" data-value="' + i + '|' + x + '" aria-pressed="' + (c.cs === x) + '">' + SNACK_CS[x].label + '</button>'; }).join('') + '</div></div>';
-    } else { main = mealMain(c); t = c.recette ? RECIPES[c.recette].t : 'Plat simple'; }
+    } else { main = mealMain(c); t = c.recette ? RECIPES[c.recette].t + leafFor(c.recette, fromIso(wiz.from) || today) : 'Plat simple'; }
     const pr = cleanProfile(prof), name = kind === 'meal' ? mealTitle(c) : main;
-    const recs = kind === 'meal' && !c.recette ? recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0; }) : [];
+    const recs = kind === 'meal' && !c.recette ? recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0 && (!wizOnly() || inSeason(id, wizOnly())); }) : [];
     const sw = kind === 'meal' ? (c.recette ? btn('simple', 'En plat simple') : recs.length ? btn('recette', 'En recette') : '') : '';
     return '<li class="wcard' + (wiz.edit === i ? ' is-edit' : '') + '"><span class="wc-m">' + main + (c.s ? '<span class="wc-s">Surprise</span>' : '') + '</span>' +
       (t ? '<span class="wc-t">' + t + '</span>' : '') + extra + '<div class="wc-a">' +
@@ -138,7 +141,7 @@
     if (!found.length) return '<p class="calc">Rien ne correspond à «' + NB + wiz.q.trim() + NB + '».</p>';
     return '<ul class="wres">' + found.slice(0, max).map(function(x){
       const on = cards.some(function(c){ return cardKey(kind, c) === x.key; });
-      return '<li><button type="button" class="wr" data-action="wiz-pick" data-value="' + x.key + '" aria-pressed="' + on + '"><span class="wr-t">' + x.title + '</span>' +
+      return '<li><button type="button" class="wr" data-action="wiz-pick" data-value="' + x.key + '" aria-pressed="' + on + '"><span class="wr-t">' + x.title + (x.leaf || '') + '</span>' +
         (x.sub ? '<span class="wr-s">' + x.sub + '</span>' : '') + '</button></li>';
     }).join('') + '</ul>' + (found.length > max ? '<p class="calc">Et ' + (found.length - max) + ' autres' + NB + ': affine ta recherche.</p>' : '');
   };
@@ -155,6 +158,7 @@
           '<td><button type="button" class="wt-sw" role="switch" id="wl-' + iso + '" aria-checked="' + lib + '" data-action="wiz-libre" data-value="' + iso + '" aria-label="Repas libre ' + dayLabel(d) + ' soir"><span class="knob" aria-hidden="true"></span></button></td></tr>';
       }).join('') + '</tbody></table>';
   };
+  const SEASON_OF_TEXT = {printemps:'Les recettes du printemps', ete:'Les recettes de l’été', automne:'Les recettes de l’automne', hiver:'Les recettes de l’hiver'};
   const STEP_TEXT = {
     pd:'De 1 à 3' + NB + ': ils tournent d’un jour à l’autre. Les jours de sortie longue, un petit-déjeuner salé laisse la place à la version sucrée.',
     co:'De 1 à 3, elles aussi en alternance. Les jours de séance, la collation a aussi ses glucides' + NB + ': choisis-les sur chaque carte.',
@@ -185,6 +189,8 @@
         '<div class="wsur"><button type="button" class="btn" id="wiz-sur" data-action="wiz-sur" data-value="full">Surprends-moi</button>' +
         (k === 'meal' ? '<button type="button" class="reset" data-action="wiz-part" data-value="prot" aria-pressed="' + (wiz.part === 'prot') + '">Je choisis la protéine</button>' +
           '<button type="button" class="reset" data-action="wiz-part" data-value="starch" aria-pressed="' + (wiz.part === 'starch') + '">Je choisis le féculent</button>' : '') + '</div>' +
+        (k === 'meal' ? '<div class="switches wsea"><button type="button" class="switch" role="switch" id="wiz-season" aria-checked="' + wiz.season + '" data-action="wiz-season">' +
+          '<span>Seulement de saison<span class="note">' + SEASON_OF_TEXT[wizSeason()] + ' et de toute l’année, pour «' + NB + 'Surprends-moi' + NB + '» et la recherche</span></span><span class="knob" aria-hidden="true"></span></button></div>' : '') +
         (k === 'meal' && wiz.part ? '<div class="wpart"><p class="calc">' + (wiz.part === 'prot' ? 'Quelle protéine' + NB + '? Le féculent et la recette seront tirés au hasard.' : 'Quel féculent' + NB + '? La protéine et la recette seront tirées au hasard.') + '</p>' +
           '<div class="opts-list">' + allowed(wiz.part, cleanProfile(prof).off).map(function(x){ return '<button type="button" class="opt" data-action="wiz-sur" data-value="' + wiz.part + '|' + x + '">' + (wiz.part === 'prot' ? PROT : STARCH)[x].label + '</button>'; }).join('') + '</div></div>' : '') +
         (k === 'co' ? '' : '<label class="field wiz-q"><span>Chercher</span><span class="inp"><input type="search" id="wiz-q" autocomplete="off" enterkeyhint="search" placeholder="' + (k === 'meal' ? 'poulet, riz, curry…' : 'avoine, œufs…') + '"></span></label>') +
@@ -230,7 +236,7 @@
     const pr = cleanProfile(prof);
     if (kind === 'pd') return surprisePd(others, pr.off, null, pr);
     if (kind === 'co') return surpriseCo(others, null, pr);
-    return surpriseMeal(others, fix, pr.off, pr);
+    return surpriseMeal(others, fix, pr.off, pr, null, wizOnly());
   };
   /* Valider : le repas libre de chaque jour, enregistré tel que le récap le montre (un par semaine, aussi hors de la
      période), puis les plats de chaque date (le dessert reste), arrondis aux 100 g sur les boîtes des recettes qui reviennent
@@ -369,12 +375,20 @@
     'wiz-recette': function(b, v){
       const c = wiz.cards.meal[+v], pr = cleanProfile(prof);
       if (stepKind() !== 'meal' || !c || c.recette) return;
-      const recs = recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0 && !wiz.cards.meal.some(function(x){ return x.recette === id; }); });
-      if (!recs.length){ $('wiz-msg').textContent = 'Les recettes de ce plat sont déjà dans tes choix.'; return; }
+      const recs = recipesFor(c.prot, c.starch).filter(function(id){ return recipePref(id, pr) > 0 && (!wizOnly() || inSeason(id, wizOnly())) && !wiz.cards.meal.some(function(x){ return x.recette === id; }); });
+      if (!recs.length){ $('wiz-msg').textContent = wizOnly() ? 'Pas d’autre recette de saison pour ce plat.' : 'Les recettes de ce plat sont déjà dans tes choix.'; return; }
       const n = Object.assign({}, c, {recette:tieredPick(Math.random, recs, function(id){ return recipePref(id, pr); })});
       wiz.cards.meal[+v] = n;
       $('wiz-msg').textContent = 'En recette' + NB + ': ' + RECIPES[n.recette].t + '.';
       wizKeep(b, 'wc-simple-' + v);
+    },
+    /* Seulement de saison (4.3.0) : la recherche et les surprises suivent ; les cartes déjà choisies restent */
+    'wiz-season': function(){
+      if (stepKind() !== 'meal') return;
+      wiz.season = !wiz.season;
+      $('wiz-msg').textContent = wiz.season ? 'Seulement des recettes de saison (et de toute l’année) dans la recherche et les surprises.' : 'Toutes les recettes.';
+      renderWiz();
+      $('wiz-season').focus({preventScroll:true});
     },
     'wiz-cs': function(b, v){
       const q = String(v).split('|'), c = wiz.cards.co[+q[0]];

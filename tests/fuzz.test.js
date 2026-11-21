@@ -93,7 +93,9 @@ const BYNAME = {
   'huile de sésame': ['food', 'huile'], 'parmesan râpé': ['food', 'parmesan'],
   // Petits-déjeuners et collations (3.29.0)
   'flocons d’avoine': ['food', 'avoine'], 'cacao non sucré': ['food', 'cacao'], 'riz rond': ['food', 'rizrond'], 'tomate': ['food', 'tomate'],
-  'tortilla complète': ['unit', 'tortilla'], 'galettes de riz soufflé': ['unit', 'galette']
+  'tortilla complète': ['unit', 'tortilla'], 'galettes de riz soufflé': ['unit', 'galette'],
+  // Ajout des recettes d'automne (4.3.0)
+  'châtaignes cuites': ['food', 'chataigne']
 };
 // Légumes et matières grasses des recettes (3.12.0)
 Object.entries(A.RFOOD).forEach(([id, x]) => { BYNAME[x[0]] = ['food', id]; });
@@ -625,7 +627,7 @@ for (let i = 0; i < N / 3; i++){
   // Valeurs extrêmes du hasard (0 et presque 1) : toujours dans les listes
   [() => 0, () => 0.9999999999].forEach(f => { const c = A.randomChoices(f); C.ok(c.dej.prot !== c.diner.prot && has(A.STARCH, c.diner.starch) && has(A.DESSERT, c.diner.dessert), 'tirage aux bornes', () => JSON.stringify(c)); });
   C.ok(seenOpt.size === A.PD_ORDER.length + 2 * (A.PROT_ORDER.length + A.STARCH_ORDER.length + A.DESSERT_ORDER.length), 'tirage : des choix jamais tirés', () => seenOpt.size + ' choix tirés');
-  /* 3.31.0 : les deux recettes de chaque couple sortent (3 000 tirages, 6 000 repas pour 160 recettes) */
+  /* 3.31.0 : les deux recettes de chaque couple sortent (3 000 tirages, 6 000 repas pour 176 recettes) */
   C.ok(seenRec.size === Object.keys(A.RECIPES).length || N < 3000, 'tirage : des recettes jamais tirées', () => seenRec.size + ' recettes tirées');
 }
 
@@ -860,9 +862,9 @@ for (let i = 0; i < N / 3; i++){
 
 // --- D. Données : complètes et cohérentes ------------------------------------------------------------------------
 // Recettes : une par couple, légumes et matières grasses connus (table, nom, rayon des courses)
-// 3.31.0 : deux par couple, la première d'identifiant protéine-féculent
-A.PROT_ORDER.forEach(p => A.STARCH_ORDER.forEach(s => { const l = A.recipesFor(p, s); C.ok(l.length === 2 && l[0] === p + '-' + s && l[1].startsWith(p + '-' + s + '-'), 'recette manquante', p + ' × ' + s); }));
-C.ok(Object.keys(A.RECIPES).length === 2 * A.PROT_ORDER.length * A.STARCH_ORDER.length, 'recettes en trop', '');
+// 3.31.0 : deux par couple au moins, la première d'identifiant protéine-féculent ; 4.3.0 : 16 de plus (automne, à la cuillère)
+A.PROT_ORDER.forEach(p => A.STARCH_ORDER.forEach(s => { const l = A.recipesFor(p, s); C.ok(l.length >= 2 && l.length <= 4 && l[0] === p + '-' + s && l.slice(1).every(x => x.startsWith(p + '-' + s + '-')), 'recette manquante', p + ' × ' + s); }));
+C.ok(Object.keys(A.RECIPES).length === 2 * A.PROT_ORDER.length * A.STARCH_ORDER.length + 16, 'recettes en trop', '');
 C.ok(Object.keys(A.RECIPES).every(id => A.recipesFor(A.RECIPES[id].p, A.RECIPES[id].s).includes(id)), 'recette hors de son couple', '');
 const aisles = A.SHOP_AISLES.flatMap(g => g.ids), refKeys = A.refTable().flatMap(g => g.rows.map(x => x.key));
 Object.keys(A.RFOOD).forEach(id => C.ok(has(A.FOOD, id) && aisles.includes(id) && refKeys.includes(id), 'aliment de recette sans valeurs, rayon ou ligne de la table', id));

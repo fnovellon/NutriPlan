@@ -51,6 +51,11 @@
   };
   const cap = function(t){ return t.charAt(0).toUpperCase() + t.slice(1); };
   const low = function(t){ return t.charAt(0).toLowerCase() + t.slice(1); };
+  /* Recette de saison (4.3.0) : une feuille après son nom, si elle n'est pas de toute l'année et qu'elle est de la saison de d */
+  const LEAF = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20c-.5-8.5 4.5-14.5 15-15-.5 10.5-6.5 15.5-15 15z"/><path d="M5 20l8-8"/></svg>';
+  const leafFor = function(id, d){ return seasonal(id) && inSeason(id, seasonOf(d)) ? '<span class="leaf" role="img" aria-label="de saison" title="De saison">' + LEAF + '</span>' : ''; };
+  /* Ses saisons, en une phrase : « De saison : automne et hiver. », « Toute l'année. » */
+  const seasonLine = function(id){ return seasonal(id) ? 'De saison' + NB + ': ' + low(seasonsText(id)) + '.' : 'Toute l’année.'; };
   /* « aujourd'hui », « demain », « hier » ou « jeudi 8 octobre » */
   const dayRel = function(d){ const r = {'-1':'hier', '0':'aujourd’hui', '1':'demain'}[dayDiff(d)]; return r || dayLabel(d); };
 

@@ -33,7 +33,8 @@
     $('sheet-t').textContent = prefName(id);
     $('sheet-list').hidden = true;
     $('sheet-rec').hidden = false;
-    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : x.veille ? ', se prépare à l’avance' : '') + '.' + meta + '</p>' + (prefIdOk(id) ? prefBtns(id) : '') +
+    $('sheet-rec').innerHTML = '<p class="rec-meta">' + x.min + NB + 'min' + (x.box ? ', se garde (à emporter)' : x.veille ? ', se prépare à l’avance' : '') + '.' + meta + '</p>' +
+      (rec ? '<p class="rec-meta rec-season">' + (seasonal(id) ? LEAF + ' ' : '') + seasonLine(id) + '</p>' : '') + (prefIdOk(id) ? prefBtns(id) : '') +
       '<h3 class="rec-h">' + head + '</h3>' +
       '<ul class="items">' + items.map(function(i){ return itemHTML('rec', i, none); }).join('') + '</ul>' +
       '<p class="rec-tot">En tout' + NB + ':' + macHTML(total(items)) + '</p>' + note +

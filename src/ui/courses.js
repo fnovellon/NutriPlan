@@ -255,7 +255,7 @@
     $('sheet-list').innerHTML = opt('*', 'Un autre au hasard', (cur.env ? 'avec tes envies et ' : 'avec ') + 'l’équilibre de la semaine') +
       PROT_ORDER.map(function(p){
         const mine = opts.filter(function(m){ return m.prot === p; });
-        return mine.length ? '<p class="rf-l">' + PROT[p].label + '</p>' + mine.map(function(m){ return opt(m.prot + '|' + m.starch + (m.recette ? '|' + m.recette : ''), mealName(m), m.recette ? RECIPES[m.recette].min + NB + 'min' : null); }).join('') : '';
+        return mine.length ? '<p class="rf-l">' + PROT[p].label + '</p>' + mine.map(function(m){ return opt(m.prot + '|' + m.starch + (m.recette ? '|' + m.recette : ''), mealName(m) + (m.recette ? leafFor(m.recette, fromIso(iso)) : ''), m.recette ? RECIPES[m.recette].min + NB + 'min' : null); }).join('') : '';
       }).join('');
     try { history.pushState({pick:true}, ''); } catch (e) {}
     $('sheet').hidden = false;

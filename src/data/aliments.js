@@ -18,7 +18,12 @@ const FOOD = {
   coco:[190,2,6.3,17.6], creme:[190,2.9,4.3,18], lait:[46,3.3,4.8,1.5], sesame:[640,17.7,9.3,56.4], tahini:[645,25,3.8,57], olives:[162,0.9,1.7,14],
   /* Petits-déjeuners et collations (3.29.0) : cacao en poudre non sucré (moyenne des étiquettes, glucides sans les fibres),
      riz rond (Ciqual, riz blanc cru) */
-  cacao:[380,21,11,21], rizrond:[352,7,79,0.6]
+  cacao:[380,21,11,21], rizrond:[352,7,79,0.6],
+  /* Légumes d'automne (4.3.0), crus, pulpe pour la courge (butternut et potimarron, moyenne), et châtaignes cuites (sous vide,
+     moyenne des étiquettes) : valeurs de référence courantes, glucides sans les fibres, à confirmer sur la table Ciqual
+     (inaccessible depuis l'environnement de travail de la 4.3.0) */
+  courge:[42,1,9,0.1], panais:[68,1.4,13,0.3], celeri:[35,1.4,6,0.3], bruxelles:[43,3.4,5.2,0.3], fenouil:[31,1.2,4.2,0.2],
+  chataigne:[165,2.5,34,1.3]
 };
 /* Groupes d'aliments aux valeurs proches (pour 100 g crus : ≈ 10 % près en calories, ≈ 3 g près en protéines et lipides),
    proposés dans un seul choix avec les valeurs du premier : viande blanche maigre (poulet 110 kcal, dinde, filet mignon de porc
@@ -55,7 +60,8 @@ const REF_GROUPS = [
   {title:'Petit-déjeuner et douceurs', per:'pour 100' + NB + 'g', src:'food', rows:[['avoine','Flocons d’avoine (ou muesli sans sucre ajouté)'],['pain','Pain complet'],['fruitsRouges','Fruits rouges'],['amandes','Amandes'],['miel','Miel'],['fruitsSecs','Fruits secs (abricots, pruneaux, figues)'],['cacao','Cacao en poudre non sucré'],['rizrond','Riz rond (riz au lait)'],['chocolat','Chocolat noir 70' + NB + '%']]},
   {title:'Légumes, crus', per:'pour 100' + NB + 'g', src:'food', rows:[['legumes','Légumes verts (moyenne)'],['oignon','Oignon (ou échalote)'],['tomate','Tomate'],['pulpe','Pulpe de tomate, en conserve'],
     ['poivron','Poivron'],['courgette','Courgette'],['champignon','Champignon de Paris'],['epinards','Épinards'],['brocoli','Brocoli'],['carotte','Carotte'],['petitspois','Petits pois, cuits'],
-    ['haricotsverts','Haricots verts'],['concombre','Concombre'],['aubergine','Aubergine'],['choufleur','Chou-fleur'],['chou','Chou rouge ou chinois'],['poireau','Poireau'],['salade','Salade verte']]},
+    ['haricotsverts','Haricots verts'],['concombre','Concombre'],['aubergine','Aubergine'],['choufleur','Chou-fleur'],['chou','Chou rouge ou chinois'],['poireau','Poireau'],['salade','Salade verte'],
+    ['courge','Courge (butternut ou potimarron)'],['panais','Panais'],['celeri','Céleri-rave'],['bruxelles','Choux de Bruxelles'],['fenouil','Fenouil'],['chataigne','Châtaignes, cuites']]},
   {title:'Matières grasses et sauces', per:'pour 100' + NB + 'g', src:'food', rows:[['huile','Huile d’olive'],['coco','Lait de coco'],['creme','Crème légère'],['lait','Lait demi-écrémé'],
     ['sesame','Graines de sésame'],['tahini','Tahini (purée de sésame)'],['olives','Olives noires']]},
   {title:'À la pièce', per:'par pièce', src:'unit', rows:[['oeuf','Œuf moyen'],['banane','Banane moyenne'],['pomme','Pomme (ou autre fruit)'],['compote','Compote sans sucre ajouté, 100' + NB + 'g'],['tortilla','Tortilla de blé complet, ≈' + NB + '60' + NB + 'g'],['galette','Galette de riz soufflé, ≈' + NB + '9' + NB + 'g']]}

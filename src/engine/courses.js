@@ -6,7 +6,7 @@ const SHOP_AISLES = [
   {title:'Crèmerie, œufs et tofu', ids:['skyr', 'oeufs', 'halloumi', 'parmesan', 'creme', 'lait', 'tofu']},
   {title:'Pain et féculents, poids crus', ids:['pain', 'tortilla'].concat(STARCH_ORDER, ['rizrond'])},
   {title:'Fruits et légumes', ids:['legumes'].concat(VEG_IDS.filter(function(v){ return v !== 'pulpe'; }), ['fruitsRouges', 'banane', 'pomme', 'fruit'])},
-  {title:'Épicerie', ids:['avoine', 'amandes', 'miel', 'fruitsSecs', 'chocolat', 'cacao', 'galette', 'thon', 'pulpe', 'compote', 'huile', 'coco', 'olives', 'sesame', 'tahini']},
+  {title:'Épicerie', ids:['avoine', 'amandes', 'miel', 'fruitsSecs', 'chocolat', 'cacao', 'galette', 'thon', 'pulpe', 'compote', 'huile', 'coco', 'olives', 'sesame', 'tahini', 'chataigne']},
   {title:'Le reste', ids:['shaker', 'ravito', 'encas', 'marge', 'libre']}
 ];
 function shopQty(g){
@@ -47,10 +47,10 @@ function shoppingList(days){
     const NAMES = {poulet:'viande blanche maigre', boeuf:'bœuf haché 5' + NB + '%', poisson:'poisson blanc', saumon:'poisson gras', crevettes:'crevettes cuites',
       jambon:'jambon blanc', skyr:'skyr nature', halloumi:'halloumi', parmesan:'parmesan', tofu:'tofu ferme', pain:'pain complet', legumes:'légumes verts',
       fruitsRouges:'fruits rouges', avoine:'flocons d’avoine ou muesli', amandes:'amandes', miel:'miel', fruitsSecs:'fruits secs', chocolat:'chocolat noir', huile:'huile d’olive',
-      cacao:'cacao non sucré', rizrond:'riz rond'};
+      cacao:'cacao non sucré', rizrond:'riz rond', chataigne:'châtaignes cuites'};
     const NOTES = {poulet:'poulet, dinde ou filet mignon de porc', poisson:'cabillaud, colin…', saumon:'saumon, maquereau ou sardines à l’huile', tofu:'nature', avoine:'muesli sans sucre ajouté',
       jambon:slices(a.g, 45), pain:slices(a.g, 40), legumes:'au choix', fruitsRouges:'surgelés, c’est parfait', fruitsSecs:'abricots, pruneaux ou figues',
-      chocolat:'70' + NB + '% ou plus', cacao:'en poudre', rizrond:'pour le riz au lait'};
+      chocolat:'70' + NB + '% ou plus', cacao:'en poudre', rizrond:'pour le riz au lait', chataigne:'sous vide'};
     return {qty:shopQty(a.g), name:has(STARCH, id) ? STARCH[id].name : has(NAMES, id) ? NAMES[id] : RFOOD[id][0],
       note:has(NOTES, id) ? NOTES[id] : has(RFOOD, id) ? RFOOD[id][1] : null};
   };

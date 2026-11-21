@@ -109,7 +109,7 @@ function scan(dom, label){
   click(dom, '#sheet .sheet-x'); click(dom, '#lib-quick'); click(dom, '#lib-mine');
   // Favorite et à éviter (3.25.0) : la fiche, la liste, les réglages
   click(dom, '#lib-list .lib-r'); click(dom, '#rp-fav'); scan(dom, 'fiche, favorite'); click(dom, '#rp-ban'); scan(dom, 'fiche, à éviter'); click(dom, '#sheet .sheet-x');
-  click(dom, '#lib-list .lib-r:last-child'); click(dom, '#lib-fav'); scan(dom, 'recettes, favorites');
+  click(dom, '#lib-list .lib-r:last-child'); click(dom, '#lib-fav'); scan(dom, 'recettes, favorites'); click(dom, '#lib-fav'); click(dom, '#lib-season'); scan(dom, 'recettes, de saison'); click(dom, '#lib-season'); click(dom, '#lib-fav');
   // Petits-déjeuners et collations (4.1.0) : chaque onglet, une fiche de chaque, les boules d'énergie
   click(dom, '#nav-rec'); click(dom, '#lib-fav'); click(dom, '#lib-tab-pd'); scan(dom, 'recettes, petits-déjeuners');
   click(dom, '#lib-list .lib-r'); click(dom, '#rp-fav'); scan(dom, 'fiche d’un petit-déjeuner'); click(dom, '#sheet .sheet-x');
@@ -146,7 +146,7 @@ function scan(dom, label){
   click(dom, '#wc-edit-no-0'); click(dom, '#wiz-next');
   click(dom, '[data-action="wiz-pick"][data-value="rizaulait"]'); click(dom, '[data-action="wiz-pick"][data-value="oeufs"]'); scan(dom, 'assistant, collations');
   click(dom, '#wiz-next'); scan(dom, 'assistant, plats, sans recherche');
-  click(dom, '[data-action="wiz-qp"][data-value="oeufs"]'); scan(dom, 'assistant, plats, recherche');
+  click(dom, '[data-action="wiz-qp"][data-value="oeufs"]'); scan(dom, 'assistant, plats, recherche'); click(dom, '#wiz-season'); scan(dom, 'assistant, plats, de saison');
   click(dom, '#wiz-res .wr'); click(dom, '[data-action="wiz-part"][data-value="starch"]'); scan(dom, 'assistant, plats, je choisis le féculent');
   click(dom, '[data-action="wiz-sur"][data-value="starch|lentilles"]'); click(dom, '#wiz-sur'); scan(dom, 'assistant, plats, trois cartes');
   type(dom, '#wiz-q', 'xyz'); scan(dom, 'assistant, plats, rien trouvé');

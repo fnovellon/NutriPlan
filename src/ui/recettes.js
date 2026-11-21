@@ -1,4 +1,4 @@
-  /* Recettes (3.24.0) : la bibliothèque, en trois onglets depuis la 4.1.0 : « Midi et soir » (les 160 recettes, deux par
+  /* Recettes (3.24.0) : la bibliothèque, en trois onglets depuis la 4.1.0 : « Midi et soir » (les 176 recettes, deux à quatre par
      protéine × féculent, filtrables : protéine, féculent, celles qui se gardent), « Petits-déjeuners » (les dix bases, pd:base)
      et « Collations » (les cinq, co:collation, et les boules d'énergie des jours de séance, cs:boules). Filtres communs : les
      rapides, les favorites, seulement tes aliments. Le repas visé de l'onglet (ce midi, ce soir, demain midi, demain soir ;
@@ -12,12 +12,12 @@
   };
   const LIB_TABS = [['meal', 'Midi et soir'], ['pd', 'Petits-déjeuners'], ['co', 'Collations']];
   const LIB_P = {
-    meal:'Les 160 recettes de l’appli, deux par protéine et féculent. Touche-en une pour voir tes quantités et la prendre pour un repas.',
+    meal:'Les 176 recettes de l’appli, deux à quatre par protéine et féculent\u00a0; une petite feuille marque celles de saison. Touche-en une pour voir tes quantités et la prendre pour un repas.',
     pd:'Les dix petits-déjeuners, avec leur préparation. Touche-en un pour voir tes quantités et le prendre pour un matin.',
     co:'Les cinq collations et les boules d’énergie des jours de séance. Touche-en une pour voir tes quantités et la prendre pour un jour.'
   };
   const LIB_QUICK = 20;
-  const lib = {tab:'meal', prot:'', starch:'', box:false, quick:false, favs:false, mine:true, target:'0|dej', tpd:'0|pd', tco:'0|co'};
+  const lib = {tab:'meal', prot:'', starch:'', box:false, quick:false, favs:false, mine:true, season:false, target:'0|dej', tpd:'0|pd', tco:'0|co'};
   const LIB_ALL = PROT_ORDER.reduce(function(a, p){ return STARCH_ORDER.reduce(function(b, s){ return b.concat(recipesFor(p, s)); }, a); }, []);
   const LIB_PD = PD_ORDER.map(function(x){ return 'pd:' + x; }), LIB_CO = SNACK_ORDER.map(function(x){ return 'co:' + x; }).concat(['cs:boules']);
   /* Le repas du moment : avant 14 h ce midi, avant 21 h ce soir, sinon demain midi ; avant 10 h ce matin, sinon demain matin ;
@@ -52,7 +52,8 @@
       if (lib.tab === 'pd') return !lib.mine || okPd.indexOf(id.slice(3)) >= 0;
       if (lib.tab === 'co') return true;
       const x = RECIPES[id];
-      return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) &&
+      /* De saison (4.3.0) : celles de la saison du repas visé, toute l'année comprise */
+      return (!lib.prot || x.p === lib.prot) && (!lib.starch || x.s === lib.starch) && (!lib.box || x.box) && (!lib.season || inSeason(id, seasonOf(fromIso(libTarget().iso)))) &&
         (!lib.mine || okP.indexOf(x.p) >= 0 && okS.indexOf(x.s) >= 0);
     }).sort(function(a, b){ return (pr.ban.indexOf(a) >= 0) - (pr.ban.indexOf(b) >= 0) || all.indexOf(a) - all.indexOf(b); });
   };
@@ -65,17 +66,17 @@
     $('lib-p').textContent = LIB_P[lib.tab];
     $('lib-for-l').textContent = meal ? 'Pour quel repas' + NB + '?' : lib.tab === 'pd' ? 'Pour quel matin' + NB + '?' : 'Pour quel jour' + NB + '?';
     $('lib-for').innerHTML = LIB_TT[lib.tab].map(function(t){ return '<button type="button" class="opt" data-action="lib-for" data-value="' + t[0] + '" aria-pressed="' + (t[0] === tv) + '">' + t[1] + '</button>'; }).join('');
-    $('lib-sel').hidden = !meal; $('lib-box').hidden = !meal;
+    $('lib-sel').hidden = !meal; $('lib-box').hidden = !meal; $('lib-season').hidden = !meal;
     $('lib-mine').hidden = lib.tab === 'co';
     $('lib-prot').value = lib.prot; $('lib-starch').value = lib.starch;
-    [['lib-box', lib.box], ['lib-quick', lib.quick], ['lib-fav', lib.favs]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
+    [['lib-box', lib.box], ['lib-quick', lib.quick], ['lib-fav', lib.favs], ['lib-season', lib.season]].forEach(function(x){ $(x[0]).setAttribute('aria-pressed', String(x[1])); });
     $('lib-mine').setAttribute('aria-checked', String(lib.mine));
     const word = meal ? ['recette', 'recettes'] : lib.tab === 'pd' ? ['petit-déjeuner', 'petits-déjeuners'] : ['collation', 'collations'];
     $('lib-n').textContent = list.length ? list.length + NB + word[list.length > 1 ? 1 : 0] + (tg.libre ? ', mais ' + tg.label + ', c’est ton repas libre.' : '.') : (meal ? 'Aucune recette' : 'Rien') + ' avec ces filtres.';
     $('lib-list').innerHTML = list.map(function(id){
       const x = has(RECIPES, id) ? RECIPES[id] : FICHE[id], on = libIsOn(id, tg), k = prefOf(id);
       return '<li><button type="button" class="lib-r' + (on ? ' is-on' : '') + (k === 'ban' ? ' is-ban' : '') + '" id="lib-' + id + '" data-action="lib-open" data-value="' + id + '" aria-haspopup="dialog">' +
-        '<span class="lib-t">' + (k === 'fav' ? '<span class="lib-h" role="img" aria-label="Favorite">' + HEART + '</span>' : '') + prefName(id) + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : x.veille ? ', se prépare à l’avance' : '') + (k === 'ban' ? ', à éviter' : '') +
+        '<span class="lib-t">' + (k === 'fav' ? '<span class="lib-h" role="img" aria-label="Favorite">' + HEART + '</span>' : '') + prefName(id) + leafFor(id, fromIso(tg.iso)) + '</span><span class="lib-m">' + x.min + NB + 'min' + (x.box ? ', se garde' : x.veille ? ', se prépare à l’avance' : '') + (k === 'ban' ? ', à éviter' : '') +
         (on ? '<span class="lib-c">' + (meal ? 'Choisie pour ' : 'Au menu ') + tg.label + '</span>' : '') + '</span></button></li>';
     }).join('');
   };
@@ -121,7 +122,7 @@
     recettes: function(b){ if (topScreen() === 'recettes') return; resetLib(); renderLib(); navTo('recettes', b); },
     'lib-tab': function(b, v){ if (!has(LIB_TT, v)) return; lib.tab = v; $('lib-msg').textContent = ''; renderLib(); $('lib-tab-' + v).focus({preventScroll:true}); },
     'lib-for': function(b, v){ if (!LIB_TT[lib.tab].some(function(t){ return t[0] === v; })) return; lib[libKey()] = v; $('lib-msg').textContent = ''; renderLib(); $('lib-for').querySelector('[data-value="' + v + '"]').focus({preventScroll:true}); },
-    'lib-f': function(b, v){ if (['box', 'quick', 'favs', 'mine'].indexOf(v) < 0) return; lib[v] = !lib[v]; renderLib(); },
+    'lib-f': function(b, v){ if (['box', 'quick', 'favs', 'mine', 'season'].indexOf(v) < 0) return; lib[v] = !lib[v]; renderLib(); },
     /* Fiche de la recette, avec tes quantités pour le repas visé */
     'lib-open': function(b, v){
       if (!has(RECIPES, v) && !has(FICHE, v)) return;

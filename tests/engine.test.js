@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -690,10 +690,10 @@ assert(energy(emptyPlan(1, sem), cleanProfile({})).target > energy(emptyPlan(1),
 // 17. Recettes (3.12.0) : une par couple protéine × féculent ; choisie, ses légumes, sa matière grasse et ses ajouts remplacent la
 // ligne « légumes » et la marge cuisine du repas, le féculent s'ajuste et le total du jour ne bouge pas
 // 3.31.0 : deux recettes par couple, la première d'identifiant protéine-féculent, l'autre protéine-féculent-suffixe
-assert.strictEqual(Object.keys(RECIPES).length, 160, '160 recettes');
+assert.strictEqual(Object.keys(RECIPES).length, 176, '176 recettes (4.3.0 : 16 de plus, d’automne et à la cuillère)');
 for (const p of PROT_ORDER) for (const st of STARCH_ORDER) for (const id of recipesFor(p, st)) {
   const ids = plain(recipesFor(p, st)), x = RECIPES[id];
-  assert(ids.length === 2 && ids[0] === p + '-' + st && ids[1].startsWith(p + '-' + st + '-') && new Set(ids.map(i => RECIPES[i].t)).size === 2, `recettes de ${p} × ${st} : ${ids}`);
+  assert(ids.length >= 2 && ids.length <= 4 && ids[0] === p + '-' + st && ids.slice(1).every(i => i.startsWith(p + '-' + st + '-')) && new Set(ids.map(i => RECIPES[i].t)).size === ids.length, `recettes de ${p} × ${st} : ${ids}`);
   const kc = x.cuis.reduce((a, c) => a + FOOD[c[0]][0] * c[1] / 100, 0);
   assert(kc >= 40 && kc <= 95, `${id} : matière grasse ${Math.round(kc)} kcal`);
   assert(x.p === p && x.s === st && x.min > 0 && x.steps.length === 3 && x.t && x.aro, `recette ${p}-${st} complète`);
@@ -701,7 +701,7 @@ for (const p of PROT_ORDER) for (const st of STARCH_ORDER) for (const id of reci
   for (const v of Object.keys(x.leg)) assert(VEG_IDS.includes(v) && FOOD[v] && RFOOD[v], `${p}-${st} : légume ${v} connu`);
   for (const c of x.cuis) assert(FOOD[c[0]] && c[1] > 0 && c[2] && c[3], `${p}-${st} : matière grasse ${c[0]}`);
   assert(new Set(x.cuis.map(c => c[0])).size === x.cuis.length, `${p}-${st} : une ligne par matière grasse`);
-  for (const a of Object.keys(x.plus)) assert(['skyr', 'miel'].includes(a) && x.plus[a] > 0, `${p}-${st} : ajout ${a}`);
+  for (const a of Object.keys(x.plus)) assert(['skyr', 'miel', 'chataigne'].includes(a) && x.plus[a] > 0, `${p}-${st} : ajout ${a}`);
   for (const t of [x.t, x.aro, ...x.steps, x.soir || ''].concat(x.cuis.map(c => c[3]))) {
     assert(!/ [:;?!%]/.test(t) && !/\d (g|min|ml|°C)\b/.test(t) && !/c\. à/.test(t) && !/'/.test(t), `typographie : ${t}`);
   }
@@ -750,7 +750,7 @@ const shopR = shoppingList([buildDay(day([]), RC)]), shopLine = id => shopR.flat
 assert(shopLine('oignon').qty === '1' && shopLine('oignon').name === 'oignon' && shopLine('coco').qty === '15 g' && shopLine('huile').qty === '5 g', 'courses : oignon, lait de coco, huile');
 const aisleIds = SHOP_AISLES.flatMap(g => g.ids);
 for (const id of VEG_IDS.concat(['huile', 'coco', 'creme', 'lait', 'sesame', 'tahini', 'olives', 'parmesan'])) assert.strictEqual(aisleIds.filter(x => x === id).length, 1, `courses : ${id} dans un rayon`);
-// Garde-fous avec les recettes : 12 journées types × 10 bases × les 160 recettes au déjeuner (dîner : une autre recette, la
+// Garde-fous avec les recettes : 12 journées types × 10 bases × les 176 recettes au déjeuner (dîner : une autre recette, la
 // première ou la deuxième de son couple)
 let nr = 0;
 for (const [name, set] of Object.entries(SETS)) for (const [ib, pdBase] of PD_ORDER.entries()) PROT_ORDER.forEach((p1, i) => STARCH_ORDER.forEach((s1, j) => recipesFor(p1, s1).forEach((r1, h) => {
@@ -872,9 +872,10 @@ const csS = batchChoices(wS, 4, offS, 1, lcg(8)).map((ch, i) => ({ ch, libre: wS
 batchSwapOptions(csS, csS[0].ch.dej.recette, offS, 1).forEach(x => assert(!['poulet', 'saumon'].includes(RECIPES[x].p) && !['riz', 'quinoa'].includes(RECIPES[x].s), 'changer : aliment retiré proposé'));
 const solo = ['prot:boeuf', 'prot:poisson', 'prot:saumon', 'prot:crevettes', 'prot:oeufs', 'prot:thon', 'prot:tofu', 'starch:pates', 'starch:pdt', 'starch:patate', 'starch:quinoa', 'starch:semoule', 'starch:boulgour', 'starch:lentilles', 'starch:poischiches', 'starch:gnocchis'];
 const dSolo = [0, 1].map(() => ({ ch: { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' }, diner: { prot: 'poulet', starch: 'riz', recette: 'poulet-riz' } }, libre: false }));
-// 3.31.0 : seule l'autre recette du même couple reste possible ; sans elle (à éviter), plus rien
-assert.deepStrictEqual(plain(batchSwapOptions(dSolo, 'poulet-riz', solo, 1)), ['poulet-riz-teriyaki'], 'changer : l’autre recette du couple');
-assert(batchSwapOptions(dSolo, 'poulet-riz', solo, 1, { fav: [], ban: ['poulet-riz-teriyaki'] }).length === 0 && batchSwapPick(dSolo, 'poulet-riz', solo, 1, lcg(1), { fav: [], ban: ['poulet-riz-teriyaki'] }) === null, 'changer : rien de possible');
+// 3.31.0 : seules les autres recettes du même couple restent possibles (4.3.0 : teriyaki et risotto) ; sans elles (à éviter), plus rien
+assert.deepStrictEqual(plain(batchSwapOptions(dSolo, 'poulet-riz', solo, 1)), ['poulet-riz-teriyaki', 'poulet-riz-risotto'], 'changer : les autres recettes du couple');
+const banRiz = { fav: [], ban: ['poulet-riz-teriyaki', 'poulet-riz-risotto'] };
+assert(batchSwapOptions(dSolo, 'poulet-riz', solo, 1, banRiz).length === 0 && batchSwapPick(dSolo, 'poulet-riz', solo, 1, lcg(1), banRiz) === null, 'changer : rien de possible');
 const dSale = [{ ch: { pdBase: 'sale', dej: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz', dessert: 'fruit' }, diner: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' } }, libre: false },
   { ch: { pdBase: 'sale', dej: { prot: 'poisson', starch: 'pates', recette: 'poisson-pates' }, diner: { prot: 'tofu', starch: 'riz', recette: 'tofu-riz', g: 150 } }, libre: false },
   { ch: { pdBase: 'sale', dej: { prot: 'poulet', starch: 'pdt', recette: 'poulet-pdt' }, diner: { prot: 'thon', starch: 'pates' } }, libre: false }];
@@ -1054,13 +1055,14 @@ assert(recipePref('poulet-riz', null) === 1 && recipePref('poulet-riz', { fav: [
   }
   // La suggestion d'un repas n'est jamais une recette à éviter ; choisie à la main, elle reste
   const chP = { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'boeuf', starch: 'pates', recette: 'boeuf-pates' } };
-  const dP = buildDay(day([]), chP, { ban: ['poulet-riz', 'poulet-riz-teriyaki', 'boeuf-pates'] }), sec = id => dP.secs.find(x => x.id === id);
+  const dP = buildDay(day([]), chP, { ban: ['poulet-riz', 'poulet-riz-teriyaki', 'poulet-riz-risotto', 'boeuf-pates'] }), sec = id => dP.secs.find(x => x.id === id);
   assert(sec('dej').suggest === null && sec('diner').recipe === 'boeuf-pates' && buildDay(day([]), chP).secs.find(x => x.id === 'dej').suggest === 'poulet-riz', 'suggestion : pas une recette à éviter');
   assert.strictEqual(buildDay(day([]), chP, { ban: ['poulet-riz'] }).secs.find(x => x.id === 'dej').suggest, 'poulet-riz-teriyaki', 'suggestion : l’autre recette du couple');
   // 3.31.0 : la suggestion tourne d'un jour à l'autre (jour), décalée d'un cran au dîner ; favorite deux fois dans le tour
   const sg = (jour, prof, slot) => buildDay(Object.assign(day([]), { jour }), { pdBase: 'avoine', dej: { prot: 'poulet', starch: 'riz' }, diner: { prot: 'poulet', starch: 'riz' } }, prof || {}).secs.find(x => x.id === (slot || 'dej')).suggest;
-  assert.deepStrictEqual([0, 1, 2, 3].map(j => sg(j)), ['poulet-riz', 'poulet-riz-teriyaki', 'poulet-riz', 'poulet-riz-teriyaki'], 'suggestion : tour des recettes');
-  assert(sg(4, {}, 'diner') === 'poulet-riz-teriyaki' && sg(-3) === 'poulet-riz-teriyaki', 'suggestion : dîner décalé, jours négatifs');
+  // 4.3.0 : trois recettes pour poulet × riz (le risotto aux champignons)
+  assert.deepStrictEqual([0, 1, 2, 3].map(j => sg(j)), ['poulet-riz', 'poulet-riz-teriyaki', 'poulet-riz-risotto', 'poulet-riz'], 'suggestion : tour des recettes');
+  assert(sg(4, {}, 'diner') === 'poulet-riz-risotto' && sg(-2) === 'poulet-riz-teriyaki', 'suggestion : dîner décalé, jours négatifs');
   assert.deepStrictEqual([0, 1, 2].map(j => sg(j, { fav: ['poulet-riz-teriyaki'] })), ['poulet-riz', 'poulet-riz-teriyaki', 'poulet-riz-teriyaki'], 'suggestion : favorite deux fois');
   assert(buildDay(day([]), chP).secs.find(x => x.id === 'diner').suggest === 'boeuf-pates', 'sans numéro de jour : la première');
   assert.strictEqual(buildDay(day([]), chP, { ban: ['poulet-riz'] }).tot.kcal, buildDay(day([]), chP).tot.kcal, 'à éviter : rien ne change dans les calculs');
@@ -1311,6 +1313,42 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
   assert.deepStrictEqual(plain(eqOfBuy({ id: 'thon', n: 1 })), { group: 'prot', id: 'thon', qty: 1, unit: 'unit' }, 'thon');
   assert.deepStrictEqual(plain(eqOfBuy({ id: 'parmesan', g: 15 })), { group: 'fat', id: 'parmesan', qty: 15, unit: 'g' }, 'parmesan : matière grasse');
   assert(eqOfBuy({ id: 'legumes', g: 250 }) === null && eqOfBuy(null) === null && eqOfBuy({ id: 'constructor', g: 5 }) === null && eqOfBuy({ id: 'riz' }) === null, 'pas d’équivalence');
+}
+
+// Saisons des recettes (4.3.0) : au moins 60 % des légumes de saison (ceux de toute l'année le sont toujours)
+{
+  Object.keys(VEG_SEASONS).forEach(v => assert((VEG_IDS.includes(v) || v === 'chataigne') && VEG_SEASONS[v].length && VEG_SEASONS[v].every(x => SEASONS.includes(x)), 'saisons du légume : ' + v));
+  Object.keys(RECIPES).forEach(id => { const l = RECIPES[id].saisons; assert(l.length && l.every((x, i) => SEASONS.includes(x) && (i === 0 || SEASONS.indexOf(x) > SEASONS.indexOf(l[i - 1]))), 'saisons de ' + id); });
+  // Recalculées à la main : sauce tomate avec un peu de courgette (200 g sur 250 de toute l'année) ; haricots verts (150 g sur 250) ;
+  // butternut, champignons, oignon, châtaignes (190 g d'automne et d'hiver sur 290)
+  assert.deepStrictEqual(plain(recipeSeasons('poulet-pates')), plain(SEASONS), 'sauce tomate : toute l’année');
+  assert.deepStrictEqual(plain(recipeSeasons('poulet-pdt')), ['ete'], 'haricots verts : l’été');
+  // Au seuil : épinards 120, oignon 50, tomate 80 → l'été à 52 % (non), le reste à 68 % ; carotte 70, courgette 100, oignon 50, pulpe 30 → 60 % pile (oui)
+  assert.deepStrictEqual(plain(recipeSeasons('oeufs-boulgour')), ['printemps', 'automne', 'hiver'], 'au seuil : 52 % ne suffit pas');
+  assert.deepStrictEqual(plain(recipeSeasons('poulet-semoule')), plain(SEASONS), 'au seuil : 60 % suffit');
+  assert.deepStrictEqual(plain(recipeSeasons('tofu-riz')), ['automne'], 'brocoli, poivron, oignon, chou : l’automne seul (72 %)');
+  assert.deepStrictEqual(plain(recipeSeasons('poulet-quinoa-butternut')), ['automne', 'hiver'], 'butternut et châtaignes : automne et hiver');
+  assert.deepStrictEqual(plain(RECIPES['poulet-riz-risotto'].saisons), ['automne', 'hiver'], 'risotto aux champignons : choisi à la main');
+  assert(Object.keys(SEASON_SET).every(id => RECIPES[id]), 'saisons choisies à la main : recettes connues');
+  assert.deepStrictEqual(plain([0, 1, 2, 4, 5, 7, 8, 10, 11].map(m => seasonOf(new Date(2026, m, 15)))), ['hiver', 'hiver', 'printemps', 'printemps', 'ete', 'ete', 'automne', 'automne', 'hiver'], 'saison d’une date');
+  assert(inSeason(null, 'ete') && inSeason('poulet-pates', 'hiver') && !inSeason('poulet-pdt', 'hiver') && inSeason('poulet-pdt', 'ete') && !seasonal('poulet-pates') && seasonal('poulet-pdt'), 'de saison');
+  assert.deepStrictEqual(plain(['poulet-pates', 'poulet-pdt', 'poulet-quinoa-butternut', 'tofu-lentilles-minestrone'].map(seasonsText)), ['Toute l’année', 'Été', 'Automne et hiver', 'Printemps, automne et hiver'], 'saisons en toutes lettres');
+  // Les 16 recettes de la 4.3.0 : au moins 8 d'automne-hiver, des châtaignes dans deux, les nouveaux légumes dans la table
+  const news = Object.keys(RECIPES).slice(160);
+  assert(news.length === 16 && news.filter(id => inSeason(id, 'automne') && inSeason(id, 'hiver') && seasonal(id)).length >= 8 && news.filter(id => RECIPES[id].plus.chataigne).length === 2, 'recettes d’automne');
+  ['courge', 'panais', 'celeri', 'bruxelles', 'fenouil', 'chataigne'].forEach(f => assert(FOOD[f] && Math.abs(4 * FOOD[f][1] + 4 * FOOD[f][2] + 9 * FOOD[f][3] - FOOD[f][0]) <= Math.max(0.2 * FOOD[f][0], 10), 'valeurs de ' + f));
+  const items = recipeItems('boeuf-pdt-mijote'), ch = items.find(i => i.key === 'x-chataigne');
+  assert(ch && ch.name === 'châtaignes cuites' && ch.qty === '40 g' && Math.abs(ch.m.kcal - 66) < 1e-9 && ch.buy.id === 'chataigne', 'châtaignes comptées : ' + JSON.stringify(ch));
+  // Surprends-moi « seulement de saison » : jamais une recette hors saison ; sans, toutes
+  const r = (() => { let x = 5; return () => (x = (x * 16807) % 2147483647) / 2147483647; })();
+  let out = 0;
+  for (let i = 0; i < 400; i++) {
+    const se = SEASONS[i % 4], m = surpriseMeal([], i % 3 ? {} : { prot: PROT_ORDER[i % 8] }, [], null, r, se);
+    assert(!m.recette || inSeason(m.recette, se), 'surprise hors saison : ' + m.recette + ' ' + se);
+    const n = surpriseMeal([], {}, [], null, r);
+    if (n.recette && !inSeason(n.recette, 'hiver')) out++;
+  }
+  assert(out > 20, 'sans le filtre : des recettes de toutes les saisons (' + out + ')');
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);

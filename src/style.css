@@ -570,3 +570,11 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .eqb svg{width:16px;height:16px;}
 .nav .ic{width:min(54px,100%);}
 @media (max-width:400px){.nav button{font-size:11.5px;}}
+
+/* Recettes de saison (4.3.0) : une petite feuille verte après le nom */
+.leaf{display:inline-flex;vertical-align:-2px;margin-left:5px;color:var(--lip);}
+.leaf svg{width:15px;height:15px;}
+.rec-season{display:flex;align-items:center;gap:6px;margin-top:-4px;}
+.rec-season svg{width:16px;height:16px;color:var(--lip);flex:none;}
+.wsea{margin:0 0 12px;}
+.wsea .note{display:block;font-size:14px;}

@@ -80,12 +80,12 @@
   const recHTML = function(s){
     if (s.libre || s.recipe || !s.suggest) return '';
     const id = shownSuggest(s), x = RECIPES[id];
-    return '<div class="rec"><p class="rec-t">Suggestion' + NB + ': <span class="rec-n">' + x.t + '</span></p>' + recMeta(x) + recBtns(s, false, id) + '</div>';
+    return '<div class="rec"><p class="rec-t">Suggestion' + NB + ': <span class="rec-n">' + x.t + '</span>' + leafFor(id, selDate) + '</p>' + recMeta(x) + recBtns(s, false, id) + '</div>';
   };
   /* Recette choisie qui fait partie d'un batch cooking (3.21.0) : « Batch cooking » ouvre sa fiche (ui/courses.js) */
   const recCardHTML = function(s){
     const x = RECIPES[s.recipe], bt = dayBatch[s.id];
-    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' +
+    return '<div class="rec is-on"><h3 class="rec-h3">' + x.t + leafFor(s.recipe, selDate) + '</h3>' + recMeta(x) + '<p class="rec-k">' + macHTML(total(recipePart(s))) + '</p>' +
       '<p class="rec-vol"><span class="vol">à volonté</span> des légumes en plus si tu as faim (≈' + NB + '30' + NB + 'kcal les 100' + NB + 'g)</p>' + recBtns(s, true, s.recipe) +
       (bt && bt.r.id === s.recipe ? '<button type="button" class="reset rec-batch" id="rec-b-' + s.id + '" data-action="rec-batch" data-slot="' + s.id + '"' +
         ' aria-label="Batch cooking de la recette ' + REPAS[s.id] + '">Batch cooking</button>' : '') + '</div>';

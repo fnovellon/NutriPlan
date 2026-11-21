@@ -513,7 +513,7 @@ assert($('#sheet-rec [data-action="rec-off"]') && /Choisie pour ce dîner/.test(
 click('#sheet .sheet-x');
 // Changer de féculent : la recette est oubliée, celle du nouveau couple est proposée
 choose('starch', 'diner', 'riz');
-assert(/^Suggestion\s:\s(Chili de bœuf aux poivrons, riz|Bœuf sauté aux légumes)/.test(recBox('diner').textContent) && !('recette' in stored().choices[3].diner) && dinerNames().includes('légumes'), 'féculent changé : recette oubliée');
+assert(/^Suggestion\s:\s(Chili de bœuf aux poivrons, riz|Bœuf sauté aux légumes|Pho au bœuf)/.test(recBox('diner').textContent) && !('recette' in stored().choices[3].diner) && dinerNames().includes('légumes'), 'féculent changé : recette oubliée');
 choose('starch', 'diner', 'pates');
 assert(!recBox('diner').classList.contains('is-on'), 'revenir au féculent ne reprend pas la recette');
 // Repas libre : pas de recette au dîner
@@ -742,7 +742,7 @@ p.click('#help');
 assert(view() === 'aide' && pw.document.activeElement === p.$('#aide-h') && pw.history.state.screen === 'aide', 'le « ? » n’ouvre pas l’aide');
 assert(/Ta journée en trois temps/.test(p.$('#aide').textContent) && /cru/.test(p.$('#aide').textContent), 'explications absentes');
 const refRows = [...p.d.querySelectorAll('#ref-tables tbody tr')];
-assert(p.d.querySelectorAll('#ref-tables table').length === 6 && refRows.length === 61, 'table des aliments (3.29.0 : cacao, riz rond, tortilla, galette de riz) : ' + refRows.length + ' lignes');
+assert(p.d.querySelectorAll('#ref-tables table').length === 6 && refRows.length === 67, 'table des aliments (3.29.0 : cacao, riz rond, tortilla, galette de riz ; 4.3.0 : six aliments d’automne) : ' + refRows.length + ' lignes');
 const pouletRow = [...p.$('#ref-tables tr[data-key="poulet"]').querySelectorAll('td')].map(td => td.textContent);
 assert.deepStrictEqual(pouletRow, ['110', '23', '0', '1,4'], 'valeurs du poulet');
 assert.deepStrictEqual([...p.$('#ref-tables tr[data-key="riz"]').querySelectorAll('td')].map(td => td.textContent), ['352', '8,4', '77', '1'], 'valeurs du riz (cru)');
@@ -982,9 +982,21 @@ assert(c.$('[data-action="wiz-cs"][data-value="0|boules"]').getAttribute('aria-p
 c.click('#wiz-next');
 assert(wizH() === 'Tes plats' && c.d.querySelectorAll('[data-action="wiz-qp"]').length === 8 && !c.$('.wr'), 'étape des plats');
 c.click('[data-action="wiz-qp"][data-value="poisson"]');
-assert(c.$('#wiz-q').value === 'Poisson blanc' && wres().every(v => v.startsWith('poisson|')) && wres().includes('poisson|riz|') && wres().length === 30, 'poisson blanc : ' + wres().length);
+assert(c.$('#wiz-q').value === 'Poisson blanc' && wres().every(v => v.startsWith('poisson|')) && wres().includes('poisson|riz|') && wres().length === 32, 'poisson blanc : ' + wres().length);
+// Seulement de saison (4.3.0) : non par défaut ; l'automne et toute l'année, plats simples compris
+{
+  const S = cw.eval('inSeason');
+  assert(c.$('#wiz-season').getAttribute('aria-checked') === 'false' && /recettes de l’automne et de toute l’année/.test(c.$('.wsea').textContent), 'de saison : non par défaut');
+  c.click('#wiz-season');
+  assert(c.$('#wiz-season').getAttribute('aria-checked') === 'true' && cw.document.activeElement === c.$('#wiz-season') && /^Seulement des recettes de saison/.test(wizMsg()), 'seulement de saison');
+  assert(wres().length > 10 && wres().length < 32 && wres().every(v => v.startsWith('poisson|') && S(v.split('|')[2] || null, 'automne')) && wres().includes('poisson|riz|') && wres().includes('poisson|quinoa|poisson-quinoa-potimarron'), 'poisson de saison : ' + wres().length);
+  const leaf = [...c.d.querySelectorAll('#wiz-res .wr')].filter(b => b.querySelector('.leaf')).map(b => b.dataset.value.split('|')[2]);
+  assert(leaf.length && leaf.every(id => cw.eval('seasonal')(id)), 'icône dans les résultats');
+  c.click('#wiz-season');
+  assert(wres().length === 32 && wizMsg() === 'Toutes les recettes.', 'toutes les saisons');
+}
 typeQ('poulet riz');
-assert.deepStrictEqual(wres(), ['poulet|riz|poulet-riz', 'poulet|riz|poulet-riz-teriyaki', 'poulet|riz|'], 'poulet et riz');
+assert.deepStrictEqual(wres(), ['poulet|riz|poulet-riz', 'poulet|riz|poulet-riz-teriyaki', 'poulet|riz|poulet-riz-risotto', 'poulet|riz|'], 'poulet et riz');
 c.click('[data-action="wiz-pick"][data-value="poulet|riz|"]');
 c.click('[data-action="wiz-pick"][data-value="poulet|riz|poulet-riz"]');
 assert.deepStrictEqual([...c.d.querySelectorAll('.wcard')].map(x => x.querySelector('.wc-t').textContent), ['Plat simple', 'Poulet au curry doux, riz basmati'], 'plat simple et recette');
@@ -994,7 +1006,7 @@ c.click('#wc-rm-0');
 c.click('#wc-simple-0');
 assert(c.$('.wcard .wc-t').textContent === 'Plat simple' && cw.document.activeElement === c.$('#wc-recette-0'), 'en plat simple');
 c.click('#wc-recette-0');
-assert(/^(Poulet au curry doux, riz basmati|.*teriyaki.*)$/i.test(c.$('.wcard .wc-t').textContent) && c.$('#wc-simple-0') && /^En recette\s: /.test(wizMsg()), 'en recette : ' + c.$('.wcard .wc-t').textContent);
+assert(/^(Poulet au curry doux, riz basmati|.*teriyaki.*|Risotto crémeux.*)$/i.test(c.$('.wcard .wc-t').textContent.trim()) && c.$('#wc-simple-0') && /^En recette\s: /.test(wizMsg()), 'en recette : ' + c.$('.wcard .wc-t').textContent);
 c.click('[data-action="wiz-part"][data-value="prot"]');
 assert(c.$('[data-action="wiz-part"][data-value="prot"]').getAttribute('aria-pressed') === 'true' && /Le féculent et la recette seront tirés au hasard/.test(c.$('.wpart').textContent), 'je choisis la protéine');
 c.click('[data-action="wiz-sur"][data-value="prot|saumon"]');
@@ -1063,7 +1075,7 @@ assert(!shared().includes('doses de shaker') && /repas libre/.test(shared()), 'l
 const cs2 = snapOf(cw), again2 = tools(open(ls => Object.entries(cs2).forEach(([k, v]) => ls.setItem(k, v))));
 again2.click('#plan-btn');
 const card0 = again2.$('#plan-body .pl-card');
-assert(card0 && !card0.classList.contains('is-now') && /^À venir, demain, 3\sjoursDu 8 au 10\soctobrePetits-déjeunersSalé, Pain completCollationsMuffins œuf-épinardsPlatsPoulet au curry doux, riz basmati|^À venir, demain, 3\sjoursDu 8 au 10\soctobrePetits-déjeunersSalé, Pain completCollationsMuffins œuf-épinardsPlatsPoulet/.test(card0.textContent), 'planification suivante en grand : ' + card0.textContent);
+assert(card0 && !card0.classList.contains('is-now') && /^À venir, demain, 3\sjoursDu 8 au 10\soctobrePetits-déjeunersSalé, Pain completCollationsMuffins œuf-épinardsPlatsPoulet au curry doux, riz basmati|^À venir, demain, 3\sjoursDu 8 au 10\soctobrePetits-déjeunersSalé, Pain completCollationsMuffins œuf-épinardsPlats(Poulet|Risotto)/.test(card0.textContent), 'planification suivante en grand : ' + card0.textContent);
 again2.click('[data-action="pl-open"][data-value="2026-10-08|2026-10-10"]');
 assert(again2.$(`#courses-list [data-value="${key}"]`).getAttribute('aria-checked') === 'true', 'coche gardée');
 c.click('[data-action="co-uncheck"]');
@@ -1754,21 +1766,39 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.choose('dessert', 'dej', 'fruit');
   t.click('#nav-rec');
   assert(!t.$('#recettes').hidden && t.$('#page').hidden && t.$('#nav-rec').getAttribute('aria-current') === 'page' && t.d.activeElement === t.$('#lib-h'), 'recettes ouvertes par le menu');
-  assert(t.pressed('lib-for') === '0|dej' && /^140\srecettes\.$/.test(t.$('#lib-n').textContent) && ids().every(id => R[id].p !== 'thon'), 'ce midi, sans le thon (pas proposé) : ' + t.$('#lib-n').textContent);
+  assert(t.pressed('lib-for') === '0|dej' && /^156\srecettes\.$/.test(t.$('#lib-n').textContent) && ids().every(id => R[id].p !== 'thon'), 'ce midi, sans le thon (pas proposé) : ' + t.$('#lib-n').textContent);
   t.click('#lib-mine');
-  assert(ids().length === 160 && t.$('#lib-mine').getAttribute('aria-checked') === 'false', 'toutes les recettes');
+  assert(ids().length === 176 && t.$('#lib-mine').getAttribute('aria-checked') === 'false', 'toutes les recettes');
+  assert(t.$('#lib-p').textContent.startsWith('Les ' + Object.keys(R).length + ' recettes de l’appli, deux à quatre par protéine et féculent'), 'phrase de la bibliothèque à jour : ' + t.$('#lib-p').textContent);
   t.click('#lib-mine');
   pick('#lib-prot', 'saumon');
-  assert(ids().length === 20 && ids().every(id => R[id].p === 'saumon'), 'filtre protéine');
+  assert(ids().length === 21 && ids().every(id => R[id].p === 'saumon'), 'filtre protéine');
   pick('#lib-starch', 'riz');
   assert.deepStrictEqual(ids(), ['saumon-riz', 'saumon-riz-teriyaki'], 'filtre féculent : les deux recettes du couple, la première d’abord');
   pick('#lib-prot', ''); pick('#lib-starch', '__proto__');
-  assert(ids().length === 140 && t.$('#lib-starch').value === '', 'valeur inconnue ignorée');
+  assert(ids().length === 156 && t.$('#lib-starch').value === '', 'valeur inconnue ignorée');
   t.click('#lib-box');
   assert(ids().length === Object.values(R).filter(x => x.box && x.p !== 'thon').length && ids().every(id => R[id].box), 'se garde');
   t.click('#lib-quick');
   assert(ids().length > 0 && ids().every(id => R[id].box && R[id].min <= 20), 'se garde, 20 min ou moins');
   t.click('#lib-box'); t.click('#lib-quick');
+  // De saison (4.3.0) : ce midi, le 7 octobre (automne) ; l'icône sur celles qui ne sont pas de toute l'année
+  {
+    const inS = id => tw.eval('inSeason')(id, 'automne'), seas = id => tw.eval('seasonal')(id);
+    const leaves = () => [...t.d.querySelectorAll('#lib-list .lib-r')].filter(b => b.querySelector('.leaf[aria-label="de saison"]')).map(b => b.dataset.value);
+    assert(leaves().length > 30 && leaves().join() === ids().filter(id => seas(id) && inS(id)).join(), 'icône de saison : ' + leaves().length);
+    t.click('#lib-season');
+    assert(t.$('#lib-season').getAttribute('aria-pressed') === 'true' && ids().length === Object.keys(R).filter(id => R[id].p !== 'thon' && inS(id)).length && ids().length < 156 && ids().every(inS), 'de saison : ' + ids().length);
+    assert(ids().includes('poulet-quinoa-butternut') && ids().includes('poulet-pates') && !ids().includes('poulet-pdt'), 'de saison : automne et toute l’année, pas l’été');
+    t.click('#lib-poulet-quinoa-butternut');
+    assert(/^De saison\s:\sautomne et hiver\.$/.test(t.$('#sheet-rec .rec-season').textContent.trim()) && t.$('#sheet-rec .rec-season svg'), 'fiche : ' + t.$('#sheet-rec .rec-season').textContent);
+    t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    t.click('#lib-season');
+    assert(ids().length === 156, 'toutes les saisons');
+    t.click('#lib-poulet-pates');
+    assert(t.$('#sheet-rec .rec-season').textContent.trim() === 'Toute l’année.' && !t.$('#sheet-rec .rec-season svg'), 'fiche : toute l’année');
+    t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  }
   // Fiche : quantités pour ce midi, « Prendre pour ce midi »
   t.click('#lib-poulet-riz');
   const libItems = t.$('#sheet-rec .items').textContent;
@@ -1816,7 +1846,7 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.click('#gear'); t.click('#tab-appli'); t.click('[data-action="eff-ask"]'); t.click('[data-action="eff-ok"]'); t.click('[data-action="acc-skip"]');
   if (!t.$('#repas').hidden) t.click('#repas [data-action="fermer"]');
   t.click('#nav-rec');
-  assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 160, 'effacer : filtres remis');
+  assert(t.$('#lib-prot').value === '' && t.$('#lib-box').getAttribute('aria-pressed') === 'false' && ids().length === 176, 'effacer : filtres remis');
 }
 
 // Bibliothèque (4.1.0) : petits-déjeuners et collations en onglets, leurs fiches (quantités du jour visé, préparation, notes
@@ -1828,9 +1858,9 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   const PDO = tw.eval('PD_ORDER'), DEF = tw.eval('DEFAULT_CHOICES');
   t.click('#nav-rec');
   assert.deepStrictEqual([...t.d.querySelectorAll('#lib-tabs button')].map(b => b.textContent), ['Midi et soir', 'Petits-déjeuners', 'Collations'], 'onglets');
-  assert(t.pressed('lib-tab') === 'meal' && ids().length === 160 && !t.$('#lib-sel').hidden, 'midi et soir par défaut');
+  assert(t.pressed('lib-tab') === 'meal' && ids().length === 176 && !t.$('#lib-sel').hidden, 'midi et soir par défaut');
   t.click('#lib-tab-pd');
-  assert(t.pressed('lib-tab') === 'pd' && t.d.activeElement === t.$('#lib-tab-pd') && t.$('#lib-sel').hidden && t.$('#lib-box').hidden && !t.$('#lib-mine').hidden, 'onglet des petits-déjeuners');
+  assert(t.pressed('lib-tab') === 'pd' && t.d.activeElement === t.$('#lib-tab-pd') && t.$('#lib-sel').hidden && t.$('#lib-box').hidden && t.$('#lib-season').hidden && !t.$('#lib-mine').hidden, 'onglet des petits-déjeuners');
   assert.deepStrictEqual([...t.d.querySelectorAll('#lib-for .opt')].map(b => b.dataset.value), ['0|pd', '1|pd'], 'ce matin, demain matin');
   assert(t.pressed('lib-for') === '0|pd' && t.$('#lib-for-l').textContent === 'Pour quel matin ?' && t.$('#lib-n').textContent === '10 petits-déjeuners.', 'à 9 h, ce matin');
   assert.deepStrictEqual(ids(), [...PDO].map(x => 'pd:' + x), 'les dix bases');
@@ -1957,8 +1987,9 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   const tw = t.d.defaultView, pf = () => JSON.parse(tw.localStorage.getItem(PKEY)), R = tw.eval('RECIPES');
   const esc = () => t.d.dispatchEvent(new tw.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   // Page : la suggestion du déjeuner (poulet, riz : l'une des deux recettes du couple, selon le jour)
-  const first = t.$('#rec-v-dej').dataset.value, other = ['poulet-riz', 'poulet-riz-teriyaki'].find(x => x !== first);
-  assert(['poulet-riz', 'poulet-riz-teriyaki'].includes(first), 'suggestion du déjeuner : ' + first);
+  // 4.3.0 : trois recettes pour poulet × riz (le risotto aux champignons)
+  const trio = ['poulet-riz', 'poulet-riz-teriyaki', 'poulet-riz-risotto'], first = t.$('#rec-v-dej').dataset.value, others = trio.filter(x => x !== first);
+  assert(trio.includes(first), 'suggestion du déjeuner : ' + first);
   t.click('#rec-v-dej');
   assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'false' && t.$('#rp-ban').getAttribute('aria-pressed') === 'false' && t.$('#rp-s').textContent === '', 'fiche : ni favorite ni à éviter');
   t.click('#rp-fav');
@@ -1967,15 +1998,17 @@ assert(sk.$('#accueil').hidden && !sk.$('#page').hidden && /Complète ton profil
   t.click('#rp-ban');
   assert(t.$('#rp-fav').getAttribute('aria-pressed') === 'false' && t.$('#rp-ban').getAttribute('aria-pressed') === 'true' && /ne la tire plus/.test(t.$('#rp-s').textContent), 'à éviter');
   assert(!pf().fav && pf().ban.join() === first, 'l’une ou l’autre : ' + JSON.stringify(pf()));
-  // 3.31.0 : l'autre recette du couple est proposée ; les deux à éviter, plus de suggestion
-  assert(t.$('#rec-v-dej').dataset.value === other && !t.$('#rec-n-dej'), 'suggestion : l’autre recette du couple');
+  // 3.31.0 : une autre recette du couple est proposée (« Une autre recette » tant qu'il en reste deux) ; toutes à éviter, plus de suggestion
+  assert(others.includes(t.$('#rec-v-dej').dataset.value) && t.$('#rec-n-dej'), 'suggestion : une autre recette du couple');
   esc();
   assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#rec-v-dej'), 'panneau fermé : focus sur la suggestion');
+  t.click('#rec-v-dej'); t.click('#rp-ban'); esc();
+  assert(others.includes(t.$('#rec-v-dej').dataset.value) && !t.$('#rec-n-dej'), 'suggestion : la dernière recette du couple');
   t.click('#rec-v-dej'); t.click('#rp-ban');
   assert(!t.$('#sec-dej .rec') && !t.$('#rec-v-dej'), 'plus de suggestion sous le déjeuner');
   esc();
   assert(t.$('#sheet').hidden && t.d.activeElement === t.$('#ft-dej'), 'panneau fermé : focus sur le repère du repas');
-  t.click('#gear'); t.click('#tab-repas'); t.click('#rp-list [data-pref="ban"][data-value="' + other + '"]'); t.click('#nav-jour');
+  t.click('#gear'); t.click('#tab-repas'); others.forEach(o => t.click('#rp-list [data-pref="ban"][data-value="' + o + '"]')); t.click('#nav-jour');
   // Bibliothèque : la recette à éviter en fin de liste ; une favorite avec son cœur et le filtre
   t.click('#nav-rec'); t.click('#lib-mine');
   const ids = () => [...t.d.querySelectorAll('#lib-list .lib-r')].map(b => b.dataset.value);

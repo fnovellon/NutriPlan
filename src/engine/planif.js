@@ -45,24 +45,28 @@ function surpriseCo(cards, rand, prefs){
 /* Un repas surprise : fix = { prot } ou { starch } (surprise partielle, l'autre est tiré) ou {} (complète). La protéine évite
    celles déjà prises, le poisson est favorisé s'il n'y en a pas encore (× 3), les légumes secs aussi ; un féculent déjà pris
    pèse 0,3 ; un couple déjà pris, ou dont toutes les recettes sont à éviter, est écarté s'il reste autre chose. La recette du
-   couple est tirée selon les préférences (favorite × 2, jamais une à éviter) ; sans recette possible, un plat simple. */
-function surpriseMeal(cards, fix, off, prefs, rand){
+   couple est tirée selon les préférences (favorite × 2, jamais une à éviter) ; sans recette possible, un plat simple. Avec
+   season (4.3.0, « Seulement de saison ») : seulement des recettes de cette saison (toute l'année comprise), les couples qui
+   n'en ont pas écartés s'il reste autre chose. */
+function surpriseMeal(cards, fix, off, prefs, rand, season){
   const r = rand || Math.random, f = fix || {};
+  /* Un couple a une recette possible (pas à éviter, et de saison si season, 4.3.0) */
+  const okCouple = function(p, s){ return recipesFor(p, s).some(function(id){ return recipePref(id, prefs) > 0 && (!season || inSeason(id, season)); }); };
   const prots = allowed('prot', off), sts = allowed('starch', off);
   const hasFish = cards.some(function(c){ return FISH.indexOf(c.prot) >= 0; }), hasLeg = cards.some(function(c){ return LEGUMES.indexOf(c.starch) >= 0; });
   const taken = function(p, s){ return cards.some(function(c){ return c.prot === p && c.starch === s; }); };
   const prot = f.prot && has(PROT, f.prot) ? f.prot : tieredPick(r, prots, function(p){
     if (cards.some(function(c){ return c.prot === p; })) return 0;
-    if (f.starch && (taken(p, f.starch) || couplePref(p, f.starch, prefs) === 0)) return 0;
+    if (f.starch && (taken(p, f.starch) || !okCouple(p, f.starch))) return 0;
     return FISH.indexOf(p) >= 0 && !hasFish ? 3 : 1;
   });
   const starch = f.starch && has(STARCH, f.starch) ? f.starch : tieredPick(r, sts, function(s){
-    if (taken(prot, s) || couplePref(prot, s, prefs) === 0) return 0;
+    if (taken(prot, s) || !okCouple(prot, s)) return 0;
     let w = cards.some(function(c){ return c.starch === s; }) ? 0.3 : 1;
     if (LEGUMES.indexOf(s) >= 0 && !hasLeg) w *= 3;
     return w;
   });
-  const recs = recipesFor(prot, starch).filter(function(id){ return recipePref(id, prefs) > 0; });
+  const recs = recipesFor(prot, starch).filter(function(id){ return recipePref(id, prefs) > 0 && (!season || inSeason(id, season)); });
   const recette = recs.length ? tieredPick(r, recs, function(id){ return recipePref(id, prefs); }) : null;
   return {prot:prot, starch:starch, recette:recette, s:f.prot ? 'prot' : f.starch ? 'starch' : 'full'};
 }
