@@ -84,7 +84,9 @@ function scan(dom, label){
   [...dom.window.document.querySelectorAll('#frise [role="tab"]')].forEach(t => { t.click(); scan(dom, 'page, carte ' + t.dataset.value); });
   addSess(dom, 'petite'); scan(dom, 'page, quatre séances');
   C.ok(dom.window.document.querySelector('#sess-add').disabled, '« + Séance » actif à 4 séances', '');
-  click(dom, '[data-action="toggle"][data-key="libre"]'); scan(dom, 'page, repas libre');
+  click(dom, '#sw-lib-diner'); scan(dom, 'page, repas libre');
+  click(dom, '#lk-diner-plaisir'); scan(dom, 'page, repas plaisir');
+  click(dom, '#sw-lib-dej'); scan(dom, 'page, déjeuner et dîner libres'); click(dom, '#sw-lib-dej');
   click(dom, '[data-action="open-pick"][data-kind="dessert"][data-slot="dej"]'); scan(dom, 'panneau de choix'); click(dom, '#sheet [data-value="chocolat"]');
   click(dom, '#open-repas'); scan(dom, 'formulaire des repas, repas libre');
   click(dom, '#repas-form .sel[data-kind="prot"][data-slot="dej"]'); scan(dom, 'formulaire des repas, panneau de choix');
@@ -196,11 +198,13 @@ function scan(dom, label){
   const dom = open({ [PKEY]: '{}' }), d = dom.window.document;
   const today = iso.slice(0, 10);
   C.ok(d.getElementById('date').textContent === 'Aujourd’hui, ' + title.replace(/(\d|er) /, '$1\u00A0'), 'date du jour', () => iso + ' : ' + d.getElementById('date').textContent);
-  click(dom, '#sw-lib');   // repas libre aujourd'hui : celui du samedi de la même semaine est retiré
-  const st = JSON.parse(dom.window.localStorage.getItem(KEY));
-  C.ok(st.plans[today] && st.plans[today].libre === true, 'repas libre enregistré à la bonne date', () => iso + ' : ' + JSON.stringify(st.plans));
-  if (sat !== today) C.ok(st.plans[sat] && st.plans[sat].libre === false && /samedi/.test(d.getElementById('hint').textContent), 'repas libre du samedi de la même semaine retiré', () => iso + ' : ' + JSON.stringify(st.plans));
-  C.ok(Object.keys(st.plans).every(k => k === today || k === sat), 'date enregistrée inattendue', () => iso + ' : ' + Object.keys(st.plans).join(' '));
+  click(dom, '#sw-lib-diner');   // repas libre ce soir : un repas dehors, le repas plaisir reste samedi soir (même semaine)
+  let st = JSON.parse(dom.window.localStorage.getItem(KEY));
+  C.ok(st.plans[today] && JSON.stringify(st.plans[today].libre) === '{"diner":"dehors"}' && /est samedi soir\.$/.test(d.getElementById('hint').textContent), 'repas libre enregistré à la bonne date', () => iso + ' : ' + JSON.stringify(st.plans) + ' ' + d.getElementById('hint').textContent);
+  click(dom, '#lk-diner-plaisir');   // le repas plaisir passe à ce soir : celui du samedi de la même semaine n'est plus libre
+  st = JSON.parse(dom.window.localStorage.getItem(KEY));
+  C.ok(JSON.stringify(st.plans[today].libre) === '{"diner":"plaisir"}' && !st.plans[sat] && /samedi soir n’est plus libre\.$/.test(d.getElementById('hint').textContent), 'repas plaisir du samedi de la même semaine retiré', () => iso + ' : ' + JSON.stringify(st.plans));
+  C.ok(Object.keys(st.plans).every(k => k === today), 'date enregistrée inattendue', () => iso + ' : ' + Object.keys(st.plans).join(' '));
 });
 {
   // Page ouverte d'un jour à l'autre : au retour sur l'onglet, elle passe au nouveau jour
@@ -227,7 +231,7 @@ function check(dom, log){
       C.ok(/^\d{4}-\d\d-\d\d$/.test(date), 'date enregistrée invalide', () => date);
       // Enregistré champ par champ (3.11.0) : ce qui manque vient de la semaine type
       // Imprévu (3.26.0) : toujours valide quand il est enregistré
-      C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch', 'imprevu'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || typeof p.libre === 'boolean') &&
+      C.ok(p && typeof p === 'object' && Object.keys(p).every(k => ['seances', 'libre', 'ch', 'imprevu'].includes(k)) && (!('seances' in p) || (Array.isArray(p.seances) && p.seances.length <= 4)) && (!('libre' in p) || JSON.stringify(w.eval('cleanLibre')(p.libre)) === JSON.stringify(p.libre)) &&
         (!('imprevu' in p) || (p.imprevu !== null && JSON.stringify(w.eval('cleanImprevu')(p.imprevu)) === JSON.stringify(p.imprevu))), 'plan enregistré invalide', () => JSON.stringify(p));
       // Recette enregistrée : toujours celle de la protéine et du féculent du repas
       if (p && p.ch) C.ok(['dej', 'diner'].every(sl => !p.ch[sl] || !('recette' in p.ch[sl]) || ofCouple(p.ch[sl])), 'recette enregistrée qui ne va pas', () => JSON.stringify(p.ch));
@@ -304,8 +308,27 @@ function check(dom, log){
     if (iso && !(rec && 'seances' in rec)) C.ok(n === (sem && sem.jours && sem.jours[js] ? sem.jours[js].length : 0), 'séances de la semaine type', () => iso + ' : ' + n + ' ' + JSON.stringify(sem) + ' ' + where());
   } catch (e){ C.ok(false, 'séances de la semaine type : lecture', () => e.message); }
   C.ok(n > 0 || $('#sess .rest-t'), '« Repos, pas de séance » sans séance', where);
-  const libre = $('#sw-lib').getAttribute('aria-checked') === 'true';
-  C.ok(libre === /Repas libre/.test(($('#h-diner') || { textContent: '' }).textContent), 'interrupteur du repas libre ≠ page', where);
+  // Repas libres (5.0.0) : un interrupteur au déjeuner et au dîner, la carte remplacée ; dehors ou plaisir, une bulle choisie
+  const lib = {};
+  ['dej', 'diner'].forEach(sl => {
+    const b = $('#sw-lib-' + sl), on = !!b && b.getAttribute('aria-checked') === 'true';
+    lib[sl] = on;
+    C.ok(b && on === /^(Déjeuner|Dîner) libre/.test(($('#h-' + sl) || { textContent: '' }).textContent), 'interrupteur du repas libre ≠ page', () => sl + ' ' + where());
+    const k = [...d.querySelectorAll('[data-action="lib-kind"][data-value^="' + sl + '|"]')];
+    C.ok(on ? k.length === 2 && k.filter(x => x.getAttribute('aria-pressed') === 'true').length === 1 : !k.length, 'repas libre : dehors ou plaisir', () => sl + ' ' + where());
+  });
+  const libre = lib.diner;
+  // Un seul repas plaisir enregistré par semaine (lundi → dimanche)
+  try {
+    const st = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{}}'), cl = w.eval('cleanLibre'), weeks = {};
+    Object.keys(st.plans).forEach(k => {
+      const n = Object.values(cl(st.plans[k] && st.plans[k].libre)).filter(x => x === 'plaisir').length;
+      if (!n) return;
+      const x = new Date(k + 'T12:00:00'), mon = new Date(x - ((x.getDay() + 6) % 7) * 864e5).toDateString();
+      weeks[mon] = (weeks[mon] || 0) + n;
+    });
+    C.ok(Object.values(weeks).every(n => n <= 1), 'deux repas plaisir enregistrés la même semaine', () => JSON.stringify(weeks) + ' ' + where());
+  } catch (e){ C.ok(false, 'repas plaisir : lecture', () => e.message); }
   C.ok($('#sheet').hidden || /^choose-open/.test(log[log.length - 1]), 'panneau de choix resté ouvert', where);
   // Ta semaine : cinq repères, une phrase ; alerte si un repère est dépassé, « équilibrée » si tous sont tenus
   const wbRows = [...d.querySelectorAll('#wb-list li')];
@@ -327,7 +350,7 @@ function check(dom, log){
     const banP = (JSON.parse(w.localStorage.getItem(PKEY) || '{}') || {}).ban || [], sel = k => (meal.querySelector('[data-action="open-pick"][data-kind="' + k + '"]') || { dataset: {} }).dataset.value;
     const couple = sel('prot') + '-' + sel('starch');
     const replaced = !meal.querySelector('.picks') && /kcal d’imprévu/.test(meal.textContent);
-    C.ok(!!box === !(sl === 'diner' && libre) || (!box && (banP.includes(couple) || replaced)), 'recette proposée', () => sl + ' ' + where());
+    C.ok(!!box === !lib[sl] || (!box && (banP.includes(couple) || replaced)), 'recette proposée', () => sl + ' ' + where());
     if (box && box.classList.contains('is-on')) C.ok(names.every(n => ['fruit', 'compote', 'fruits secs', 'chocolat noir', 'kcal d’imprévu'].includes(n)) && box.querySelector('h3') && box.querySelector('.rec-k .mac') && meal.querySelector('.picks').nextElementSibling === box, 'recette choisie : ingrédients sur la page', () => names.join(', ') + ' ' + where());
     else if (box) C.ok(names.includes('légumes') && /^Suggestion/.test(box.textContent), 'repas sans recette : légumes absents', () => names.join(', ') + ' ' + where());
   });
@@ -336,7 +359,7 @@ function check(dom, log){
   try {
     const iso = ($('#week [aria-pressed="true"]') || { dataset: {} }).dataset.value, st = JSON.parse(w.localStorage.getItem(KEY) || '{"plans":{}}');
     const im = st.plans[iso] && st.plans[iso].imprevu, ok = im && w.eval('cleanImprevu')(im), card = ok ? $('#sec-' + ok.slot) : null;
-    const shown = card && !(ok.slot === 'diner' && libre), lines = [...d.querySelectorAll('#day .items li')].filter(li => /kcal d’imprévu/.test(li.textContent));
+    const shown = card && !lib[ok.slot], lines = [...d.querySelectorAll('#day .items li')].filter(li => /kcal d’imprévu/.test(li.textContent));
     C.ok(lines.length === (shown ? 1 : 0) && (!shown || card.contains(lines[0])) && /d’imprévu/.test($('#sum-text').textContent) === !!shown, 'imprévu : carte et total', () => iso + ' ' + JSON.stringify(im) + ' ' + where());
   } catch (e){ C.ok(false, 'imprévu : lecture', () => e.message); }
   // Recettes à éviter (3.25.0) : jamais proposées sous un repas
@@ -418,7 +441,8 @@ const ACTIONS = {
     C.ok(d.activeElement.getAttribute('aria-selected') === 'true', 'frise : focus pas sur le repère choisi', k);
     return 'frise ' + k;
   },
-  libre: dom => { dom.window.document.querySelector('#sw-lib').click(); return 'repas libre'; },
+  libre: dom => { const d = dom.window.document, sl = R.pick(['dej', 'diner']); d.querySelector('#sw-lib-' + sl).click(); return 'repas libre ' + sl; },
+  'libre-k': dom => { const b = R.pick([...dom.window.document.querySelectorAll('[data-action="lib-kind"]')]); if (!b) return null; b.click(); return 'repas ' + b.dataset.value; },
   // « Mangé » sur la carte d'un repas (3.23.0) : coché, la carte passe au repas suivant pas encore mangé
   mange: dom => {
     const d = dom.window.document, t = R.pick([...d.querySelectorAll('#frise .f-m')]);
@@ -590,7 +614,7 @@ const ACTIONS = {
       d.querySelector('#wiz-next').click();
       if (err){ C.ok(d.querySelector('#wiz-step').textContent === 'Étape 1 sur 5' && w.localStorage.getItem(QK) === before, 'planification créée malgré l’erreur', err); d.querySelector('#nav-jour').click(); return 'planifier refusé'; }
       wizCards(dom);
-      // Récap : quelques repas libres basculés, un seul par semaine dans la période
+      // Récap : quelques repas libres basculés, au midi ou au soir ; un seul repas plaisir par semaine
       for (let i = R.int(0, 3); i > 0; i--){ const b = R.pick([...d.querySelectorAll('[data-action="wiz-libre"]')]); if (b) b.click(); }
       const libres = [...d.querySelectorAll('[data-action="wiz-libre"][aria-checked="true"]')].map(b => b.dataset.value);
       d.querySelector('#wiz-next').click();
@@ -605,11 +629,8 @@ const ACTIONS = {
         days.forEach(k => {
           const c = st.plans[k].ch;
           C.ok(p.cards.pd.some(x => x.id === c.pdBase) && p.cards.co.some(x => x.id === c.co && x.cs === c.cs) && meals.includes(key(c.dej)) && meals.includes(key(c.diner)), 'planification : plat hors des cartes', () => k + ' ' + JSON.stringify(c) + ' ' + JSON.stringify(p.cards));
-          C.ok((st.plans[k].libre === true) === libres.includes(k), 'planification : repas libre du récap', () => k + ' ' + JSON.stringify(libres));
+          ['dej', 'diner'].forEach(sl => C.ok(!!w.eval('libreOf')(st.plans[k], sl) === libres.includes(k + '|' + sl), 'planification : repas libre du récap', () => k + ' ' + sl + ' ' + JSON.stringify(libres)));
         });
-        const weeks = {};
-        libres.forEach(k => { const x = new Date(k + 'T12:00:00'), mon = new Date(x - ((x.getDay() + 6) % 7) * 864e5).toDateString(); weeks[mon] = (weeks[mon] || 0) + 1; });
-        C.ok(Object.values(weeks).every(n => n === 1), 'récap : deux repas libres la même semaine', () => libres.join());
       }
       // Planifications : pas de chevauchement, triées
       C.ok(q.list.every((x, i) => i === 0 || q.list[i - 1].to < x.from), 'planifications qui se chevauchent', () => JSON.stringify(q.list));

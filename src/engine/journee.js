@@ -182,7 +182,8 @@ function composeDay(plan, ch, pr, pf){
      la journée en plus, ou en moins) ;
      jamais reporté sur un autre jour. */
   let imp = null;
-  const im = cleanImprevu(plan.imprevu), isec = im && !(plan.libre && im.slot === 'diner') ? secs.find(function(s){ return s.id === im.slot && !s.band; }) : null;
+  const lib = cleanLibre(plan.libre);
+  const im = cleanImprevu(plan.imprevu), isec = im && !has(lib, im.slot) ? secs.find(function(s){ return s.id === im.slot && !s.band; }) : null;
   if (isec){
     const before = tot.kcal, place = im.mode === 'place';
     const delta = im.kcal - (place ? total(isec.items).kcal : 0);
@@ -201,7 +202,7 @@ function composeDay(plan, ch, pr, pf){
         left -= kc - (nk >= 30 ? nk : 0);
       }
     }
-    const st = [[lunch, 'dej'], [dinner, 'diner']].filter(function(x){ return later.indexOf(x[0]) >= 0 && !(plan.libre && x[1] === 'diner'); }).map(function(x){
+    const st = [[lunch, 'dej'], [dinner, 'diner']].filter(function(x){ return later.indexOf(x[0]) >= 0 && !has(lib, x[1]); }).map(function(x){
       const cur = x[0].items.find(function(i){ return i.key === 'st'; }).m.kcal, lo = STARCH_MIN * k, hi = Math.max(lo, starchCap(ch[x[1]].starch, k));
       return {sec:x[0], id:ch[x[1]].starch, cur:cur, room:Math.max(0, left > 0 ? cur - lo : hi - cur)};
     });
@@ -215,18 +216,26 @@ function composeDay(plan, ch, pr, pf){
     imp = {slot:im.slot, kcal:im.kcal, mode:im.mode, delta:delta, over:tot.kcal - before};
   }
 
-  /* Repas libre : remplace le dîner du jour normal et son skyr du soir s'il y en a un (budget = les deux + 300 × k) */
+  /* Repas libres (5.0.0, au déjeuner et au dîner, autant qu'on veut) : chacun remplace son repas du jour normal (le dîner
+     avec son skyr du soir s'il y en a un) par un budget, arrondi à 50 : son énergie (repas dehors), + 300 × k pour le repas
+     plaisir de la semaine. Les autres repas ne bougent pas. */
   let libre = null;
-  if (plan.libre){
-    const soirKcal = soirSec ? total(soirSec.items).kcal : 0;
-    if (soirSec) secs.splice(secs.indexOf(soirSec), 1);
-    libre = Math.round((total(dinner.items).kcal + soirKcal + 300 * k) / 50) * 50;
-    secs[secs.indexOf(dinner)] = {id:'diner', title:'Repas libre', when:(dinner.when ? dinner.when + ', ' : '') + 'resto ou entre amis', libre:true,
-      items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0}, null, {id:'libre', n:1, kcal:libre})]};
-    tot = total(allItems(secs));
-  }
-  const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !plan.libre ? total(soirSec.items).p : 0;
-  return {secs:secs, tot:tot, libre:libre, imprevu:imp, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
+  const libres = {};
+  LIBRE_SLOTS.forEach(function(slot){
+    if (!has(lib, slot)) return;
+    const sec = slot === 'dej' ? lunch : dinner, plaisir = lib[slot] === 'plaisir';
+    let extra = 0;
+    if (slot === 'diner' && soirSec){ extra = total(soirSec.items).kcal; secs.splice(secs.indexOf(soirSec), 1); }
+    const kc = Math.round((total(sec.items).kcal + extra + (plaisir ? 300 * k : 0)) / 50) * 50;
+    libres[slot] = kc;
+    libre = (libre || 0) + kc;
+    secs[secs.indexOf(sec)] = {id:slot, title:slot === 'dej' ? 'Déjeuner libre' : 'Dîner libre', when:(sec.when ? sec.when + ', ' : '') + 'resto ou entre amis', libre:lib[slot],
+      items:[it('lib', fmtInt(kc), 'kcal environ', plaisir ? 'ton repas plaisir de la semaine' + NB + ': de quoi te faire plaisir, sans peser' : 'le budget de ton repas prévu, pour manger dehors',
+        {kcal:kc, p:0, c:0, f:0}, null, {id:'libre', n:1, kcal:kc})]};
+  });
+  if (libre !== null) tot = total(allItems(secs));
+  const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !has(lib, 'diner') ? total(soirSec.items).p : 0;
+  return {secs:secs, tot:tot, libre:libre, libres:libres, imprevu:imp, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
 }
 /* Journée complète. Le facteur de protéines pf part de 1 (menu de référence) et ne bouge que si les protéines de la journée
    sortent de la fourchette objectif ± 10 % : il vise alors juste à l'intérieur (à 2 % du bord, pour absorber les arrondis).
@@ -235,7 +244,7 @@ function composeDay(plan, ch, pr, pf){
    @param {Plan} plan  @param {Choices} ch  @param {*} [profile] champs du profil, validés ici  @returns {Day} */
 function buildDay(plan, ch, profile){
   const pr = cleanProfile(profile), T = protTarget(pr), lo = (1 - PROT_BAND) * T, hi = (1 + PROT_BAND) * T;
-  const special = plan.libre || cleanImprevu(plan.imprevu), base = special ? Object.assign({}, plan, {libre:false, imprevu:null}) : plan;
+  const special = hasLibre(plan) || cleanImprevu(plan.imprevu), base = special ? Object.assign({}, plan, {libre:{}, imprevu:null}) : plan;
   let pf = 1, r = composeDay(base, ch, pr, pf);
   for (let pass = 0; pass < 5; pass++){
     const P = r.tot.p - r.soirP, adj1 = r.adjP / pf;

@@ -151,9 +151,14 @@
       '<button type="button" class="redo" id="redo-' + s.pick + '" data-action="redo" data-slot="' + s.pick + '" aria-label="Un autre plat ' + REPAS[s.pick] + '" title="Un autre plat">' + REDO + '</button></div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
     const card = s.recipe && !s.libre, shown = card ? s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) >= 0; }) : s.items;
-    /* Repas libre : un interrupteur dans la carte du dîner (et dans celle du repas libre, qui le remplace) */
-    const lib = s.id === 'diner' ? '<button type="button" class="switch" role="switch" id="sw-lib" aria-checked="' + !!s.libre + '" data-action="toggle" data-key="libre">' +
-      '<span>Repas libre ' + (dayDiff(selDate) === 0 ? 'ce soir' : 'le soir') + '</span><span class="knob" aria-hidden="true"></span></button>' : '';
+    /* Repas libre (5.0.0) : un interrupteur dans la carte du déjeuner et dans celle du dîner (et dans celle du repas libre,
+       qui le remplace) ; repas libre : repas dehors ou repas plaisir (un par semaine) */
+    const at = s.id === 'dej' ? (dayDiff(selDate) === 0 ? 'ce midi' : 'le midi') : (dayDiff(selDate) === 0 ? 'ce soir' : 'le soir');
+    const lib = LIBRE_SLOTS.indexOf(s.id) >= 0 ? '<button type="button" class="switch" role="switch" id="sw-lib-' + s.id + '" aria-checked="' + !!s.libre + '" data-action="toggle" data-key="libre" data-value="' + s.id + '">' +
+      '<span>Repas libre ' + at + '</span><span class="knob" aria-hidden="true"></span></button>' +
+      (s.libre ? '<div class="opts-list lib-k" role="group" aria-label="Sorte de repas libre">' + [['dehors', 'Repas dehors'], ['plaisir', 'Repas plaisir']].map(function(x){
+        return '<button type="button" class="opt" id="lk-' + s.id + '-' + x[0] + '" data-action="lib-kind" data-value="' + s.id + '|' + x[0] + '" aria-pressed="' + (s.libre === x[0]) + '">' + x[1] + '</button>';
+      }).join('') + '</div>' : '') : '';
     /* « Mangé » : aujourd'hui et les jours passés */
     const done = isEaten(s.id);
     const eat = dayDiff(selDate) > 0 ? '' : '<button type="button" class="eat" id="eat-' + s.id + '" data-action="eat" data-value="' + s.id + '" aria-pressed="' + done + '" aria-label="' + s.title + ' mangé">' + CHECK + '<span>Mangé</span></button>';
@@ -190,7 +195,7 @@
       }
       const tiny = s.libre ? 'Libre' : s.title === 'Goûter' ? 'Goûter' : SEC_TINY[s.id];
       const ok = isEaten(s.id);
-      return '<button type="button" class="f-m' + (ok ? ' is-eaten' : '') + '"' + a + ' aria-label="' + s.title + (ok ? ', mangé' : '') + '"><span class="f-d" aria-hidden="true">' + (ok ? CHECK : '') + '</span><span class="f-l" aria-hidden="true">' + (s.libre ? 'Repas libre' : SEC_SHORT[s.id] || s.title) + '</span>' +
+      return '<button type="button" class="f-m' + (ok ? ' is-eaten' : '') + '"' + a + ' aria-label="' + s.title + (ok ? ', mangé' : '') + '"><span class="f-d" aria-hidden="true">' + (ok ? CHECK : '') + '</span><span class="f-l" aria-hidden="true">' + (s.libre ? s.title : SEC_SHORT[s.id] || s.title) + '</span>' +
         '<span class="f-l f-t" aria-hidden="true">' + tiny + '</span></button>';
     }).join('');
   };
@@ -403,12 +408,13 @@
   };
   const renderSummary = function(res){
     const t = res.tot, en = res.energy;
-    const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de repas libre'] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
+    const libW = res.libre && Object.keys(res.libres).length > 1 ? 'repas libres' : 'repas libre';
+    const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de ' + libW] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' + (dont.length ? ', dont ' + dont.join(' et ') + '.' : '.');
     let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
     /* Veille d'une sortie longue (3.28.0) : la recharge, et le conseil d'un féculent digeste si le dîner est aux légumineuses */
     if (en.recharge) note += ' Veille de sortie longue' + NB + ': +' + NB + Math.max(5, Math.round(en.recharge / 5) * 5) + NB + 'g de glucides pour recharger, au dîner d’abord.' +
-      (!plan.libre && LEGUMES.indexOf(ch.diner.starch) >= 0 ? ' Ce soir, du riz ou des pâtes passeront mieux que des légumineuses.' : '');
+      (!libreOf(plan, 'diner') && LEGUMES.indexOf(ch.diner.starch) >= 0 ? ' Ce soir, du riz ou des pâtes passeront mieux que des légumineuses.' : '');
     const over = !res.libre && res.ecart > en.target * 0.03;
     if (over){
       const pr = cleanProfile(prof), tips = [];
@@ -453,7 +459,7 @@
     $('legend').innerHTML = '<li class="p">Protéines <b>' + Math.round(t.p) + NB + 'g</b></li>' +
       '<li class="c">Glucides <b>' + Math.round(t.c) + NB + 'g</b></li>' +
       '<li class="f">Lipides <b>' + Math.round(t.f) + NB + 'g</b></li>' +
-      (res.libre || res.imprevu ? '<li class="x">hors ' + (res.libre && res.imprevu ? 'repas libre et imprévu' : res.libre ? 'repas libre' : 'imprévu') + '</li>' : '');
+      (res.libre || res.imprevu ? '<li class="x">hors ' + (res.libre && res.imprevu ? libW + ' et imprévu' : res.libre ? libW : 'imprévu') + '</li>' : '');
   };
   const render = function(){
     renderControls();
@@ -491,7 +497,7 @@
        planification du jour est en recettes ; le dessert reste */
     redo: function(b){
       const slot = b.dataset.slot, other = slot === 'dej' ? 'diner' : 'dej';
-      if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
+      if (!has(REPAS, slot) || libreOf(plan, slot)) return;
       const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p && p.type ? p.type === 'recettes' : !!recipeOf(old);
       for (let i = 0; i < 20; i++){
         /* Les refus de la planification du jour (3.30.0) comptent aussi */
@@ -535,13 +541,36 @@
       render();
       $(to ? 'ft-' + to : 'eat-' + v).focus({preventScroll:true});
     },
-    toggle: function(b){
-      if (b.dataset.key !== 'libre') return;
-      let msg = '';
-      plan.libre = !plan.libre;
-      if (plan.libre) msg = clearOtherLibre();
-      savePlan({libre:plan.libre});
-      return msg;
+    /* Repas libre d'un repas (5.0.0) : autant qu'on veut. Activé : repas plaisir s'il n'y en a pas d'autre cette semaine,
+       sinon repas dehors (le budget du repas prévu) */
+    toggle: function(b, v){
+      if (b.dataset.key !== 'libre' || LIBRE_SLOTS.indexOf(v) < 0) return;
+      const l = cleanLibre(plan.libre);
+      if (l[v]){ delete l[v]; plan.libre = cleanLibre(l); savePlan({libre:plan.libre}); return ''; }
+      const others = otherPlaisirs(selDate, selIso(), v);
+      l[v] = others.length ? 'dehors' : 'plaisir';
+      plan.libre = cleanLibre(l); savePlan({libre:plan.libre});
+      return l[v] === 'plaisir' ? 'Repas plaisir ' + mealAt(selDate, v) + NB + ': ton repas prévu, avec ≈' + NB + r10(300 * scaleOf(cleanProfile(prof))) + NB + 'kcal de plus. Un par semaine.'
+        : 'Repas dehors ' + mealAt(selDate, v) + NB + ': le budget de ton repas prévu. Ton repas plaisir de la semaine est ' + mealAt(others[0].d, others[0].slot) + '.';
+    },
+    /* Repas dehors ou repas plaisir : un seul repas plaisir par semaine, il passe ici ; un autre enregistré reste libre,
+       sans le bonus ; celui de la semaine type n'est plus libre */
+    'lib-kind': function(b, v){
+      const q = String(v).split('|'), slot = q[0], kind = q[1], l = cleanLibre(plan.libre);
+      if (!has(l, slot) || LIBRE_KINDS.indexOf(kind) < 0 || l[slot] === kind) return;
+      l[slot] = kind;
+      if (kind === 'dehors'){ plan.libre = cleanLibre(l); savePlan({libre:plan.libre}); return 'Repas dehors ' + mealAt(selDate, slot) + NB + ': le budget de ton repas prévu.'; }
+      const kept = [], gone = [];
+      otherPlaisirs(selDate, selIso(), slot).forEach(function(o){
+        if (o.iso === selIso()){ l[o.slot] = 'dehors'; kept.push(mealAt(o.d, o.slot)); return; }
+        if (o.rec){ const x = recLibre(o.iso); x[o.slot] = 'dehors'; writeDay(o.iso, {libre:x}); kept.push(mealAt(o.d, o.slot)); }
+        else gone.push(mealAt(o.d, o.slot));
+      });
+      plan.libre = cleanLibre(l); savePlan({libre:plan.libre});
+      const and = function(a){ return a.length > 1 ? a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1] : a[0]; };
+      return 'Repas plaisir ' + mealAt(selDate, slot) + NB + ': ton repas prévu, avec ≈' + NB + r10(300 * scaleOf(cleanProfile(prof))) + NB + 'kcal de plus.' +
+        (kept.length ? ' Un par semaine' + NB + ': ' + and(kept) + (kept.length > 1 ? ' restent libres' : ' reste libre') + ', sans le bonus.' : '') +
+        (gone.length ? ' Un par semaine' + NB + ': ' + and(gone) + (gone.length > 1 ? ' ne sont plus libres.' : ' n’est plus libre.') : '');
     },
     pd: function(b, v){ if (has(PD, v)){ ch.pdBase = v; saveCh(); } return ''; },
     /* Collation (3.29.0) : la partie protéines, et les glucides les jours de séance */
@@ -599,7 +628,6 @@
       delete store.plans[selIso()];
       delete store.choices[sel];
       loadSel();
-      if (plan.libre) msg = clearOtherLibre();
       persist(); prevQty = new Map();
       return msg;
     }

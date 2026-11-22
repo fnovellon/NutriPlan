@@ -359,8 +359,8 @@ P 119 g (fourchette 130 à 158, facteur 0.77), G 128 g, L 40 g, portions × 1.00
   Collation (dans l’après-midi) :
     2 œufs (durs ou mollets, préparés à l’avance)  144 kcal
     1 shaker de protéines (une dose, à l’eau)  120 kcal
-  Repas libre (resto ou entre amis) :
-    900 kcal environ (de quoi te faire plaisir, sans peser)  900 kcal
+  Dîner libre (resto ou entre amis) :
+    900 kcal environ (ton repas plaisir de la semaine : de quoi te faire plaisir, sans peser)  900 kcal
 
 == 72 kg, repas libre, petite le soir, desserts
 dépense 2616 kcal (repos 2328, séances 288), objectif 2270 kcal, apport 2569 kcal (écart 8), dont repas libre 1050
@@ -383,8 +383,8 @@ P 119 g (fourchette 130 à 158, facteur 0.78), G 159 g, L 40 g, portions × 1.00
   Petite séance
   Shaker (juste après la séance) :
     1 shaker de protéines (une dose, à l’eau)  120 kcal
-  Repas libre (après la séance, resto ou entre amis) :
-    1 050 kcal environ (de quoi te faire plaisir, sans peser)  1050 kcal
+  Dîner libre (après la séance, resto ou entre amis) :
+    1 050 kcal environ (ton repas plaisir de la semaine : de quoi te faire plaisir, sans peser)  1050 kcal
 
 == 72 kg, moyenne à midi, pain, chocolat et fruit
 dépense 2781 kcal (repos 2328, séances 454), objectif 2430 kcal, apport 2437 kcal (écart 7)

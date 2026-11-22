@@ -42,7 +42,7 @@ const tools = dom => {
     d, $, click,
     stored: () => JSON.parse(dom.window.localStorage.getItem(KEY)),
     sections: () => [...d.querySelectorAll('#day .meal h2, #day .band-t')].map(h => h.childNodes[0].textContent.trim()),
-    setSwitch: (k, on) => { const b = $(`[data-action="toggle"][data-key="${k}"]`); if ((b.getAttribute('aria-checked') === 'true') !== on) b.click(); },
+    setSwitch: (k, on, slot) => { const b = $(`[data-action="toggle"][data-key="${k}"]` + (k === 'libre' ? `[data-value="${slot || 'diner'}"]` : '')); if ((b.getAttribute('aria-checked') === 'true') !== on) b.click(); },
     starchLine: slot => [...d.querySelectorAll(`[aria-labelledby="h-${slot}"] .items li`)].map(li => li.textContent)
       .find(t => /riz basmati|pâtes|pommes de terre|patate douce|quinoa|semoule|boulgour|lentilles|gnocchis/.test(t)),
     pressed: action => $(`[data-action="${action}"][aria-pressed="true"]`).dataset.value,
@@ -166,15 +166,59 @@ rm(0);
 add('moyenne');
 assert.deepStrictEqual(stored().plans['2026-10-07'].seances, [{ taille: 'moyenne', moment: 'soir' }], 'séances enregistrées');
 
-// Repas libre : un seul par semaine, celui du samedi (par défaut) est retiré
+// Repas libres (5.0.0) : autant qu'on veut, au déjeuner et au dîner ; un seul repas plaisir par semaine (samedi soir par
+// défaut, de la semaine type) : un autre repas libre est un repas dehors, le budget du repas prévu
+const sumKcal = () => +$('#sum-text strong').textContent.replace(/\D/g, '');
+const k0 = sumKcal();
 setSwitch('libre', true);
-assert(sections().includes('Repas libre') && /repas libre/.test($('#sum-text').textContent), 'repas libre');
-// Son interrupteur est dans la carte du dîner (3.20.0) : le focus y reste, la frise dit « Repas libre »
-assert($('#sw-lib').closest('#sec-diner') && d.activeElement === $('#sw-lib') && $('#ft-diner .f-l').textContent === 'Repas libre', 'repas libre dans la carte du dîner');
-assert(/samedi/.test($('#hint').textContent), 'message du repas libre déplacé');
-assert.strictEqual(stored().plans['2026-10-10'].libre, false, 'repas libre du samedi non retiré');
+assert(sections().includes('Dîner libre') && /kcal de repas libre\./.test($('#sum-text').textContent), 'repas libre');
+// Son interrupteur est dans la carte du dîner (3.20.0) : le focus y reste, la frise dit « Dîner libre »
+assert($('#sw-lib-diner').closest('#sec-diner') && d.activeElement === $('#sw-lib-diner') && $('#ft-diner .f-l').textContent === 'Dîner libre', 'repas libre dans la carte du dîner');
+assert(/^Repas dehors ce soir\s:\sle budget de ton repas prévu\. Ton repas plaisir de la semaine est samedi soir\.$/.test($('#hint').textContent), 'repas dehors : ' + $('#hint').textContent);
+assert.deepStrictEqual(stored().plans['2026-10-07'].libre, { diner: 'dehors' }, 'repas dehors enregistré');
+assert(!stored().plans['2026-10-10'] && $('#lk-diner-dehors').getAttribute('aria-pressed') === 'true' && $('#lk-diner-plaisir').getAttribute('aria-pressed') === 'false', 'samedi garde son repas plaisir');
+assert(Math.abs(sumKcal() - k0) <= 50, 'repas dehors : le total ne bouge presque pas (arrondi à 50)');
+// Le repas plaisir passe à ce soir : celui de samedi (semaine type) n'est plus libre
+click('#lk-diner-plaisir');
+assert(/^Repas plaisir ce soir\s:\ston repas prévu, avec ≈\s300\skcal de plus\. Un par semaine\s:\ssamedi soir n’est plus libre\.$/.test($('#hint').textContent) && d.activeElement === $('#lk-diner-plaisir'), 'repas plaisir : ' + $('#hint').textContent);
+assert.deepStrictEqual(stored().plans['2026-10-07'].libre, { diner: 'plaisir' }, 'repas plaisir enregistré');
+assert(sumKcal() - k0 >= 250 && sumKcal() - k0 <= 350, 'repas plaisir : ≈ 300 kcal de plus');
+// Le déjeuner aussi : repas dehors (le plaisir est pris) ; le plaisir au déjeuner, le dîner reste libre sans le bonus
+setSwitch('libre', true, 'dej');
+assert(sections().includes('Déjeuner libre') && sections().includes('Dîner libre') && /kcal de repas libres\./.test($('#sum-text').textContent) && /Ton repas plaisir de la semaine est ce soir\./.test($('#hint').textContent), 'deux repas libres : ' + $('#hint').textContent);
+assert.deepStrictEqual(stored().plans['2026-10-07'].libre, { diner: 'plaisir', dej: 'dehors' }, 'deux repas libres enregistrés');
+click('#lk-dej-plaisir');
+assert(/Un par semaine\s:\sce soir reste libre, sans le bonus\.$/.test($('#hint').textContent), 'plaisir déplacé au déjeuner : ' + $('#hint').textContent);
+assert.deepStrictEqual(stored().plans['2026-10-07'].libre, { diner: 'dehors', dej: 'plaisir' }, 'plaisir au déjeuner');
+setSwitch('libre', false, 'dej');
 setSwitch('libre', false);
+assert.deepStrictEqual(stored().plans['2026-10-07'].libre, {}, 'plus de repas libre');
+assert(Math.abs(sumKcal() - k0) <= 10 && !sections().some(x => / libre$/.test(x)), 'journée normale');
 assert.strictEqual($('#hint').textContent, '', 'message non effacé');
+
+// Repas libres enregistrés avant la 5.0.0 (vrai) : le dîner, en repas plaisir ; celui de la semaine type (samedi) n'est plus
+// libre. Un déjeuner libre : le formulaire des repas le dit, la bibliothèque n'a pas de bouton, le jour d'une planification le montre
+{
+  const t = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-08': { libre: true } }, choices: {} }))));
+  t.click('#week [data-value="2026-10-08"]');
+  assert(t.$('#sw-lib-diner').getAttribute('aria-checked') === 'true' && t.$('#lk-diner-plaisir').getAttribute('aria-pressed') === 'true' && t.sections().includes('Dîner libre'), 'ancien format : dîner, repas plaisir');
+  t.click('#week [data-value="2026-10-10"]');
+  assert(t.$('#sw-lib-diner').getAttribute('aria-checked') === 'false', 'ancien format : samedi plus libre');
+  t.click('#week [data-value="2026-10-08"]');
+  t.setSwitch('libre', true, 'dej');
+  assert.deepStrictEqual(t.stored().plans['2026-10-08'].libre, { diner: 'plaisir', dej: 'dehors' }, 'nouveau format écrit');
+  assert(/^Repas dehors jeudi midi\s:\sle budget de ton repas prévu\. Ton repas plaisir de la semaine est jeudi soir\.$/.test(t.$('#hint').textContent) && t.$('#ft-dej .f-l').textContent === 'Déjeuner libre', 'déjeuner libre : ' + t.$('#hint').textContent);
+  assert(!t.$('#redo-dej') && !t.$('#imp-dej') && !t.$('#sec-dej .rec') && /^\d[\d\s]*kcal environle budget de ton repas prévu, pour manger dehors$/.test(t.$('#sec-dej .items li').textContent), 'déjeuner libre : sa carte');
+  t.click('#open-repas');
+  assert(/Ce midi-là, c’est ton repas libre\s:\sce déjeuner est gardé pour les prochains jeudis\./.test(t.$('[aria-labelledby="repas-h-dej"]').textContent), 'déjeuner libre dans le formulaire');
+  t.click('#repas [data-action="fermer"]');
+  t.click('#nav-rec');
+  t.click('[data-action="lib-for"][data-value="1|dej"]');
+  assert(/demain midi, c’est ton repas libre/.test(t.$('#lib-n').textContent), 'bibliothèque : demain midi libre');
+  t.click('#lib-list .lib-r');
+  assert(!t.$('[data-action="lib-take"]'), 'bibliothèque : pas de bouton pour un déjeuner libre');
+  t.d.dispatchEvent(new t.d.defaultView.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+}
 
 // Frise (3.20.0) : un repère par repas et par séance, dans l'ordre de la journée, une seule carte affichée (celle du repère
 // choisi) ; à 9 h aujourd'hui, le petit-déjeuner
@@ -537,13 +581,13 @@ assert(!rl.$('[aria-labelledby="h-dej"] .rec.is-on'), 'formulaire : féculent ch
 
 // Stockage : l'activité par date, les choix par jour de la semaine
 let st = stored();
-assert.deepStrictEqual(Object.keys(st.plans).sort(), ['2026-10-07', '2026-10-10'], 'plans enregistrés');
+assert.deepStrictEqual(Object.keys(st.plans).sort(), ['2026-10-07'], 'plans enregistrés (5.0.0 : samedi n’a plus besoin d’être écrit)');
 assert.deepStrictEqual(Object.keys(st.choices), ['3'], 'choix enregistrés');
 
-// Revenir au plan de base efface le jour (le samedi garde sa modification)
+// Revenir au plan de base efface le jour
 click('[data-action="reset"]');
 st = stored();
-assert.deepStrictEqual(Object.keys(st.plans).sort(), ['2026-10-10']);
+assert.deepStrictEqual(Object.keys(st.plans).sort(), []);
 assert.deepStrictEqual(st.choices, {});
 assert.deepStrictEqual(sess(), [], 'séances non effacées');
 add('moyenne');
@@ -869,7 +913,7 @@ assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent], ['
 c.click('#week [data-value="2026-10-06"]');
 assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent], ['Hier, mardi 6 octobre', 'Qu’est-ce que tu as fait hier ?'], 'hier');
 c.click('#week [data-value="2026-10-09"]');
-assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent, c.$('#sw-lib').textContent], ['Vendredi 9 octobre', 'Qu’est-ce que tu prévois vendredi 9 octobre ?', 'Repas libre le soir'], 'autre jour');
+assert.deepStrictEqual([c.$('#date').textContent, c.$('#title').textContent, c.$('#sw-lib-diner').textContent, c.$('#sw-lib-dej').textContent], ['Vendredi 9 octobre', 'Qu’est-ce que tu prévois vendredi 9 octobre ?', 'Repas libre le soir', 'Repas libre le midi'], 'autre jour');
 assert(!c.$('#today-btn').hidden, 'bouton « Revenir à aujourd’hui »');
 // Séances et plats du jour affiché, enregistrés pour sa date (plats aussi en mémoire pour ce jour de la semaine)
 c.add('moyenne');
@@ -895,12 +939,17 @@ assert(!c.$('#wk-prev').disabled, 'semaine précédente possible');
 c.click('#wk-prev');
 assert(c.$('#wk-prev').disabled && dayBtn('2026-09-15').disabled && !dayBtn('2026-09-16').disabled, 'pas plus de 21 jours en arrière');
 c.click('#today-btn');
-// Un repas libre par semaine, dans la semaine du jour affiché
+// Un repas plaisir par semaine, dans la semaine du jour affiché
 c.click('#wk-next');
 c.click('#week [data-value="2026-10-15"]');
 c.setSwitch('libre', true);
+assert(/Ton repas plaisir de la semaine est samedi soir\.$/.test(c.$('#hint').textContent), 'repas plaisir de la même semaine : ' + c.$('#hint').textContent);
+c.click('#lk-diner-plaisir');
 cs = c.stored();
-assert(cs.plans['2026-10-17'] && cs.plans['2026-10-17'].libre === false && /samedi est retiré/.test(c.$('#hint').textContent), 'repas libre du samedi de la même semaine retiré');
+assert(!cs.plans['2026-10-17'] && /^Repas plaisir jeudi soir\s:.*samedi soir n’est plus libre\.$/.test(c.$('#hint').textContent), 'repas plaisir du samedi de la même semaine retiré : ' + c.$('#hint').textContent);
+c.click('#week [data-value="2026-10-17"]');
+assert(c.$('#sw-lib-diner').getAttribute('aria-checked') === 'false', 'samedi : plus de repas libre');
+c.click('#week [data-value="2026-10-15"]');
 assert(!cs.plans['2026-10-10'], 'samedi d’une autre semaine touché');
 // Revenir au plan de base : la date est effacée
 c.click('[data-action="reset"]');
@@ -1018,15 +1067,21 @@ assert(/^Poisson gras et /.test(card2()), 'une autre surprise garde la protéine
 c.click('#wiz-back');
 assert(wizH() === 'Tes collations' && cardsTxt().join('|') === 'Muffins œuf-épinards', 'retour : cartes gardées');
 c.click('#wiz-next');
-// Récap : un jour par ligne ; samedi, le repas libre de la semaine type ; un seul par semaine
+// Récap : un jour par ligne ; samedi soir, le repas plaisir de la semaine type ; des repas libres au midi et au soir (5.0.0)
 c.click('#wiz-next');
 assert(wizH() === 'Ton récap' && c.$('#wiz-next').textContent === 'Valider', 'récap');
 const wrows = () => [...c.d.querySelectorAll(".wiz-t tbody tr")];
 assert.deepStrictEqual(wrows().map(r => r.querySelector('th').textContent), ['Jeu. 8', 'Ven. 9', 'Sam. 10'], 'jours du récap');
-assert(/Matin Salé/.test(wrows()[0].textContent) && /Matin Pain complet/.test(wrows()[1].textContent) && /Collation Muffins œuf-épinards/.test(wrows()[2].textContent) && /Soir Repas libre/.test(wrows()[2].textContent) && wrows()[2].classList.contains('is-lib'), 'récap : ' + wrows().map(r => r.textContent).join(' | '));
-c.click('#wl-2026-10-08');
-assert(c.$('#wl-2026-10-08').getAttribute('aria-checked') === 'true' && c.$('#wl-2026-10-10').getAttribute('aria-checked') === 'false' && /celui de samedi 10\soctobre sera retiré/.test(wizMsg()) && cw.document.activeElement === c.$('#wl-2026-10-08'), 'un seul repas libre : ' + wizMsg());
-c.click('#wl-2026-10-10');
+assert(/Matin Salé/.test(wrows()[0].textContent) && /Matin Pain complet/.test(wrows()[1].textContent) && /Collation Muffins œuf-épinards/.test(wrows()[2].textContent) && /Soir Repas libre, plaisir/.test(wrows()[2].textContent) && wrows()[2].querySelector('.wt-m.is-lib') && !wrows()[0].querySelector('.is-lib'), 'récap : ' + wrows().map(r => r.textContent).join(' | '));
+assert(c.d.querySelectorAll('.wiz-t .wt-sw').length === 6 && c.$('#wl-2026-10-10-diner').getAttribute('aria-checked') === 'true' && c.$('#wl-2026-10-10-dej').getAttribute('aria-checked') === 'false', 'un interrupteur au midi et au soir');
+c.click('#wl-2026-10-08-dej');
+assert(c.$('#wl-2026-10-08-dej').getAttribute('aria-checked') === 'true' && c.$('#wl-2026-10-10-diner').getAttribute('aria-checked') === 'true' && /^Repas libre jeudi 8\soctobre midi, avec le budget du repas prévu\s:\ston repas plaisir est déjà pris cette semaine\.$/.test(wizMsg()) && cw.document.activeElement === c.$('#wl-2026-10-08-dej') && /Midi Repas libre(?!,)/.test(wrows()[0].textContent), 'repas libre en plus : ' + wizMsg());
+c.click('#wl-2026-10-10-diner');
+assert(/^Plus de repas libre samedi 10\soctobre soir\.$/.test(wizMsg()) && !/Repas libre/.test(wrows()[2].textContent), 'repas libre retiré');
+c.click('#wl-2026-10-08-diner');
+assert(/^Repas libre jeudi 8\soctobre soir, ton repas plaisir de la semaine\.$/.test(wizMsg()) && /Soir Repas libre, plaisir/.test(wrows()[0].textContent), 'repas plaisir quand il n’y en a pas : ' + wizMsg());
+['#wl-2026-10-08-diner', '#wl-2026-10-08-dej', '#wl-2026-10-10-diner'].forEach(x => c.click(x));
+assert(/Soir Repas libre, plaisir/.test(wrows()[2].textContent) && !/Repas libre/.test(wrows()[0].textContent), 'retour au samedi');
 // Valider : plats de chaque date, planification gardée, ses courses ouvertes
 c.click('#wiz-next');
 assert(!c.$('#courses').hidden && c.$('#wiz').hidden && cw.document.activeElement === c.$('#courses-list-t') && c.$('#plan-btn').getAttribute('aria-current') === 'page', 'courses après la création');
@@ -1226,7 +1281,7 @@ assert.strictEqual(sw.$('#sem-days [data-value="1"]').getAttribute('aria-label')
 sw.click('#reglages [data-action="fermer"]');
 assert.deepStrictEqual(sw.sess(), ['Sortie longue'], 'séances de la semaine type sur la page');
 assert(!sw.stored() || !sw.stored().plans['2026-10-07'], 'jour non rempli enregistré');
-const libreOf = iso => { sw.click(`#week [data-value="${iso}"]`); return sw.$('#sw-lib').getAttribute('aria-checked') === 'true'; };
+const libreOf = iso => { sw.click(`#week [data-value="${iso}"]`); return sw.$('#sw-lib-diner').getAttribute('aria-checked') === 'true'; };
 assert(!libreOf('2026-10-10') && libreOf('2026-10-11'), 'repas libre de la semaine type : dimanche');
 // Choisir un plat n'enregistre pas les séances : elles suivent toujours la semaine type
 sw.click('#week [data-value="2026-10-07"]');
@@ -1245,10 +1300,13 @@ assert.deepStrictEqual(sw.sess(), ['Séance moyenne'], 'jour modifié : séances
 assert.deepStrictEqual(Object.keys(sw.stored().plans['2026-10-05']), ['seances'], 'séances seules enregistrées');
 sw.click('[data-action="reset"]');
 assert.strictEqual(sw.sess().length, 3, 'plan de base : semaine type');
-// Un seul repas libre par semaine : l'activer jeudi retire celui de la semaine type (dimanche)
+// Un seul repas plaisir par semaine : jeudi, un repas dehors ; le repas plaisir passé à jeudi, dimanche (semaine type) n'est plus libre
 sw.click('#week [data-value="2026-10-08"]');
 sw.setSwitch('libre', true);
-assert(/celui de dimanche est retiré/.test(sw.$('#hint').textContent) && sw.stored().plans['2026-10-11'].libre === false, 'repas libre de la semaine type retiré : ' + sw.$('#hint').textContent);
+assert(/Ton repas plaisir de la semaine est dimanche soir\.$/.test(sw.$('#hint').textContent) && libreOf('2026-10-11'), 'repas plaisir de la semaine type : ' + sw.$('#hint').textContent);
+sw.click('#week [data-value="2026-10-08"]');
+sw.click('#lk-diner-plaisir');
+assert(/dimanche soir n’est plus libre\.$/.test(sw.$('#hint').textContent) && !sw.stored().plans['2026-10-11'], 'repas plaisir de la semaine type retiré : ' + sw.$('#hint').textContent);
 assert(!libreOf('2026-10-11'), 'dimanche sans repas libre');
 // La semaine suivante, pas encore remplie : la semaine type, aussi dans une planification (ses séances gardées)
 sw.click('#today-btn');

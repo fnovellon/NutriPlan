@@ -200,7 +200,7 @@ function envPlan(days, wants, rand){
   const r = rand || Math.random, out = days.map(function(){ return {dej:{}, diner:{}}; });
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const len = Math.min(BATCH_BLOCK, days.length - b), slots = [];
-    for (let i = b; i < b + len; i++){ slots.push({i:i, slot:'dej'}); if (!(days[i] && days[i].libre)) slots.push({i:i, slot:'diner'}); }
+    for (let i = b; i < b + len; i++) LIBRE_SLOTS.forEach(function(s){ if (!libreOf(days[i], s)) slots.push({i:i, slot:s}); });
     wants.forEach(function(w){
       const used = [];
       for (let n = 0; n < envNeed(len); n++){
@@ -225,7 +225,7 @@ function envShort(chs, days, wants){
     for (let b = 0; b < chs.length; b += BATCH_BLOCK){
       const len = Math.min(BATCH_BLOCK, chs.length - b);
       let n = 0;
-      for (let i = b; i < b + len; i++) ['dej', 'diner'].forEach(function(sl){ if (!(sl === 'diner' && days[i] && days[i].libre) && chs[i][sl][w.kind] === w.id) n++; });
+      for (let i = b; i < b + len; i++) ['dej', 'diner'].forEach(function(sl){ if (!libreOf(days[i], sl) && chs[i][sl][w.kind] === w.id) n++; });
       if (n < envNeed(len)) return true;
     }
     return false;

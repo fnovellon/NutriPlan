@@ -30,10 +30,10 @@
     if (p.cards) return p.cards;
     const cnt = {pd:[], co:[], meal:[]}, add = function(k, key, o){ const x = cnt[k].find(function(y){ return y.key === key; }); if (x) x.n++; else cnt[k].push({key:key, n:1, o:o}); };
     rangeDays(p.from, p.to).forEach(function(iso){
-      const c = choicesFor(iso, fromIso(iso).getDay()), lib = planFor(iso).libre;
+      const c = choicesFor(iso, fromIso(iso).getDay()), pl = planFor(iso);
       add('pd', c.pdBase, {id:c.pdBase});
       add('co', (c.co || 'oeufs') + '|' + (c.cs || 'banane'), {id:c.co || 'oeufs', cs:c.cs || 'banane'});
-      ['dej', 'diner'].forEach(function(sl){ if (sl === 'diner' && lib) return; const m = c[sl], r = recipeOf(m); add('meal', m.prot + '|' + m.starch + '|' + (r || ''), {prot:m.prot, starch:m.starch, recette:r || null}); });
+      ['dej', 'diner'].forEach(function(sl){ if (libreOf(pl, sl)) return; const m = c[sl], r = recipeOf(m); add('meal', m.prot + '|' + m.starch + '|' + (r || ''), {prot:m.prot, starch:m.starch, recette:r || null}); });
     });
     const top = function(k){ return cnt[k].slice().sort(function(a, b){ return b.n - a.n; }).map(function(x){ return x.o; }); };
     return cleanCards({pd:top('pd'), co:top('co'), meal:top('meal')});
@@ -145,17 +145,21 @@
         (x.sub ? '<span class="wr-s">' + x.sub + '</span>' : '') + '</button></li>';
     }).join('') + '</ul>' + (found.length > max ? '<p class="calc">Et ' + (found.length - max) + ' autres' + NB + ': affine ta recherche.</p>' : '');
   };
-  /* Le récap : un jour par ligne, ses repas, et le repas libre à cocher */
-  const recapPlan = function(){ return planDays(isos().map(function(iso){ return {libre:!!wiz.libre[iso]}; }), wiz.cards); };
+  /* Le récap : un jour par ligne, ses repas, et un interrupteur « Libre » au midi et au soir (5.0.0) */
+  const recapPlan = function(){ return planDays(isos().map(function(iso){ return {libre:wiz.libre[iso] || {}}; }), wiz.cards); };
   const recapHTML = function(){
     const all = isos(), pl = recapPlan();
-    return '<p class="calc">Les plats tournent sur les jours, jamais la même protéine midi et soir si c’est possible. Touche «' + NB + 'Libre' + NB + '» pour le repas libre d’un soir (un par semaine).</p>' +
-      '<table class="wiz-t"><thead><tr><th scope="col">Jour</th><th scope="col">Repas</th><th scope="col">Libre</th></tr></thead><tbody>' + all.map(function(iso, j){
-        const d = fromIso(iso), x = pl[j], lib = !!wiz.libre[iso];
+    return '<p class="calc">Les plats tournent sur les jours, jamais la même protéine midi et soir si c’est possible. Touche l’interrupteur d’un midi ou d’un soir pour un repas libre, autant que tu veux' + NB + ': le premier de la semaine est ton repas plaisir, les autres gardent le budget du repas prévu.</p>' +
+      '<table class="wiz-t"><thead><tr><th scope="col">Jour</th><th scope="col">Repas</th></tr></thead><tbody>' + all.map(function(iso, j){
+        const d = fromIso(iso), x = pl[j], lib = wiz.libre[iso] || {};
         const li = function(l, v){ return '<span class="wt-r"><span class="wt-l">' + l + '</span> ' + v + '</span>'; };
-        return '<tr' + (lib ? ' class="is-lib"' : '') + '><th scope="row"><span class="wt-d">' + cap(d.toLocaleDateString('fr-FR', {weekday:'short'})) + '</span> ' + d.getDate() + '</th><td>' +
-          li('Matin', PD[x.pdBase].label) + li('Midi', mealTitle(x.dej)) + li('Collation', SNACK[x.co].label) + li('Soir', lib ? 'Repas libre' : mealTitle(x.diner)) + '</td>' +
-          '<td><button type="button" class="wt-sw" role="switch" id="wl-' + iso + '" aria-checked="' + lib + '" data-action="wiz-libre" data-value="' + iso + '" aria-label="Repas libre ' + dayLabel(d) + ' soir"><span class="knob" aria-hidden="true"></span></button></td></tr>';
+        const meal = function(l, slot){
+          const k = lib[slot];
+          return '<span class="wt-r wt-m' + (k ? ' is-lib' : '') + '"><span><span class="wt-l">' + l + '</span> ' + (k === 'plaisir' ? 'Repas libre, plaisir' : k ? 'Repas libre' : mealTitle(x[slot])) + '</span>' +
+            '<button type="button" class="wt-sw" role="switch" id="wl-' + iso + '-' + slot + '" aria-checked="' + !!k + '" data-action="wiz-libre" data-value="' + iso + '|' + slot + '" aria-label="Repas libre ' + dayLabel(d) + ' ' + MEAL_AT[slot] + '"><span class="knob" aria-hidden="true"></span></button></span>';
+        };
+        return '<tr><th scope="row"><span class="wt-d">' + cap(d.toLocaleDateString('fr-FR', {weekday:'short'})) + '</span> ' + d.getDate() + '</th><td>' +
+          li('Matin', PD[x.pdBase].label) + meal('Midi', 'dej') + li('Collation', SNACK[x.co].label) + meal('Soir', 'diner') + '</td></tr>';
       }).join('') + '</tbody></table>';
   };
   const SEASON_OF_TEXT = {printemps:'Les recettes du printemps', ete:'Les recettes de l’été', automne:'Les recettes de l’automne', hiver:'Les recettes de l’hiver'};
@@ -212,10 +216,10 @@
     scroller().scrollTop = 0;
     $('wiz-h').focus({preventScroll:true});
   };
-  /* Les jours de la période gardent leur repas libre (enregistré ou de la semaine type), un par semaine */
+  /* Les jours de la période gardent leurs repas libres (enregistrés ou de la semaine type) */
   const wizLibre = function(){
     const keep = {};
-    isos().forEach(function(iso){ keep[iso] = has(wiz.libre, iso) ? wiz.libre[iso] : planFor(iso).libre; });
+    isos().forEach(function(iso){ keep[iso] = cleanLibre(has(wiz.libre, iso) ? wiz.libre[iso] : planFor(iso).libre); });
     wiz.libre = keep;
   };
   /* Ajoute une carte (ou remplace celle en cours de changement) : '' si c'est fait, sinon pourquoi pas */
@@ -238,17 +242,12 @@
     if (kind === 'co') return surpriseCo(others, null, pr);
     return surpriseMeal(others, fix, pr.off, pr, null, wizOnly());
   };
-  /* Valider : le repas libre de chaque jour, enregistré tel que le récap le montre (un par semaine, aussi hors de la
-     période), puis les plats de chaque date (le dessert reste), arrondis aux 100 g sur les boîtes des recettes qui reviennent
-     (batchRound) ; la planification est gardée et ses courses s'ouvrent */
+  /* Valider : les repas libres de chaque jour, enregistrés tels que le récap les montre, puis les plats de chaque date (le
+     dessert reste), arrondis aux 100 g sur les boîtes des recettes qui reviennent (batchRound) ; la planification est gardée
+     et ses courses s'ouvrent */
   const wizSave = function(){
-    const all = isos(), pl = recapPlan(), msgs = [];
-    all.forEach(function(iso){
-      const on = !!wiz.libre[iso];
-      writeDay(iso, {libre:on});
-      if (!on) return;
-      weekOf(fromIso(iso)).forEach(function(d){ const x = isoDate(d); if (all.indexOf(x) < 0 && planFor(x).libre){ writeDay(x, {libre:false}); msgs.push(dayLabel(d)); } });
-    });
+    const all = isos(), pl = recapPlan();
+    all.forEach(function(iso){ writeDay(iso, {libre:cleanLibre(wiz.libre[iso])}); });
     const chs = all.map(function(iso, j){
       const js = fromIso(iso).getDay(), old = choicesFor(iso, js), x = pl[j], c = {pdBase:x.pdBase, co:x.co, cs:x.cs};
       ['dej', 'diner'].forEach(function(sl){ c[sl] = Object.assign({dessert:dessertOf(old[sl])}, x[sl]); });
@@ -258,7 +257,7 @@
     persist();
     const p = {from:wiz.from, to:wiz.to, cards:cleanCards(wiz.cards), checked:[]};
     addPlanif(p);
-    return {p:p, moved:msgs};
+    return {p:p};
   };
   /* Ouvre l'assistant : nouvelle planification, ou modification de p (à partir d'aujourd'hui, ses cartes) */
   const openWiz = function(p, opener){
@@ -301,8 +300,7 @@
       cur = r.p; renderCourses();
       /* Modifiée : retour à son détail ; créée : son détail à la place de l'assistant */
       if (wiz.editing) closeScreen(false); else replaceScreen('courses');
-      $('courses-msg').textContent = (wiz.editing ? 'Planification modifiée.' : 'Planification créée.') +
-        (r.moved.length ? ' Un seul repas libre par semaine' + NB + ': ' + (r.moved.length > 1 ? 'ceux de ' : 'celui de ') + r.moved.join(' et de ') + (r.moved.length > 1 ? ' sont retirés.' : ' est retiré.') : '') + ' Voici tes courses.';
+      $('courses-msg').textContent = (wiz.editing ? 'Planification modifiée.' : 'Planification créée.') + ' Voici tes courses.';
       resetPlanner();
       const h = $('courses-list-t');
       if (h.scrollIntoView) h.scrollIntoView({block:'start'});
@@ -396,19 +394,19 @@
       c.cs = q[1];
       wizKeep(b);
     },
-    /* Repas libre d'un soir : un par semaine (lundi → dimanche) dans la période */
+    /* Repas libre d'un midi ou d'un soir (5.0.0), autant qu'on veut : le repas plaisir s'il n'y en a pas encore cette semaine
+       (lundi → dimanche, dans le récap ou hors de la période), sinon un repas dehors (le budget du repas prévu) */
     'wiz-libre': function(b, v){
-      if (stepKind() !== 'recap' || !has(wiz.libre, v)) return;
-      const on = !wiz.libre[v], moved = [];
-      if (on) weekOf(fromIso(v)).forEach(function(d){
-        const x = isoDate(d);
-        if (x === v) return;
-        if (wiz.libre[x]){ wiz.libre[x] = false; moved.push(dayLabel(d)); }
-        else if (!has(wiz.libre, x) && planFor(x).libre) moved.push(dayLabel(d));
+      const q = String(v).split('|'), iso = q[0], slot = q[1];
+      if (stepKind() !== 'recap' || !has(wiz.libre, iso) || LIBRE_SLOTS.indexOf(slot) < 0) return;
+      const l = wiz.libre[iso], at = dayLabel(fromIso(iso)) + ' ' + MEAL_AT[slot];
+      if (l[slot]){ delete l[slot]; $('wiz-msg').textContent = 'Plus de repas libre ' + at + '.'; wizKeep(b); return; }
+      const plaisir = weekOf(fromIso(iso)).some(function(d){
+        const x = isoDate(d), o = has(wiz.libre, x) ? wiz.libre[x] : cleanLibre(planFor(x).libre);
+        return LIBRE_SLOTS.some(function(s){ return o[s] === 'plaisir'; });
       });
-      wiz.libre[v] = on;
-      $('wiz-msg').textContent = (on ? 'Repas libre ' + dayLabel(fromIso(v)) + ' soir.' : 'Plus de repas libre ' + dayLabel(fromIso(v)) + '.') +
-        (moved.length ? ' Un seul par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' : 'celui de ') + moved.join(' et de ') + (moved.length > 1 ? ' seront retirés.' : ' sera retiré.') : '');
+      l[slot] = plaisir ? 'dehors' : 'plaisir';
+      $('wiz-msg').textContent = 'Repas libre ' + at + (plaisir ? ', avec le budget du repas prévu' + NB + ': ton repas plaisir est déjà pris cette semaine.' : ', ton repas plaisir de la semaine.');
       wizKeep(b);
     }
   });

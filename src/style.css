@@ -526,12 +526,14 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .wiz-t th,.wiz-t td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;}
 .wiz-t thead th{font-family:var(--sans);font-weight:600;font-size:13.5px;color:var(--muted);}
 .wiz-t tbody th{width:3.4rem;font-family:var(--sans);font-weight:700;white-space:nowrap;}
-.wiz-t td:last-child,.wiz-t thead th:last-child{width:50px;padding-right:0;text-align:right;}
+.wiz-t td{padding-right:0;}
 .wt-d{display:block;font-weight:600;font-size:13.5px;color:var(--muted);}
 .wt-r{display:block;}
 .wt-l{font-family:var(--sans);font-weight:600;font-size:13px;color:var(--muted);}
-.is-lib .wt-r:last-child{color:var(--beet);}
-.wt-sw{display:inline-flex;padding:4px 0;border:0;background:none;}
+.wt-m{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0;}
+.wt-m>span{min-width:0;}
+.wt-m.is-lib>span{color:var(--beet);}
+.wt-sw{display:inline-flex;flex:none;padding:4px 0;border:0;background:none;}
 .wt-sw[aria-checked="true"] .knob{background:var(--beet);}
 .wt-sw[aria-checked="true"] .knob::after{transform:translateX(18px);}
 .wiz .acc-nav{position:sticky;bottom:0;margin:22px -18px 0;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line);}

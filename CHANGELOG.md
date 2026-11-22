@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 5.0.0, 22 novembre 2026
+
+- Autant de repas libres que tu veux, le midi comme le soir : un déjeuner dehors, un midi et un soir le même jour, tout un week-end. L'interrupteur « Repas libre » est maintenant aussi dans la carte du déjeuner.
+- Deux sortes de repas libre. Un **repas dehors** garde le budget du repas prévu : ta sèche ne change pas. Ton **repas plaisir**, un par semaine (le samedi soir par défaut), a environ 300 kcal de plus, comme avant.
+- Le premier repas libre de la semaine est ton repas plaisir ; les suivants sont des repas dehors. « Repas plaisir » sur un autre repas y déplace le bonus, et l'appli te dit ce qui change.
+- En planifiant, le récap a un interrupteur pour chaque midi et chaque soir.
+- Les autres repas de la journée ne bougent pas. Tes repas libres déjà prévus sont repris tels quels.
+
 ## 4.3.0, 21 novembre 2026
 
 - 16 nouvelles recettes (176 en tout) : 8 d'automne, avec de la butternut, du potimarron, des champignons, du céleri, des choux de Bruxelles et des châtaignes, et 8 plats « à la cuillère », dans leur bouillon mais avec des morceaux : ramen au poulet, pho au bœuf, curry thaï aux crevettes, minestrone au tofu, potée, chorba, bouillon miso, marmite de poisson.

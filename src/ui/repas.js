@@ -12,9 +12,10 @@
     };
     const day = DAYS.find(function(x){ return x.js === sel; }).long;
     return meal('pd', 'Petit-déjeuner', rows(['pd'], null)) +
-      meal('dej', 'Déjeuner', rows(['prot', 'starch', 'dessert'], 'dej')) +
+      meal('dej', 'Déjeuner', rows(['prot', 'starch', 'dessert'], 'dej'),
+        libreOf(plan, 'dej') ? (dayDiff(selDate) === 0 ? 'Ce midi' : 'Ce midi-là') + ', c’est ton repas libre' + NB + ': ce déjeuner est gardé pour les prochains ' + day + 's.' : null) +
       meal('diner', 'Dîner', rows(['prot', 'starch', 'dessert'], 'diner'),
-        plan.libre ? (dayDiff(selDate) === 0 ? 'Ce soir' : 'Ce soir-là') + ', c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
+        libreOf(plan, 'diner') ? (dayDiff(selDate) === 0 ? 'Ce soir' : 'Ce soir-là') + ', c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
   };
   const renderRepas = function(){
     $('repas-h').textContent = dayDiff(selDate) === 0 ? 'Tes repas du jour' : 'Tes repas, ' + dayRel(selDate);

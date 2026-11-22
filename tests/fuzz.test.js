@@ -39,7 +39,15 @@ function randProfile(){
 function randPlan(js, libre){
   const s = [];
   for (let i = R.int(0, 5); i > 0; i--) s.push({ taille: R.pick(['petite', 'moyenne', 'longue']), moment: R.pick(['matin', 'midi', 'soir']), duree: R.pick([1.5, 2, 2.5, 3]) });
-  return A.cleanPlan({ seances: s, libre: libre === undefined ? R.chance(.15) : libre }, js);
+  return A.cleanPlan({ seances: s, libre: libre === undefined ? randLibre() : libre }, js);
+}
+// Repas libres (5.0.0) : souvent aucun ; sinon le midi, le soir ou les deux, dehors ou plaisir ; parfois l'ancien format (vrai)
+function randLibre(){
+  if (!R.chance(.25)) return R.chance(.5) ? {} : false;
+  if (R.chance(.15)) return true;
+  const l = {};
+  ['dej', 'diner'].forEach(sl => { if (R.chance(.6)) l[sl] = R.pick(['dehors', 'plaisir']); });
+  return l;
 }
 // Recette : souvent celle du couple (choisie), parfois une qui ne va pas (ignorée)
 const slot = () => {
@@ -258,15 +266,15 @@ for (let i = 0; i < N; i++){
   const h = handEnergy(pr, plan);
   C.ok(near(r.energy.rest, h.rest, 1e-6) && near(r.energy.cost, h.cost, 1e-6) && near(r.energy.deficit, h.deficit, 1e-6) && r.energy.target === h.target && near(r.energy.kgWeek, h.kgWeek, 1e-9) && near(r.energy.recharge, h.recharge, 1e-9),
     'dépense ≠ calcul à la main', () => JSON.stringify([r.energy, h]) + ' ' + input);
-  if (!plan.libre) C.ok(near(r.ecart, r.tot.kcal - T, 1e-6), 'écart ≠ apport − objectif', cas);
+  if (!A.hasLibre(plan)) C.ok(near(r.ecart, r.tot.kcal - T, 1e-6), 'écart ≠ apport − objectif', cas);
 
   // Objectif : ±3 %, au-dessus seulement si un féculent est au plancher (aussi le jour du repas libre : journée normale)
   C.ok(r.ecart >= -0.03 * T, 'apport plus de 3 % sous l’objectif', () => Math.round(r.ecart) + ' / ' + T + ' ' + input);
-  if (!plan.libre) C.ok(r.ecart <= 0.03 * T || atFloor(r, ch), 'apport au-dessus de l’objectif sans féculent au plancher', () => Math.round(r.ecart) + ' / ' + T + ' ' + input);
+  if (!A.hasLibre(plan)) C.ok(r.ecart <= 0.03 * T || atFloor(r, ch), 'apport au-dessus de l’objectif sans féculent au plancher', () => Math.round(r.ecart) + ' / ' + T + ' ' + input);
 
   // Protéines : dans la fourchette ; en dessous seulement si tout est au maximum (portions, skyr du soir), et la page le dit
   const soir = sec(r, 'soir');
-  if (!plan.libre){
+  if (!A.hasLibre(plan)){
     const P = r.tot.p;
     C.ok(P >= r.prot.low - 0.5 || (r.prot.factor >= A.PF_MAX - 0.02 && soir && soir.items[0].qty === A.sc(300, 10, k) + NB + 'g'),
       'protéines sous la fourchette sans être au maximum', () => Math.round(P) + ' < ' + Math.round(r.prot.low) + ' pf ' + r.prot.factor.toFixed(2) + ' ' + input);
@@ -305,7 +313,7 @@ for (let i = 0; i < N; i++){
 
   // Lipides : plancher toujours ; plafond (+ 8,4 g par chocolat) avec une marge cuisine d'au plus 150 kcal, dès 47 kg
   // (une marge de 250 kcal peut le dépasser d'environ 15 %), sauf si les féculents sont déjà au plancher (la page le dit)
-  if (!plan.libre){
+  if (!A.hasLibre(plan)){
     C.ok(r.tot.f >= A.FAT_MIN * k - 0.5, 'lipides sous le plancher', () => r.tot.f.toFixed(1) + ' < ' + (A.FAT_MIN * k).toFixed(1) + ' ' + input);
     const choc = ['dej', 'diner'].filter(id => ch[id].dessert === 'chocolat').length;
     const huile = items.find(x => x.key === 'gras');
@@ -328,7 +336,7 @@ for (let i = 0; i < N; i++){
   const encas = items.filter(x => x.key === 'encas');
   C.ok(encas.length <= 1, 'plusieurs encas', cas);
   // Sans encas, féculents au plafond : il ne reste pas 30 kcal ou plus à placer (aux arrondis des féculents près)
-  if (!encas.length && !plan.libre && atCap(r, ch)){
+  if (!encas.length && !A.hasLibre(plan) && atCap(r, ch)){
     const tol = ['dej', 'diner'].reduce((a, id) => { const S = A.STARCH[ch[id].starch]; return a + S.f[0] * S.step / 200; }, 0);
     C.ok(r.ecart > -30 - tol - 1e-6, 'reste de 30 kcal ou plus sans encas', () => Math.round(r.ecart) + ' ' + input);
   }
@@ -374,7 +382,7 @@ for (let i = 0; i < N; i++){
     // Œufs de la journée : 4 au plus à 72 kg (petit-déjeuner aux œufs ou « Œufs + jambon », jamais avec les œufs durs de la
     // collation), un de plus avec le mug cake, hors repas libre
     const eggs = items.filter(x => x.buy && x.buy.id === 'oeuf').reduce((t, x) => t + x.buy.n, 0);
-    if (!plan.libre && ch.dej.prot !== 'oeufs' && ch.diner.prot !== 'oeufs') C.ok(eggs <= A.pieces(2, k) + 2 + (kind === 'mugcake' ? A.pieces(1, k) : 0), 'trop d’œufs dans la journée', () => eggs + ' ' + input);
+    if (!A.hasLibre(plan) && ch.dej.prot !== 'oeufs' && ch.diner.prot !== 'oeufs') C.ok(eggs <= A.pieces(2, k) + 2 + (kind === 'mugcake' ? A.pieces(1, k) : 0), 'trop d’œufs dans la journée', () => eggs + ' ' + input);
   }
   // Desserts : une ligne en fin de repas si choisi ; après une séance à midi, compote seulement sans dessert au déjeuner
   ['dej', 'diner'].forEach(id => {
@@ -384,19 +392,27 @@ for (let i = 0; i < N; i++){
     if (des.length) C.ok(s.items[s.items.length - 1] === des[0] || s.items[s.items.length - 1].key === 'gras', 'dessert pas en fin de repas', () => qtys(s));
   });
   const comp = sec(r, 'dej').items.filter(x => x.key === 'comp').length;
-  C.ok(comp === (plan.seances.some(x => x.moment === 'midi') && ch.dej.dessert === 'aucun' ? 1 : 0), 'compote du déjeuner après une séance à midi', () => qtys(sec(r, 'dej')));
+  if (!A.libreOf(plan, 'dej')) C.ok(comp === (plan.seances.some(x => x.moment === 'midi') && ch.dej.dessert === 'aucun' ? 1 : 0), 'compote du déjeuner après une séance à midi', () => qtys(sec(r, 'dej')));
 
-  // Repas libre : la journée normale, dîner (et skyr du soir) remplacés par un budget = ce qu'ils valaient + 300 × k
-  if (plan.libre){
-    const n = A.buildDay(Object.assign({}, plan, { libre: false }), ch, prof);
-    const d = sec(r, 'diner');
-    C.ok(d.libre && d.items.length === 1 && !soir, 'repas libre : dîner remplacé, pas de skyr du soir', () => ids.join(' '));
-    const was = sum(n.secs.filter(s => s.id === 'diner' || s.id === 'soir').flatMap(s => s.items)).kcal;
-    C.ok(r.libre === Math.round((was + 300 * k) / 50) * 50 && r.libre > 0, 'budget du repas libre', () => r.libre + ' au lieu de ' + Math.round((was + 300 * k) / 50) * 50 + ' ' + input);
+  // Repas libres (5.0.0) : la journée normale, chaque repas libre (le dîner avec son skyr du soir) remplacé par un budget =
+  // ce qu'il valait (repas dehors), + 300 × k (repas plaisir), arrondi à 50 ; les autres repas sont ceux du jour normal
+  const lib = A.cleanLibre(plan.libre), libs = Object.keys(lib);
+  if (libs.length){
+    const n = A.buildDay(Object.assign({}, plan, { libre: {} }), ch, prof);
+    const gone = libs.concat(lib.diner ? ['soir'] : []);
+    let all = 0, was = 0;
+    libs.forEach(sl => {
+      const d = sec(r, sl), w = sum(n.secs.filter(s => s.id === sl || (sl === 'diner' && s.id === 'soir')).flatMap(s => s.items)).kcal;
+      C.ok(d.libre === lib[sl] && d.items.length === 1 && d.items[0].key === 'lib' && (sl !== 'diner' || !soir), 'repas libre : repas remplacé, pas de skyr du soir', () => sl + ' ' + ids.join(' '));
+      const want = Math.round((w + (lib[sl] === 'plaisir' ? 300 * k : 0)) / 50) * 50;
+      C.ok(r.libres[sl] === want && want > 0, 'budget du repas libre', () => sl + ' ' + r.libres[sl] + ' au lieu de ' + want + ' ' + input);
+      all += want; was += w;
+    });
+    C.ok(r.libre === all, 'total des repas libres', cas);
     C.ok(near(r.ecart, n.ecart, 1e-9), 'écart du jour libre ≠ jour normal', () => r.ecart + ' ' + n.ecart + ' ' + input);
     C.ok(near(r.tot.kcal, n.tot.kcal - was + r.libre, 1e-6), 'total du jour libre', cas);
     C.ok(r.prot.factor === n.prot.factor, 'portions du jour libre ≠ jour normal', cas);
-    n.secs.filter(s => s.id !== 'diner' && s.id !== 'soir').forEach(s => {
+    n.secs.filter(s => gone.indexOf(s.id) < 0).forEach(s => {
       const same = r.secs.find(x => x.id === s.id);
       C.ok(same && qtys(same) === qtys(s), 'jour libre : autre repas différent du jour normal', () => s.id + ' : ' + (same ? qtys(same) : '—') + ' // ' + qtys(s) + ' ' + input);
     });
@@ -476,7 +492,7 @@ for (let i = 0; i < N / 3; i++){
       C.ok(keep(s.items) === keep(r0.secs[at + 1 + j].items), 'imprévu : autre chose que les féculents a bougé', () => s.id + ' ' + input);
     });
     const lo = A.STARCH_MIN * r.scale, step = id => { const S = A.STARCH[ch[id].starch]; return S.f[0] * S.step / 100; };
-    const later = ['dej', 'diner'].filter(id => r.secs.findIndex(s => s.id === id) > at && !(plan.libre && id === 'diner'));
+    const later = ['dej', 'diner'].filter(id => r.secs.findIndex(s => s.id === id) > at && !A.libreOf(plan, id));
     later.forEach(id => {
       const v = starchOf(r, id).m.kcal, hi = Math.max(lo, A.starchCap(ch[id].starch, r.scale));
       C.ok(v >= Math.min(lo, starchOf(r0, id).m.kcal) - step(id) - 0.01 && v <= Math.max(hi, starchOf(r0, id).m.kcal) + step(id) + 0.01, 'imprévu : féculent hors de ses bornes', () => id + ' ' + Math.round(v) + ' ' + input);
@@ -489,10 +505,10 @@ for (let i = 0; i < N / 3; i++){
     const slack = later.reduce((a, id) => a + step(id), 0) + 10 + (enc ? 30 : 0);
     if (Math.abs(x.delta) <= room - slack) C.ok(Math.abs(x.over) <= slack, 'imprévu pas repris malgré la place', () => Math.round(x.delta) + ' / ' + Math.round(room) + ' → ' + Math.round(x.over) + ' ' + input);
     else C.ok(Math.abs(x.delta - x.over) <= room + slack && (Math.abs(x.over) <= slack || Math.sign(x.over) === Math.sign(x.delta)), 'imprévu : plus repris que la place', () => Math.round(x.delta) + ' / ' + Math.round(room) + ' → ' + Math.round(x.over) + ' ' + input);
-    // Repas libre : son budget ne bouge pas ; un imprévu à sa place (le dîner) est ignoré
-    if (plan.libre){
+    // Repas libres : leur budget ne bouge pas ; un imprévu à leur place est ignoré
+    if (A.hasLibre(plan)){
       C.ok(r.libre === r0.libre, 'imprévu : budget du repas libre changé', () => input);
-      C.ok(A.buildDay(Object.assign({}, plan, { imprevu: { slot: 'diner', kcal: 500, mode: 'plus' } }), ch, prof).imprevu === null, 'imprévu au repas libre', () => input);
+      Object.keys(A.cleanLibre(plan.libre)).forEach(sl => C.ok(A.buildDay(Object.assign({}, plan, { imprevu: { slot: sl, kcal: 500, mode: 'plus' } }), ch, prof).imprevu === null, 'imprévu au repas libre', () => sl + ' ' + input));
     }
   }
 }
@@ -529,7 +545,7 @@ for (let i = 0; i < N * 2; i++){
   const show = () => { try { return JSON.stringify(x); } catch (e){ return String(x); } };
   try {
     const p = A.cleanPlan(x, js);
-    C.ok(Array.isArray(p.seances) && typeof p.libre === 'boolean' && p.seances.length <= 4, 'cleanPlan : forme', show);
+    C.ok(Array.isArray(p.seances) && (p.libre && typeof p.libre === 'object' && Object.keys(p.libre).every(sl => ['dej', 'diner'].includes(sl) && ['dehors', 'plaisir'].includes(p.libre[sl]))) && p.seances.length <= 4, 'cleanPlan : forme', show);
     C.ok(p.seances.filter(s => s.taille === 'longue').length <= 1, 'cleanPlan : deux sorties longues', show);
     p.seances.forEach(s => {
       C.ok(has(A.SIZES, s.taille) && has(A.MOMENT_RANK, s.moment), 'cleanPlan : séance invalide', show);
@@ -545,7 +561,7 @@ for (let i = 0; i < N * 2; i++){
     C.ok(Object.keys(pr).every(key => has(A.PROFILE_DEFAULT, key)), 'profil : champ inconnu gardé', show);
     const sw = pr.semaine;
     C.ok(sw && Number.isInteger(sw.libre) && sw.libre >= 0 && sw.libre <= 6 && Object.entries(sw.jours).every(([js, l]) => /^[0-6]$/.test(js) && Array.isArray(l) && l.length >= 1 && l.length <= 4 && l.every(x => has(A.SIZES, x.taille) && has(A.MOMENT_RANK, x.moment)) && l.filter(x => x.taille === 'longue').length <= 1), 'profil : semaine type invalide', show);
-    for (let js = 0; js < 7; js++){ const e = A.cleanPlan(R.chance(.5) ? x : undefined, js, sw); C.ok(Array.isArray(e.seances) && e.seances.length <= 4 && typeof e.libre === 'boolean', 'cleanPlan avec semaine type : forme', show); }
+    for (let js = 0; js < 7; js++){ const e = A.cleanPlan(R.chance(.5) ? x : undefined, js, sw); C.ok(Array.isArray(e.seances) && e.seances.length <= 4 && (e.libre && typeof e.libre === 'object' && Object.keys(e.libre).every(sl => ['dej', 'diner'].includes(sl) && ['dehors', 'plaisir'].includes(e.libre[sl]))), 'cleanPlan avec semaine type : forme', show); }
     C.ok(Array.isArray(pr.off) && pr.off.every(o => ALL_OFF.includes(o)) && ['pd', 'prot', 'starch'].every(k => A.allowed(k, pr.off).length > 0), 'profil : aliments retirés invalides', show);
     const r = A.buildDay(p, A.DEFAULT_CHOICES[js], x);
     C.ok(fin(r.tot.kcal) && fin(r.tot.p), 'buildDay sur profil abîmé : total invalide', show);
@@ -565,14 +581,14 @@ for (let i = 0; i < N / 3; i++){
   for (let js = 0; js < 7; js++) if (R.chance(.5)) jours[js] = randPlan(js, false).seances;
   const sem = A.cleanWeek({ jours, libre: R.int(0, 6) }), js = R.int(0, 6), show = () => JSON.stringify([sem, js]);
   const base = A.emptyPlan(js, sem);
-  C.ok(JSON.stringify(base.seances) === JSON.stringify(sem.jours[js] || []) && base.libre === (js === sem.libre), 'jour par défaut ≠ semaine type', show);
+  C.ok(JSON.stringify(base.seances) === JSON.stringify(sem.jours[js] || []) && JSON.stringify(base.libre) === (js === sem.libre ? '{"diner":"plaisir"}' : '{}'), 'jour par défaut ≠ semaine type', show);
   const rec = {}, seances = randPlan(js, false).seances;
   if (R.chance(.5)) rec.seances = seances;
-  if (R.chance(.5)) rec.libre = R.chance(.5);
+  if (R.chance(.5)) rec.libre = randLibre();
   if (R.chance(.5)) rec.ch = randChoices();
   const p = A.cleanPlan(rec, js, sem), q = () => show() + ' ' + JSON.stringify(rec);
   C.ok(JSON.stringify(p.seances) === JSON.stringify('seances' in rec ? A.cleanSeances(rec.seances) : base.seances), 'séances : enregistrées ou semaine type', q);
-  C.ok(p.libre === ('libre' in rec ? rec.libre : base.libre), 'repas libre : enregistré ou semaine type', q);
+  C.ok(JSON.stringify(p.libre) === JSON.stringify('libre' in rec ? A.cleanLibre(rec.libre) : base.libre), 'repas libre : enregistré ou semaine type', q);
   C.ok(JSON.stringify(A.cleanWeek(JSON.parse(JSON.stringify(sem)))) === JSON.stringify(sem), 'semaine type relue à l’identique', show);
 }
 
@@ -915,9 +931,9 @@ strs.forEach(s => {
         cards.meal.push(m);
       } else { const id = R.pick(recIds), r = A.RECIPES[id]; cards.meal.push(R.chance(.5) ? { prot: r.p, starch: r.s, recette: id } : { prot: r.p, starch: r.s, recette: null }); }
     }
-    const cc = A.cleanCards(cards), n = R.int(1, 31), days = Array.from({ length: n }, () => ({ libre: R.chance(.12) }));
+    const cc = A.cleanCards(cards), n = R.int(1, 31), days = Array.from({ length: n }, () => ({ libre: R.chance(.12) ? randLibre() : R.chance(.5) }));
     const pl = A.planDays(days, cards), key = m => m.prot + '|' + m.starch + '|' + (m.recette || ''), keys = cc.meal.map(key);
-    const where = () => JSON.stringify(cc.meal.map(key)) + ' ' + JSON.stringify(days.map(d => d.libre ? 1 : 0));
+    const where = () => JSON.stringify(cc.meal.map(key)) + ' ' + JSON.stringify(days.map(d => d.libre));
     C.ok(pl.length === n, 'planDays : un jour manquant', where);
     pl.forEach((x, k) => {
       C.ok(x.pdBase === cc.pd[k % cc.pd.length].id && x.co === cc.co[k % cc.co.length].id && x.cs === cc.co[k % cc.co.length].cs, 'planDays : petit-déjeuner ou collation pas en alternance', where);
@@ -925,12 +941,12 @@ strs.forEach(s => {
     });
     for (let b = 0; b < n; b += A.BATCH_BLOCK){
       const cnt = {};
-      pl.slice(b, b + A.BATCH_BLOCK).forEach((x, k) => [x.dej].concat(days[b + k].libre ? [] : [x.diner]).forEach(m => { cnt[key(m)] = (cnt[key(m)] || 0) + 1; }));
-      const v = Object.values(cnt), slots = pl.slice(b, b + A.BATCH_BLOCK).length * 2 - days.slice(b, b + A.BATCH_BLOCK).filter(d => d.libre).length;
-      C.ok(Math.max(...v) - Math.min(...v) <= 1 && v.length === Math.min(cc.meal.length, slots), 'planDays : cartes pas autant de fois chacune', () => JSON.stringify(cnt) + ' ' + where());
+      pl.slice(b, b + A.BATCH_BLOCK).forEach((x, k) => ['dej', 'diner'].filter(sl => !A.libreOf(days[b + k], sl)).forEach(sl => { cnt[key(x[sl])] = (cnt[key(x[sl])] || 0) + 1; }));
+      const v = Object.values(cnt), slots = pl.slice(b, b + A.BATCH_BLOCK).reduce((a, x, k) => a + ['dej', 'diner'].filter(sl => !A.libreOf(days[b + k], sl)).length, 0);
+      if (slots) C.ok(Math.max(...v) - Math.min(...v) <= 1 && v.length === Math.min(cc.meal.length, slots), 'planDays : cartes pas autant de fois chacune', () => JSON.stringify(cnt) + ' ' + where());
     }
     const prots = new Set(cc.meal.map(m => m.prot));
-    if (prots.size === cc.meal.length && prots.size >= 2 && cc.meal.every(m => !m.recette || A.RECIPES[m.recette].gel)) pl.forEach((x, k) => C.ok(days[k].libre || x.dej.prot !== x.diner.prot, 'planDays : même protéine midi et soir', where));
+    if (prots.size === cc.meal.length && prots.size >= 2 && cc.meal.every(m => !m.recette || A.RECIPES[m.recette].gel)) pl.forEach((x, k) => C.ok(x.dej.prot !== x.diner.prot, 'planDays : même protéine midi et soir (repas libres compris)', where));
   }
 }
 

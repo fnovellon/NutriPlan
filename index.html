@@ -547,12 +547,14 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .wiz-t th,.wiz-t td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;}
 .wiz-t thead th{font-family:var(--sans);font-weight:600;font-size:13.5px;color:var(--muted);}
 .wiz-t tbody th{width:3.4rem;font-family:var(--sans);font-weight:700;white-space:nowrap;}
-.wiz-t td:last-child,.wiz-t thead th:last-child{width:50px;padding-right:0;text-align:right;}
+.wiz-t td{padding-right:0;}
 .wt-d{display:block;font-weight:600;font-size:13.5px;color:var(--muted);}
 .wt-r{display:block;}
 .wt-l{font-family:var(--sans);font-weight:600;font-size:13px;color:var(--muted);}
-.is-lib .wt-r:last-child{color:var(--beet);}
-.wt-sw{display:inline-flex;padding:4px 0;border:0;background:none;}
+.wt-m{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0;}
+.wt-m>span{min-width:0;}
+.wt-m.is-lib>span{color:var(--beet);}
+.wt-sw{display:inline-flex;flex:none;padding:4px 0;border:0;background:none;}
 .wt-sw[aria-checked="true"] .knob{background:var(--beet);}
 .wt-sw[aria-checked="true"] .knob::after{transform:translateX(18px);}
 .wiz .acc-nav{position:sticky;bottom:0;margin:22px -18px 0;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line);}
@@ -673,7 +675,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 
   <section data-step="4" id="acs" aria-labelledby="acc-h4" hidden>
     <h1 id="acc-h4" tabindex="-1">Ta semaine</h1>
-    <p class="acc-p">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles rempliront toutes seules tes journées, que tu pourras toujours changer un jour donné. Facultatif&nbsp;: sans séance, chaque jour part au repos.</p>
+    <p class="acc-p">Tes séances habituelles, jour par jour, et le soir de ton repas plaisir. Elles rempliront toutes seules tes journées, que tu pourras toujours changer un jour donné. Facultatif&nbsp;: sans séance, chaque jour part au repos.</p>
     <div class="week sem-days" id="acs-days" role="group" aria-label="Jour de ta semaine type"></div>
     <h2 class="rf-l sem-h" id="acs-h"></h2>
     <div class="sess" id="acs-sess"></div>
@@ -682,7 +684,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <button type="button" data-action="acs-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
       <button type="button" data-action="acs-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
     </div>
-    <p class="rf-l" id="acs-lib-l">Repas libre, le soir</p>
+    <p class="rf-l" id="acs-lib-l">Repas plaisir, le soir</p>
     <div class="opts-list" id="acs-lib" role="group" aria-labelledby="acs-lib-l"></div>
     <p class="calc">Tu pourras tout changer dans les réglages, avec la roue dentée en haut de la page.</p>
   </section>
@@ -818,7 +820,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
     <div class="tab-pan" role="tabpanel" id="pan-sport" aria-labelledby="tab-sport" tabindex="-1" hidden>
       <section class="needs" id="semaine" aria-labelledby="sem-t">
         <h2 class="needs-t" id="sem-t">Ta semaine type</h2>
-        <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas libre. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
+        <p class="needs-s">Tes séances habituelles, jour par jour, et le soir de ton repas plaisir. Elles remplissent toutes seules les jours que tu n’as pas modifiés&nbsp;: ta journée, «&nbsp;Planifier&nbsp;», tes courses et «&nbsp;Ta semaine&nbsp;» en tiennent compte. Un jour modifié à la main garde ce que tu y as mis.</p>
         <div class="needs-body">
           <div class="week sem-days" id="sem-days" role="group" aria-label="Jour de la semaine type"></div>
           <h3 class="rf-l sem-h" id="sem-h"></h3>
@@ -828,7 +830,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
             <button type="button" data-action="sem-add" data-value="moyenne"><span class="a-t">+&nbsp;Moyenne</span><span class="a-s">sortie ≈ 7&nbsp;km</span></button>
             <button type="button" data-action="sem-add" data-value="longue"><span class="a-t">+&nbsp;Longue</span><span class="a-s">1h30 et plus</span></button>
           </div>
-          <p class="rf-l" id="sem-lib-l">Repas libre, le soir</p>
+          <p class="rf-l" id="sem-lib-l">Repas plaisir, le soir</p>
           <div class="opts-list" id="sem-lib" role="group" aria-labelledby="sem-lib-l"></div>
         </div>
       </section>
@@ -940,7 +942,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li><strong>Convertir</strong>, dans le menu en haut&nbsp;: combien d’un autre aliment pour remplacer le tien. Les féculents et les matières grasses à calories égales (40&nbsp;g de riz cru, c’est 180&nbsp;g de pommes de terre), les protéines à protéines égales, avec les calories de chacune. Saisis en grammes crus, cuits ou en pièces. Dans ta journée, le bouton ⇄ d’une ligne du déjeuner ou du dîner ouvre l’outil avec sa quantité.</li>
       <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 176 recettes de l’appli, deux à quatre par protéine et féculent, dont des plats d’automne et des plats à la cuillère (ramen, pho, minestrone, potée…), à filtrer par protéine, féculent, celles qui se gardent, les rapides ou celles de saison. La petite feuille après un nom&nbsp;: la recette est de saison (celles de toute l’année n’en ont pas, elles le sont toujours). Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus. Deux autres onglets, «&nbsp;Petits-déjeuners&nbsp;» et «&nbsp;Collations&nbsp;» (avec les boules d’énergie)&nbsp;: leur préparation, tes quantités pour ce matin, demain matin, aujourd’hui ou demain, et «&nbsp;Prendre pour…&nbsp;». Un petit-déjeuner ou une collation favori revient deux fois plus souvent dans «&nbsp;Surprends-moi&nbsp;» de tes planifications, un «&nbsp;à éviter&nbsp;» n’y revient plus.</li>
       <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
-      <li>Un repas libre par semaine remplace le dîner, avec un budget un peu plus large&nbsp;: il s’active dans la carte du dîner.</li>
+      <li>Tu manges dehors&nbsp;? Active «&nbsp;Repas libre&nbsp;» dans la carte du déjeuner ou du dîner, autant de fois que tu veux. Un <strong>repas dehors</strong> garde le budget du repas prévu&nbsp;: ta sèche ne change pas. Ton <strong>repas plaisir</strong>, un par semaine (le samedi soir par défaut), a environ 300&nbsp;kcal de plus. Les autres repas de la journée ne bougent pas.</li>
       <li>Un repas ne s’est pas passé comme prévu&nbsp;? «&nbsp;Un imprévu&nbsp;?&nbsp;», en bas de sa carte&nbsp;: à la place du repas ou en plus, une estimation en kcal. La suite de ta journée s’ajuste (les féculents d’après baissent)&nbsp;; ce qui ne peut pas être repris reste, sans rien rattraper le lendemain.</li>
     </ul>
     <h2>Manger équilibré sur la semaine</h2>
@@ -961,9 +963,9 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
     <h2>Prévoir plusieurs jours</h2>
     <ul>
       <li>Le calendrier, en haut de ta journée, montre la semaine&nbsp;: touche un jour pour voir ou changer ses séances et ses plats. Un point marque les jours déjà prévus.</li>
-      <li><strong>Planifier</strong>, dans le menu en haut&nbsp;: ta planification en cours et la suivante en grand, puis les autres. «&nbsp;Nouvelle planification&nbsp;», en quelques étapes&nbsp;: les jours (31 au plus), puis 1 à 3 petits-déjeuners, 1 à 3 collations et 1 à 5 plats, choisis dans la recherche (recettes ou plats simples) ou avec «&nbsp;Surprends-moi&nbsp;» (pour un plat, tu peux aussi choisir la protéine ou le féculent, l’autre est tiré). Chaque choix est une carte&nbsp;: change-la, passe-la en plat simple ou en recette, retire-la. Pour les plats, «&nbsp;Seulement de saison&nbsp;» ne te propose que des recettes de saison et de toute l’année. Le récap montre chaque jour et son repas libre&nbsp;; valide, et tes courses s’ouvrent.</li>
+      <li><strong>Planifier</strong>, dans le menu en haut&nbsp;: ta planification en cours et la suivante en grand, puis les autres. «&nbsp;Nouvelle planification&nbsp;», en quelques étapes&nbsp;: les jours (31 au plus), puis 1 à 3 petits-déjeuners, 1 à 3 collations et 1 à 5 plats, choisis dans la recherche (recettes ou plats simples) ou avec «&nbsp;Surprends-moi&nbsp;» (pour un plat, tu peux aussi choisir la protéine ou le féculent, l’autre est tiré). Chaque choix est une carte&nbsp;: change-la, passe-la en plat simple ou en recette, retire-la. Pour les plats, «&nbsp;Seulement de saison&nbsp;» ne te propose que des recettes de saison et de toute l’année. Le récap montre chaque jour, avec un interrupteur pour rendre libre un midi ou un soir&nbsp;; valide, et tes courses s’ouvrent.</li>
       <li>Dans le récap d’une planification, «&nbsp;Changer le midi&nbsp;» ou «&nbsp;Changer le soir&nbsp;» remplace un plat, au hasard ou choisi dans la liste. «&nbsp;Modifier&nbsp;» rouvre ses étapes avec ses cartes, à partir d’aujourd’hui&nbsp;; tu peux aussi changer chaque jour depuis ta journée.</li>
-      <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas libre. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
+      <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas plaisir. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
       <li>Chaque planification a son récap jour par jour et <strong>ses courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin, et à part les épices et petits trucs (ail, citron, herbes…) à vérifier dans tes placards. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
     </ul>
     <h2>Installer l’appli sur ton téléphone</h2>
@@ -1090,7 +1092,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '4.3.0';
+const APP_VERSION = '5.0.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -1145,13 +1147,13 @@ function typo(t){
  *   soir), marge, des (dessert), gras (huile de secours) ; shk, fuel, pom, encas, skyr (soir), lib (repas libre).
  *   adj : portion ajustée à l'objectif de protéines.
  * @typedef {{id:string, title:string, when:?string, items:Item[], pick?:string, band?:boolean, moment?:string, kcal?:number,
- *   sub?:?string, libre?:boolean, recipe?:?string, suggest?:?string, cs?:boolean}} Section
+ *   sub?:?string, libre?:?string, recipe?:?string, suggest?:?string, cs?:boolean}} Section
  *   repas (id pd, sw, dej, co, shk, diner, soir) ou bandeau de séance (band0, band1…, band:true ; moment et coût de la
  *   séance pour la frise et la carte de la page, 3.20.0) ; recipe : recette choisie, suggest : recette proposée pour le
- *   couple protéine × féculent ; libre : le repas libre qui remplace le dîner ; pick : le choix du repas (pd, dej, diner, co) ;
+ *   couple protéine × féculent ; libre : la sorte du repas libre qui remplace ce repas ('dehors' ou 'plaisir', 5.0.0) ; pick : le choix du repas (pd, dej, diner, co) ;
  *   cs : la collation a aussi sa partie glucides au choix (3.29.0).
  * @typedef {{taille:('petite'|'moyenne'|'longue'), moment:('matin'|'midi'|'soir'), duree?:number}} Seance
- * @typedef {{seances:Seance[], libre:boolean, imprevu?:{slot:string, kcal:number, mode:string}, veille?:number, jour?:number}} Plan  plan d'un jour (cleanPlan ;
+ * @typedef {{seances:Seance[], libre:{dej?:string, diner?:string}, imprevu?:{slot:string, kcal:number, mode:string}, veille?:number, jour?:number}} Plan  plan d'un jour (cleanPlan ;
  *   imprevu : 3.26.0 ; veille : durée en heures de la sortie longue du lendemain, ajoutée par l'interface, 3.28.0 ; jour : numéro du jour, pour faire tourner
  *   la recette proposée, 3.31.0)
  * @typedef {{jours:Object<string, Seance[]>, libre:number}} Week  semaine type : séances par jour (getDay), jour du repas libre
@@ -1162,7 +1164,7 @@ function typo(t){
  * @typedef {{bmr:number, rest:number, mode:string, restSource:string, cost:number, need:number, deficit:number, target:number,
  *   kgWeek:number, recharge:number}} Energy  dépense et objectif du jour (energy ; recharge : grammes de glucides en plus la veille d'une
  *   sortie longue, 3.28.0)
- * @typedef {{secs:Section[], tot:Macros, libre:?number, imprevu:?{slot:string, kcal:number, mode:string, delta:number, over:number}, energy:Energy, ecart:number, scale:number,
+ * @typedef {{secs:Section[], tot:Macros, libre:?number, libres:{dej?:number, diner?:number}, imprevu:?{slot:string, kcal:number, mode:string, delta:number, over:number}, energy:Energy, ecart:number, scale:number,
  *   prot:{target:number, low:number, high:number, floor:number, factor:number}}} Day  journée construite (buildDay)
  */
 /* Données : aliments. Valeurs pour 100 g (FOOD) ou par pièce (UNIT), féculents (STARCH), rendements de cuisson (YIELD),
@@ -2243,10 +2245,24 @@ function cleanWeek(o){
   if (Number.isInteger(o.libre) && o.libre >= 0 && o.libre <= 6) out.libre = o.libre;
   return out;
 }
-/* Jour pas encore rempli : les séances de la semaine type (aucune sans elle), repas libre son jour (samedi sans elle) */
+/* Repas libres d'un jour (5.0.0) : { dej?, diner? }, chacun 'dehors' (le budget du repas prévu) ou 'plaisir' (le repas
+   prévu + 300 × k, un par semaine). Avant la 5.0.0 : un booléen, vrai = le dîner, en repas plaisir. Tout le reste : aucun. */
+const LIBRE_SLOTS = ['dej', 'diner'], LIBRE_KINDS = ['dehors', 'plaisir'];
+function cleanLibre(v){
+  const out = {};
+  if (v === true) out.diner = 'plaisir';
+  else if (v && typeof v === 'object') LIBRE_SLOTS.forEach(function(s){ if (has(v, s) && LIBRE_KINDS.indexOf(v[s]) >= 0) out[s] = v[s]; });
+  return out;
+}
+/* La sorte du repas libre de ce repas d'un plan (ou d'un jour { libre }), sinon null */
+function libreOf(p, slot){ const l = p ? cleanLibre(p.libre) : {}; return has(l, slot) ? l[slot] : null; }
+/* Au moins un repas libre ce jour-là */
+function hasLibre(p){ return !!p && Object.keys(cleanLibre(p.libre)).length > 0; }
+/* Jour pas encore rempli : les séances de la semaine type (aucune sans elle), le dîner libre en repas plaisir son jour
+   (samedi sans elle) */
 function emptyPlan(js, sem){
   const w = sem || null, l = w && has(w.jours, String(js)) ? w.jours[js] : [];
-  return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6)};
+  return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6) ? {diner:'plaisir'} : {}};
 }
 /* Imprévu d'un repas (3.26.0) : { slot, kcal, mode } ; slot : un repas de la journée, mode : 'place' (à la place du repas)
    ou 'plus' (en plus), kcal : entier de 50 à 3 000. null s'il n'est pas valide. */
@@ -2262,7 +2278,7 @@ function cleanImprevu(o){
 function cleanPlan(p, js, sem){
   const out = emptyPlan(js, sem);
   if (!p || typeof p !== 'object') return out;
-  if (has(p, 'libre')) out.libre = !!p.libre;
+  if (has(p, 'libre')) out.libre = cleanLibre(p.libre);
   if (has(p, 'seances')) out.seances = cleanSeances(p.seances);
   const im = has(p, 'imprevu') ? cleanImprevu(p.imprevu) : null;
   if (im) out.imprevu = im;
@@ -2276,7 +2292,7 @@ function migratePlan(p){
   if (a === 'course' || a === 'double') list.push({taille:'moyenne', moment:m});
   if (a === 'longue') list.push({taille:'longue', moment:'matin', duree:p.duree});
   if (p.natation && a !== 'longue') list.push({taille:'petite', moment:'midi'});
-  return {seances:list, libre:!!p.libre};
+  return {seances:list, libre:p.libre ? {diner:'plaisir'} : {}};
 }
 function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }
 /* Profil et dépense : profil validé (profileFields, cleanProfile), métabolisme de base, dépense de repos, coût des séances,
@@ -2556,7 +2572,7 @@ function envPlan(days, wants, rand){
   const r = rand || Math.random, out = days.map(function(){ return {dej:{}, diner:{}}; });
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const len = Math.min(BATCH_BLOCK, days.length - b), slots = [];
-    for (let i = b; i < b + len; i++){ slots.push({i:i, slot:'dej'}); if (!(days[i] && days[i].libre)) slots.push({i:i, slot:'diner'}); }
+    for (let i = b; i < b + len; i++) LIBRE_SLOTS.forEach(function(s){ if (!libreOf(days[i], s)) slots.push({i:i, slot:s}); });
     wants.forEach(function(w){
       const used = [];
       for (let n = 0; n < envNeed(len); n++){
@@ -2581,7 +2597,7 @@ function envShort(chs, days, wants){
     for (let b = 0; b < chs.length; b += BATCH_BLOCK){
       const len = Math.min(BATCH_BLOCK, chs.length - b);
       let n = 0;
-      for (let i = b; i < b + len; i++) ['dej', 'diner'].forEach(function(sl){ if (!(sl === 'diner' && days[i] && days[i].libre) && chs[i][sl][w.kind] === w.id) n++; });
+      for (let i = b; i < b + len; i++) ['dej', 'diner'].forEach(function(sl){ if (!libreOf(days[i], sl) && chs[i][sl][w.kind] === w.id) n++; });
       if (n < envNeed(len)) return true;
     }
     return false;
@@ -3029,7 +3045,8 @@ function composeDay(plan, ch, pr, pf){
      la journée en plus, ou en moins) ;
      jamais reporté sur un autre jour. */
   let imp = null;
-  const im = cleanImprevu(plan.imprevu), isec = im && !(plan.libre && im.slot === 'diner') ? secs.find(function(s){ return s.id === im.slot && !s.band; }) : null;
+  const lib = cleanLibre(plan.libre);
+  const im = cleanImprevu(plan.imprevu), isec = im && !has(lib, im.slot) ? secs.find(function(s){ return s.id === im.slot && !s.band; }) : null;
   if (isec){
     const before = tot.kcal, place = im.mode === 'place';
     const delta = im.kcal - (place ? total(isec.items).kcal : 0);
@@ -3048,7 +3065,7 @@ function composeDay(plan, ch, pr, pf){
         left -= kc - (nk >= 30 ? nk : 0);
       }
     }
-    const st = [[lunch, 'dej'], [dinner, 'diner']].filter(function(x){ return later.indexOf(x[0]) >= 0 && !(plan.libre && x[1] === 'diner'); }).map(function(x){
+    const st = [[lunch, 'dej'], [dinner, 'diner']].filter(function(x){ return later.indexOf(x[0]) >= 0 && !has(lib, x[1]); }).map(function(x){
       const cur = x[0].items.find(function(i){ return i.key === 'st'; }).m.kcal, lo = STARCH_MIN * k, hi = Math.max(lo, starchCap(ch[x[1]].starch, k));
       return {sec:x[0], id:ch[x[1]].starch, cur:cur, room:Math.max(0, left > 0 ? cur - lo : hi - cur)};
     });
@@ -3062,18 +3079,26 @@ function composeDay(plan, ch, pr, pf){
     imp = {slot:im.slot, kcal:im.kcal, mode:im.mode, delta:delta, over:tot.kcal - before};
   }
 
-  /* Repas libre : remplace le dîner du jour normal et son skyr du soir s'il y en a un (budget = les deux + 300 × k) */
+  /* Repas libres (5.0.0, au déjeuner et au dîner, autant qu'on veut) : chacun remplace son repas du jour normal (le dîner
+     avec son skyr du soir s'il y en a un) par un budget, arrondi à 50 : son énergie (repas dehors), + 300 × k pour le repas
+     plaisir de la semaine. Les autres repas ne bougent pas. */
   let libre = null;
-  if (plan.libre){
-    const soirKcal = soirSec ? total(soirSec.items).kcal : 0;
-    if (soirSec) secs.splice(secs.indexOf(soirSec), 1);
-    libre = Math.round((total(dinner.items).kcal + soirKcal + 300 * k) / 50) * 50;
-    secs[secs.indexOf(dinner)] = {id:'diner', title:'Repas libre', when:(dinner.when ? dinner.when + ', ' : '') + 'resto ou entre amis', libre:true,
-      items:[it('lib', fmtInt(libre), 'kcal environ', 'de quoi te faire plaisir, sans peser', {kcal:libre, p:0, c:0, f:0}, null, {id:'libre', n:1, kcal:libre})]};
-    tot = total(allItems(secs));
-  }
-  const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !plan.libre ? total(soirSec.items).p : 0;
-  return {secs:secs, tot:tot, libre:libre, imprevu:imp, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
+  const libres = {};
+  LIBRE_SLOTS.forEach(function(slot){
+    if (!has(lib, slot)) return;
+    const sec = slot === 'dej' ? lunch : dinner, plaisir = lib[slot] === 'plaisir';
+    let extra = 0;
+    if (slot === 'diner' && soirSec){ extra = total(soirSec.items).kcal; secs.splice(secs.indexOf(soirSec), 1); }
+    const kc = Math.round((total(sec.items).kcal + extra + (plaisir ? 300 * k : 0)) / 50) * 50;
+    libres[slot] = kc;
+    libre = (libre || 0) + kc;
+    secs[secs.indexOf(sec)] = {id:slot, title:slot === 'dej' ? 'Déjeuner libre' : 'Dîner libre', when:(sec.when ? sec.when + ', ' : '') + 'resto ou entre amis', libre:lib[slot],
+      items:[it('lib', fmtInt(kc), 'kcal environ', plaisir ? 'ton repas plaisir de la semaine' + NB + ': de quoi te faire plaisir, sans peser' : 'le budget de ton repas prévu, pour manger dehors',
+        {kcal:kc, p:0, c:0, f:0}, null, {id:'libre', n:1, kcal:kc})]};
+  });
+  if (libre !== null) tot = total(allItems(secs));
+  const adjP = total(allItems(secs).filter(function(i){ return i.adj; })).p, soirP = soirSec && !has(lib, 'diner') ? total(soirSec.items).p : 0;
+  return {secs:secs, tot:tot, libre:libre, libres:libres, imprevu:imp, energy:en, ecart:ecart, scale:k, adjP:adjP, soirP:soirP};
 }
 /* Journée complète. Le facteur de protéines pf part de 1 (menu de référence) et ne bouge que si les protéines de la journée
    sortent de la fourchette objectif ± 10 % : il vise alors juste à l'intérieur (à 2 % du bord, pour absorber les arrondis).
@@ -3082,7 +3107,7 @@ function composeDay(plan, ch, pr, pf){
    @param {Plan} plan  @param {Choices} ch  @param {*} [profile] champs du profil, validés ici  @returns {Day} */
 function buildDay(plan, ch, profile){
   const pr = cleanProfile(profile), T = protTarget(pr), lo = (1 - PROT_BAND) * T, hi = (1 + PROT_BAND) * T;
-  const special = plan.libre || cleanImprevu(plan.imprevu), base = special ? Object.assign({}, plan, {libre:false, imprevu:null}) : plan;
+  const special = hasLibre(plan) || cleanImprevu(plan.imprevu), base = special ? Object.assign({}, plan, {libre:{}, imprevu:null}) : plan;
   let pf = 1, r = composeDay(base, ch, pr, pf);
   for (let pass = 0; pass < 5; pass++){
     const P = r.tot.p - r.soirP, adj1 = r.adjP / pf;
@@ -3124,7 +3149,7 @@ const HAM_SLICES = 4;
    - petits-déjeuners : 0 ou 4 tranches de jambon par bloc (HAM_SLICES). Avec « Œufs + jambon » (2 boîtes), aucun
      petit-déjeuner au jambon (salé, wrap) ; sinon 4 (jours sans sortie longue ni œufs-jambon, chacun une base au jambon au
      hasard) ou aucun, tirés pour en garder en moyenne autant qu'au hasard (probabilité : jours possibles × bases au jambon
-     / bases proposées / 4) ; les autres jours, une autre base au hasard (une au jambon s'il ne reste qu'elles) ; desserts au hasard ; le dîner d'un repas libre reçoit une recette du bloc d'une autre
+     / bases proposées / 4) ; les autres jours, une autre base au hasard (une au jambon s'il ne reste qu'elles) ; desserts au hasard ; un repas libre (déjeuner ou dîner) reçoit une recette du bloc d'une autre
      protéine, sans boîte.
    - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
      favorite pèse double.
@@ -3147,8 +3172,8 @@ function batchChoices(days, n, off, k, rand, prefs, wants){
   const out = [];
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const block = days.slice(b, b + BATCH_BLOCK), slots = [];
-    block.forEach(function(d, i){ slots.push({i:i, slot:'dej'}); if (!(d && d.libre)) slots.push({i:i, slot:'diner'}); });
-    const m = slots.length, nr = Math.min(nn, m, Math.max(2, Math.floor(m / 2)));
+    block.forEach(function(d, i){ LIBRE_SLOTS.forEach(function(s){ if (!libreOf(d, s)) slots.push({i:i, slot:s}); }); });
+    const m = slots.length, nr = Math.max(1, Math.min(nn, m, Math.max(2, Math.floor(m / 2))));
     const cnt = [];
     for (let j = 0; j < nr; j++) cnt.push(Math.floor(m / nr) + (j >= nr - m % nr ? 1 : 0));
     /* Recettes qui se congèlent mal : autant que de boîtes (les moins nombreuses) qui tiennent dans les 3 premiers jours */
@@ -3217,9 +3242,11 @@ function batchChoices(days, n, off, k, rand, prefs, wants){
         at[i].diner = a; at[sl.i][sl.slot] = x;
       }
     });
-    const plates = block.map(function(d, i){ const dej = at[i].dej; return [dej, at[i].diner || ent.find(function(e){ return prot(e) !== prot(dej); }) || dej]; });
+    /* Un repas libre (5.0.0 : au déjeuner aussi) reçoit une recette du bloc d'une autre protéine que l'autre repas */
+    const another = function(x){ return ent.find(function(e){ return !x || prot(e) !== prot(x); }) || x || ent[0]; };
+    const plates = block.map(function(d, i){ let dej = at[i].dej, din = at[i].diner; if (!dej) dej = another(din); if (!din) din = another(dej); return [dej, din]; });
     /* Jambon du bloc : 0 ou 4 tranches (voir HAM_SLICES) */
-    const eggs = plates.some(function(pl, i){ return prot(pl[0]) === 'oeufs' || (!(block[i] && block[i].libre) && prot(pl[1]) === 'oeufs'); });
+    const eggs = plates.some(function(pl, i){ return (!libreOf(block[i], 'dej') && prot(pl[0]) === 'oeufs') || (!libreOf(block[i], 'diner') && prot(pl[1]) === 'oeufs'); });
     const free = [], sale = [];
     plates.forEach(function(pl, i){ if (!(block[i] && block[i].long) && prot(pl[0]) !== 'oeufs' && prot(pl[1]) !== 'oeufs') free.push(i); });
     if (sweet.length && hams.length && !eggs && free.length >= HAM_SLICES && r() < Math.min(1, free.length * hams.length / pds.length / HAM_SLICES))
@@ -3280,11 +3307,11 @@ function batchCook(days, lead){
   return blocks;
 }
 /* Changer une recette du batch cooking (3.16.0). days : les jours d'un bloc, [{ch, libre}] (plats de chaque date, repas
-   libre) ; id : la recette à remplacer, partout où elle est dans le bloc (le dîner d'un repas libre compris). Les autres
-   repas ne bougent pas. Repas servis : comme batchChoices (pas le dîner d'un repas libre). */
+   libres) ; id : la recette à remplacer, partout où elle est dans le bloc (un repas libre compris). Les autres repas ne
+   bougent pas. Repas servis : comme batchChoices (pas un repas libre, 5.0.0 : déjeuner ou dîner). */
 function batchMeals(days){
   const out = [];
-  days.forEach(function(d, i){ ['dej', 'diner'].forEach(function(slot){ if (!(slot === 'diner' && d.libre)) out.push({i:i, slot:slot, c:d.ch[slot]}); }); });
+  days.forEach(function(d, i){ ['dej', 'diner'].forEach(function(slot){ if (!libreOf(d, slot)) out.push({i:i, slot:slot, c:d.ch[slot]}); }); });
   return out;
 }
 /* Plats du bloc avec nid à la place de id : protéine, féculent et recette ; dessert gardé, poids fixés (g, g2) oubliés. Si
@@ -3325,12 +3352,12 @@ function batchSwapOptions(days, id, off, k, prefs){
   return pool.filter(function(x){
     const r = RECIPES[x];
     if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0 || recipePref(x, prefs) === 0) return false;
-    if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !days[m.i].libre && o.recette !== id && o.prot === r.p; })) return false;
+    if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !libreOf(days[m.i], m.slot === 'dej' ? 'diner' : 'dej') && o.recette !== id && o.prot === r.p; })) return false;
     if (!r.gel && days.length > FRIDGE_DAYS && mine.some(function(m){ return m.i >= FRIDGE_DAYS; })) return false;
     if (r.p === 'oeufs' && (mine.length !== 2 || !sweet)) return false;
     if (r.p === 'boeuf'){
       let rouge = 0;
-      batchSwap(days, id, x, off).forEach(function(c, i){ ['dej', 'diner'].forEach(function(s){ if (!(s === 'diner' && days[i].libre) && c[s].prot === 'boeuf') rouge += boeufCuit; }); });
+      batchSwap(days, id, x, off).forEach(function(c, i){ ['dej', 'diner'].forEach(function(s){ if (!libreOf(days[i], s) && c[s].prot === 'boeuf') rouge += boeufCuit; }); });
       if (rouge > WEEK_GOALS.rouge + 0.5) return false;
     }
     return true;
@@ -3372,7 +3399,7 @@ function batchRound(days, profile){
   /* Sans imprévu (3.26.0) : la boîte est cuisinée comme prévu */
   const build = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {imprevu:null}), chs[i], profile); };
   /* Protéines d'un jour comparées à sa fourchette sur la journée normale (le repas libre n'a pas de macros connues) */
-  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:false, imprevu:null}), chs[i], profile); };
+  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:{}, imprevu:null}), chs[i], profile); };
   const sec = function(r, slot){ return r.secs.find(function(s){ return s.id === slot; }); };
   const grams = function(r, slot, key){ const x = sec(r, slot).items.find(function(i){ return i.key === key; }); return x && x.buy ? x.buy.g || 0 : 0; };
   const band = function(r){ return Math.max(0, r.prot.low - r.tot.p, r.tot.p - r.prot.high); };
@@ -3396,7 +3423,7 @@ function batchRound(days, profile){
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const served = [];
     for (let i = b; i < Math.min(days.length, b + BATCH_BLOCK); i++)
-      ['dej', 'diner'].forEach(function(s){ if (!(s === 'diner' && days[i].plan.libre)) served.push({i:i, s:s}); });
+      ['dej', 'diner'].forEach(function(s){ if (!libreOf(days[i].plan, s)) served.push({i:i, s:s}); });
     const order = [];
     served.forEach(function(m){
       const c = out[m.i][m.s], id = recipeOf(c);
@@ -3585,7 +3612,8 @@ function surpriseMeal(cards, fix, off, prefs, rand, season){
      nombreuses aux cartes servies d'abord (celles qui se congèlent mal, poisson en tête), repas dans l'ordre des jours, deux
      cartes en cours à la fois, pas deux fois de suite la même ; jamais la même protéine midi et soir si c'est possible
      (échange avec le repas le plus proche, sans repousser après le 3e jour une recette qui se congèle mal). Un plat simple
-     se congèle (il se cuisine le jour même). Le dîner d'un repas libre reçoit une carte d'une autre protéine, sans compter.
+     se congèle (il se cuisine le jour même). Un repas libre (déjeuner ou dîner, 5.0.0) reçoit une carte d'une autre protéine,
+     sans compter.
    Renvoie [{ pdBase, co, cs, dej, diner }] (dej et diner : { prot, starch, recette ? }). */
 function planDays(days, cards){
   const c0 = cleanCards(cards), out = days.map(function(){ return {}; });
@@ -3597,7 +3625,7 @@ function planDays(days, cards){
   const gel = function(e){ return !e.c.recette || RECIPES[e.c.recette].gel; };
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const block = days.slice(b, b + BATCH_BLOCK), slots = [];
-    block.forEach(function(d, i){ slots.push({i:i, slot:'dej'}); if (!(d && d.libre)) slots.push({i:i, slot:'diner'}); });
+    block.forEach(function(d, i){ LIBRE_SLOTS.forEach(function(s){ if (!libreOf(d, s)) slots.push({i:i, slot:s}); }); });
     const m = slots.length, nr = Math.min(c0.meal.length, m), cnt = [];
     for (let j = 0; j < nr; j++) cnt.push(Math.floor(m / nr) + (j >= nr - m % nr ? 1 : 0));
     const ent = c0.meal.slice(0, nr).map(function(c, j){ return {c:c, j:j}; });
@@ -3640,8 +3668,13 @@ function planDays(days, cards){
       }
     });
     const meal = function(e){ const o = {prot:e.c.prot, starch:e.c.starch}; if (e.c.recette) o.recette = e.c.recette; return o; };
+    /* Un repas libre (5.0.0 : au déjeuner aussi) reçoit une carte d'une autre protéine que l'autre repas, sans compter */
+    const pool = ent.concat(c0.meal.map(function(c){ return {c:c}; }));
+    const another = function(x){ return pool.find(function(e){ return !x || e.c.prot !== x.c.prot; }) || x || pool[0]; };
     block.forEach(function(d, i){
-      const dej = at[i].dej, din = at[i].diner || ent.find(function(e){ return e.c.prot !== dej.c.prot; }) || dej;
+      let dej = at[i].dej, din = at[i].diner;
+      if (!dej) dej = another(din);
+      if (!din) din = another(dej);
       out[b + i].dej = meal(dej); out[b + i].diner = meal(din);
     });
   }
@@ -3866,14 +3899,16 @@ if (typeof document !== 'undefined'){
   };
   /* Semaine type des réglages : séances habituelles et jour du repas libre */
   const semOf = function(){ return cleanProfile(prof).semaine; };
-  /* Plan d'une date : ce qui est enregistré, le reste de la semaine type. Le repas libre de la semaine type ne compte pas
-     si un autre jour de la même semaine en a un enregistré (un seul par semaine). */
+  /* Repas libres enregistrés pour une date (5.0.0), sinon null (ils viennent de la semaine type) */
+  const recLibre = function(iso){ const o = store.plans[iso]; return o && typeof o === 'object' && has(o, 'libre') ? cleanLibre(o.libre) : null; };
+  /* Plan d'une date : ce qui est enregistré, le reste de la semaine type. Le repas plaisir de la semaine type (le dîner de
+     son jour) ne compte pas si un autre jour de la même semaine a un repas plaisir enregistré (un par semaine). */
   const basePlan = function(iso){
-    const d = fromIso(iso), rec = store.plans[iso], p = cleanPlan(rec, d.getDay(), semOf());
-    if (p.libre && !(rec && typeof rec === 'object' && has(rec, 'libre')) && weekOf(d).some(function(x){
-      const i = isoDate(x), o = store.plans[i];
-      return i !== iso && o && typeof o === 'object' && has(o, 'libre') && o.libre === true;
-    })) p.libre = false;
+    const d = fromIso(iso), p = cleanPlan(store.plans[iso], d.getDay(), semOf());
+    if (hasLibre(p) && !recLibre(iso) && weekOf(d).some(function(x){
+      const i = isoDate(x), l = recLibre(i);
+      return i !== iso && l && LIBRE_SLOTS.some(function(s){ return l[s] === 'plaisir'; });
+    })) p.libre = {};
     return p;
   };
   /* Veille d'une sortie longue (3.28.0) : la durée de celle du lendemain (prévue ou de la semaine type), pour recharger */
@@ -3897,20 +3932,27 @@ if (typeof document !== 'undefined'){
      page les donnerait (un imprévu sur un autre repas reste compté) */
   const planForMeal = function(p, slot){
     const im = cleanImprevu(p.imprevu);
-    return Object.assign({}, p, {libre:false}, im && im.slot === slot ? {imprevu:null} : {});
+    return Object.assign({}, p, {libre:{}}, im && im.slot === slot ? {imprevu:null} : {});
   };
   /* Plats choisis : pour cette date, et en mémoire pour ce jour de la semaine (repris par les jours pas encore choisis) */
   const saveCh = function(){ writeDay(selIso(), {ch:ch}); store.choices[sel] = ch; persist(); };
-  /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */
-  const clearOtherLibre = function(){
-    const moved = [];
-    weekOf(selDate).forEach(function(d){
-      const iso = isoDate(d);
-      if (iso === selIso()) return;
-      if (planFor(iso).libre){ writeDay(iso, {libre:false}); moved.push(DAYS.find(function(x){ return x.js === d.getDay(); }).long); }
+  /* Repas libres (5.0.0) : autant qu'on veut, au déjeuner et au dîner ; un seul repas plaisir par semaine (lundi →
+     dimanche). Les autres repas plaisir de la semaine de d, sauf iso|slot : [{ iso, slot, d, rec }] (rec : enregistré ;
+     sinon celui de la semaine type) */
+  const MEAL_AT = {dej:'midi', diner:'soir'};
+  const otherPlaisirs = function(d, iso, slot){
+    const out = [];
+    weekOf(d).forEach(function(x){
+      const i = isoDate(x), l = cleanLibre(planFor(i).libre);
+      LIBRE_SLOTS.forEach(function(s){ if (l[s] === 'plaisir' && !(i === iso && s === slot)) out.push({iso:i, slot:s, d:x, rec:!!recLibre(i)}); });
     });
-    if (!moved.length) return '';
-    return 'Un seul repas libre par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' + moved.join(' et de ') + ' sont retirés.' : 'celui de ' + moved[0] + ' est retiré.');
+    return out;
+  };
+  /* « samedi soir », « ce midi » (le jour affiché) */
+  const mealAt = function(d, slot){
+    const dd = dayDiff(d);
+    if (isoDate(d) === selIso() && dd === 0) return slot === 'dej' ? 'ce midi' : 'ce soir';
+    return DAYS.find(function(x){ return x.js === d.getDay(); }).long + ' ' + MEAL_AT[slot];
   };
   /* Actions des boutons (data-action) : chaque écran ajoute les siennes à côté de son code (Object.assign(ACTIONS, {…})),
      le clic est traité dans ui/actions.js. Une action reçoit le bouton et sa valeur (data-value) ; elle renvoie un message
@@ -4070,9 +4112,14 @@ if (typeof document !== 'undefined'){
       '<button type="button" class="redo" id="redo-' + s.pick + '" data-action="redo" data-slot="' + s.pick + '" aria-label="Un autre plat ' + REPAS[s.pick] + '" title="Un autre plat">' + REDO + '</button></div>';
     const kc = s.libre ? '' : '<span class="kcal">' + fmtInt(Math.round(total(s.items).kcal / 5) * 5) + NB + 'kcal</span>';
     const card = s.recipe && !s.libre, shown = card ? s.items.filter(function(i){ return RECIPE_OUT.indexOf(i.key) >= 0; }) : s.items;
-    /* Repas libre : un interrupteur dans la carte du dîner (et dans celle du repas libre, qui le remplace) */
-    const lib = s.id === 'diner' ? '<button type="button" class="switch" role="switch" id="sw-lib" aria-checked="' + !!s.libre + '" data-action="toggle" data-key="libre">' +
-      '<span>Repas libre ' + (dayDiff(selDate) === 0 ? 'ce soir' : 'le soir') + '</span><span class="knob" aria-hidden="true"></span></button>' : '';
+    /* Repas libre (5.0.0) : un interrupteur dans la carte du déjeuner et dans celle du dîner (et dans celle du repas libre,
+       qui le remplace) ; repas libre : repas dehors ou repas plaisir (un par semaine) */
+    const at = s.id === 'dej' ? (dayDiff(selDate) === 0 ? 'ce midi' : 'le midi') : (dayDiff(selDate) === 0 ? 'ce soir' : 'le soir');
+    const lib = LIBRE_SLOTS.indexOf(s.id) >= 0 ? '<button type="button" class="switch" role="switch" id="sw-lib-' + s.id + '" aria-checked="' + !!s.libre + '" data-action="toggle" data-key="libre" data-value="' + s.id + '">' +
+      '<span>Repas libre ' + at + '</span><span class="knob" aria-hidden="true"></span></button>' +
+      (s.libre ? '<div class="opts-list lib-k" role="group" aria-label="Sorte de repas libre">' + [['dehors', 'Repas dehors'], ['plaisir', 'Repas plaisir']].map(function(x){
+        return '<button type="button" class="opt" id="lk-' + s.id + '-' + x[0] + '" data-action="lib-kind" data-value="' + s.id + '|' + x[0] + '" aria-pressed="' + (s.libre === x[0]) + '">' + x[1] + '</button>';
+      }).join('') + '</div>' : '') : '';
     /* « Mangé » : aujourd'hui et les jours passés */
     const done = isEaten(s.id);
     const eat = dayDiff(selDate) > 0 ? '' : '<button type="button" class="eat" id="eat-' + s.id + '" data-action="eat" data-value="' + s.id + '" aria-pressed="' + done + '" aria-label="' + s.title + ' mangé">' + CHECK + '<span>Mangé</span></button>';
@@ -4109,7 +4156,7 @@ if (typeof document !== 'undefined'){
       }
       const tiny = s.libre ? 'Libre' : s.title === 'Goûter' ? 'Goûter' : SEC_TINY[s.id];
       const ok = isEaten(s.id);
-      return '<button type="button" class="f-m' + (ok ? ' is-eaten' : '') + '"' + a + ' aria-label="' + s.title + (ok ? ', mangé' : '') + '"><span class="f-d" aria-hidden="true">' + (ok ? CHECK : '') + '</span><span class="f-l" aria-hidden="true">' + (s.libre ? 'Repas libre' : SEC_SHORT[s.id] || s.title) + '</span>' +
+      return '<button type="button" class="f-m' + (ok ? ' is-eaten' : '') + '"' + a + ' aria-label="' + s.title + (ok ? ', mangé' : '') + '"><span class="f-d" aria-hidden="true">' + (ok ? CHECK : '') + '</span><span class="f-l" aria-hidden="true">' + (s.libre ? s.title : SEC_SHORT[s.id] || s.title) + '</span>' +
         '<span class="f-l f-t" aria-hidden="true">' + tiny + '</span></button>';
     }).join('');
   };
@@ -4322,12 +4369,13 @@ if (typeof document !== 'undefined'){
   };
   const renderSummary = function(res){
     const t = res.tot, en = res.energy;
-    const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de repas libre'] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
+    const libW = res.libre && Object.keys(res.libres).length > 1 ? 'repas libres' : 'repas libre';
+    const dont = (res.libre ? [fmtInt(res.libre) + NB + 'kcal de ' + libW] : []).concat(res.imprevu ? [fmtInt(res.imprevu.kcal) + NB + 'kcal d’imprévu'] : []);
     $('sum-text').innerHTML = 'Environ <strong>' + r10(t.kcal) + NB + 'kcal</strong> sur la journée' + (dont.length ? ', dont ' + dont.join(' et ') + '.' : '.');
     let tab = 'profil', note = 'Dépense estimée' + NB + ': ' + r10(en.need) + NB + 'kcal, ' + (en.deficit > 0 ? 'moins ' + r10(en.deficit) + NB + 'kcal de déficit.' : 'sans déficit.');
     /* Veille d'une sortie longue (3.28.0) : la recharge, et le conseil d'un féculent digeste si le dîner est aux légumineuses */
     if (en.recharge) note += ' Veille de sortie longue' + NB + ': +' + NB + Math.max(5, Math.round(en.recharge / 5) * 5) + NB + 'g de glucides pour recharger, au dîner d’abord.' +
-      (!plan.libre && LEGUMES.indexOf(ch.diner.starch) >= 0 ? ' Ce soir, du riz ou des pâtes passeront mieux que des légumineuses.' : '');
+      (!libreOf(plan, 'diner') && LEGUMES.indexOf(ch.diner.starch) >= 0 ? ' Ce soir, du riz ou des pâtes passeront mieux que des légumineuses.' : '');
     const over = !res.libre && res.ecart > en.target * 0.03;
     if (over){
       const pr = cleanProfile(prof), tips = [];
@@ -4372,7 +4420,7 @@ if (typeof document !== 'undefined'){
     $('legend').innerHTML = '<li class="p">Protéines <b>' + Math.round(t.p) + NB + 'g</b></li>' +
       '<li class="c">Glucides <b>' + Math.round(t.c) + NB + 'g</b></li>' +
       '<li class="f">Lipides <b>' + Math.round(t.f) + NB + 'g</b></li>' +
-      (res.libre || res.imprevu ? '<li class="x">hors ' + (res.libre && res.imprevu ? 'repas libre et imprévu' : res.libre ? 'repas libre' : 'imprévu') + '</li>' : '');
+      (res.libre || res.imprevu ? '<li class="x">hors ' + (res.libre && res.imprevu ? libW + ' et imprévu' : res.libre ? libW : 'imprévu') + '</li>' : '');
   };
   const render = function(){
     renderControls();
@@ -4410,7 +4458,7 @@ if (typeof document !== 'undefined'){
        planification du jour est en recettes ; le dessert reste */
     redo: function(b){
       const slot = b.dataset.slot, other = slot === 'dej' ? 'diner' : 'dej';
-      if (!has(REPAS, slot) || plan.libre && slot === 'diner') return;
+      if (!has(REPAS, slot) || libreOf(plan, slot)) return;
       const pr = cleanProfile(prof), bal = weekBal(selDate, selIso()), old = ch[slot], p = planifOf(selIso()), rec = p && p.type ? p.type === 'recettes' : !!recipeOf(old);
       for (let i = 0; i < 20; i++){
         /* Les refus de la planification du jour (3.30.0) comptent aussi */
@@ -4454,13 +4502,36 @@ if (typeof document !== 'undefined'){
       render();
       $(to ? 'ft-' + to : 'eat-' + v).focus({preventScroll:true});
     },
-    toggle: function(b){
-      if (b.dataset.key !== 'libre') return;
-      let msg = '';
-      plan.libre = !plan.libre;
-      if (plan.libre) msg = clearOtherLibre();
-      savePlan({libre:plan.libre});
-      return msg;
+    /* Repas libre d'un repas (5.0.0) : autant qu'on veut. Activé : repas plaisir s'il n'y en a pas d'autre cette semaine,
+       sinon repas dehors (le budget du repas prévu) */
+    toggle: function(b, v){
+      if (b.dataset.key !== 'libre' || LIBRE_SLOTS.indexOf(v) < 0) return;
+      const l = cleanLibre(plan.libre);
+      if (l[v]){ delete l[v]; plan.libre = cleanLibre(l); savePlan({libre:plan.libre}); return ''; }
+      const others = otherPlaisirs(selDate, selIso(), v);
+      l[v] = others.length ? 'dehors' : 'plaisir';
+      plan.libre = cleanLibre(l); savePlan({libre:plan.libre});
+      return l[v] === 'plaisir' ? 'Repas plaisir ' + mealAt(selDate, v) + NB + ': ton repas prévu, avec ≈' + NB + r10(300 * scaleOf(cleanProfile(prof))) + NB + 'kcal de plus. Un par semaine.'
+        : 'Repas dehors ' + mealAt(selDate, v) + NB + ': le budget de ton repas prévu. Ton repas plaisir de la semaine est ' + mealAt(others[0].d, others[0].slot) + '.';
+    },
+    /* Repas dehors ou repas plaisir : un seul repas plaisir par semaine, il passe ici ; un autre enregistré reste libre,
+       sans le bonus ; celui de la semaine type n'est plus libre */
+    'lib-kind': function(b, v){
+      const q = String(v).split('|'), slot = q[0], kind = q[1], l = cleanLibre(plan.libre);
+      if (!has(l, slot) || LIBRE_KINDS.indexOf(kind) < 0 || l[slot] === kind) return;
+      l[slot] = kind;
+      if (kind === 'dehors'){ plan.libre = cleanLibre(l); savePlan({libre:plan.libre}); return 'Repas dehors ' + mealAt(selDate, slot) + NB + ': le budget de ton repas prévu.'; }
+      const kept = [], gone = [];
+      otherPlaisirs(selDate, selIso(), slot).forEach(function(o){
+        if (o.iso === selIso()){ l[o.slot] = 'dehors'; kept.push(mealAt(o.d, o.slot)); return; }
+        if (o.rec){ const x = recLibre(o.iso); x[o.slot] = 'dehors'; writeDay(o.iso, {libre:x}); kept.push(mealAt(o.d, o.slot)); }
+        else gone.push(mealAt(o.d, o.slot));
+      });
+      plan.libre = cleanLibre(l); savePlan({libre:plan.libre});
+      const and = function(a){ return a.length > 1 ? a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1] : a[0]; };
+      return 'Repas plaisir ' + mealAt(selDate, slot) + NB + ': ton repas prévu, avec ≈' + NB + r10(300 * scaleOf(cleanProfile(prof))) + NB + 'kcal de plus.' +
+        (kept.length ? ' Un par semaine' + NB + ': ' + and(kept) + (kept.length > 1 ? ' restent libres' : ' reste libre') + ', sans le bonus.' : '') +
+        (gone.length ? ' Un par semaine' + NB + ': ' + and(gone) + (gone.length > 1 ? ' ne sont plus libres.' : ' n’est plus libre.') : '');
     },
     pd: function(b, v){ if (has(PD, v)){ ch.pdBase = v; saveCh(); } return ''; },
     /* Collation (3.29.0) : la partie protéines, et les glucides les jours de séance */
@@ -4518,7 +4589,6 @@ if (typeof document !== 'undefined'){
       delete store.plans[selIso()];
       delete store.choices[sel];
       loadSel();
-      if (plan.libre) msg = clearOtherLibre();
       persist(); prevQty = new Map();
       return msg;
     }
@@ -4601,9 +4671,10 @@ if (typeof document !== 'undefined'){
     };
     const day = DAYS.find(function(x){ return x.js === sel; }).long;
     return meal('pd', 'Petit-déjeuner', rows(['pd'], null)) +
-      meal('dej', 'Déjeuner', rows(['prot', 'starch', 'dessert'], 'dej')) +
+      meal('dej', 'Déjeuner', rows(['prot', 'starch', 'dessert'], 'dej'),
+        libreOf(plan, 'dej') ? (dayDiff(selDate) === 0 ? 'Ce midi' : 'Ce midi-là') + ', c’est ton repas libre' + NB + ': ce déjeuner est gardé pour les prochains ' + day + 's.' : null) +
       meal('diner', 'Dîner', rows(['prot', 'starch', 'dessert'], 'diner'),
-        plan.libre ? (dayDiff(selDate) === 0 ? 'Ce soir' : 'Ce soir-là') + ', c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
+        libreOf(plan, 'diner') ? (dayDiff(selDate) === 0 ? 'Ce soir' : 'Ce soir-là') + ', c’est ton repas libre' + NB + ': ce dîner est gardé pour les prochains ' + day + 's.' : null);
   };
   const renderRepas = function(){
     $('repas-h').textContent = dayDiff(selDate) === 0 ? 'Tes repas du jour' : 'Tes repas, ' + dayRel(selDate);
@@ -4730,10 +4801,10 @@ if (typeof document !== 'undefined'){
     if (p.cards) return p.cards;
     const cnt = {pd:[], co:[], meal:[]}, add = function(k, key, o){ const x = cnt[k].find(function(y){ return y.key === key; }); if (x) x.n++; else cnt[k].push({key:key, n:1, o:o}); };
     rangeDays(p.from, p.to).forEach(function(iso){
-      const c = choicesFor(iso, fromIso(iso).getDay()), lib = planFor(iso).libre;
+      const c = choicesFor(iso, fromIso(iso).getDay()), pl = planFor(iso);
       add('pd', c.pdBase, {id:c.pdBase});
       add('co', (c.co || 'oeufs') + '|' + (c.cs || 'banane'), {id:c.co || 'oeufs', cs:c.cs || 'banane'});
-      ['dej', 'diner'].forEach(function(sl){ if (sl === 'diner' && lib) return; const m = c[sl], r = recipeOf(m); add('meal', m.prot + '|' + m.starch + '|' + (r || ''), {prot:m.prot, starch:m.starch, recette:r || null}); });
+      ['dej', 'diner'].forEach(function(sl){ if (libreOf(pl, sl)) return; const m = c[sl], r = recipeOf(m); add('meal', m.prot + '|' + m.starch + '|' + (r || ''), {prot:m.prot, starch:m.starch, recette:r || null}); });
     });
     const top = function(k){ return cnt[k].slice().sort(function(a, b){ return b.n - a.n; }).map(function(x){ return x.o; }); };
     return cleanCards({pd:top('pd'), co:top('co'), meal:top('meal')});
@@ -4845,17 +4916,21 @@ if (typeof document !== 'undefined'){
         (x.sub ? '<span class="wr-s">' + x.sub + '</span>' : '') + '</button></li>';
     }).join('') + '</ul>' + (found.length > max ? '<p class="calc">Et ' + (found.length - max) + ' autres' + NB + ': affine ta recherche.</p>' : '');
   };
-  /* Le récap : un jour par ligne, ses repas, et le repas libre à cocher */
-  const recapPlan = function(){ return planDays(isos().map(function(iso){ return {libre:!!wiz.libre[iso]}; }), wiz.cards); };
+  /* Le récap : un jour par ligne, ses repas, et un interrupteur « Libre » au midi et au soir (5.0.0) */
+  const recapPlan = function(){ return planDays(isos().map(function(iso){ return {libre:wiz.libre[iso] || {}}; }), wiz.cards); };
   const recapHTML = function(){
     const all = isos(), pl = recapPlan();
-    return '<p class="calc">Les plats tournent sur les jours, jamais la même protéine midi et soir si c’est possible. Touche «' + NB + 'Libre' + NB + '» pour le repas libre d’un soir (un par semaine).</p>' +
-      '<table class="wiz-t"><thead><tr><th scope="col">Jour</th><th scope="col">Repas</th><th scope="col">Libre</th></tr></thead><tbody>' + all.map(function(iso, j){
-        const d = fromIso(iso), x = pl[j], lib = !!wiz.libre[iso];
+    return '<p class="calc">Les plats tournent sur les jours, jamais la même protéine midi et soir si c’est possible. Touche l’interrupteur d’un midi ou d’un soir pour un repas libre, autant que tu veux' + NB + ': le premier de la semaine est ton repas plaisir, les autres gardent le budget du repas prévu.</p>' +
+      '<table class="wiz-t"><thead><tr><th scope="col">Jour</th><th scope="col">Repas</th></tr></thead><tbody>' + all.map(function(iso, j){
+        const d = fromIso(iso), x = pl[j], lib = wiz.libre[iso] || {};
         const li = function(l, v){ return '<span class="wt-r"><span class="wt-l">' + l + '</span> ' + v + '</span>'; };
-        return '<tr' + (lib ? ' class="is-lib"' : '') + '><th scope="row"><span class="wt-d">' + cap(d.toLocaleDateString('fr-FR', {weekday:'short'})) + '</span> ' + d.getDate() + '</th><td>' +
-          li('Matin', PD[x.pdBase].label) + li('Midi', mealTitle(x.dej)) + li('Collation', SNACK[x.co].label) + li('Soir', lib ? 'Repas libre' : mealTitle(x.diner)) + '</td>' +
-          '<td><button type="button" class="wt-sw" role="switch" id="wl-' + iso + '" aria-checked="' + lib + '" data-action="wiz-libre" data-value="' + iso + '" aria-label="Repas libre ' + dayLabel(d) + ' soir"><span class="knob" aria-hidden="true"></span></button></td></tr>';
+        const meal = function(l, slot){
+          const k = lib[slot];
+          return '<span class="wt-r wt-m' + (k ? ' is-lib' : '') + '"><span><span class="wt-l">' + l + '</span> ' + (k === 'plaisir' ? 'Repas libre, plaisir' : k ? 'Repas libre' : mealTitle(x[slot])) + '</span>' +
+            '<button type="button" class="wt-sw" role="switch" id="wl-' + iso + '-' + slot + '" aria-checked="' + !!k + '" data-action="wiz-libre" data-value="' + iso + '|' + slot + '" aria-label="Repas libre ' + dayLabel(d) + ' ' + MEAL_AT[slot] + '"><span class="knob" aria-hidden="true"></span></button></span>';
+        };
+        return '<tr><th scope="row"><span class="wt-d">' + cap(d.toLocaleDateString('fr-FR', {weekday:'short'})) + '</span> ' + d.getDate() + '</th><td>' +
+          li('Matin', PD[x.pdBase].label) + meal('Midi', 'dej') + li('Collation', SNACK[x.co].label) + meal('Soir', 'diner') + '</td></tr>';
       }).join('') + '</tbody></table>';
   };
   const SEASON_OF_TEXT = {printemps:'Les recettes du printemps', ete:'Les recettes de l’été', automne:'Les recettes de l’automne', hiver:'Les recettes de l’hiver'};
@@ -4912,10 +4987,10 @@ if (typeof document !== 'undefined'){
     scroller().scrollTop = 0;
     $('wiz-h').focus({preventScroll:true});
   };
-  /* Les jours de la période gardent leur repas libre (enregistré ou de la semaine type), un par semaine */
+  /* Les jours de la période gardent leurs repas libres (enregistrés ou de la semaine type) */
   const wizLibre = function(){
     const keep = {};
-    isos().forEach(function(iso){ keep[iso] = has(wiz.libre, iso) ? wiz.libre[iso] : planFor(iso).libre; });
+    isos().forEach(function(iso){ keep[iso] = cleanLibre(has(wiz.libre, iso) ? wiz.libre[iso] : planFor(iso).libre); });
     wiz.libre = keep;
   };
   /* Ajoute une carte (ou remplace celle en cours de changement) : '' si c'est fait, sinon pourquoi pas */
@@ -4938,17 +5013,12 @@ if (typeof document !== 'undefined'){
     if (kind === 'co') return surpriseCo(others, null, pr);
     return surpriseMeal(others, fix, pr.off, pr, null, wizOnly());
   };
-  /* Valider : le repas libre de chaque jour, enregistré tel que le récap le montre (un par semaine, aussi hors de la
-     période), puis les plats de chaque date (le dessert reste), arrondis aux 100 g sur les boîtes des recettes qui reviennent
-     (batchRound) ; la planification est gardée et ses courses s'ouvrent */
+  /* Valider : les repas libres de chaque jour, enregistrés tels que le récap les montre, puis les plats de chaque date (le
+     dessert reste), arrondis aux 100 g sur les boîtes des recettes qui reviennent (batchRound) ; la planification est gardée
+     et ses courses s'ouvrent */
   const wizSave = function(){
-    const all = isos(), pl = recapPlan(), msgs = [];
-    all.forEach(function(iso){
-      const on = !!wiz.libre[iso];
-      writeDay(iso, {libre:on});
-      if (!on) return;
-      weekOf(fromIso(iso)).forEach(function(d){ const x = isoDate(d); if (all.indexOf(x) < 0 && planFor(x).libre){ writeDay(x, {libre:false}); msgs.push(dayLabel(d)); } });
-    });
+    const all = isos(), pl = recapPlan();
+    all.forEach(function(iso){ writeDay(iso, {libre:cleanLibre(wiz.libre[iso])}); });
     const chs = all.map(function(iso, j){
       const js = fromIso(iso).getDay(), old = choicesFor(iso, js), x = pl[j], c = {pdBase:x.pdBase, co:x.co, cs:x.cs};
       ['dej', 'diner'].forEach(function(sl){ c[sl] = Object.assign({dessert:dessertOf(old[sl])}, x[sl]); });
@@ -4958,7 +5028,7 @@ if (typeof document !== 'undefined'){
     persist();
     const p = {from:wiz.from, to:wiz.to, cards:cleanCards(wiz.cards), checked:[]};
     addPlanif(p);
-    return {p:p, moved:msgs};
+    return {p:p};
   };
   /* Ouvre l'assistant : nouvelle planification, ou modification de p (à partir d'aujourd'hui, ses cartes) */
   const openWiz = function(p, opener){
@@ -5001,8 +5071,7 @@ if (typeof document !== 'undefined'){
       cur = r.p; renderCourses();
       /* Modifiée : retour à son détail ; créée : son détail à la place de l'assistant */
       if (wiz.editing) closeScreen(false); else replaceScreen('courses');
-      $('courses-msg').textContent = (wiz.editing ? 'Planification modifiée.' : 'Planification créée.') +
-        (r.moved.length ? ' Un seul repas libre par semaine' + NB + ': ' + (r.moved.length > 1 ? 'ceux de ' : 'celui de ') + r.moved.join(' et de ') + (r.moved.length > 1 ? ' sont retirés.' : ' est retiré.') : '') + ' Voici tes courses.';
+      $('courses-msg').textContent = (wiz.editing ? 'Planification modifiée.' : 'Planification créée.') + ' Voici tes courses.';
       resetPlanner();
       const h = $('courses-list-t');
       if (h.scrollIntoView) h.scrollIntoView({block:'start'});
@@ -5096,19 +5165,19 @@ if (typeof document !== 'undefined'){
       c.cs = q[1];
       wizKeep(b);
     },
-    /* Repas libre d'un soir : un par semaine (lundi → dimanche) dans la période */
+    /* Repas libre d'un midi ou d'un soir (5.0.0), autant qu'on veut : le repas plaisir s'il n'y en a pas encore cette semaine
+       (lundi → dimanche, dans le récap ou hors de la période), sinon un repas dehors (le budget du repas prévu) */
     'wiz-libre': function(b, v){
-      if (stepKind() !== 'recap' || !has(wiz.libre, v)) return;
-      const on = !wiz.libre[v], moved = [];
-      if (on) weekOf(fromIso(v)).forEach(function(d){
-        const x = isoDate(d);
-        if (x === v) return;
-        if (wiz.libre[x]){ wiz.libre[x] = false; moved.push(dayLabel(d)); }
-        else if (!has(wiz.libre, x) && planFor(x).libre) moved.push(dayLabel(d));
+      const q = String(v).split('|'), iso = q[0], slot = q[1];
+      if (stepKind() !== 'recap' || !has(wiz.libre, iso) || LIBRE_SLOTS.indexOf(slot) < 0) return;
+      const l = wiz.libre[iso], at = dayLabel(fromIso(iso)) + ' ' + MEAL_AT[slot];
+      if (l[slot]){ delete l[slot]; $('wiz-msg').textContent = 'Plus de repas libre ' + at + '.'; wizKeep(b); return; }
+      const plaisir = weekOf(fromIso(iso)).some(function(d){
+        const x = isoDate(d), o = has(wiz.libre, x) ? wiz.libre[x] : cleanLibre(planFor(x).libre);
+        return LIBRE_SLOTS.some(function(s){ return o[s] === 'plaisir'; });
       });
-      wiz.libre[v] = on;
-      $('wiz-msg').textContent = (on ? 'Repas libre ' + dayLabel(fromIso(v)) + ' soir.' : 'Plus de repas libre ' + dayLabel(fromIso(v)) + '.') +
-        (moved.length ? ' Un seul par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' : 'celui de ') + moved.join(' et de ') + (moved.length > 1 ? ' seront retirés.' : ' sera retiré.') : '');
+      l[slot] = plaisir ? 'dehors' : 'plaisir';
+      $('wiz-msg').textContent = 'Repas libre ' + at + (plaisir ? ', avec le budget du repas prévu' + NB + ': ton repas plaisir est déjà pris cette semaine.' : ', ton repas plaisir de la semaine.');
       wizKeep(b);
     }
   });
@@ -5280,16 +5349,16 @@ if (typeof document !== 'undefined'){
     }).join('');
     /* Un repas : sa recette, sinon sa protéine et son féculent */
     const meal = function(c){ const r = recipeOf(c); return r ? RECIPES[r].t : low(PROT[c.prot].label) + ' et ' + low(STARCH[c.starch].label); };
-    /* Changer un repas (3.30.0) : aujourd'hui et après, pas le dîner d'un repas libre ; pas dans une planification en batch
+    /* Changer un repas (3.30.0) : aujourd'hui et après, pas un repas libre ; pas dans une planification en batch
        cooking d'avant la 4.0.0 (elle change ses recettes dans sa fiche) */
     const change = !cur.n;
     $('courses-days').innerHTML = days.map(function(iso, j){
       const d = fromIso(iso), p = planFor(iso), c = choicesFor(iso, d.getDay()), r = res[j];
-      const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', 'midi' + NB + ': ' + low(meal(c.dej)), r.libre ? 'repas libre le soir' : 'soir' + NB + ': ' + low(meal(c.diner))];
+      const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', libreOf(p, 'dej') ? 'repas libre le midi' : 'midi' + NB + ': ' + low(meal(c.dej)), libreOf(p, 'diner') ? 'repas libre le soir' : 'soir' + NB + ': ' + low(meal(c.diner))];
       const btn = function(slot){ return '<button type="button" class="reset" id="chg-' + iso + '-' + slot + '" data-action="co-meal" data-value="' + iso + '|' + slot + '" aria-haspopup="dialog" aria-label="Changer le repas ' + REPAS[slot] + ', ' + dayLabel(d) + '">Changer le ' + (slot === 'dej' ? 'midi' : 'soir') + '</button>'; };
       return '<li><button type="button" class="shop-day" data-action="co-day" data-value="' + iso + '"><span class="d">' + cap(dayLabel(d)) + '</span>' +
         '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + '.</span></button>' +
-        (change && iso >= t ? '<div class="co-meals">' + btn('dej') + (r.libre ? '' : btn('diner')) + '</div>' : '') + '</li>';
+        (change && iso >= t && LIBRE_SLOTS.some(function(sl){ return !libreOf(p, sl); }) ? '<div class="co-meals">' + (libreOf(p, 'dej') ? '' : btn('dej')) + (libreOf(p, 'diner') ? '' : btn('diner')) + '</div>' : '') + '</li>';
     }).join('');
   };
   const openPlanif = function(p, opener){ cur = p; renderCourses(); openScreen('courses', opener); };
@@ -5397,7 +5466,7 @@ if (typeof document !== 'undefined'){
      et (4.0.0, ou planification en plats simples) les plats simples. */
   const mealOptions = function(iso, slot){
     const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), c = choicesFor(iso, fromIso(iso).getDay()), o = c[slot === 'dej' ? 'diner' : 'dej'];
-    const lib = slot === 'dej' && planFor(iso).libre, prots = allowed('prot', off), avoid = !lib && prots.length > 1 ? o.prot : null;
+    const lib = libreOf(planFor(iso), slot === 'dej' ? 'diner' : 'dej'), prots = allowed('prot', off), avoid = !lib && prots.length > 1 ? o.prot : null;
     const out = [];
     prots.forEach(function(p){
       if (p === avoid) return;
@@ -5481,7 +5550,7 @@ if (typeof document !== 'undefined'){
     'co-meal': function(b, v){
       const q = String(v).split('|');
       if (!cur || cur.n || !fromIso(q[0]) || !isoOk(q[0]) || q[0] < todayIso() || q[0] < cur.from || q[0] > cur.to || !has(REPAS, q[1])) return;
-      if (q[1] === 'diner' && planFor(q[0]).libre) return;
+      if (libreOf(planFor(q[0]), q[1])) return;
       openMeal(q[0], q[1], b);
     },
     /* Le plat choisi (ou tiré) remplace celui de ce repas, enregistré pour la date et en mémoire pour son jour de la semaine ;
@@ -5528,7 +5597,7 @@ if (typeof document !== 'undefined'){
       let n = 0;
       blk.isos.forEach(function(iso, j){
         const d = blk.days[j];
-        n += ['dej', 'diner'].filter(function(sl){ return d.ch[sl].recette === s.id && !(sl === 'diner' && d.libre); }).length;
+        n += ['dej', 'diner'].filter(function(sl){ return d.ch[sl].recette === s.id && !libreOf(d, sl); }).length;
         if (JSON.stringify(next[j]) === JSON.stringify(d.ch)) return;
         const js = fromIso(iso).getDay(), c = cleanCh(next[j], js);
         writeDay(iso, {ch:c});
@@ -5705,7 +5774,7 @@ if (typeof document !== 'undefined'){
   const libKey = function(){ return lib.tab === 'pd' ? 'tpd' : lib.tab === 'co' ? 'tco' : 'target'; };
   const libTarget = function(){
     const v = lib[libKey()], q = v.split('|'), iso = isoDate(addDays(today, +q[0]));
-    return {iso:iso, slot:q[1], day:+q[0], label:LIB_TT[lib.tab].find(function(t){ return t[0] === v; })[1].toLowerCase(), libre:q[1] === 'diner' && planFor(iso).libre};
+    return {iso:iso, slot:q[1], day:+q[0], label:LIB_TT[lib.tab].find(function(t){ return t[0] === v; })[1].toLowerCase(), libre:!!libreOf(planFor(iso), q[1])};
   };
   /* Ce qui est déjà choisi pour le repas visé : la recette, la base du petit-déjeuner, la collation (et ses boules) */
   const libChosen = function(tg){

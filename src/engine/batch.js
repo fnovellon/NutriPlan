@@ -21,7 +21,7 @@ const HAM_SLICES = 4;
    - petits-déjeuners : 0 ou 4 tranches de jambon par bloc (HAM_SLICES). Avec « Œufs + jambon » (2 boîtes), aucun
      petit-déjeuner au jambon (salé, wrap) ; sinon 4 (jours sans sortie longue ni œufs-jambon, chacun une base au jambon au
      hasard) ou aucun, tirés pour en garder en moyenne autant qu'au hasard (probabilité : jours possibles × bases au jambon
-     / bases proposées / 4) ; les autres jours, une autre base au hasard (une au jambon s'il ne reste qu'elles) ; desserts au hasard ; le dîner d'un repas libre reçoit une recette du bloc d'une autre
+     / bases proposées / 4) ; les autres jours, une autre base au hasard (une au jambon s'il ne reste qu'elles) ; desserts au hasard ; un repas libre (déjeuner ou dîner) reçoit une recette du bloc d'une autre
      protéine, sans boîte.
    - préférences (3.25.0, prefs : { fav, ban }) : une recette à éviter n'est jamais tirée (sauf s'il ne reste qu'elles), une
      favorite pèse double.
@@ -44,8 +44,8 @@ function batchChoices(days, n, off, k, rand, prefs, wants){
   const out = [];
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const block = days.slice(b, b + BATCH_BLOCK), slots = [];
-    block.forEach(function(d, i){ slots.push({i:i, slot:'dej'}); if (!(d && d.libre)) slots.push({i:i, slot:'diner'}); });
-    const m = slots.length, nr = Math.min(nn, m, Math.max(2, Math.floor(m / 2)));
+    block.forEach(function(d, i){ LIBRE_SLOTS.forEach(function(s){ if (!libreOf(d, s)) slots.push({i:i, slot:s}); }); });
+    const m = slots.length, nr = Math.max(1, Math.min(nn, m, Math.max(2, Math.floor(m / 2))));
     const cnt = [];
     for (let j = 0; j < nr; j++) cnt.push(Math.floor(m / nr) + (j >= nr - m % nr ? 1 : 0));
     /* Recettes qui se congèlent mal : autant que de boîtes (les moins nombreuses) qui tiennent dans les 3 premiers jours */
@@ -114,9 +114,11 @@ function batchChoices(days, n, off, k, rand, prefs, wants){
         at[i].diner = a; at[sl.i][sl.slot] = x;
       }
     });
-    const plates = block.map(function(d, i){ const dej = at[i].dej; return [dej, at[i].diner || ent.find(function(e){ return prot(e) !== prot(dej); }) || dej]; });
+    /* Un repas libre (5.0.0 : au déjeuner aussi) reçoit une recette du bloc d'une autre protéine que l'autre repas */
+    const another = function(x){ return ent.find(function(e){ return !x || prot(e) !== prot(x); }) || x || ent[0]; };
+    const plates = block.map(function(d, i){ let dej = at[i].dej, din = at[i].diner; if (!dej) dej = another(din); if (!din) din = another(dej); return [dej, din]; });
     /* Jambon du bloc : 0 ou 4 tranches (voir HAM_SLICES) */
-    const eggs = plates.some(function(pl, i){ return prot(pl[0]) === 'oeufs' || (!(block[i] && block[i].libre) && prot(pl[1]) === 'oeufs'); });
+    const eggs = plates.some(function(pl, i){ return (!libreOf(block[i], 'dej') && prot(pl[0]) === 'oeufs') || (!libreOf(block[i], 'diner') && prot(pl[1]) === 'oeufs'); });
     const free = [], sale = [];
     plates.forEach(function(pl, i){ if (!(block[i] && block[i].long) && prot(pl[0]) !== 'oeufs' && prot(pl[1]) !== 'oeufs') free.push(i); });
     if (sweet.length && hams.length && !eggs && free.length >= HAM_SLICES && r() < Math.min(1, free.length * hams.length / pds.length / HAM_SLICES))
@@ -177,11 +179,11 @@ function batchCook(days, lead){
   return blocks;
 }
 /* Changer une recette du batch cooking (3.16.0). days : les jours d'un bloc, [{ch, libre}] (plats de chaque date, repas
-   libre) ; id : la recette à remplacer, partout où elle est dans le bloc (le dîner d'un repas libre compris). Les autres
-   repas ne bougent pas. Repas servis : comme batchChoices (pas le dîner d'un repas libre). */
+   libres) ; id : la recette à remplacer, partout où elle est dans le bloc (un repas libre compris). Les autres repas ne
+   bougent pas. Repas servis : comme batchChoices (pas un repas libre, 5.0.0 : déjeuner ou dîner). */
 function batchMeals(days){
   const out = [];
-  days.forEach(function(d, i){ ['dej', 'diner'].forEach(function(slot){ if (!(slot === 'diner' && d.libre)) out.push({i:i, slot:slot, c:d.ch[slot]}); }); });
+  days.forEach(function(d, i){ ['dej', 'diner'].forEach(function(slot){ if (!libreOf(d, slot)) out.push({i:i, slot:slot, c:d.ch[slot]}); }); });
   return out;
 }
 /* Plats du bloc avec nid à la place de id : protéine, féculent et recette ; dessert gardé, poids fixés (g, g2) oubliés. Si
@@ -222,12 +224,12 @@ function batchSwapOptions(days, id, off, k, prefs){
   return pool.filter(function(x){
     const r = RECIPES[x];
     if (x === id || usedR.indexOf(x) >= 0 || usedP.indexOf(r.p) >= 0 || recipePref(x, prefs) === 0) return false;
-    if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !days[m.i].libre && o.recette !== id && o.prot === r.p; })) return false;
+    if (mine.some(function(m){ const o = days[m.i].ch[m.slot === 'dej' ? 'diner' : 'dej']; return !libreOf(days[m.i], m.slot === 'dej' ? 'diner' : 'dej') && o.recette !== id && o.prot === r.p; })) return false;
     if (!r.gel && days.length > FRIDGE_DAYS && mine.some(function(m){ return m.i >= FRIDGE_DAYS; })) return false;
     if (r.p === 'oeufs' && (mine.length !== 2 || !sweet)) return false;
     if (r.p === 'boeuf'){
       let rouge = 0;
-      batchSwap(days, id, x, off).forEach(function(c, i){ ['dej', 'diner'].forEach(function(s){ if (!(s === 'diner' && days[i].libre) && c[s].prot === 'boeuf') rouge += boeufCuit; }); });
+      batchSwap(days, id, x, off).forEach(function(c, i){ ['dej', 'diner'].forEach(function(s){ if (!libreOf(days[i], s) && c[s].prot === 'boeuf') rouge += boeufCuit; }); });
       if (rouge > WEEK_GOALS.rouge + 0.5) return false;
     }
     return true;
@@ -269,7 +271,7 @@ function batchRound(days, profile){
   /* Sans imprévu (3.26.0) : la boîte est cuisinée comme prévu */
   const build = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {imprevu:null}), chs[i], profile); };
   /* Protéines d'un jour comparées à sa fourchette sur la journée normale (le repas libre n'a pas de macros connues) */
-  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:false, imprevu:null}), chs[i], profile); };
+  const normal = function(chs, i){ return buildDay(Object.assign({}, days[i].plan, {libre:{}, imprevu:null}), chs[i], profile); };
   const sec = function(r, slot){ return r.secs.find(function(s){ return s.id === slot; }); };
   const grams = function(r, slot, key){ const x = sec(r, slot).items.find(function(i){ return i.key === key; }); return x && x.buy ? x.buy.g || 0 : 0; };
   const band = function(r){ return Math.max(0, r.prot.low - r.tot.p, r.tot.p - r.prot.high); };
@@ -293,7 +295,7 @@ function batchRound(days, profile){
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const served = [];
     for (let i = b; i < Math.min(days.length, b + BATCH_BLOCK); i++)
-      ['dej', 'diner'].forEach(function(s){ if (!(s === 'diner' && days[i].plan.libre)) served.push({i:i, s:s}); });
+      ['dej', 'diner'].forEach(function(s){ if (!libreOf(days[i].plan, s)) served.push({i:i, s:s}); });
     const order = [];
     served.forEach(function(m){
       const c = out[m.i][m.s], id = recipeOf(c);

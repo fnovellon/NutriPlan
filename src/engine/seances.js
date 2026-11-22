@@ -41,10 +41,24 @@ function cleanWeek(o){
   if (Number.isInteger(o.libre) && o.libre >= 0 && o.libre <= 6) out.libre = o.libre;
   return out;
 }
-/* Jour pas encore rempli : les séances de la semaine type (aucune sans elle), repas libre son jour (samedi sans elle) */
+/* Repas libres d'un jour (5.0.0) : { dej?, diner? }, chacun 'dehors' (le budget du repas prévu) ou 'plaisir' (le repas
+   prévu + 300 × k, un par semaine). Avant la 5.0.0 : un booléen, vrai = le dîner, en repas plaisir. Tout le reste : aucun. */
+const LIBRE_SLOTS = ['dej', 'diner'], LIBRE_KINDS = ['dehors', 'plaisir'];
+function cleanLibre(v){
+  const out = {};
+  if (v === true) out.diner = 'plaisir';
+  else if (v && typeof v === 'object') LIBRE_SLOTS.forEach(function(s){ if (has(v, s) && LIBRE_KINDS.indexOf(v[s]) >= 0) out[s] = v[s]; });
+  return out;
+}
+/* La sorte du repas libre de ce repas d'un plan (ou d'un jour { libre }), sinon null */
+function libreOf(p, slot){ const l = p ? cleanLibre(p.libre) : {}; return has(l, slot) ? l[slot] : null; }
+/* Au moins un repas libre ce jour-là */
+function hasLibre(p){ return !!p && Object.keys(cleanLibre(p.libre)).length > 0; }
+/* Jour pas encore rempli : les séances de la semaine type (aucune sans elle), le dîner libre en repas plaisir son jour
+   (samedi sans elle) */
 function emptyPlan(js, sem){
   const w = sem || null, l = w && has(w.jours, String(js)) ? w.jours[js] : [];
-  return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6)};
+  return {seances:l.map(function(x){ return Object.assign({}, x); }), libre:js === (w ? w.libre : 6) ? {diner:'plaisir'} : {}};
 }
 /* Imprévu d'un repas (3.26.0) : { slot, kcal, mode } ; slot : un repas de la journée, mode : 'place' (à la place du repas)
    ou 'plus' (en plus), kcal : entier de 50 à 3 000. null s'il n'est pas valide. */
@@ -60,7 +74,7 @@ function cleanImprevu(o){
 function cleanPlan(p, js, sem){
   const out = emptyPlan(js, sem);
   if (!p || typeof p !== 'object') return out;
-  if (has(p, 'libre')) out.libre = !!p.libre;
+  if (has(p, 'libre')) out.libre = cleanLibre(p.libre);
   if (has(p, 'seances')) out.seances = cleanSeances(p.seances);
   const im = has(p, 'imprevu') ? cleanImprevu(p.imprevu) : null;
   if (im) out.imprevu = im;
@@ -74,6 +88,6 @@ function migratePlan(p){
   if (a === 'course' || a === 'double') list.push({taille:'moyenne', moment:m});
   if (a === 'longue') list.push({taille:'longue', moment:'matin', duree:p.duree});
   if (p.natation && a !== 'longue') list.push({taille:'petite', moment:'midi'});
-  return {seances:list, libre:!!p.libre};
+  return {seances:list, libre:p.libre ? {diner:'plaisir'} : {}};
 }
 function dureeLabel(d){ const x = DUREES.find(function(a){ return a[0] === d; }); return x ? x[1] : DUREES[1][1]; }

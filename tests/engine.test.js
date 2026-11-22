@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET, cleanLibre, libreOf, hasLibre, LIBRE_SLOTS};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET, cleanLibre, libreOf, hasLibre, LIBRE_SLOTS } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -97,19 +97,19 @@ assert.deepStrictEqual(plain(profileFields({ mode: 'x', age: '35', sexe: 'x', ne
 assert.deepStrictEqual(plain(profileFields('nimporte')), {});
 
 // 5. Plan d'un jour et conversion des plans d'avant la 2.0.0
-assert.deepStrictEqual(plain(emptyPlan(3)), { seances: [], libre: false }, 'jour sans séance');
-assert.strictEqual(emptyPlan(6).libre, true, 'repas libre du samedi par défaut');
+assert.deepStrictEqual(plain(emptyPlan(3)), { seances: [], libre: {} }, 'jour sans séance');
+assert.deepStrictEqual(plain(emptyPlan(6).libre), { diner: 'plaisir' }, 'repas libre du samedi par défaut');
 assert.deepStrictEqual(plain(cleanPlan({ seances: [petite('aube'), { taille: 'constructor' }, 'x', longue(7), longue(2), moyenne('midi'), petite('soir'), petite('matin'), petite('soir')], libre: 1 }, 3)),
-  { seances: [petite('soir'), longue(2), moyenne('midi'), petite('soir')], libre: true }, 'séances nettoyées : moment par défaut, une seule longue, 4 au plus');
-assert.deepStrictEqual(plain(cleanPlan({ seances: [{ taille: 'longue', moment: 'soir', duree: 3 }] }, 6)), { seances: [longue(3)], libre: true }, 'longue toujours le matin');
-assert.deepStrictEqual(plain(cleanPlan('abc', 2)), { seances: [], libre: false }, 'plan corrompu');
+  { seances: [petite('soir'), longue(2), moyenne('midi'), petite('soir')], libre: {} }, 'séances nettoyées : moment par défaut, une seule longue, 4 au plus ; repas libre abîmé (1) : aucun');
+assert.deepStrictEqual(plain(cleanPlan({ seances: [{ taille: 'longue', moment: 'soir', duree: 3 }] }, 6)), { seances: [longue(3)], libre: { diner: 'plaisir' } }, 'longue toujours le matin');
+assert.deepStrictEqual(plain(cleanPlan('abc', 2)), { seances: [], libre: {} }, 'plan corrompu');
 const old = (activity, extra) => plain(migratePlan(Object.assign({ activity, moment: 'soir', duree: 2, natation: false, libre: false }, extra)));
-assert.deepStrictEqual(old('repos'), { seances: [], libre: false }, 'repos');
-assert.deepStrictEqual(old('muscu'), { seances: [petite('soir')], libre: false }, 'muscu');
-assert.deepStrictEqual(old('course', { moment: 'matin' }), { seances: [moyenne('matin')], libre: false }, 'course le matin');
-assert.deepStrictEqual(old('double'), { seances: [petite('soir'), moyenne('soir')], libre: false }, 'muscu + course');
-assert.deepStrictEqual(old('longue', { duree: 2.5, libre: true }), { seances: [longue(2.5)], libre: true }, 'sortie longue');
-assert.deepStrictEqual(old('repos', { natation: true }), { seances: [petite('midi')], libre: false }, 'natation');
+assert.deepStrictEqual(old('repos'), { seances: [], libre: {} }, 'repos');
+assert.deepStrictEqual(old('muscu'), { seances: [petite('soir')], libre: {} }, 'muscu');
+assert.deepStrictEqual(old('course', { moment: 'matin' }), { seances: [moyenne('matin')], libre: {} }, 'course le matin');
+assert.deepStrictEqual(old('double'), { seances: [petite('soir'), moyenne('soir')], libre: {} }, 'muscu + course');
+assert.deepStrictEqual(old('longue', { duree: 2.5, libre: true }), { seances: [longue(2.5)], libre: { diner: 'plaisir' } }, 'sortie longue');
+assert.deepStrictEqual(old('repos', { natation: true }), { seances: [petite('midi')], libre: {} }, 'natation');
 assert.deepStrictEqual(old('longue', { natation: true }).seances.length, 1, 'pas de natation un jour de sortie longue');
 
 // 6. Toutes les combinaisons de plats avec le profil par défaut : apport ≈ objectif, planchers respectés
@@ -364,7 +364,7 @@ for (const [name, set] of Object.entries(SETS)) {
   const dinner = normal.secs.find(s => s.id === 'diner');
   assert(r.libre > 0 && r.libre % 50 === 0, `${name} : budget libre ${r.libre}`);
   near(r.libre, dinner.items.reduce((a, i) => a + i.m.kcal, 0) + 300, 25, `${name} : budget libre`);
-  assert(r.secs.some(s => s.title === 'Repas libre') && !r.secs.some(s => s.id === 'soir'), `${name} : sections du repas libre`);
+  assert(r.secs.some(s => s.title === 'Dîner libre' && s.libre === 'plaisir') && !r.secs.some(s => s.id === 'soir'), `${name} : sections du repas libre`);
   assert(r.tot.kcal > normal.tot.kcal, `${name} : repas libre non compté`);
 }
 // Le jour du repas libre est d'abord un jour normal (planchers de secours compris) : seuls le dîner et le skyr du soir
@@ -379,6 +379,52 @@ const sameDay = (label, set, ch, prof) => {
   assert(!r.secs.some(s => s.id === 'soir'), `${label} : skyr du soir le jour du repas libre`);
   return normal;
 };
+// 5.0.0 : repas libres au déjeuner et au dîner, repas dehors (le budget du repas prévu) ou repas plaisir (+ 300 × k).
+// Chaque repas libre remplace seulement le sien (le dîner avec le skyr du soir) ; les autres repas sont ceux du jour normal.
+const sameDay2 = (label, set, ch, prof, lib) => {
+  const normal = buildDay(day(set), ch, prof), r = buildDay(day(set, { libre: lib }), ch, prof), k = r.scale;
+  const qty = (x, id) => x.secs.find(s => s.id === id).items.map(i => i.qty + ' ' + i.name).join(', ');
+  const gone = ['dej', 'diner'].filter(sl => lib[sl]).concat(lib.diner ? ['soir'] : []);
+  normal.secs.filter(s => gone.indexOf(s.id) < 0).forEach(s => assert.strictEqual(qty(r, s.id), qty(normal, s.id), `${label} : ${s.title} changé par le repas libre`));
+  const kc = ids => normal.secs.filter(s => ids.indexOf(s.id) >= 0).reduce((a, s) => a + s.items.reduce((b, i) => b + i.m.kcal, 0), 0);
+  let sum = 0;
+  ['dej', 'diner'].forEach(sl => {
+    if (!lib[sl]) { assert(!r.libres[sl], `${label} : ${sl} pas libre`); return; }
+    const want = Math.round((kc(sl === 'diner' ? ['diner', 'soir'] : ['dej']) + (lib[sl] === 'plaisir' ? 300 * k : 0)) / 50) * 50;
+    const sec = r.secs.find(s => s.id === sl);
+    assert(sec.libre === lib[sl] && sec.title === (sl === 'dej' ? 'Déjeuner libre' : 'Dîner libre') && sec.items.length === 1 && sec.items[0].key === 'lib', `${label} : section ${sl}`);
+    assert.strictEqual(r.libres[sl], want, `${label} : budget ${sl} (${lib[sl]})`);
+    assert(sec.items[0].buy.id === 'libre' && sec.items[0].buy.n === 1 && sec.items[0].buy.kcal === want, `${label} : courses ${sl}`);
+    sum += want;
+  });
+  assert.strictEqual(r.libre, sum, `${label} : total des repas libres`);
+  assert.strictEqual(r.ecart, normal.ecart, `${label} : écart du jour libre`);
+  assert.strictEqual(r.prot.factor, normal.prot.factor, `${label} : pf du jour normal`);
+  near(r.tot.kcal, normal.tot.kcal + sum - (lib.dej ? kc(['dej']) : 0) - (lib.diner ? kc(['diner', 'soir']) : 0), 1e-6, `${label} : total du jour`);
+  return r;
+};
+for (const [name, set] of Object.entries(SETS)) {
+  for (const lib of [{ dej: 'dehors' }, { dej: 'plaisir' }, { diner: 'dehors' }, { dej: 'dehors', diner: 'plaisir' }, { dej: 'dehors', diner: 'dehors' }])
+    sameDay2(`${name} ${JSON.stringify(lib)}`, set, DEFAULT_CHOICES[3], {}, lib);
+}
+{
+  const dh = sameDay2('repas dehors : sans le bonus', [], DEFAULT_CHOICES[2], {}, { diner: 'dehors' }), pl = buildDay(day([], { libre: { diner: 'plaisir' } }), DEFAULT_CHOICES[2]);
+  near(pl.libres.diner - dh.libres.diner, 300, 50, 'repas plaisir : 300 kcal de plus que le repas dehors');
+  assert.deepStrictEqual(plain(buildDay(day([], { libre: true }), DEFAULT_CHOICES[2]).libres), plain(pl.libres), 'ancien format (vrai) : dîner en repas plaisir');
+  sameDay2('52 kg, deux repas libres', [petite('matin'), moyenne('soir')], DEFAULT_CHOICES[5], { poids: 52, sexe: 'f' }, { dej: 'plaisir', diner: 'dehors' });
+  sameDay2('thon deux fois, salé, 2,2 g/kg, sans shaker, déjeuner libre', [], { pdBase: 'sale', dej: { prot: 'thon', starch: 'gnocchis' }, diner: { prot: 'thon', starch: 'pdt' } }, { prot: 2.2, shaker: 'non' }, { dej: 'dehors' });
+  // Imprévu : pas sur un repas libre ; un imprévu du matin n'est pas repris sur le budget d'un repas libre
+  const im = buildDay(day([], { libre: { dej: 'dehors' }, imprevu: { slot: 'dej', kcal: 900, mode: 'place' } }), DEFAULT_CHOICES[2]);
+  assert(!im.imprevu && im.libres.dej, 'imprévu ignoré sur un repas libre');
+  const im2 = buildDay(day([], { libre: { dej: 'dehors', diner: 'dehors' } }), DEFAULT_CHOICES[2]), im3 = buildDay(day([], { libre: { dej: 'dehors', diner: 'dehors' }, imprevu: { slot: 'pd', kcal: 900, mode: 'place' } }), DEFAULT_CHOICES[2]);
+  assert(im3.imprevu && im3.libres.dej === im2.libres.dej && im3.libres.diner === im2.libres.diner, 'budgets des repas libres intacts');
+  near(im3.tot.kcal - im2.tot.kcal, im3.imprevu.over, 1e-6, 'imprévu : seul ce qui n’est pas repris s’ajoute');
+  assert(im3.imprevu.over > 0, 'imprévu avant deux repas libres : rien ou peu à reprendre');
+  // Formats relus : vrai, objet, sortes et repas inconnus ignorés
+  assert.deepStrictEqual(plain(cleanLibre({ dej: 'dehors', diner: 'x', pd: 'plaisir', __proto__: { dej: 'plaisir' } })), { dej: 'dehors' }, 'cleanLibre');
+  assert.deepStrictEqual([true, false, null, 1, 'diner', [], {}].map(v => JSON.stringify(plain(cleanLibre(v)))), ['{"diner":"plaisir"}', '{}', '{}', '{}', '{}', '{}', '{}'], 'cleanLibre : anciens formats et abîmés');
+  assert(libreOf({ libre: true }, 'diner') === 'plaisir' && libreOf({ libre: { dej: 'dehors' } }, 'dej') === 'dehors' && libreOf({ libre: { dej: 'dehors' } }, 'diner') === null && libreOf(null, 'dej') === null && !hasLibre({ libre: {} }), 'libreOf, hasLibre');
+}
 const oil = sameDay('58 kg sans marge', [petite('matin')], DEFAULT_CHOICES[2], { poids: 58, sexe: 'f', shaker: 'non', marge: 0 });
 assert(oil.secs.find(s => s.id === 'diner').items.some(i => i.key === 'gras'), 'cas sans huile de secours : le test ne vérifie plus rien');
 const soir = sameDay('thon deux fois, salé, 2,2 g/kg, sans shaker', [], { pdBase: 'sale', dej: { prot: 'thon', starch: 'gnocchis' }, diner: { prot: 'thon', starch: 'pdt' } }, { prot: 2.2, shaker: 'non' });
@@ -670,16 +716,16 @@ assert.deepStrictEqual(plain(sem), { jours: { 1: [{ taille: 'petite', moment: 's
 assert.deepStrictEqual(plain(cleanWeek(null)), { jours: {}, libre: 6 }, 'pas de semaine type');
 assert.deepStrictEqual(plain(cleanWeek({ jours: 'x', libre: 7 })), { jours: {}, libre: 6 }, 'semaine type abîmée');
 assert.strictEqual(cleanWeek({ libre: 2.5 }).libre, 6, 'repas libre : un jour entier');
-assert.deepStrictEqual(plain(emptyPlan(1, sem)), { seances: [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'matin' }], libre: false }, 'lundi : séances de la semaine type');
-assert(emptyPlan(0, sem).libre && !emptyPlan(6, sem).libre && emptyPlan(6).libre, 'repas libre : jour de la semaine type, samedi sans elle');
+assert.deepStrictEqual(plain(emptyPlan(1, sem)), { seances: [{ taille: 'petite', moment: 'soir' }, { taille: 'moyenne', moment: 'matin' }], libre: {} }, 'lundi : séances de la semaine type');
+assert(hasLibre(emptyPlan(0, sem)) && !hasLibre(emptyPlan(6, sem)) && hasLibre(emptyPlan(6)), 'repas libre : jour de la semaine type, samedi sans elle');
 const e1 = emptyPlan(1, sem); e1.seances[0].moment = 'matin';
 assert.strictEqual(sem.jours[1][0].moment, 'soir', 'la semaine type n’est pas modifiée par un jour');
 // Ce qui est enregistré l'emporte, champ par champ ; sans semaine type, rien ne change (repos, samedi)
 assert.deepStrictEqual(plain(cleanPlan({ ch: {} }, 1, sem)), plain(emptyPlan(1, sem)), 'jour avec des plats seulement : séances de la semaine type');
 assert.deepStrictEqual(plain(cleanPlan({ seances: [] }, 1, sem).seances), [], 'repos enregistré : gardé');
-assert.strictEqual(cleanPlan({ libre: false }, 0, sem).libre, false, 'repas libre retiré : gardé');
+assert.deepStrictEqual(plain(cleanPlan({ libre: false }, 0, sem).libre), {}, 'repas libre retiré : gardé');
 assert.deepStrictEqual(plain(cleanPlan({ libre: true }, 1, sem).seances), plain(sem.jours[1]), 'repas libre seul : séances de la semaine type');
-assert.deepStrictEqual(plain(cleanPlan(undefined, 3)), { seances: [], libre: false }, 'sans semaine type : repos');
+assert.deepStrictEqual(plain(cleanPlan(undefined, 3)), { seances: [], libre: {} }, 'sans semaine type : repos');
 assert.deepStrictEqual(plain(cleanSeances([petite('matin'), { taille: 'x' }, longue(4), longue(2)])), [{ taille: 'petite', moment: 'matin' }, { taille: 'longue', moment: 'matin', duree: 2 }], 'séances validées');
 // Profil : la semaine type n'est gardée que si elle diffère de celle par défaut
 assert(!('semaine' in profileFields({ semaine: { jours: {}, libre: 6 } })) && profileFields({ semaine: { jours: {}, libre: 3 } }).semaine.libre === 3, 'semaine type dans le profil');
@@ -983,7 +1029,7 @@ assert(envNeed(7) === 2 && envNeed(4) === 2 && envNeed(3) === 1 && envNeed(1) ==
     assert(beef(res) <= Math.max(500.5, beef(nat)), `${combo} : bœuf ${beef(res)}`);
     const fiche = batchCook(res.map(r => ({ res: r })))[0];
     (fiche ? fiche.recipes : []).forEach(rc => {
-      const x = RECIPES[rc.id], mine = out.flatMap((c, i) => ['dej', 'diner'].filter(sl => c[sl].recette === rc.id && !(sl === 'diner' && plans[i].libre)).map(sl => c[sl]));
+      const x = RECIPES[rc.id], mine = out.flatMap((c, i) => ['dej', 'diner'].filter(sl => c[sl].recette === rc.id && !libreOf(plans[i], sl)).map(sl => c[sl]));
       if (x.p === 'oeufs') return assert(mine.every(m => m.g2 === Math.round(90 * k / 5) * 5 && !('g' in m)), `${combo} : jambon des œufs-jambon`);
       if (!BATCH_GRAMS[x.p]) return assert(mine.every(m => !('g' in m) && !('g2' in m)), `${combo} : ${rc.id} sans poids fixé`);
       elig++;
@@ -1096,7 +1142,7 @@ assert(recipePref('poulet-riz', null) === 1 && recipePref('poulet-riz', { fav: [
 // Imprévu (3.26.0) : relu du stockage s'il est valide ; un repas mangé autrement, repris sur la suite de la journée
 {
   const ok = { slot: 'dej', kcal: 600, mode: 'place' };
-  assert.deepStrictEqual(plain(cleanPlan({ seances: [], libre: false, imprevu: ok }, 3)), { seances: [], libre: false, imprevu: ok }, 'imprévu relu');
+  assert.deepStrictEqual(plain(cleanPlan({ seances: [], libre: false, imprevu: ok }, 3)), { seances: [], libre: {}, imprevu: ok }, 'imprévu relu');
   [{ slot: 'dej', kcal: 40, mode: 'place' }, { slot: 'dej', kcal: 3010, mode: 'plus' }, { slot: 'dej', kcal: 600.5, mode: 'plus' }, { slot: 'dej', kcal: '600', mode: 'plus' },
     { slot: 'band0', kcal: 600, mode: 'plus' }, { slot: '__proto__', kcal: 600, mode: 'plus' }, { slot: 'dej', kcal: 600, mode: 'x' }, null, 5, 'dej'].forEach(bad =>
     assert(!('imprevu' in cleanPlan({ seances: [], libre: false, imprevu: bad }, 3)) && cleanImprevu(bad) === null, 'imprévu abîmé ignoré : ' + JSON.stringify(bad)));
@@ -1229,6 +1275,27 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
   const one = plain(planDays([{ libre: false }, { libre: true }], { pd: [{ id: 'pain' }], co: [{ id: 'thon', cs: 'banane' }], meal: [{ prot: 'oeufs', starch: 'pdt', recette: null }] }));
   assert(one.every(x => x.dej.prot === 'oeufs' && x.diner.prot === 'oeufs' && !x.dej.recette), 'une seule carte');
   assert.deepStrictEqual(plain(planDays([{}], { pd: [], co: [], meal: [] })), [{}], 'aucune carte');
+  // Repas libres au déjeuner aussi (5.0.0) : ils ne comptent pas, reçoivent une carte d'une autre protéine que l'autre repas
+  {
+    const ld = [{ libre: { dej: 'dehors' } }, {}, { libre: { dej: 'plaisir', diner: 'dehors' } }, { libre: true }, {}, { libre: { dej: 'dehors' } }, {}];
+    const lp = plain(planDays(ld, cards)), cnt = {};
+    lp.forEach((x, i) => {
+      assert(ok.includes(key(x.dej)) && ok.includes(key(x.diner)) && x.dej.prot !== x.diner.prot, 'libres, jour ' + i + ' : ' + JSON.stringify(x));
+      ['dej', 'diner'].forEach(sl => { if (!libreOf(ld[i], sl)) cnt[key(x[sl])] = (cnt[key(x[sl])] || 0) + 1; });
+    });
+    const v = Object.values(cnt);
+    assert(Math.max(...v) - Math.min(...v) <= 1 && v.reduce((a, y) => a + y, 0) === 14 - 5, 'repas libres pas comptés : ' + JSON.stringify(cnt));
+    const all = plain(planDays([{ libre: { dej: 'dehors', diner: 'plaisir' } }, { libre: { dej: 'dehors', diner: 'dehors' } }], cards));
+    assert(all.every(x => ok.includes(key(x.dej)) && ok.includes(key(x.diner)) && x.dej.prot !== x.diner.prot), 'tout libre : des cartes quand même');
+    // Batch cooking d'avant la 4.0.0 et envies : un déjeuner libre ne compte pas non plus
+    const bd = Array.from({ length: 7 }, (x, i) => ({ libre: i === 1 ? { dej: 'dehors' } : i === 4 ? { dej: 'dehors', diner: 'plaisir' } : {} }));
+    const bc = plain(batchChoices(bd, 4, [], 1, lcg(11)));
+    assert(bc.every(c => c.dej.recette && c.diner.recette && c.dej.prot !== c.diner.prot), 'batch : déjeuners libres');
+    const ep = plain(envPlan(bd, [{ kind: 'prot', id: 'poisson' }], lcg(2)));
+    assert(!ep[1].dej.prot && !ep[4].dej.prot && !ep[4].diner.prot, 'envies : rien sur un repas libre');
+    const ab = plain(batchChoices([{ libre: { dej: 'dehors', diner: 'dehors' } }, { libre: { dej: 'dehors', diner: 'dehors' } }], 3, [], 1, lcg(1)));
+    assert(ab.every(c => c.dej.recette && c.diner.recette), 'batch tout libre : des recettes quand même');
+  }
   // Épices et petits trucs : aromates des recettes servies (pas un dîner de repas libre), petits-déjeuners et collations qui
   // en demandent ; noms ramenés à l'essentiel, triés
   assert.deepStrictEqual(['ail en chemise', 'persil plat (beaucoup)', 'citron confit', 'paprika doux', 'basilic'].map(pantryName), ['ail', 'persil', 'citron', 'paprika', 'basilic'], 'noms des épices');

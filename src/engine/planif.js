@@ -76,7 +76,8 @@ function surpriseMeal(cards, fix, off, prefs, rand, season){
      nombreuses aux cartes servies d'abord (celles qui se congèlent mal, poisson en tête), repas dans l'ordre des jours, deux
      cartes en cours à la fois, pas deux fois de suite la même ; jamais la même protéine midi et soir si c'est possible
      (échange avec le repas le plus proche, sans repousser après le 3e jour une recette qui se congèle mal). Un plat simple
-     se congèle (il se cuisine le jour même). Le dîner d'un repas libre reçoit une carte d'une autre protéine, sans compter.
+     se congèle (il se cuisine le jour même). Un repas libre (déjeuner ou dîner, 5.0.0) reçoit une carte d'une autre protéine,
+     sans compter.
    Renvoie [{ pdBase, co, cs, dej, diner }] (dej et diner : { prot, starch, recette ? }). */
 function planDays(days, cards){
   const c0 = cleanCards(cards), out = days.map(function(){ return {}; });
@@ -88,7 +89,7 @@ function planDays(days, cards){
   const gel = function(e){ return !e.c.recette || RECIPES[e.c.recette].gel; };
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const block = days.slice(b, b + BATCH_BLOCK), slots = [];
-    block.forEach(function(d, i){ slots.push({i:i, slot:'dej'}); if (!(d && d.libre)) slots.push({i:i, slot:'diner'}); });
+    block.forEach(function(d, i){ LIBRE_SLOTS.forEach(function(s){ if (!libreOf(d, s)) slots.push({i:i, slot:s}); }); });
     const m = slots.length, nr = Math.min(c0.meal.length, m), cnt = [];
     for (let j = 0; j < nr; j++) cnt.push(Math.floor(m / nr) + (j >= nr - m % nr ? 1 : 0));
     const ent = c0.meal.slice(0, nr).map(function(c, j){ return {c:c, j:j}; });
@@ -131,8 +132,13 @@ function planDays(days, cards){
       }
     });
     const meal = function(e){ const o = {prot:e.c.prot, starch:e.c.starch}; if (e.c.recette) o.recette = e.c.recette; return o; };
+    /* Un repas libre (5.0.0 : au déjeuner aussi) reçoit une carte d'une autre protéine que l'autre repas, sans compter */
+    const pool = ent.concat(c0.meal.map(function(c){ return {c:c}; }));
+    const another = function(x){ return pool.find(function(e){ return !x || e.c.prot !== x.c.prot; }) || x || pool[0]; };
     block.forEach(function(d, i){
-      const dej = at[i].dej, din = at[i].diner || ent.find(function(e){ return e.c.prot !== dej.c.prot; }) || dej;
+      let dej = at[i].dej, din = at[i].diner;
+      if (!dej) dej = another(din);
+      if (!din) din = another(dej);
       out[b + i].dej = meal(dej); out[b + i].diner = meal(din);
     });
   }

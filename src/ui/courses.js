@@ -112,16 +112,16 @@
     }).join('');
     /* Un repas : sa recette, sinon sa protéine et son féculent */
     const meal = function(c){ const r = recipeOf(c); return r ? RECIPES[r].t : low(PROT[c.prot].label) + ' et ' + low(STARCH[c.starch].label); };
-    /* Changer un repas (3.30.0) : aujourd'hui et après, pas le dîner d'un repas libre ; pas dans une planification en batch
+    /* Changer un repas (3.30.0) : aujourd'hui et après, pas un repas libre ; pas dans une planification en batch
        cooking d'avant la 4.0.0 (elle change ses recettes dans sa fiche) */
     const change = !cur.n;
     $('courses-days').innerHTML = days.map(function(iso, j){
       const d = fromIso(iso), p = planFor(iso), c = choicesFor(iso, d.getDay()), r = res[j];
-      const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', 'midi' + NB + ': ' + low(meal(c.dej)), r.libre ? 'repas libre le soir' : 'soir' + NB + ': ' + low(meal(c.diner))];
+      const what = [p.seances.length ? p.seances.length + NB + 'séance' + (p.seances.length > 1 ? 's' : '') : 'repos', libreOf(p, 'dej') ? 'repas libre le midi' : 'midi' + NB + ': ' + low(meal(c.dej)), libreOf(p, 'diner') ? 'repas libre le soir' : 'soir' + NB + ': ' + low(meal(c.diner))];
       const btn = function(slot){ return '<button type="button" class="reset" id="chg-' + iso + '-' + slot + '" data-action="co-meal" data-value="' + iso + '|' + slot + '" aria-haspopup="dialog" aria-label="Changer le repas ' + REPAS[slot] + ', ' + dayLabel(d) + '">Changer le ' + (slot === 'dej' ? 'midi' : 'soir') + '</button>'; };
       return '<li><button type="button" class="shop-day" data-action="co-day" data-value="' + iso + '"><span class="d">' + cap(dayLabel(d)) + '</span>' +
         '<span class="k">' + r10(r.tot.kcal) + NB + 'kcal</span><span class="note">' + cap(what.join(', ')) + '.</span></button>' +
-        (change && iso >= t ? '<div class="co-meals">' + btn('dej') + (r.libre ? '' : btn('diner')) + '</div>' : '') + '</li>';
+        (change && iso >= t && LIBRE_SLOTS.some(function(sl){ return !libreOf(p, sl); }) ? '<div class="co-meals">' + (libreOf(p, 'dej') ? '' : btn('dej')) + (libreOf(p, 'diner') ? '' : btn('diner')) + '</div>' : '') + '</li>';
     }).join('');
   };
   const openPlanif = function(p, opener){ cur = p; renderCourses(); openScreen('courses', opener); };
@@ -229,7 +229,7 @@
      et (4.0.0, ou planification en plats simples) les plats simples. */
   const mealOptions = function(iso, slot){
     const pr = cleanProfile(prof), off = envOff(pr.off, cur.env), c = choicesFor(iso, fromIso(iso).getDay()), o = c[slot === 'dej' ? 'diner' : 'dej'];
-    const lib = slot === 'dej' && planFor(iso).libre, prots = allowed('prot', off), avoid = !lib && prots.length > 1 ? o.prot : null;
+    const lib = libreOf(planFor(iso), slot === 'dej' ? 'diner' : 'dej'), prots = allowed('prot', off), avoid = !lib && prots.length > 1 ? o.prot : null;
     const out = [];
     prots.forEach(function(p){
       if (p === avoid) return;
@@ -313,7 +313,7 @@
     'co-meal': function(b, v){
       const q = String(v).split('|');
       if (!cur || cur.n || !fromIso(q[0]) || !isoOk(q[0]) || q[0] < todayIso() || q[0] < cur.from || q[0] > cur.to || !has(REPAS, q[1])) return;
-      if (q[1] === 'diner' && planFor(q[0]).libre) return;
+      if (libreOf(planFor(q[0]), q[1])) return;
       openMeal(q[0], q[1], b);
     },
     /* Le plat choisi (ou tiré) remplace celui de ce repas, enregistré pour la date et en mémoire pour son jour de la semaine ;
@@ -360,7 +360,7 @@
       let n = 0;
       blk.isos.forEach(function(iso, j){
         const d = blk.days[j];
-        n += ['dej', 'diner'].filter(function(sl){ return d.ch[sl].recette === s.id && !(sl === 'diner' && d.libre); }).length;
+        n += ['dej', 'diner'].filter(function(sl){ return d.ch[sl].recette === s.id && !libreOf(d, sl); }).length;
         if (JSON.stringify(next[j]) === JSON.stringify(d.ch)) return;
         const js = fromIso(iso).getDay(), c = cleanCh(next[j], js);
         writeDay(iso, {ch:c});

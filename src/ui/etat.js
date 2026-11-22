@@ -102,14 +102,16 @@
   };
   /* Semaine type des réglages : séances habituelles et jour du repas libre */
   const semOf = function(){ return cleanProfile(prof).semaine; };
-  /* Plan d'une date : ce qui est enregistré, le reste de la semaine type. Le repas libre de la semaine type ne compte pas
-     si un autre jour de la même semaine en a un enregistré (un seul par semaine). */
+  /* Repas libres enregistrés pour une date (5.0.0), sinon null (ils viennent de la semaine type) */
+  const recLibre = function(iso){ const o = store.plans[iso]; return o && typeof o === 'object' && has(o, 'libre') ? cleanLibre(o.libre) : null; };
+  /* Plan d'une date : ce qui est enregistré, le reste de la semaine type. Le repas plaisir de la semaine type (le dîner de
+     son jour) ne compte pas si un autre jour de la même semaine a un repas plaisir enregistré (un par semaine). */
   const basePlan = function(iso){
-    const d = fromIso(iso), rec = store.plans[iso], p = cleanPlan(rec, d.getDay(), semOf());
-    if (p.libre && !(rec && typeof rec === 'object' && has(rec, 'libre')) && weekOf(d).some(function(x){
-      const i = isoDate(x), o = store.plans[i];
-      return i !== iso && o && typeof o === 'object' && has(o, 'libre') && o.libre === true;
-    })) p.libre = false;
+    const d = fromIso(iso), p = cleanPlan(store.plans[iso], d.getDay(), semOf());
+    if (hasLibre(p) && !recLibre(iso) && weekOf(d).some(function(x){
+      const i = isoDate(x), l = recLibre(i);
+      return i !== iso && l && LIBRE_SLOTS.some(function(s){ return l[s] === 'plaisir'; });
+    })) p.libre = {};
     return p;
   };
   /* Veille d'une sortie longue (3.28.0) : la durée de celle du lendemain (prévue ou de la semaine type), pour recharger */
@@ -133,20 +135,27 @@
      page les donnerait (un imprévu sur un autre repas reste compté) */
   const planForMeal = function(p, slot){
     const im = cleanImprevu(p.imprevu);
-    return Object.assign({}, p, {libre:false}, im && im.slot === slot ? {imprevu:null} : {});
+    return Object.assign({}, p, {libre:{}}, im && im.slot === slot ? {imprevu:null} : {});
   };
   /* Plats choisis : pour cette date, et en mémoire pour ce jour de la semaine (repris par les jours pas encore choisis) */
   const saveCh = function(){ writeDay(selIso(), {ch:ch}); store.choices[sel] = ch; persist(); };
-  /* Un seul repas libre par semaine : l'activer un jour le retire des autres jours de la même semaine */
-  const clearOtherLibre = function(){
-    const moved = [];
-    weekOf(selDate).forEach(function(d){
-      const iso = isoDate(d);
-      if (iso === selIso()) return;
-      if (planFor(iso).libre){ writeDay(iso, {libre:false}); moved.push(DAYS.find(function(x){ return x.js === d.getDay(); }).long); }
+  /* Repas libres (5.0.0) : autant qu'on veut, au déjeuner et au dîner ; un seul repas plaisir par semaine (lundi →
+     dimanche). Les autres repas plaisir de la semaine de d, sauf iso|slot : [{ iso, slot, d, rec }] (rec : enregistré ;
+     sinon celui de la semaine type) */
+  const MEAL_AT = {dej:'midi', diner:'soir'};
+  const otherPlaisirs = function(d, iso, slot){
+    const out = [];
+    weekOf(d).forEach(function(x){
+      const i = isoDate(x), l = cleanLibre(planFor(i).libre);
+      LIBRE_SLOTS.forEach(function(s){ if (l[s] === 'plaisir' && !(i === iso && s === slot)) out.push({iso:i, slot:s, d:x, rec:!!recLibre(i)}); });
     });
-    if (!moved.length) return '';
-    return 'Un seul repas libre par semaine' + NB + ': ' + (moved.length > 1 ? 'ceux de ' + moved.join(' et de ') + ' sont retirés.' : 'celui de ' + moved[0] + ' est retiré.');
+    return out;
+  };
+  /* « samedi soir », « ce midi » (le jour affiché) */
+  const mealAt = function(d, slot){
+    const dd = dayDiff(d);
+    if (isoDate(d) === selIso() && dd === 0) return slot === 'dej' ? 'ce midi' : 'ce soir';
+    return DAYS.find(function(x){ return x.js === d.getDay(); }).long + ' ' + MEAL_AT[slot];
   };
   /* Actions des boutons (data-action) : chaque écran ajoute les siennes à côté de son code (Object.assign(ACTIONS, {…})),
      le clic est traité dans ui/actions.js. Une action reçoit le bouton et sa valeur (data-value) ; elle renvoie un message

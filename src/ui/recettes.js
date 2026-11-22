@@ -32,7 +32,7 @@
   const libKey = function(){ return lib.tab === 'pd' ? 'tpd' : lib.tab === 'co' ? 'tco' : 'target'; };
   const libTarget = function(){
     const v = lib[libKey()], q = v.split('|'), iso = isoDate(addDays(today, +q[0]));
-    return {iso:iso, slot:q[1], day:+q[0], label:LIB_TT[lib.tab].find(function(t){ return t[0] === v; })[1].toLowerCase(), libre:q[1] === 'diner' && planFor(iso).libre};
+    return {iso:iso, slot:q[1], day:+q[0], label:LIB_TT[lib.tab].find(function(t){ return t[0] === v; })[1].toLowerCase(), libre:!!libreOf(planFor(iso), q[1])};
   };
   /* Ce qui est déjà choisi pour le repas visé : la recette, la base du petit-déjeuner, la collation (et ses boules) */
   const libChosen = function(tg){
