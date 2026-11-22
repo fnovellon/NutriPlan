@@ -31,7 +31,9 @@
 
   <section data-step="1" aria-labelledby="acc-h1">
     <h1 id="acc-h1" tabindex="-1">Bienvenue</h1>
-    <p class="acc-p">L’appli calcule tes repas de la journée, avec les quantités, d’après ton profil et tes séances. Tes réponses restent sur ton téléphone.</p>
+    <p class="acc-p">L’appli calcule tes repas de la journée, avec les quantités, d’après ton profil et tes séances. Tes réponses restent sur ton téléphone, sauf si tu actives la synchronisation.</p>
+    <p class="calc acc-sync">Déjà utilisée sur un autre appareil&nbsp;? <button type="button" class="link" id="acc-sync" data-action="sync-in">Se connecter avec Google</button> pour reprendre tes données.</p>
+    <p class="warn" id="acc-sync-msg" role="status"></p>
     <div class="opt-row">
       <span class="lbl" id="acc-l-sexe">Tu es</span>
       <div class="seg" role="group" aria-labelledby="acc-l-sexe">
@@ -164,7 +166,7 @@
     <p>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</p>
     <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
     <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
-    <p>Tes séances et tes plats sont mémorisés pour chaque jour, sur cet appareil. Un jour pas encore choisi reprend les plats du même jour de la semaine.</p>
+    <p>Tes séances et tes plats sont mémorisés pour chaque jour, sur cet appareil (et sur ton compte Google si tu actives la synchronisation, dans les réglages). Un jour pas encore choisi reprend les plats du même jour de la semaine.</p>
     <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
     <p class="version"><span>Version <span id="app-version"></span></span><a href="https://github.com/fnovellon/NutriPlan/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Nouveautés</a></p>
   </footer>
@@ -232,7 +234,7 @@
             <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
           </div>
           <p class="calc" id="calc-prot"></p>
-          <p class="calc">Ton profil reste sur cet appareil.</p>
+          <p class="calc">Ton profil reste sur cet appareil, sauf si tu actives la synchronisation (onglet «&nbsp;Appli&nbsp;»).</p>
         </div>
       </section>
     </div>
@@ -322,14 +324,25 @@
           </div>
         </div>
       </section>
+      <section class="needs" id="sync" aria-labelledby="sync-t">
+        <h2 class="needs-t" id="sync-t">Synchronisation</h2>
+        <p class="needs-s" id="sync-s"></p>
+        <div class="needs-body">
+          <p class="calc" id="sync-st" role="status"></p>
+          <div class="regl-links" id="sync-acts"></div>
+          <p class="warn" id="sync-err" role="alert"></p>
+          <p class="calc">La première connexion d’un appareil reprend ta copie en ligne&nbsp;; ce qui n’y est pas encore y est ajouté. Ensuite, si deux appareils changent la même chose, le plus récent l’emporte.</p>
+        </div>
+      </section>
       <section class="needs" id="effacer" aria-labelledby="eff-t">
         <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
-        <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
+        <p class="needs-s">Tout remettre à zéro sur cet appareil (et ta copie en ligne si tu es connecté)&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
         <div class="needs-body">
           <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
           <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
-            <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
+            <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.<span id="eff-sync" hidden> Ta copie en ligne sera effacée aussi.</span></p>
             <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
+            <p class="warn" id="eff-msg" role="status"></p>
           </div>
         </div>
       </section>
@@ -386,6 +399,12 @@
       <li>Dans le récap d’une planification, «&nbsp;Changer le midi&nbsp;» ou «&nbsp;Changer le soir&nbsp;» remplace un plat, au hasard ou choisi dans la liste. «&nbsp;Modifier&nbsp;» rouvre ses étapes avec ses cartes, à partir d’aujourd’hui&nbsp;; tu peux aussi changer chaque jour depuis ta journée.</li>
       <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas plaisir. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
       <li>Chaque planification a son récap jour par jour et <strong>ses courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin, et à part les épices et petits trucs (ail, citron, herbes…) à vérifier dans tes placards. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
+    </ul>
+    <h2>Sur tous tes appareils</h2>
+    <ul>
+      <li>Dans les réglages, onglet «&nbsp;Appli&nbsp;», <strong>Synchronisation</strong>&nbsp;: connecte-toi avec ton compte Google et retrouve tes jours, ton profil, tes planifications et tes repas cochés sur ton téléphone, ta tablette ou ton ordinateur. La première connexion d’un appareil reprend ta copie en ligne&nbsp;; ensuite, chaque changement est envoyé tout seul, et si deux appareils changent la même chose, le plus récent l’emporte.</li>
+      <li>Sur un nouvel appareil, l’accueil propose «&nbsp;Se connecter avec Google&nbsp;» pour reprendre tout de suite tes données.</li>
+      <li>Sans réseau, l’appli marche comme d’habitude&nbsp;: tes changements partent à la prochaine connexion.</li>
     </ul>
     <h2>Installer l’appli sur ton téléphone</h2>
     <ul>
@@ -524,6 +543,7 @@
 {{inclure engine/courses.js}}
 {{inclure engine/planif.js}}
 {{inclure engine/equiv.js}}
+{{inclure engine/sync.js}}
 
 {{# Interface : seulement dans un navigateur (le moteur reste testable sans DOM). Un fichier par écran ; chacun ajoute les }}
 {{# actions de ses boutons à ACTIONS (déclaré dans ui/etat.js, le clic est traité dans ui/actions.js). }}
@@ -544,6 +564,7 @@ if (typeof document !== 'undefined'){
 {{inclure ui/actions.js}}
 {{inclure ui/reglages.js}}
 {{inclure ui/demarrage.js}}
+{{inclure ui/sync.js}}
 }
 </script>
 </body>

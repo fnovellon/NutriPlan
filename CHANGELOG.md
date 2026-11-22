@@ -1,5 +1,13 @@
 # Nouveautés
 
+## 5.1.0, 22 novembre 2026
+
+- Synchronisation entre tes appareils : dans les réglages (onglet « Appli »), connecte-toi avec ton compte Google et retrouve tes jours, ton profil, tes planifications et tes repas cochés sur ton téléphone, ta tablette ou ton ordinateur.
+- Chaque changement part tout seul quelques secondes après ; si deux appareils changent la même chose, le plus récent l'emporte. Sans réseau, l'appli marche comme avant et rattrape à la prochaine connexion.
+- Sur un nouvel appareil, l'accueil propose « Se connecter avec Google » pour reprendre tout de suite tes données.
+- « Tout effacer » efface aussi ta copie en ligne quand tu es connecté. Tu peux te déconnecter à tout moment : tes données restent sur l'appareil.
+- Tes données sont rangées sur ton compte, dans le projet Firebase de l'appli : personne d'autre que toi ne peut y accéder depuis l'appli, mais son administrateur peut techniquement les voir.
+
 ## 5.0.0, 22 novembre 2026
 
 - Autant de repas libres que tu veux, le midi comme le soir : un déjeuner dehors, un midi et un soir le même jour, tout un week-end. L'interrupteur « Repas libre » est maintenant aussi dans la carte du déjeuner.

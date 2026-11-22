@@ -221,6 +221,6 @@
     },
     /* « Effacer mes données » : demander, confirmer ou annuler */
     'eff-ask': function(){ effShow(true); $('eff-no').focus({preventScroll:true}); },
-    'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); },
-    'eff-ok': function(){ resetAll(); }
+    'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); }
+    /* « Oui, tout effacer » (eff-ok) : dans ui/sync.js (la copie en ligne d'abord si on est connecté) */
   });

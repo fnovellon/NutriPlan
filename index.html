@@ -601,6 +601,8 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 .rec-season svg{width:16px;height:16px;color:var(--lip);flex:none;}
 .wsea{margin:0 0 12px;}
 .wsea .note{display:block;font-size:14px;}
+#sync .regl-links{margin-bottom:14px;}
+.acc-sync{margin-top:-10px;}
 </style>
 </head>
 <body>
@@ -612,7 +614,9 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
 
   <section data-step="1" aria-labelledby="acc-h1">
     <h1 id="acc-h1" tabindex="-1">Bienvenue</h1>
-    <p class="acc-p">L’appli calcule tes repas de la journée, avec les quantités, d’après ton profil et tes séances. Tes réponses restent sur ton téléphone.</p>
+    <p class="acc-p">L’appli calcule tes repas de la journée, avec les quantités, d’après ton profil et tes séances. Tes réponses restent sur ton téléphone, sauf si tu actives la synchronisation.</p>
+    <p class="calc acc-sync">Déjà utilisée sur un autre appareil&nbsp;? <button type="button" class="link" id="acc-sync" data-action="sync-in">Se connecter avec Google</button> pour reprendre tes données.</p>
+    <p class="warn" id="acc-sync-msg" role="status"></p>
     <div class="opt-row">
       <span class="lbl" id="acc-l-sexe">Tu es</span>
       <div class="seg" role="group" aria-labelledby="acc-l-sexe">
@@ -745,7 +749,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
     <p>Sous chaque aliment&nbsp;: ses calories, puis P, G, L pour protéines, glucides, lipides.</p>
     <p>Quand tu changes de féculent, la quantité s’ajuste pour garder les mêmes calories.</p>
     <p>Les calories sont des estimations&nbsp;: c’est ta moyenne de poids sur deux semaines qui dit s’il faut ajuster.</p>
-    <p>Tes séances et tes plats sont mémorisés pour chaque jour, sur cet appareil. Un jour pas encore choisi reprend les plats du même jour de la semaine.</p>
+    <p>Tes séances et tes plats sont mémorisés pour chaque jour, sur cet appareil (et sur ton compte Google si tu actives la synchronisation, dans les réglages). Un jour pas encore choisi reprend les plats du même jour de la semaine.</p>
     <button type="button" class="reset" data-action="reset">Revenir au plan de base pour ce jour</button>
     <p class="version"><span>Version <span id="app-version"></span></span><a href="https://github.com/fnovellon/NutriPlan/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Nouveautés</a></p>
   </footer>
@@ -813,7 +817,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
             <input type="range" id="in-prot" data-key="prot" min="1.6" max="2.2" step="0.1">
           </div>
           <p class="calc" id="calc-prot"></p>
-          <p class="calc">Ton profil reste sur cet appareil.</p>
+          <p class="calc">Ton profil reste sur cet appareil, sauf si tu actives la synchronisation (onglet «&nbsp;Appli&nbsp;»).</p>
         </div>
       </section>
     </div>
@@ -903,14 +907,25 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
           </div>
         </div>
       </section>
+      <section class="needs" id="sync" aria-labelledby="sync-t">
+        <h2 class="needs-t" id="sync-t">Synchronisation</h2>
+        <p class="needs-s" id="sync-s"></p>
+        <div class="needs-body">
+          <p class="calc" id="sync-st" role="status"></p>
+          <div class="regl-links" id="sync-acts"></div>
+          <p class="warn" id="sync-err" role="alert"></p>
+          <p class="calc">La première connexion d’un appareil reprend ta copie en ligne&nbsp;; ce qui n’y est pas encore y est ajouté. Ensuite, si deux appareils changent la même chose, le plus récent l’emporte.</p>
+        </div>
+      </section>
       <section class="needs" id="effacer" aria-labelledby="eff-t">
         <h2 class="needs-t" id="eff-t">Effacer mes données</h2>
-        <p class="needs-s">Tout remettre à zéro sur cet appareil&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
+        <p class="needs-s">Tout remettre à zéro sur cet appareil (et ta copie en ligne si tu es connecté)&nbsp;: ton profil, tes séances et tes plats prévus, ta semaine type, tes aliments et tes courses. L’appli repart comme au premier lancement.</p>
         <div class="needs-body">
           <div id="eff-ask"><button type="button" class="reset danger" id="eff-btn" data-action="eff-ask">Tout effacer</button></div>
           <div id="eff-confirm" role="group" aria-labelledby="eff-q" hidden>
-            <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.</p>
+            <p class="eff-q" id="eff-q">Tout effacer&nbsp;? C’est définitif.<span id="eff-sync" hidden> Ta copie en ligne sera effacée aussi.</span></p>
             <div class="regl-links"><button type="button" class="btn danger" data-action="eff-ok">Oui, tout effacer</button><button type="button" class="btn" id="eff-no" data-action="eff-no">Annuler</button></div>
+            <p class="warn" id="eff-msg" role="status"></p>
           </div>
         </div>
       </section>
@@ -967,6 +982,12 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li>Dans le récap d’une planification, «&nbsp;Changer le midi&nbsp;» ou «&nbsp;Changer le soir&nbsp;» remplace un plat, au hasard ou choisi dans la liste. «&nbsp;Modifier&nbsp;» rouvre ses étapes avec ses cartes, à partir d’aujourd’hui&nbsp;; tu peux aussi changer chaque jour depuis ta journée.</li>
       <li><strong>Ta semaine type</strong> (réglages)&nbsp;: tes séances habituelles jour par jour et le soir de ton repas plaisir. Les jours que tu n’as pas modifiés les reprennent tout seuls, pour des quantités justes sans rien saisir.</li>
       <li>Chaque planification a son récap jour par jour et <strong>ses courses</strong>&nbsp;: tout ce qu’il faut acheter pour ces jours, en poids crus ou en pièces, rangé par rayon, à cocher au magasin, et à part les épices et petits trucs (ail, citron, herbes…) à vérifier dans tes placards. Un jour pas encore rempli reprend ta semaine type (sans elle, c’est un jour de repos).</li>
+    </ul>
+    <h2>Sur tous tes appareils</h2>
+    <ul>
+      <li>Dans les réglages, onglet «&nbsp;Appli&nbsp;», <strong>Synchronisation</strong>&nbsp;: connecte-toi avec ton compte Google et retrouve tes jours, ton profil, tes planifications et tes repas cochés sur ton téléphone, ta tablette ou ton ordinateur. La première connexion d’un appareil reprend ta copie en ligne&nbsp;; ensuite, chaque changement est envoyé tout seul, et si deux appareils changent la même chose, le plus récent l’emporte.</li>
+      <li>Sur un nouvel appareil, l’accueil propose «&nbsp;Se connecter avec Google&nbsp;» pour reprendre tout de suite tes données.</li>
+      <li>Sans réseau, l’appli marche comme d’habitude&nbsp;: tes changements partent à la prochaine connexion.</li>
     </ul>
     <h2>Installer l’appli sur ton téléphone</h2>
     <ul>
@@ -1092,7 +1113,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '5.0.0';
+const APP_VERSION = '5.1.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -3793,6 +3814,151 @@ function eqOfBuy(buy){
   if (typeof buy.g === 'number') return {group:at[0], id:at[1], qty:buy.g, unit:'g'};
   return null;
 }
+/* Synchronisation entre appareils (5.1.0), sans réseau ni DOM : les données de l'appli découpées en entrées, chacune avec
+   l'heure de sa dernière modification ; la plus récente gagne. Le transport (Firebase) est dans ui/sync.js.
+   Entrées (identifiants) : 'p.AAAA-MM-JJ' (le plan d'une date, clé v2), 'c.0'…'c.6' (les plats en mémoire d'un jour de la
+   semaine, v2), 'm.AAAA-MM-JJ' (les repas cochés d'une date), 'profil', 'planifs' (les clés entières). Valeur : le JSON de
+   l'entrée, null si elle a été effacée. Pas la date d'ouverture du formulaire des repas (propre à l'appareil). */
+const SYNC_STORES = {v2:'repas-du-jour:v2', profil:'repas-du-jour:profil:v1', planifs:'repas-du-jour:planifs:v1', manges:'repas-du-jour:manges:v1'};
+const SYNC_KEY = 'repas-du-jour:sync:v1';
+const SYNC_DATE = /^\d{4}-\d\d-\d\d$/;
+/* Identifiant valide, et sa clé de stockage (sinon null) : jamais une propriété héritée (__proto__…) */
+function syncStoreOf(id){
+  if (id === 'profil' || id === 'planifs') return id;
+  if (typeof id !== 'string') return null;
+  const p = id.slice(0, 2), x = id.slice(2);
+  if ((p === 'p.' || p === 'm.') && SYNC_DATE.test(x)) return p === 'p.' ? 'v2' : 'manges';
+  if (p === 'c.' && /^[0-6]$/.test(x)) return 'v2';
+  return null;
+}
+/* Empreinte d'une valeur (FNV-1a 32 bits) : de quoi voir qu'elle a changé sans la garder en double */
+function syncHash(s){
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(36);
+}
+const syncParse = function(s){
+  if (s === null || s === undefined) return {o:null, ok:true};
+  try { const o = JSON.parse(s); if (o && typeof o === 'object' && !Array.isArray(o)) return {o:o, ok:true}; } catch (e) {}
+  return {o:null, ok:false};
+};
+/* raw : { v2, profil, planifs, manges } (chaînes du stockage, null si absentes). Renvoie { entries: { id: JSON }, bad: [clés
+   illisibles] } : les entrées d'une clé illisible ne sont ni comparées ni remplacées (jamais prises pour des effacements). */
+function syncSplit(raw){
+  const out = {}, bad = [];
+  const get = function(k){ const r = syncParse(raw[k]); if (!r.ok) bad.push(k); return r.o; };
+  const v2 = get('v2');
+  if (v2) [['plans', 'p.'], ['choices', 'c.']].forEach(function(x){
+    const o = v2[x[0]];
+    if (o && typeof o === 'object' && !Array.isArray(o)) Object.keys(o).forEach(function(k){ const id = x[1] + k; if (syncStoreOf(id)) out[id] = JSON.stringify(o[k]); });
+  });
+  const m = get('manges');
+  if (m) Object.keys(m).forEach(function(k){ const id = 'm.' + k; if (syncStoreOf(id)) out[id] = JSON.stringify(m[k]); });
+  ['profil', 'planifs'].forEach(function(k){ const o = get(k); if (o) out[k] = JSON.stringify(o); });
+  return {entries:out, bad:bad};
+}
+/* Applique des entrées venues d'un autre appareil ({ id: JSON | null }) aux chaînes du stockage ; renvoie les nouvelles
+   chaînes des clés touchées (null : clé à retirer). Une entrée invalide (identifiant, JSON) est ignorée. */
+function syncJoin(raw, changes){
+  const obj = {}, touched = {};
+  const load = function(k){
+    if (!has(obj, k)){ const r = syncParse(raw[k]); obj[k] = r.o || (k === 'v2' ? {plans:{}, choices:{}} : k === 'manges' ? {} : null); }
+    return obj[k];
+  };
+  Object.keys(changes).forEach(function(id){
+    const k = syncStoreOf(id), v = changes[id];
+    if (!k) return;
+    let val = null;
+    if (v !== null){ try { val = JSON.parse(v); } catch (e) { return; } }
+    if (k === 'profil' || k === 'planifs'){
+      if (val !== null && (typeof val !== 'object' || Array.isArray(val))) return;
+      obj[k] = val; touched[k] = true; return;
+    }
+    const o = load(k), x = id.slice(2);
+    const box = k === 'manges' ? o : id.slice(0, 2) === 'p.' ? (o.plans && typeof o.plans === 'object' ? o.plans : (o.plans = {})) : (o.choices && typeof o.choices === 'object' ? o.choices : (o.choices = {}));
+    if (val === null) delete box[x]; else box[x] = val;
+    touched[k] = true;
+  });
+  const out = {};
+  Object.keys(touched).forEach(function(k){ out[k] = obj[k] === null ? null : JSON.stringify(obj[k]); });
+  return out;
+}
+/* État de la synchronisation relu du stockage : { init, seen: { id: empreinte | 'x' (effacée) }, t: { id: ms }, dirty: [id],
+   uid (le dernier compte lié à cet appareil), email, on (connecté : Firebase chargé au démarrage), last (heure du serveur de la
+   dernière entrée reçue), at (dernière synchronisation réussie), pending (connexion en cours, par redirection) } */
+function cleanSyncMeta(o){
+  const out = {init:false, seen:{}, t:{}, dirty:[], uid:null, email:'', on:false, last:0, at:0, pending:false};
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return out;
+  out.init = o.init === true;
+  ['seen', 't'].forEach(function(f){
+    const s = o[f];
+    if (s && typeof s === 'object' && !Array.isArray(s)) Object.keys(s).forEach(function(id){
+      if (!syncStoreOf(id)) return;
+      if (f === 'seen' ? typeof s[id] === 'string' : typeof s[id] === 'number' && isFinite(s[id]) && s[id] >= 0) out[f][id] = s[id];
+    });
+  });
+  if (Array.isArray(o.dirty)) out.dirty = o.dirty.filter(function(id, i, a){ return syncStoreOf(id) && a.indexOf(id) === i; });
+  if (typeof o.uid === 'string' && o.uid) out.uid = o.uid;
+  if (typeof o.email === 'string') out.email = o.email.slice(0, 200);
+  ['last', 'at'].forEach(function(f){ if (typeof o[f] === 'number' && isFinite(o[f]) && o[f] >= 0) out[f] = o[f]; });
+  out.pending = o.pending === true;
+  out.on = o.on === true;
+  return out;
+}
+/* Ce qui a changé sur cet appareil depuis la dernière fois (meta modifié) : chaque entrée changée ou effacée prend l'heure
+   now et devient à envoyer (dirty). La toute première fois (init), rien n'est daté : tout part à 0, la copie en ligne
+   l'emportera. Les entrées d'une clé illisible ne bougent pas. Renvoie les identifiants changés. */
+function syncDiff(split, meta, now){
+  const e = split.entries, changed = [];
+  const badId = function(id){ return split.bad.indexOf(syncStoreOf(id)) >= 0; };
+  if (!meta.init){
+    Object.keys(e).forEach(function(id){ meta.seen[id] = syncHash(e[id]); meta.t[id] = 0; });
+    meta.init = true;
+    return changed;
+  }
+  Object.keys(e).forEach(function(id){
+    const h = syncHash(e[id]);
+    if (meta.seen[id] !== h){ meta.seen[id] = h; meta.t[id] = now; changed.push(id); }
+  });
+  Object.keys(meta.seen).forEach(function(id){
+    if (has(e, id) || meta.seen[id] === 'x' || badId(id)) return;
+    meta.seen[id] = 'x'; meta.t[id] = now; changed.push(id);
+  });
+  changed.forEach(function(id){ if (meta.dirty.indexOf(id) < 0) meta.dirty.push(id); });
+  return changed;
+}
+/* Fusion avec ce qui vient du serveur (remote : [{ id, v, t, s }], s : heure du serveur). first : première liaison de cet
+   appareil à ce compte, la copie en ligne l'emporte sur tout ce qu'elle contient. Sinon, la plus récente gagne ; à la même
+   heure, la plus grande valeur (le même choix sur tous les appareils). Le serveur garde la dernière écriture reçue, pas la
+   plus récente : une entrée en ligne plus ancienne que celle d'ici est renvoyée. Renvoie { apply: { id: JSON | null }
+   (seulement ce qui change ici), push: [{ id, v, t }] } ; meta suit (heures, empreintes, dirty, last). */
+function syncMerge(split, meta, remote, first){
+  const apply = {}, there = {};
+  let last = meta.last;
+  remote.forEach(function(r){
+    if (!r || !syncStoreOf(r.id) || split.bad.indexOf(syncStoreOf(r.id)) >= 0) return;
+    const v = typeof r.v === 'string' ? r.v : null, t = typeof r.t === 'number' && isFinite(r.t) ? r.t : 0;
+    if (typeof r.s === 'number' && r.s > last) last = r.s;
+    there[r.id] = true;
+    const lt = first ? -1 : has(meta.t, r.id) ? meta.t[r.id] : -1;
+    const cur = has(split.entries, r.id) ? split.entries[r.id] : null;
+    if (t < lt || (t === lt && String(v) <= String(cur))){
+      if (cur !== v && meta.dirty.indexOf(r.id) < 0) meta.dirty.push(r.id);
+      return;
+    }
+    if (cur !== v) apply[r.id] = v;
+    meta.t[r.id] = t;
+    meta.seen[r.id] = v === null ? 'x' : syncHash(v);
+    const d = meta.dirty.indexOf(r.id);
+    if (d >= 0) meta.dirty.splice(d, 1);
+  });
+  meta.last = last;
+  const ids = first ? Object.keys(split.entries).filter(function(id){ return !there[id]; }) : meta.dirty.slice();
+  const push = ids.filter(function(id){ return syncStoreOf(id); }).map(function(id){
+    return {id:id, v:has(split.entries, id) ? split.entries[id] : null, t:has(meta.t, id) ? meta.t[id] : 0};
+  });
+  return {apply:apply, push:push};
+}
 
 if (typeof document !== 'undefined'){
   /* Interface (tout ce fichier et les suivants sont dans if (typeof document !== 'undefined'){ … }, voir src/page.html).
@@ -6440,8 +6606,8 @@ if (typeof document !== 'undefined'){
     },
     /* « Effacer mes données » : demander, confirmer ou annuler */
     'eff-ask': function(){ effShow(true); $('eff-no').focus({preventScroll:true}); },
-    'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); },
-    'eff-ok': function(){ resetAll(); }
+    'eff-no': function(){ effShow(false); $('eff-btn').focus({preventScroll:true}); }
+    /* « Oui, tout effacer » (eff-ok) : dans ui/sync.js (la copie en ligne d'abord si on est connecté) */
   });
   /* Si la page reste ouverte d'un jour à l'autre, revenir sur le nouveau jour */
   const refreshToday = function(){
@@ -6496,6 +6662,221 @@ if (typeof document !== 'undefined'){
       $('install').hidden = true;
     }
   });
+  /* Synchronisation entre appareils (5.1.0) : connexion Google et copie des données dans Firestore (projet Firebase de
+     l'appli), users/{uid}/e/{id} = { v: JSON | null, t: heure de la modification (ms), s: heure du serveur }. Les règles du
+     projet ne laissent chaque compte lire et écrire que son espace. La bibliothèque officielle (app, auth, firestore-lite,
+     FB_VERSION) n'est chargée que si la synchronisation est utilisée ; sans elle, l'appli marche comme avant.
+     Le découpage et la fusion sont dans engine/sync.js. Les changements venus d'un autre appareil ne sont écrits que quand
+     rien n'est en cours ici (pas d'assistant, de formulaire des repas, de panneau ouvert, ni d'accueil refait), puis la
+     page se recharge : l'état en mémoire ne peut pas les écraser.
+     Pour les tests : window.__repasSync = { adapter, reload, delay } remplace Firebase, le rechargement et le délai. */
+  const FB_VERSION = '12.19.0';
+  const FB_CONFIG = {apiKey:'AIzaSyCFPLXWigZeEK4EFoejWKwqexEBKXaGSJA', authDomain:'nutriplan-a9b42.firebaseapp.com', projectId:'nutriplan-a9b42',
+    storageBucket:'nutriplan-a9b42.firebasestorage.app', messagingSenderId:'336973795535', appId:'1:336973795535:web:48be16bbe0db54577c27ba'};
+  const FLASH_KEY = 'repas-du-jour:sync-flash';
+  const syncHooks = window.__repasSync || null;
+  let syncMeta = cleanSyncMeta(readObj(SYNC_KEY));
+  const saveSync = function(){ try { localStorage.setItem(SYNC_KEY, JSON.stringify(syncMeta)); } catch (e) {} };
+  const rawStores = function(){
+    const o = {};
+    Object.keys(SYNC_STORES).forEach(function(k){ try { o[k] = localStorage.getItem(SYNC_STORES[k]); } catch (e) { o[k] = null; } });
+    return o;
+  };
+  /* Les changements de cet appareil, datés (hors connexion aussi : ils gardent leur heure pour la prochaine synchronisation) */
+  const syncLocal = function(){ const sp = syncSplit(rawStores()); syncDiff(sp, syncMeta, Date.now()); saveSync(); return sp; };
+  /* Rien en cours qui serait perdu par un rechargement */
+  const syncIdle = function(){
+    const open = stack.some(function(x){ return x.name === 'wiz' || x.name === 'repas'; });
+    let accBusy = false;
+    try { accBusy = !!acc && localStorage.getItem(PKEY) !== null; } catch (e) {}
+    return !open && $('sheet').hidden && !accBusy;
+  };
+  const reloadPage = function(){ if (syncHooks && syncHooks.reload) syncHooks.reload(); else location.reload(); };
+
+  /* Firebase, chargé une fois. Interface : onUser(cb), signIn(), signOut(), pull(uid, depuis), push(uid, entrées), wipe(uid) */
+  let fbP = null;
+  const fbAdapter = function(){
+    if (syncHooks && syncHooks.adapter) return Promise.resolve(syncHooks.adapter);
+    if (fbP) return fbP;
+    const url = 'https://www.gstatic.com/firebasejs/' + FB_VERSION + '/firebase-';
+    fbP = Promise.all([import(url + 'app.js'), import(url + 'auth.js'), import(url + 'firestore-lite.js')]).then(function(m){
+      const app = m[0].initializeApp(FB_CONFIG), A = m[1], F = m[2], auth = A.getAuth(app), db = F.getFirestore(app);
+      const col = function(uid){ return F.collection(db, 'users', uid, 'e'); };
+      const inBatches = function(list, fn){
+        let p = Promise.resolve();
+        for (let i = 0; i < list.length; i += 400){
+          const part = list.slice(i, i + 400);
+          p = p.then(function(){ const b = F.writeBatch(db); part.forEach(function(x){ fn(b, x); }); return b.commit(); });
+        }
+        return p;
+      };
+      return {
+        onUser:function(cb){ A.onAuthStateChanged(auth, function(u){ cb(u ? {uid:u.uid, email:u.email || ''} : null); }); A.getRedirectResult(auth).catch(function(){}); },
+        signIn:function(){
+          const pv = new A.GoogleAuthProvider();
+          return A.signInWithPopup(auth, pv).catch(function(e){
+            if (e && /popup-blocked|operation-not-supported/.test(e.code || '')) return A.signInWithRedirect(auth, pv);
+            throw e;
+          });
+        },
+        signOut:function(){ return A.signOut(auth); },
+        pull:function(uid, since){
+          const q = since ? F.query(col(uid), F.where('s', '>', F.Timestamp.fromMillis(since))) : col(uid);
+          return F.getDocs(q).then(function(snap){
+            return snap.docs.map(function(d){
+              const x = d.data();
+              return {id:d.id, v:typeof x.v === 'string' ? x.v : null, t:typeof x.t === 'number' ? x.t : 0, s:x.s && x.s.toMillis ? x.s.toMillis() : 0};
+            });
+          });
+        },
+        push:function(uid, list){ return inBatches(list, function(b, x){ b.set(F.doc(col(uid), x.id), {v:x.v, t:x.t, s:F.serverTimestamp()}); }); },
+        wipe:function(uid){ return F.getDocs(col(uid)).then(function(snap){ return inBatches(snap.docs, function(b, d){ b.delete(d.ref); }); }); }
+      };
+    });
+    fbP.catch(function(){ fbP = null; });
+    return fbP;
+  };
+
+  /* État affiché : off (pas connecté), wait (chargement, connexion), on ; msg : la dernière erreur */
+  const sync = {user:null, state:'off', msg:'', busy:null, again:false, listening:false, timer:null, held:false};
+  const errText = function(e){
+    const c = (e && e.code) || '';
+    if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(c)) return 'Connexion annulée.';
+    if (/network-request-failed|unavailable/.test(c) || !c) return 'Pas de réseau, ou Google ne répond pas' + NB + ': réessaie plus tard.';
+    if (/unauthorized-domain/.test(c)) return 'Ce site n’est pas autorisé dans le projet Firebase de l’appli.';
+    if (/web-storage-unsupported|operation-not-supported/.test(c)) return 'Ce navigateur bloque la connexion Google' + NB + ': essaie dans Safari ou Chrome.';
+    if (/internal-error/.test(c)) return 'La connexion à Google n’a pas marché' + NB + ': un bloqueur de publicités ou de traceurs peut l’empêcher (il bloque apis.google.com).';
+    if (/permission-denied/.test(c)) return 'Ta copie en ligne est refusée par le serveur (' + c + ').';
+    return 'La synchronisation n’a pas marché (' + c + ').';
+  };
+  const whenText = function(ms){
+    const d = new Date(ms), dd = Math.round((noon() - new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12)) / 864e5);
+    const h = d.getHours() + NB + 'h' + NB + String(d.getMinutes()).padStart(2, '0');
+    return (dd === 0 ? 'aujourd’hui' : dd === 1 ? 'hier' : 'le ' + dayLabel(d).replace(/^\S+ /, '')) + ' à ' + h;
+  };
+  const renderSync = function(){
+    const on = sync.state === 'on' && sync.user;
+    $('sync-s').textContent = on ? 'Tes jours, ton profil, tes planifications et tes repas cochés sont copiés sur ton compte, et repris sur tes autres appareils.'
+      : 'Retrouve tes jours, ton profil, tes planifications et tes repas cochés sur tous tes appareils, avec ton compte Google. Ils sont copiés dans le projet Firebase de l’appli' + NB + ': son administrateur peut techniquement y accéder.';
+    $('sync-st').textContent = sync.state === 'wait' ? 'Connexion…' : on ? 'Connecté avec ' + (sync.user.email || 'ton compte Google') + '.' +
+      (sync.busy ? ' Synchronisation…' : syncMeta.at ? ' Dernière synchronisation' + NB + ': ' + whenText(syncMeta.at) + '.' : '') +
+      (sync.held ? ' Des changements de ton autre appareil arrivent dès que tu reviens à ta journée.' : '') : '';
+    $('sync-acts').innerHTML = on
+      ? '<button type="button" class="reset" id="sync-now" data-action="sync-now">Synchroniser maintenant</button><button type="button" class="reset" id="sync-out" data-action="sync-out">Se déconnecter</button>'
+      : '<button type="button" class="btn" id="sync-in" data-action="sync-in"' + (sync.state === 'wait' ? ' disabled' : '') + '>Se connecter avec Google</button>';
+    $('sync-err').textContent = sync.msg;
+    $('acc-sync-msg').textContent = sync.state === 'wait' ? 'Connexion…' : sync.msg;
+    $('eff-sync').hidden = !on;
+  };
+  /* Une synchronisation : les changements d'ici datés, ce qui a changé en ligne depuis la dernière fois (tout, la première
+     fois sur ce compte : la copie en ligne l'emporte), envoi de ce qui est plus récent ici, puis écriture de ce qui vient
+     d'ailleurs et rechargement (seulement si rien n'est en cours, sinon ce sera la prochaine fois). */
+  const syncCycle = function(a){
+    const u = sync.user, first = syncMeta.uid !== u.uid;
+    syncLocal();
+    return a.pull(u.uid, first ? 0 : syncMeta.last).then(function(remote){
+      const meta = cleanSyncMeta(JSON.parse(JSON.stringify(syncMeta)));
+      const split = syncSplit(rawStores());
+      syncDiff(split, meta, Date.now());
+      const m = syncMerge(split, meta, Array.isArray(remote) ? remote : [], first);
+      const n = Object.keys(m.apply).length;
+      if (n && !syncIdle()){ sync.held = true; return; }
+      return (m.push.length ? a.push(u.uid, m.push) : Promise.resolve()).then(function(){
+        m.push.forEach(function(x){ const i = meta.dirty.indexOf(x.id); if (i >= 0) meta.dirty.splice(i, 1); });
+        meta.uid = u.uid; meta.email = u.email; meta.at = Date.now(); meta.pending = false;
+        if (n && !syncIdle()){
+          /* Devenu occupé pendant l'envoi : ce qui vient d'ailleurs attendra (relu la prochaine fois) */
+          meta.last = syncMeta.last;
+          Object.keys(m.apply).forEach(function(id){ delete meta.t[id]; delete meta.seen[id]; if (has(syncMeta.t, id)) meta.t[id] = syncMeta.t[id]; if (has(syncMeta.seen, id)) meta.seen[id] = syncMeta.seen[id]; });
+          if (first) meta.uid = syncMeta.uid;
+          syncMeta = meta; saveSync(); sync.held = true;
+          return;
+        }
+        sync.held = false;
+        if (n){
+          const out = syncJoin(rawStores(), m.apply);
+          try { Object.keys(out).forEach(function(k){ if (out[k] === null) localStorage.removeItem(SYNC_STORES[k]); else localStorage.setItem(SYNC_STORES[k], out[k]); }); } catch (e) {}
+        }
+        syncMeta = meta; saveSync();
+        if (n){
+          try { sessionStorage.setItem(FLASH_KEY, '1'); } catch (e) {}
+          reloadPage();
+        }
+      });
+    });
+  };
+  const syncRun = function(){
+    if (!sync.user || sync.state !== 'on'){ syncLocal(); return Promise.resolve(); }
+    if (sync.busy){ sync.again = true; return sync.busy; }
+    sync.busy = fbAdapter().then(syncCycle).then(function(){ sync.msg = ''; }, function(e){ sync.msg = errText(e); }).then(function(){
+      sync.busy = null;
+      renderSync();
+      if (sync.again){ sync.again = false; return syncRun(); }
+    });
+    renderSync();
+    return sync.busy;
+  };
+  /* Quelques secondes après un changement (les clics s'enchaînent) */
+  const syncSoon = function(ms){
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(syncRun, ms !== undefined ? ms : syncHooks && syncHooks.delay !== undefined ? syncHooks.delay : 3000);
+  };
+  /* Compte connecté ou non (aussi au retour d'une connexion par redirection, ou après une session expirée) */
+  const syncListen = function(a){
+    if (sync.listening) return;
+    sync.listening = true;
+    a.onUser(function(u){
+      sync.user = u;
+      sync.state = u ? 'on' : 'off';
+      syncMeta.on = !!u; if (u) syncMeta.pending = false; saveSync();
+      if (u) syncRun();
+      renderSync();
+    });
+  };
+  const syncStart = function(){
+    sync.state = 'wait'; sync.msg = ''; renderSync();
+    return fbAdapter().then(function(a){ syncListen(a); return a; }, function(e){ sync.state = 'off'; sync.msg = errText(e); renderSync(); throw e; });
+  };
+  Object.assign(ACTIONS, {
+    'sync-in': function(){
+      if (sync.state === 'wait') return;
+      syncMeta.pending = true; saveSync();
+      syncStart().then(function(a){
+        sync.state = 'wait'; renderSync();
+        return a.signIn();
+      }).then(function(){ renderSync(); }, function(e){
+        syncMeta.pending = false; saveSync();
+        sync.state = sync.user ? 'on' : 'off'; sync.msg = errText(e); renderSync();
+      });
+    },
+    'sync-out': function(){
+      fbAdapter().then(function(a){ return a.signOut(); }).then(function(){
+        sync.user = null; sync.state = 'off'; sync.msg = ''; syncMeta.on = false; saveSync(); renderSync();
+        $('sync-st').textContent = 'Déconnecté. Tes données restent sur cet appareil.';
+        $('sync-in').focus({preventScroll:true});
+      }, function(e){ sync.msg = errText(e); renderSync(); });
+    },
+    'sync-now': function(){ clearTimeout(sync.timer); syncRun(); },
+    /* Tout effacer : connecté, la copie en ligne d'abord (sinon rien n'est effacé), puis la déconnexion et l'appareil */
+    'eff-ok': function(){
+      if (!sync.user){ resetAll(); syncMeta = cleanSyncMeta(null); return; }
+      const u = sync.user;
+      $('eff-msg').textContent = 'Effacement de ta copie en ligne…';
+      fbAdapter().then(function(a){ return a.wipe(u.uid).then(function(){ return a.signOut(); }); }).then(function(){
+        sync.user = null; sync.state = 'off'; $('eff-msg').textContent = '';
+        resetAll();
+        syncMeta = cleanSyncMeta(null); renderSync();
+      }, function(e){ $('eff-msg').textContent = 'Ta copie en ligne n’a pas pu être effacée' + NB + ': ' + errText(e).charAt(0).toLowerCase() + errText(e).slice(1) + ' Rien n’a été effacé.'; });
+    }
+  });
+  document.addEventListener('click', function(){ syncSoon(); });
+  document.addEventListener('change', function(){ syncSoon(); });
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden'){ clearTimeout(sync.timer); syncRun(); } else syncSoon(500); });
+  renderSync();
+  /* Déjà connecté sur cet appareil (ou de retour d'une connexion par redirection) : la bibliothèque est chargée tout de suite */
+  if (syncMeta.on || syncMeta.pending) syncStart().catch(function(){});
+  else syncLocal();
+  try { if (sessionStorage.getItem(FLASH_KEY)){ sessionStorage.removeItem(FLASH_KEY); $('hint').textContent = 'Tes données sont à jour avec tes autres appareils.'; } } catch (e) {}
 }
 </script>
 </body>

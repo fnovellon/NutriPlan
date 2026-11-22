@@ -14,7 +14,7 @@ if (!require('../build').upToDate()){
 const deep = process.argv[2] === 'deep';
 const JOBS = deep
   ? [['fuzz.test.js', '20'], ['ui-fuzz.test.js', '10']]
-  : ['engine', 'golden', 'fuzz', 'ui', 'ui-fuzz', 'pwa'].map(n => [n + '.test.js']);
+  : ['engine', 'golden', 'fuzz', 'ui', 'ui-fuzz', 'sync', 'pwa'].map(n => [n + '.test.js']);
 const results = new Array(JOBS.length);
 let next = 0, running = 0, failed = 0;
 const start = Date.now();

@@ -1,8 +1,8 @@
 # Repas du jour
 
-Au premier lancement, indique ton profil et ton objectif. Ensuite, ajoute tes séances du jour : l'appli affiche tous les repas avec les quantités, adaptées à ton poids. Tout reste sur ton téléphone.
+Au premier lancement, indique ton profil et ton objectif. Ensuite, ajoute tes séances du jour : l'appli affiche tous les repas avec les quantités, adaptées à ton poids. Tout reste sur ton téléphone, sauf si tu actives la synchronisation entre tes appareils (compte Google, réglages).
 
 - Ouvrir `index.html` dans un navigateur (le calendrier, « Planifier » et « Mes courses » prévoient plusieurs jours et font ta liste de courses), ou l'installer sur ton téléphone depuis le site (Android : « Installer l'application » ; iPhone : Partager puis « Sur l'écran d'accueil ») : elle marche alors hors connexion.
-- Le code est dans `src/` ; `npm run build` en construit `index.html`, la page publiée (une seule page autonome, à ne pas modifier à la main).
+- Le code est dans `src/` ; `npm run build` en construit `index.html`, la page publiée (une seule page autonome, à ne pas modifier à la main ; seule la synchronisation charge la bibliothèque Firebase, à la demande).
 - Tests : `npm install` puis `npm test` (`npm run test:deep` pour une vérification plus longue, `npm run test:ref` pour comparer au dernier commit).
 - Contexte et règles de calcul : `CLAUDE.md` ; écrans, stockage, architecture et tests : `docs/`.
