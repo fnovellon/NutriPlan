@@ -791,10 +791,22 @@ const ACTIONS = {
     if (d.querySelector('#page').hidden || !b) return 'batch -';
     b.click();
     const n = d.querySelectorAll('#batch-body .b-list')[1].querySelectorAll('li').length;
-    C.ok(!d.querySelector('#batch').hidden && n >= 2 && new RegExp('\\s' + n + '\\sboîtes\\.').test(d.querySelector('#batch-body .calc').textContent) && d.querySelectorAll('#batch-body .rec-steps li').length === 3, 'page du batch', () => d.querySelector('#batch-body').textContent.slice(0, 160));
+    const calc = d.querySelector('#batch-body .calc').textContent;
+    C.ok(!d.querySelector('#batch').hidden && n >= 2 && (new RegExp('\\s' + n + '\\sboîtes\\.').test(calc) || new RegExp('^Cette recette ne se garde pas.*ses ' + n + '\\srepas\\.').test(calc)) && d.querySelectorAll('#batch-body .rec-steps li').length === 3, 'page du batch', () => d.querySelector('#batch-body').textContent.slice(0, 160));
     d.querySelector('#batch [data-action="fermer"]').click();
     C.ok(!d.querySelector('#page').hidden && d.activeElement === b.ownerDocument.getElementById(b.id), 'page du batch : retour', '');
     return 'batch';
+  },
+  // Journée : la fiche de batch d'un petit-déjeuner ou d'une collation (5.2.0), puis retour
+  prep: dom => {
+    const d = dom.window.document, b = R.pick([...d.querySelectorAll('[data-action="prep-batch"]')]);
+    if (d.querySelector('#page').hidden || !b) return 'prep -';
+    b.click();
+    const portions = [...d.querySelectorAll('#batch-body p.calc')].slice(1).reduce((a, p) => a + +((p.textContent.match(/^Pour (\d+)/) || [0, 0])[1]), 0);
+    C.ok(!d.querySelector('#batch').hidden && portions >= 2 && d.querySelectorAll('#batch-body .rec-steps li').length >= 2 && /À préparer/.test(d.querySelector('#batch-body').textContent), 'fiche de batch d’un petit-déjeuner ou d’une collation', () => d.querySelector('#batch-body').textContent.slice(0, 200));
+    d.querySelector('#batch [data-action="fermer"]').click();
+    C.ok(!d.querySelector('#page').hidden, 'fiche de batch : retour', '');
+    return 'prep ' + b.dataset.value;
   },
   // Ta semaine : ouvrir ou refermer la carte
   semaine: dom => { const e = dom.window.document.querySelector('#wk-bal'); if (dom.window.document.querySelector('#page').hidden) return 'semaine -'; e.open = !e.open; return 'semaine ' + (e.open ? 'ouverte' : 'fermée'); },

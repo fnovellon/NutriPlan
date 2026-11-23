@@ -5,7 +5,8 @@
      Le découpage et la fusion sont dans engine/sync.js. Les changements venus d'un autre appareil ne sont écrits que quand
      rien n'est en cours ici (pas d'assistant, de formulaire des repas, de panneau ouvert, ni d'accueil refait), puis la
      page se recharge : l'état en mémoire ne peut pas les écraser.
-     Pour les tests : window.__repasSync = { adapter, reload, delay } remplace Firebase, le rechargement et le délai. */
+     Pour les tests : window.__repasSync = { adapter, reload, delay, poll } remplace Firebase, le rechargement, le délai et la
+     vérification en direct (0 : aucune). */
   const FB_VERSION = '12.19.0';
   const FB_CONFIG = {apiKey:'AIzaSyCFPLXWigZeEK4EFoejWKwqexEBKXaGSJA', authDomain:'nutriplan-a9b42.firebaseapp.com', projectId:'nutriplan-a9b42',
     storageBucket:'nutriplan-a9b42.firebasestorage.app', messagingSenderId:'336973795535', appId:'1:336973795535:web:48be16bbe0db54577c27ba'};
@@ -74,7 +75,7 @@
   };
 
   /* État affiché : off (pas connecté), wait (chargement, connexion), on ; msg : la dernière erreur */
-  const sync = {user:null, state:'off', msg:'', busy:null, again:false, listening:false, timer:null, held:false};
+  const sync = {user:null, state:'off', msg:'', busy:null, again:false, listening:false, timer:null, held:false, poll:null};
   const errText = function(e){
     const c = (e && e.code) || '';
     if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(c)) return 'Connexion annulée.';
@@ -157,6 +158,13 @@
     clearTimeout(sync.timer);
     sync.timer = setTimeout(syncRun, ms !== undefined ? ms : syncHooks && syncHooks.delay !== undefined ? syncHooks.delay : 3000);
   };
+  /* En direct (5.2.0) : connecté et l'appli à l'écran, une synchronisation toutes les 30 s (POLL), pour voir arriver ce qui
+     change sur un autre appareil sans rien faire ; arrêtée à la déconnexion */
+  const POLL = syncHooks && syncHooks.poll !== undefined ? syncHooks.poll : 30000;
+  const syncPoll = function(on){
+    clearInterval(sync.poll); sync.poll = null;
+    if (on && POLL > 0) sync.poll = setInterval(function(){ if (document.visibilityState !== 'hidden' && sync.user && !sync.busy) syncRun(); }, POLL);
+  };
   /* Compte connecté ou non (aussi au retour d'une connexion par redirection, ou après une session expirée) */
   const syncListen = function(a){
     if (sync.listening) return;
@@ -166,6 +174,7 @@
       sync.state = u ? 'on' : 'off';
       syncMeta.on = !!u; if (u) syncMeta.pending = false; saveSync();
       if (u) syncRun();
+      syncPoll(!!u);
       renderSync();
     });
   };
@@ -187,7 +196,7 @@
     },
     'sync-out': function(){
       fbAdapter().then(function(a){ return a.signOut(); }).then(function(){
-        sync.user = null; sync.state = 'off'; sync.msg = ''; syncMeta.on = false; saveSync(); renderSync();
+        sync.user = null; sync.state = 'off'; sync.msg = ''; syncMeta.on = false; saveSync(); syncPoll(false); renderSync();
         $('sync-st').textContent = 'Déconnecté. Tes données restent sur cet appareil.';
         $('sync-in').focus({preventScroll:true});
       }, function(e){ sync.msg = errText(e); renderSync(); });
@@ -199,7 +208,7 @@
       const u = sync.user;
       $('eff-msg').textContent = 'Effacement de ta copie en ligne…';
       fbAdapter().then(function(a){ return a.wipe(u.uid).then(function(){ return a.signOut(); }); }).then(function(){
-        sync.user = null; sync.state = 'off'; $('eff-msg').textContent = '';
+        sync.user = null; sync.state = 'off'; syncPoll(false); $('eff-msg').textContent = '';
         resetAll();
         syncMeta = cleanSyncMeta(null); renderSync();
       }, function(e){ $('eff-msg').textContent = 'Ta copie en ligne n’a pas pu être effacée' + NB + ': ' + errText(e).charAt(0).toLowerCase() + errText(e).slice(1) + ' Rien n’a été effacé.'; });

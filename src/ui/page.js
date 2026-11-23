@@ -94,16 +94,38 @@
      7 jours, ceux de la planification qui contient la date (sinon sa semaine, lundi → dimanche). Pour chaque repas
      concerné : la recette (batchCook), les dates du bloc, lead (0 : cuisinée le premier jour, sinon la veille). Calculé
      une fois par dessin, seulement si un repas a une recette choisie. */
-  let dayBatch = {};
-  const batchFor = function(iso){
+  let dayBatch = {}, dayPrep = {};
+  /* Le bloc de 7 jours d'une date : ceux de sa planification, sinon sa semaine ; lead : 0 s'il commence aujourd'hui */
+  const blockOf = function(iso){
     const p = planifOf(iso), wk = weekOf(fromIso(iso)), from = p ? p.from : isoDate(wk[0]), to = p ? p.to : isoDate(wk[6]);
-    const all = rangeDays(from, to), i = all.indexOf(iso), b0 = i - i % BATCH_BLOCK, isos = all.slice(b0, b0 + BATCH_BLOCK);
-    const lead = b0 === 0 && dayDiff(fromIso(from)) <= 0 ? 0 : 1, out = {};
-    if (i < 0) return out;
-    batchCook(isos.map(function(x){ return {res:dayResult(x)}; }), lead).forEach(function(bl){
+    const all = rangeDays(from, to), i = all.indexOf(iso), b0 = i - i % BATCH_BLOCK;
+    return i < 0 ? null : {isos:all.slice(b0, b0 + BATCH_BLOCK), lead:b0 === 0 && dayDiff(fromIso(from)) <= 0 ? 0 : 1};
+  };
+  /* Les recettes qui ne se gardent pas aussi (5.2.0) : leur fiche dit de les cuisiner le jour même */
+  const batchFor = function(iso){
+    const bk = blockOf(iso), out = {};
+    if (!bk) return out;
+    const isos = bk.isos, lead = bk.lead;
+    batchCook(isos.map(function(x){ return {res:dayResult(x)}; }), lead, true).forEach(function(bl){
       bl.recipes.forEach(function(r){ r.boxes.forEach(function(bx){ if (isos[bx.day] === iso) out[bx.slot] = {r:r, isos:isos, lead:lead}; }); });
     });
     return out;
+  };
+  /* Petit-déjeuner et collation qui se préparent à l'avance (5.2.0, prepCook) et reviennent dans le bloc de la date, à
+     partir d'elle (les jours d'avant sont passés ou déjà prévus), chaque fournée la veille : par repas (pd, co, cs pour les
+     boules d'énergie), l'élément, les dates comptées */
+  const prepFor = function(iso){
+    const bk = blockOf(iso), out = {};
+    if (!bk) return out;
+    const isos = bk.isos.filter(function(x){ return x >= iso; });
+    prepCook(isos.map(function(x){ return {res:dayResult(x), ch:choicesFor(x, fromIso(x).getDay())}; }), 1).forEach(function(bl){
+      bl.items.forEach(function(it){ it.batches.forEach(function(bt){ bt.days.forEach(function(dd){ if (isos[dd.day] === iso) out[it.id.split(':')[0]] = {p:it, bt:bt, isos:isos}; }); }); });
+    });
+    return out;
+  };
+  const PREP_LABEL = {pd:'Batch cooking du petit-déjeuner', co:'Batch cooking de la collation', cs:'Batch cooking des boules d’énergie'};
+  const prepBtn = function(slot){
+    return dayPrep[slot] ? '<button type="button" class="reset rec-batch" id="prep-' + slot + '" data-action="prep-batch" data-value="' + slot + '" aria-label="' + PREP_LABEL[slot] + '">' + (slot === 'cs' ? 'Batch des boules d’énergie' : 'Batch cooking') + '</button>' : '';
   };
   /* Repas mangés (3.23.0) : clé repas-du-jour:manges:v1, { 'AAAA-MM-JJ': ['pd', 'dej', …] } (identifiants de repas validés,
      jours de plus de 21 jours effacés). Le bouton « Mangé » de la carte coche ou décoche ; cocher passe au repas suivant. */
@@ -165,6 +187,7 @@
     return '<section class="meal' + (done ? ' is-eaten' : '') + '"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
       (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2><div class="mh-r">' + kc + eat + '</div></div>' + lib + picks + (card ? recCardHTML(s) : '') +
       (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) +
+      (s.id === 'pd' ? prepBtn('pd') : s.id === 'co' ? prepBtn('co') + prepBtn('cs') : '') +
       (s.libre ? '' : '<button type="button" class="reset imp-b" id="imp-' + s.id + '" data-action="imp" data-value="' + s.id + '" aria-haspopup="dialog"' +
         (s.imprevu ? '>Modifier l’imprévu' : ' aria-label="Un imprévu ' + impAt(s) + NB + '?">Un imprévu' + NB + '?') + '</button>') + '</section>';
   };
@@ -470,6 +493,7 @@
     const next = new Map();
     if (!res.secs.some(function(s){ return s.id === fsel; })) fsel = autoSec();
     dayBatch = res.secs.some(function(s){ return s.recipe && !s.libre; }) ? batchFor(selIso()) : {};
+    dayPrep = has(PREP, 'pd:' + ch.pdBase) || has(PREP, 'co:' + (ch.co || 'oeufs')) || ch.cs === 'boules' ? prepFor(selIso()) : {};
     $('frise').innerHTML = friseHTML(res.secs);
     fitFrise();
     $('eat-msg').textContent = eatenText(res.secs);
@@ -592,6 +616,8 @@
     },
     /* La page du batch de cette recette (3.21.0) */
     'rec-batch': function(b){ const x = has(REPAS, b.dataset.slot) ? dayBatch[b.dataset.slot] : null; if (!x) return; renderBatchPage(x); openScreen('batch', b); },
+    /* Petit-déjeuner ou collation à préparer à l'avance (5.2.0) */
+    'prep-batch': function(b, v){ const x = has(dayPrep, v) ? dayPrep[v] : null; if (!x) return; renderPrepPage(x); openScreen('batch', b); },
     'rec-on': function(b){
       const slot = b.dataset.slot, all = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch) : [];
       const id = all.indexOf(b.dataset.value) >= 0 ? b.dataset.value : all[0];

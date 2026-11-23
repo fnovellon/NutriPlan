@@ -137,9 +137,11 @@ function batchChoices(days, n, off, k, rand, prefs, wants){
    protéine et féculent de la boîte) et ce qu'il faut cuire en tout (protéine, féculent, légumes, matière grasse, ajouts :
    somme des boîtes, valeurs des lignes de buildDay). lead : jours entre la cuisson et le premier jour (1 par défaut, la
    veille ; 0 si la période commence aujourd'hui), pour le premier bloc seulement.
-   Renvoie [{start, recipes:[{id, t, gel, boxes, totals}]}].
-   @param {{res:Day}[]} days  @param {number} [lead] */
-function batchCook(days, lead){
+   fresh (5.2.0, bouton « Batch cooking » de la journée) : aussi les recettes qui ne se gardent pas, marquées fresh (cuisinées
+   le jour même ; la veille, le féculent et les légumes).
+   Renvoie [{start, recipes:[{id, t, gel, fresh, boxes, totals}]}].
+   @param {{res:Day}[]} days  @param {number} [lead]  @param {boolean} [fresh] */
+function batchCook(days, lead, fresh){
   const blocks = [];
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const by = {}, order = [];
@@ -150,7 +152,7 @@ function batchCook(days, lead){
         by[sec.recipe].push({day:b + i, slot:sec.id, after:i + (b === 0 && lead === 0 ? 0 : 1), items:sec.items.filter(function(x){ return /^(p1|p2|st|[vfx]-)/.test(x.key) && x.buy; })});
       });
     });
-    const recipes = order.filter(function(id){ return RECIPES[id].box && by[id].length >= 2; }).map(function(id){
+    const recipes = order.filter(function(id){ return (RECIPES[id].box || fresh) && by[id].length >= 2; }).map(function(id){
       const x = RECIPES[id], tot = {}, ids = [];
       by[id].forEach(function(v){ v.items.forEach(function(i){
         const a = tot[i.buy.id] || (tot[i.buy.id] = {first:i, g:0, n:0, cooked:0});
@@ -172,7 +174,7 @@ function batchCook(days, lead){
           return {qty:i.qty, name:i.name, cooked:i.cook ? i.cook.ways.map(function(w){ return '≈' + NB + grams(w.g) + ' ' + w.adj; }).join(' ou ') : null};
         })};
       });
-      return {id:id, t:x.t, gel:x.gel, boxes:boxes, totals:totals};
+      return {id:id, t:x.t, gel:x.gel, fresh:!x.box, boxes:boxes, totals:totals};
     });
     if (recipes.length) blocks.push({start:b, recipes:recipes});
   }
@@ -345,4 +347,64 @@ function batchRound(days, profile){
     }); }
   }
   return out;
+}
+/* Petits-déjeuners et collations qui se préparent à l'avance (5.2.0) : leur section, les clés de leurs lignes (null : toute
+   la section), combien de jours ils se gardent au frigo (keep), s'ils se congèlent (gel) et comment les garder (note). */
+const PREP = {
+  'pd:bircher':{sec:'pd', keys:null, keep:2, gel:false, note:'Il se garde 2 jours au frigo, dans un bocal fermé : prépare-le le soir pour les deux matins suivants.'},
+  'co:oeufs':{sec:'co', keys:['oe'], keep:7, gel:false, note:'Durs, ils se gardent une semaine au frigo dans leur coquille (écale-les au moment de les manger) ; mollets, mange-les dans les 2 jours.'},
+  'co:muffins':{sec:'co', keys:['mfo', 'mfe', 'mfp'], keep:3, gel:true, note:'Ils se gardent 3 jours au frigo ; ceux d’après vont au congélateur, sors-les la veille au soir.'},
+  'co:rizaulait':{sec:'co', keys:['rzr', 'rzl', 'rzs'], keep:3, gel:false, note:'Il se garde 3 jours au frigo, en pots fermés, et se congèle mal : une fournée pour 3 jours au plus.'},
+  'cs:boules':{sec:'co', keys:['bof', 'bos', 'boa'], keep:7, gel:true, note:'Elles se gardent une semaine au frais dans une boîte fermée ; au-delà, au congélateur.'}
+};
+/* Ce qui se prépare à l'avance dans les jours d'une période (days = [{res, ch}], dates consécutives, par blocs de 7 comme
+   batchCook ; lead comme batchCook) : pour chaque petit-déjeuner ou collation de PREP servi au moins deux fois dans un bloc
+   (un jour compte si ses lignes y sont : pas une collation remplacée par du skyr parce qu'il y a déjà des œufs, ni le goûter
+   d'une sortie longue, ni un repas remplacé par un imprévu), ses fournées : la veille de la première portion (le jour même
+   si c'est le premier jour et que la période commence aujourd'hui), chacune pour les portions qui tiennent au frigo (keep
+   jours) ; s'il se congèle, une seule fournée, le reste au congélateur. Renvoie [{start, items:[{id, keep, gel, note,
+   batches:[{prep, days:[{day, freezer}], totals:[{id, qty, name}]}]}]}] (prep, day : depuis le premier jour de la période ;
+   prep = −1 : la veille). */
+function prepCook(days, lead){
+  const PLURAL = {oeuf:'œufs', pomme:'pommes', banane:'bananes'};
+  const which = function(ch, id){
+    const k = id.split(':');
+    return k[0] === 'pd' ? ch.pdBase === k[1] : k[0] === 'co' ? (ch.co || 'oeufs') === k[1] : (ch.cs || 'banane') === k[1];
+  };
+  const blocks = [];
+  for (let b = 0; b < days.length; b += BATCH_BLOCK){
+    const items = [];
+    Object.keys(PREP).forEach(function(id){
+      const P = PREP[id], occ = [];
+      days.slice(b, b + BATCH_BLOCK).forEach(function(d, i){
+        if (!d.ch || !which(d.ch, id)) return;
+        const sec = d.res.secs.find(function(s){ return s.id === P.sec && !s.band && !s.libre; });
+        const lines = sec ? sec.items.filter(function(x){ return x.buy && (P.keys ? P.keys.indexOf(x.key) >= 0 : x.key !== 'imp'); }) : [];
+        if (!lines.length || (P.keys && !P.keys.every(function(k){ return lines.some(function(x){ return x.key === k; }); }))) return;
+        occ.push({day:b + i, lines:lines});
+      });
+      if (occ.length < 2) return;
+      const batches = [];
+      let rest = occ.slice();
+      while (rest.length){
+        const prep = rest[0].day === 0 && lead === 0 ? 0 : rest[0].day - 1;
+        const mine = P.gel ? rest : rest.filter(function(o){ return o.day - prep <= P.keep; });
+        rest = rest.slice(mine.length);
+        const tot = {}, order = [];
+        mine.forEach(function(o){ o.lines.forEach(function(x){
+          const a = tot[x.buy.id] || (tot[x.buy.id] = {g:0, n:0, name:x.name});
+          if (order.indexOf(x.buy.id) < 0) order.push(x.buy.id);
+          a.g += x.buy.g || 0; a.n += x.buy.n || 0;
+        }); });
+        batches.push({prep:prep, days:mine.map(function(o){ return {day:o.day, freezer:o.day - prep > P.keep}; }),
+          totals:order.map(function(bid){
+            const a = tot[bid];
+            return a.n ? {id:bid, qty:String(a.n), name:a.n > 1 && has(PLURAL, bid) ? PLURAL[bid] : a.name} : {id:bid, qty:shopQty(a.g), name:a.name};
+          })});
+      }
+      items.push({id:id, keep:P.keep, gel:P.gel, note:P.note, batches:batches});
+    });
+    if (items.length) blocks.push({start:b, items:items});
+  }
+  return blocks;
 }

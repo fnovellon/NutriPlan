@@ -138,7 +138,7 @@ const clock = { now: new Date(2026, 9, 7, 9).getTime() };
 const device = (server, storage, o = {}) => {
   const st = { reloads: 0 };
   const errors = [];
-  const dom = openPage({ clock, errors, storage, setup: win => { if (o.flash) win.sessionStorage.setItem('repas-du-jour:sync-flash', '1'); win.__repasSync = { adapter: fakeFirebase(server, { uid: 'u1', email: 'moi@exemple.fr' }, o), reload: () => { st.reloads++; }, delay: 0 }; } });
+  const dom = openPage({ clock, errors, storage, setup: win => { if (o.flash) win.sessionStorage.setItem('repas-du-jour:sync-flash', '1'); win.__repasSync = { adapter: fakeFirebase(server, { uid: 'u1', email: 'moi@exemple.fr' }, o), reload: () => { st.reloads++; }, delay: 0, poll: o.poll || 0 }; } });
   const d = dom.window.document, $ = s => d.querySelector(s);
   return Object.assign(st, { dom, d, $, errors, ls: dom.window.localStorage, click: s => { const e = $(s); assert(e, 'introuvable : ' + s); e.click(); },
     snapshot: () => { const o = {}; for (let i = 0; i < dom.window.localStorage.length; i++){ const k = dom.window.localStorage.key(i); o[k] = dom.window.localStorage.getItem(k); } return o; },
@@ -210,6 +210,13 @@ const device = (server, storage, o = {}) => {
   const lib = x => JSON.stringify(JSON.parse(x.ls.getItem(KEYS.v2)).plans['2026-10-07'].libre);
   assert(lib(pa) === lib(pb) && lib(pa) === JSON.stringify(JSON.parse(server.docs.u1['p.2026-10-07'].v).libre), 'même milliseconde : ' + lib(pa) + ' / ' + lib(pb));
   a = pa; b = pb;
+  // En direct (5.2.0) : une page ouverte sans rien toucher reçoit ce qui change ailleurs (vérification toutes les 30 ms ici)
+  const live = device(server, a.snapshot(), { signedIn: true, poll: 30 }); await flush();
+  clock.now += 60000; b.click('#sw-lib-dej'); await flush();
+  const pulls0 = server.pulls;
+  await new Promise(r => setTimeout(r, 150));
+  assert(live.reloads === 1 && server.pulls > pulls0 && JSON.parse(live.ls.getItem(KEYS.v2)).plans['2026-10-07'].libre.dej, 'en direct : reçu sans rien toucher');
+  live.dom.window.close();
   // Se déconnecter : les données restent, plus de Firebase au démarrage
   b.click('#gear'); b.click('#tab-appli'); b.click('#sync-out'); await flush();
   assert(b.$('#sync-st').textContent === 'Déconnecté. Tes données restent sur cet appareil.' && !b.meta().on && b.ls.getItem(KEYS.profil), 'déconnecté');
@@ -230,5 +237,5 @@ const device = (server, storage, o = {}) => {
   a.click('[data-action="eff-ok"]'); await flush();
   assert(!server.docs.u1 && !a.ls.getItem(KEYS.profil) && !a.$('#accueil').hidden, 'tout effacé, en ligne aussi');
   [a, b, c].forEach(x => assert.deepStrictEqual(x.errors, [], 'erreur dans la page : ' + x.errors.join(' | ')));
-  console.log('synchronisation OK (moteur, 400 simulations à plusieurs appareils, interface à deux appareils)');
+  console.log('synchronisation OK (moteur, 400 simulations à plusieurs appareils, interface à deux appareils, en direct)');
 })().catch(e => { console.error(e); process.exit(1); });

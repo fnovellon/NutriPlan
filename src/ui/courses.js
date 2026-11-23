@@ -157,12 +157,12 @@
   const batchBody = function(r, isos){
     const x = RECIPES[r.id], n = r.boxes.length;
     const li = function(q, name, note){ return '<li><span class="b-q">' + q + '</span><span class="name">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</span></li>'; };
-    return '<h3 class="rec-h">À cuire en tout</h3><ul class="b-list">' + r.totals.map(function(t){ return li(t.qty, t.name, t.note); }).join('') + '</ul>' +
-      '<h3 class="rec-h">Les boîtes</h3><ul class="b-list">' + r.boxes.map(function(bx){
+    return '<h3 class="rec-h">' + (r.fresh ? 'En tout, pour ses ' + n + NB + 'repas' : 'À cuire en tout') + '</h3><ul class="b-list">' + r.totals.map(function(t){ return li(t.qty, t.name, t.note); }).join('') + '</ul>' +
+      '<h3 class="rec-h">' + (r.fresh ? 'Les repas' : 'Les boîtes') + '</h3><ul class="b-list">' + r.boxes.map(function(bx){
         const d = fromIso(isos[bx.day]);
         return li(cap(d.toLocaleDateString('fr-FR', {weekday:'short'})) + ' ' + d.getDate() + ', ' + SLOT[bx.slot],
-          bx.parts.map(function(pt){ return pt.qty + ' ' + pt.name + (pt.cooked ? ' (' + pt.cooked + ')' : ''); }).join(', ') + ', ' + (SHARE[n] || '1 part sur ' + n) + ' des légumes et de la sauce',
-          bx.fridge ? 'frigo' : 'congélateur' + (r.gel ? '' : ', mais elle se congèle mal' + NB + ': prépare-la plutôt la veille'));
+          bx.parts.map(function(pt){ return pt.qty + ' ' + pt.name + (pt.cooked ? ' (' + pt.cooked + ')' : ''); }).join(', ') + (r.fresh ? '' : ', ' + (SHARE[n] || '1 part sur ' + n) + ' des légumes et de la sauce'),
+          r.fresh ? 'le jour même' : bx.fridge ? 'frigo' : 'congélateur' + (r.gel ? '' : ', mais elle se congèle mal' + NB + ': prépare-la plutôt la veille'));
       }).join('') + '</ul>' +
       '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' +
       '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + x.steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>';
@@ -193,7 +193,23 @@
   const renderBatchPage = function(x){
     const r = x.r, ng = r.boxes.filter(function(b){ return !b.fridge; }).length, start = fromIso(x.isos[0]);
     $('batchp-h').textContent = r.t;
-    $('batch-body').innerHTML = '<p class="calc">' + cookText(x.lead === 0 ? start : addDays(start, -1), r.boxes.length, ng, '') + '</p>' + batchBody(r, x.isos);
+    /* Une recette qui ne se garde pas (5.2.0) : cuisinée le jour même, la veille le féculent et les légumes */
+    $('batch-body').innerHTML = '<p class="calc">' + (r.fresh ? 'Cette recette ne se garde pas une fois cuisinée' + NB + ': cuis-la le jour même, pour chacun de ses ' + r.boxes.length + NB + 'repas. La veille, tu peux cuire le féculent (refroidi vite, au frigo) et laver et couper les légumes.'
+      : cookText(x.lead === 0 ? start : addDays(start, -1), r.boxes.length, ng, '')) + '</p>' + batchBody(r, x.isos);
+  };
+  /* Page du batch d'un petit-déjeuner ou d'une collation (5.2.0, bouton « Batch cooking » de sa carte) : comment il se garde,
+     ses fournées (le jour où la préparer, les portions, ce qu'il faut en tout), sa préparation */
+  const renderPrepPage = function(x){
+    const it = x.p, k = it.id.split(':'), day = function(i){ return i < 0 ? addDays(fromIso(x.isos[0]), -1) : fromIso(x.isos[i]); };
+    const short = function(d){ return d.toLocaleDateString('fr-FR', {weekday:'short'}) + ' ' + d.getDate(); };
+    const li = function(q, name){ return '<li><span class="b-q">' + q + '</span><span class="name">' + name + '</span></li>'; };
+    $('batchp-h').textContent = k[0] === 'pd' ? PD[k[1]].label : k[0] === 'co' ? SNACK[k[1]].label : 'Boules d’énergie';
+    $('batch-body').innerHTML = '<p class="calc">' + it.note + '</p>' + it.batches.map(function(bt){
+      const fr = bt.days.filter(function(dd){ return !dd.freezer; }), fz = bt.days.filter(function(dd){ return dd.freezer; });
+      const days = function(l){ return l.map(function(dd){ return short(day(dd.day)); }).join(', '); };
+      return '<h3 class="rec-h">À préparer ' + (dayDiff(day(bt.prep)) < 0 ? 'la veille (' + dayRel(day(bt.prep)) + ')' : dayRel(day(bt.prep))) + '</h3><p class="calc">Pour ' + bt.days.length + NB + 'portion' + (bt.days.length > 1 ? 's' : '') + NB + ': ' + days(fr) +
+        (fz.length ? NB + '; au congélateur' + NB + ': ' + days(fz) : '') + '.</p><ul class="b-list">' + bt.totals.map(function(t){ return li(t.qty, t.name); }).join('') + '</ul>';
+    }).join('') + '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + FICHE[it.id].steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>';
   };
   /* Changer une recette du batch cooking (3.16.0) : les jours de son bloc (7 jours à partir de start dans la planification),
      avec leurs plats et leur repas libre */

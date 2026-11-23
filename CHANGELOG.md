@@ -1,5 +1,11 @@
 # Nouveautés
 
+## 5.2.0, 23 novembre 2026
+
+- Synchronisation en direct : une appli restée ouverte voit arriver d'elle-même ce que tu changes sur ton autre appareil (une vérification toutes les 30 secondes tant qu'elle est à l'écran).
+- Batch cooking pour le petit-déjeuner et la collation qui se préparent à l'avance : bircher, œufs durs, muffins œuf-épinards, riz au lait et boules d'énergie. Quand ils reviennent dans ta semaine, le bouton « Batch cooking » de leur carte te dit quand les préparer, pour quels jours, en quelles quantités et combien de temps ils se gardent.
+- Le bouton « Batch cooking » apparaît aussi pour les recettes qui ne se gardent pas (poisson, papillotes, salades) quand elles reviennent : elles se cuisinent le jour même, et la fiche te dit ce que tu peux préparer la veille.
+
 ## 5.1.0, 22 novembre 2026
 
 - Synchronisation entre tes appareils : dans les réglages (onglet « Appli »), connecte-toi avec ton compte Google et retrouve tes jours, ton profil, tes planifications et tes repas cochés sur ton téléphone, ta tablette ou ton ordinateur.

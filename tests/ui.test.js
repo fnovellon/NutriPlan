@@ -196,6 +196,33 @@ assert.deepStrictEqual(stored().plans['2026-10-07'].libre, {}, 'plus de repas li
 assert(Math.abs(sumKcal() - k0) <= 10 && !sections().some(x => / libre$/.test(x)), 'journée normale');
 assert.strictEqual($('#hint').textContent, '', 'message non effacé');
 
+// Batch cooking (5.2.0) : le petit-déjeuner et la collation qui reviennent dans la semaine ont leur bouton et leur fiche ; une
+// recette qui ne se garde pas, choisie deux fois, aussi (à cuisiner le jour même)
+{
+  const R0 = Object.keys(JSON.parse('{}'));
+  void R0;
+  const memo = {}; for (let js = 0; js < 7; js++) memo[js] = { pdBase: 'bircher', co: 'oeufs' };
+  const t = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: {}, choices: memo }))));
+  const tw = t.d.defaultView, RR = tw.eval('RECIPES'), fr = Object.keys(RR).find(id => !RR[id].box && RR[id].p === 'poisson' && RR[id].s === 'riz');
+  t.click('#ft-pd');
+  assert(t.$('#prep-pd') && t.$('#prep-pd').textContent === 'Batch cooking' && t.$('#prep-pd').getAttribute('aria-label') === 'Batch cooking du petit-déjeuner', 'bouton du petit-déjeuner');
+  t.click('#prep-pd');
+  assert(!t.$('#batch').hidden && t.$('#batchp-h').textContent === 'Bircher' && /^Il se garde 2\sjours au frigo/.test(t.$('#batch-body .calc').textContent), 'fiche du bircher');
+  assert(/^À préparer la veille \(hier\)$/.test(t.$('#batch-body .rec-h').textContent) && /Pour 2\sportions\s:\smer\. 7, jeu\. 8\./.test(t.$('#batch-body').textContent) && t.d.querySelectorAll('#batch-body .rec-steps li').length === 3, 'fournée du bircher : ' + t.$('#batch-body').textContent.slice(0, 200));
+  t.click('#batch [data-action="fermer"]');
+  t.click('#ft-co');
+  assert(t.$('#prep-co') && !t.$('#prep-cs'), 'bouton de la collation (œufs durs), pas de boules');
+  t.click('#prep-co');
+  assert(t.$('#batchp-h').textContent === 'Œufs durs' && /Pour 4\sportions\s:\smer\. 7, jeu\. 8, ven\. 9, sam\. 10\./.test(t.$('#batch-body').textContent), 'fiche des œufs durs (dimanche : œufs au dîner, collation au skyr) : ' + t.$('#batch-body').textContent.slice(0, 160));
+  t.click('#batch [data-action="fermer"]');
+  // Recette qui ne se garde pas, ce midi et demain midi
+  const t2 = tools(open(ls => ls.setItem(KEY, JSON.stringify({ plans: { '2026-10-07': { ch: { dej: { prot: 'poisson', starch: 'riz', recette: fr } } }, '2026-10-08': { ch: { dej: { prot: 'poisson', starch: 'riz', recette: fr } } } }, choices: {} }))));
+  t2.click('#ft-dej');
+  assert(t2.$('#rec-b-dej'), 'recette fragile : bouton');
+  t2.click('#rec-b-dej');
+  assert(/^Cette recette ne se garde pas une fois cuisinée\s:\scuis-la le jour même, pour chacun de ses 2\srepas\./.test(t2.$('#batch-body .calc').textContent) && /En tout, pour ses 2\srepas/.test(t2.$('#batch-body').textContent) && /le jour même/.test(t2.$('#batch-body .b-list:nth-of-type(2)').textContent), 'fiche d’une recette fragile');
+}
+
 // Repas libres enregistrés avant la 5.0.0 (vrai) : le dîner, en repas plaisir ; celui de la semaine type (samedi) n'est plus
 // libre. Un déjeuner libre : le formulaire des repas le dit, la bibliothèque n'a pas de bouton, le jour d'une planification le montre
 {

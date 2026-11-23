@@ -956,7 +956,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
       <li>Sous le déjeuner et le dîner, une recette t’est proposée pour ta protéine et ton féculent (il y en a deux à quatre par couple, elles tournent d’un jour à l’autre&nbsp;; «&nbsp;Une autre recette&nbsp;» montre la suivante). «&nbsp;Voir la recette&nbsp;» montre tes quantités, les aromates et les étapes&nbsp;; «&nbsp;Choisir&nbsp;» la prend pour ce repas&nbsp;: ses légumes et sa matière grasse sont comptés à la place de la ligne «&nbsp;légumes&nbsp;» et de la marge cuisine, et le féculent s’ajuste pour garder le même total. Ta journée montre alors la recette et ses macros&nbsp;; ses ingrédients, avec tes quantités, sont dans sa fiche. «&nbsp;Décide pour moi&nbsp;» la choisit d’office.</li>
       <li><strong>Convertir</strong>, dans le menu en haut&nbsp;: combien d’un autre aliment pour remplacer le tien. Les féculents et les matières grasses à calories égales (40&nbsp;g de riz cru, c’est 180&nbsp;g de pommes de terre), les protéines à protéines égales, avec les calories de chacune. Saisis en grammes crus, cuits ou en pièces. Dans ta journée, le bouton ⇄ d’une ligne du déjeuner ou du dîner ouvre l’outil avec sa quantité.</li>
       <li><strong>Recettes</strong>, dans le menu en haut&nbsp;: les 176 recettes de l’appli, deux à quatre par protéine et féculent, dont des plats d’automne et des plats à la cuillère (ramen, pho, minestrone, potée…), à filtrer par protéine, féculent, celles qui se gardent, les rapides ou celles de saison. La petite feuille après un nom&nbsp;: la recette est de saison (celles de toute l’année n’en ont pas, elles le sont toujours). Choisis d’abord le repas (ce midi, ce soir, demain midi ou demain soir)&nbsp;: la fiche d’une recette te donne tes quantités pour ce repas, et «&nbsp;Prendre pour…&nbsp;» la met dans ta journée. Dans la fiche, «&nbsp;Favorite&nbsp;» la fait revenir deux fois plus souvent quand l’appli tire tes plats en recettes, «&nbsp;À éviter&nbsp;» ne la tire plus. Deux autres onglets, «&nbsp;Petits-déjeuners&nbsp;» et «&nbsp;Collations&nbsp;» (avec les boules d’énergie)&nbsp;: leur préparation, tes quantités pour ce matin, demain matin, aujourd’hui ou demain, et «&nbsp;Prendre pour…&nbsp;». Un petit-déjeuner ou une collation favori revient deux fois plus souvent dans «&nbsp;Surprends-moi&nbsp;» de tes planifications, un «&nbsp;à éviter&nbsp;» n’y revient plus.</li>
-      <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
+      <li>Envie de cuisiner une seule fois&nbsp;? Dans une planification, prends quelques recettes qui se gardent&nbsp;: elles reviennent midi et soir, et ta planification montre «&nbsp;Ton batch cooking&nbsp;»&nbsp;: quand cuisiner, ce qu’il faut cuire en tout et ce que contient chaque boîte. Dans ta journée, le bouton «&nbsp;Batch cooking&nbsp;» d’une recette ouvre sa fiche (pour une recette qui ne se garde pas&nbsp;: ce que tu peux préparer la veille). Le petit-déjeuner et la collation qui se préparent à l’avance (bircher, œufs durs, muffins, riz au lait, boules d’énergie) ont aussi le leur quand ils reviennent dans ta semaine&nbsp;: quand les préparer, pour quels jours et en quelles quantités. Un plat cuisiné se garde 3&nbsp;jours au frigo&nbsp;: les boîtes suivantes vont au congélateur (sors-les la veille au soir), et les salades, qui se congèlent mal, sont mangées en premier.</li>
       <li>Tu manges dehors&nbsp;? Active «&nbsp;Repas libre&nbsp;» dans la carte du déjeuner ou du dîner, autant de fois que tu veux. Un <strong>repas dehors</strong> garde le budget du repas prévu&nbsp;: ta sèche ne change pas. Ton <strong>repas plaisir</strong>, un par semaine (le samedi soir par défaut), a environ 300&nbsp;kcal de plus. Les autres repas de la journée ne bougent pas.</li>
       <li>Un repas ne s’est pas passé comme prévu&nbsp;? «&nbsp;Un imprévu&nbsp;?&nbsp;», en bas de sa carte&nbsp;: à la place du repas ou en plus, une estimation en kcal. La suite de ta journée s’ajuste (les féculents d’après baissent)&nbsp;; ce qui ne peut pas être repris reste, sans rien rattraper le lendemain.</li>
     </ul>
@@ -1113,7 +1113,7 @@ h2.sem-h{margin:14px 0 8px;font-family:var(--serif);font-weight:400;font-size:17
    pieces), textes (grams, slices, fmtInt, typo). Premier fichier du script : les autres s'en servent dès le chargement. */
 const NB = '\u00A0';
 /* Version de l'appli : la même que package.json, notée dans CHANGELOG.md */
-const APP_VERSION = '5.1.0';
+const APP_VERSION = '5.2.0';
 
 function has(o, k){ return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
 function grams(n){ return n + NB + 'g'; }
@@ -3286,9 +3286,11 @@ function batchChoices(days, n, off, k, rand, prefs, wants){
    protéine et féculent de la boîte) et ce qu'il faut cuire en tout (protéine, féculent, légumes, matière grasse, ajouts :
    somme des boîtes, valeurs des lignes de buildDay). lead : jours entre la cuisson et le premier jour (1 par défaut, la
    veille ; 0 si la période commence aujourd'hui), pour le premier bloc seulement.
-   Renvoie [{start, recipes:[{id, t, gel, boxes, totals}]}].
-   @param {{res:Day}[]} days  @param {number} [lead] */
-function batchCook(days, lead){
+   fresh (5.2.0, bouton « Batch cooking » de la journée) : aussi les recettes qui ne se gardent pas, marquées fresh (cuisinées
+   le jour même ; la veille, le féculent et les légumes).
+   Renvoie [{start, recipes:[{id, t, gel, fresh, boxes, totals}]}].
+   @param {{res:Day}[]} days  @param {number} [lead]  @param {boolean} [fresh] */
+function batchCook(days, lead, fresh){
   const blocks = [];
   for (let b = 0; b < days.length; b += BATCH_BLOCK){
     const by = {}, order = [];
@@ -3299,7 +3301,7 @@ function batchCook(days, lead){
         by[sec.recipe].push({day:b + i, slot:sec.id, after:i + (b === 0 && lead === 0 ? 0 : 1), items:sec.items.filter(function(x){ return /^(p1|p2|st|[vfx]-)/.test(x.key) && x.buy; })});
       });
     });
-    const recipes = order.filter(function(id){ return RECIPES[id].box && by[id].length >= 2; }).map(function(id){
+    const recipes = order.filter(function(id){ return (RECIPES[id].box || fresh) && by[id].length >= 2; }).map(function(id){
       const x = RECIPES[id], tot = {}, ids = [];
       by[id].forEach(function(v){ v.items.forEach(function(i){
         const a = tot[i.buy.id] || (tot[i.buy.id] = {first:i, g:0, n:0, cooked:0});
@@ -3321,7 +3323,7 @@ function batchCook(days, lead){
           return {qty:i.qty, name:i.name, cooked:i.cook ? i.cook.ways.map(function(w){ return '≈' + NB + grams(w.g) + ' ' + w.adj; }).join(' ou ') : null};
         })};
       });
-      return {id:id, t:x.t, gel:x.gel, boxes:boxes, totals:totals};
+      return {id:id, t:x.t, gel:x.gel, fresh:!x.box, boxes:boxes, totals:totals};
     });
     if (recipes.length) blocks.push({start:b, recipes:recipes});
   }
@@ -3494,6 +3496,66 @@ function batchRound(days, profile){
     }); }
   }
   return out;
+}
+/* Petits-déjeuners et collations qui se préparent à l'avance (5.2.0) : leur section, les clés de leurs lignes (null : toute
+   la section), combien de jours ils se gardent au frigo (keep), s'ils se congèlent (gel) et comment les garder (note). */
+const PREP = {
+  'pd:bircher':{sec:'pd', keys:null, keep:2, gel:false, note:'Il se garde 2 jours au frigo, dans un bocal fermé : prépare-le le soir pour les deux matins suivants.'},
+  'co:oeufs':{sec:'co', keys:['oe'], keep:7, gel:false, note:'Durs, ils se gardent une semaine au frigo dans leur coquille (écale-les au moment de les manger) ; mollets, mange-les dans les 2 jours.'},
+  'co:muffins':{sec:'co', keys:['mfo', 'mfe', 'mfp'], keep:3, gel:true, note:'Ils se gardent 3 jours au frigo ; ceux d’après vont au congélateur, sors-les la veille au soir.'},
+  'co:rizaulait':{sec:'co', keys:['rzr', 'rzl', 'rzs'], keep:3, gel:false, note:'Il se garde 3 jours au frigo, en pots fermés, et se congèle mal : une fournée pour 3 jours au plus.'},
+  'cs:boules':{sec:'co', keys:['bof', 'bos', 'boa'], keep:7, gel:true, note:'Elles se gardent une semaine au frais dans une boîte fermée ; au-delà, au congélateur.'}
+};
+/* Ce qui se prépare à l'avance dans les jours d'une période (days = [{res, ch}], dates consécutives, par blocs de 7 comme
+   batchCook ; lead comme batchCook) : pour chaque petit-déjeuner ou collation de PREP servi au moins deux fois dans un bloc
+   (un jour compte si ses lignes y sont : pas une collation remplacée par du skyr parce qu'il y a déjà des œufs, ni le goûter
+   d'une sortie longue, ni un repas remplacé par un imprévu), ses fournées : la veille de la première portion (le jour même
+   si c'est le premier jour et que la période commence aujourd'hui), chacune pour les portions qui tiennent au frigo (keep
+   jours) ; s'il se congèle, une seule fournée, le reste au congélateur. Renvoie [{start, items:[{id, keep, gel, note,
+   batches:[{prep, days:[{day, freezer}], totals:[{id, qty, name}]}]}]}] (prep, day : depuis le premier jour de la période ;
+   prep = −1 : la veille). */
+function prepCook(days, lead){
+  const PLURAL = {oeuf:'œufs', pomme:'pommes', banane:'bananes'};
+  const which = function(ch, id){
+    const k = id.split(':');
+    return k[0] === 'pd' ? ch.pdBase === k[1] : k[0] === 'co' ? (ch.co || 'oeufs') === k[1] : (ch.cs || 'banane') === k[1];
+  };
+  const blocks = [];
+  for (let b = 0; b < days.length; b += BATCH_BLOCK){
+    const items = [];
+    Object.keys(PREP).forEach(function(id){
+      const P = PREP[id], occ = [];
+      days.slice(b, b + BATCH_BLOCK).forEach(function(d, i){
+        if (!d.ch || !which(d.ch, id)) return;
+        const sec = d.res.secs.find(function(s){ return s.id === P.sec && !s.band && !s.libre; });
+        const lines = sec ? sec.items.filter(function(x){ return x.buy && (P.keys ? P.keys.indexOf(x.key) >= 0 : x.key !== 'imp'); }) : [];
+        if (!lines.length || (P.keys && !P.keys.every(function(k){ return lines.some(function(x){ return x.key === k; }); }))) return;
+        occ.push({day:b + i, lines:lines});
+      });
+      if (occ.length < 2) return;
+      const batches = [];
+      let rest = occ.slice();
+      while (rest.length){
+        const prep = rest[0].day === 0 && lead === 0 ? 0 : rest[0].day - 1;
+        const mine = P.gel ? rest : rest.filter(function(o){ return o.day - prep <= P.keep; });
+        rest = rest.slice(mine.length);
+        const tot = {}, order = [];
+        mine.forEach(function(o){ o.lines.forEach(function(x){
+          const a = tot[x.buy.id] || (tot[x.buy.id] = {g:0, n:0, name:x.name});
+          if (order.indexOf(x.buy.id) < 0) order.push(x.buy.id);
+          a.g += x.buy.g || 0; a.n += x.buy.n || 0;
+        }); });
+        batches.push({prep:prep, days:mine.map(function(o){ return {day:o.day, freezer:o.day - prep > P.keep}; }),
+          totals:order.map(function(bid){
+            const a = tot[bid];
+            return a.n ? {id:bid, qty:String(a.n), name:a.n > 1 && has(PLURAL, bid) ? PLURAL[bid] : a.name} : {id:bid, qty:shopQty(a.g), name:a.name};
+          })});
+      }
+      items.push({id:id, keep:P.keep, gel:P.gel, note:P.note, batches:batches});
+    });
+    if (items.length) blocks.push({start:b, items:items});
+  }
+  return blocks;
 }
 /* Liste de courses : les achats (buy) de plusieurs journées construites par buildDay, additionnés et rangés par rayon.
    Poids crus, pièces entières, budgets en kcal.
@@ -4221,16 +4283,38 @@ if (typeof document !== 'undefined'){
      7 jours, ceux de la planification qui contient la date (sinon sa semaine, lundi → dimanche). Pour chaque repas
      concerné : la recette (batchCook), les dates du bloc, lead (0 : cuisinée le premier jour, sinon la veille). Calculé
      une fois par dessin, seulement si un repas a une recette choisie. */
-  let dayBatch = {};
-  const batchFor = function(iso){
+  let dayBatch = {}, dayPrep = {};
+  /* Le bloc de 7 jours d'une date : ceux de sa planification, sinon sa semaine ; lead : 0 s'il commence aujourd'hui */
+  const blockOf = function(iso){
     const p = planifOf(iso), wk = weekOf(fromIso(iso)), from = p ? p.from : isoDate(wk[0]), to = p ? p.to : isoDate(wk[6]);
-    const all = rangeDays(from, to), i = all.indexOf(iso), b0 = i - i % BATCH_BLOCK, isos = all.slice(b0, b0 + BATCH_BLOCK);
-    const lead = b0 === 0 && dayDiff(fromIso(from)) <= 0 ? 0 : 1, out = {};
-    if (i < 0) return out;
-    batchCook(isos.map(function(x){ return {res:dayResult(x)}; }), lead).forEach(function(bl){
+    const all = rangeDays(from, to), i = all.indexOf(iso), b0 = i - i % BATCH_BLOCK;
+    return i < 0 ? null : {isos:all.slice(b0, b0 + BATCH_BLOCK), lead:b0 === 0 && dayDiff(fromIso(from)) <= 0 ? 0 : 1};
+  };
+  /* Les recettes qui ne se gardent pas aussi (5.2.0) : leur fiche dit de les cuisiner le jour même */
+  const batchFor = function(iso){
+    const bk = blockOf(iso), out = {};
+    if (!bk) return out;
+    const isos = bk.isos, lead = bk.lead;
+    batchCook(isos.map(function(x){ return {res:dayResult(x)}; }), lead, true).forEach(function(bl){
       bl.recipes.forEach(function(r){ r.boxes.forEach(function(bx){ if (isos[bx.day] === iso) out[bx.slot] = {r:r, isos:isos, lead:lead}; }); });
     });
     return out;
+  };
+  /* Petit-déjeuner et collation qui se préparent à l'avance (5.2.0, prepCook) et reviennent dans le bloc de la date, à
+     partir d'elle (les jours d'avant sont passés ou déjà prévus), chaque fournée la veille : par repas (pd, co, cs pour les
+     boules d'énergie), l'élément, les dates comptées */
+  const prepFor = function(iso){
+    const bk = blockOf(iso), out = {};
+    if (!bk) return out;
+    const isos = bk.isos.filter(function(x){ return x >= iso; });
+    prepCook(isos.map(function(x){ return {res:dayResult(x), ch:choicesFor(x, fromIso(x).getDay())}; }), 1).forEach(function(bl){
+      bl.items.forEach(function(it){ it.batches.forEach(function(bt){ bt.days.forEach(function(dd){ if (isos[dd.day] === iso) out[it.id.split(':')[0]] = {p:it, bt:bt, isos:isos}; }); }); });
+    });
+    return out;
+  };
+  const PREP_LABEL = {pd:'Batch cooking du petit-déjeuner', co:'Batch cooking de la collation', cs:'Batch cooking des boules d’énergie'};
+  const prepBtn = function(slot){
+    return dayPrep[slot] ? '<button type="button" class="reset rec-batch" id="prep-' + slot + '" data-action="prep-batch" data-value="' + slot + '" aria-label="' + PREP_LABEL[slot] + '">' + (slot === 'cs' ? 'Batch des boules d’énergie' : 'Batch cooking') + '</button>' : '';
   };
   /* Repas mangés (3.23.0) : clé repas-du-jour:manges:v1, { 'AAAA-MM-JJ': ['pd', 'dej', …] } (identifiants de repas validés,
      jours de plus de 21 jours effacés). Le bouton « Mangé » de la carte coche ou décoche ; cocher passe au repas suivant. */
@@ -4292,6 +4376,7 @@ if (typeof document !== 'undefined'){
     return '<section class="meal' + (done ? ' is-eaten' : '') + '"' + panelAttrs(s) + '><div class="meal-head"><h2 id="h-' + s.id + '">' + s.title +
       (s.when ? '<span class="when">' + s.when + '</span>' : '') + '</h2><div class="mh-r">' + kc + eat + '</div></div>' + lib + picks + (card ? recCardHTML(s) : '') +
       (shown.length ? '<ul class="items">' + shown.map(function(i){ return itemHTML(s.id, i, next); }).join('') + '</ul>' : '') + recHTML(s) +
+      (s.id === 'pd' ? prepBtn('pd') : s.id === 'co' ? prepBtn('co') + prepBtn('cs') : '') +
       (s.libre ? '' : '<button type="button" class="reset imp-b" id="imp-' + s.id + '" data-action="imp" data-value="' + s.id + '" aria-haspopup="dialog"' +
         (s.imprevu ? '>Modifier l’imprévu' : ' aria-label="Un imprévu ' + impAt(s) + NB + '?">Un imprévu' + NB + '?') + '</button>') + '</section>';
   };
@@ -4597,6 +4682,7 @@ if (typeof document !== 'undefined'){
     const next = new Map();
     if (!res.secs.some(function(s){ return s.id === fsel; })) fsel = autoSec();
     dayBatch = res.secs.some(function(s){ return s.recipe && !s.libre; }) ? batchFor(selIso()) : {};
+    dayPrep = has(PREP, 'pd:' + ch.pdBase) || has(PREP, 'co:' + (ch.co || 'oeufs')) || ch.cs === 'boules' ? prepFor(selIso()) : {};
     $('frise').innerHTML = friseHTML(res.secs);
     fitFrise();
     $('eat-msg').textContent = eatenText(res.secs);
@@ -4719,6 +4805,8 @@ if (typeof document !== 'undefined'){
     },
     /* La page du batch de cette recette (3.21.0) */
     'rec-batch': function(b){ const x = has(REPAS, b.dataset.slot) ? dayBatch[b.dataset.slot] : null; if (!x) return; renderBatchPage(x); openScreen('batch', b); },
+    /* Petit-déjeuner ou collation à préparer à l'avance (5.2.0) */
+    'prep-batch': function(b, v){ const x = has(dayPrep, v) ? dayPrep[v] : null; if (!x) return; renderPrepPage(x); openScreen('batch', b); },
     'rec-on': function(b){
       const slot = b.dataset.slot, all = has(REPAS, slot) ? recipesFor(ch[slot].prot, ch[slot].starch) : [];
       const id = all.indexOf(b.dataset.value) >= 0 ? b.dataset.value : all[0];
@@ -5560,12 +5648,12 @@ if (typeof document !== 'undefined'){
   const batchBody = function(r, isos){
     const x = RECIPES[r.id], n = r.boxes.length;
     const li = function(q, name, note){ return '<li><span class="b-q">' + q + '</span><span class="name">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</span></li>'; };
-    return '<h3 class="rec-h">À cuire en tout</h3><ul class="b-list">' + r.totals.map(function(t){ return li(t.qty, t.name, t.note); }).join('') + '</ul>' +
-      '<h3 class="rec-h">Les boîtes</h3><ul class="b-list">' + r.boxes.map(function(bx){
+    return '<h3 class="rec-h">' + (r.fresh ? 'En tout, pour ses ' + n + NB + 'repas' : 'À cuire en tout') + '</h3><ul class="b-list">' + r.totals.map(function(t){ return li(t.qty, t.name, t.note); }).join('') + '</ul>' +
+      '<h3 class="rec-h">' + (r.fresh ? 'Les repas' : 'Les boîtes') + '</h3><ul class="b-list">' + r.boxes.map(function(bx){
         const d = fromIso(isos[bx.day]);
         return li(cap(d.toLocaleDateString('fr-FR', {weekday:'short'})) + ' ' + d.getDate() + ', ' + SLOT[bx.slot],
-          bx.parts.map(function(pt){ return pt.qty + ' ' + pt.name + (pt.cooked ? ' (' + pt.cooked + ')' : ''); }).join(', ') + ', ' + (SHARE[n] || '1 part sur ' + n) + ' des légumes et de la sauce',
-          bx.fridge ? 'frigo' : 'congélateur' + (r.gel ? '' : ', mais elle se congèle mal' + NB + ': prépare-la plutôt la veille'));
+          bx.parts.map(function(pt){ return pt.qty + ' ' + pt.name + (pt.cooked ? ' (' + pt.cooked + ')' : ''); }).join(', ') + (r.fresh ? '' : ', ' + (SHARE[n] || '1 part sur ' + n) + ' des légumes et de la sauce'),
+          r.fresh ? 'le jour même' : bx.fridge ? 'frigo' : 'congélateur' + (r.gel ? '' : ', mais elle se congèle mal' + NB + ': prépare-la plutôt la veille'));
       }).join('') + '</ul>' +
       '<h3 class="rec-h">Aromates, sans compter</h3><p class="rec-aro">' + cap(x.aro) + '.</p>' +
       '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + x.steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>';
@@ -5596,7 +5684,23 @@ if (typeof document !== 'undefined'){
   const renderBatchPage = function(x){
     const r = x.r, ng = r.boxes.filter(function(b){ return !b.fridge; }).length, start = fromIso(x.isos[0]);
     $('batchp-h').textContent = r.t;
-    $('batch-body').innerHTML = '<p class="calc">' + cookText(x.lead === 0 ? start : addDays(start, -1), r.boxes.length, ng, '') + '</p>' + batchBody(r, x.isos);
+    /* Une recette qui ne se garde pas (5.2.0) : cuisinée le jour même, la veille le féculent et les légumes */
+    $('batch-body').innerHTML = '<p class="calc">' + (r.fresh ? 'Cette recette ne se garde pas une fois cuisinée' + NB + ': cuis-la le jour même, pour chacun de ses ' + r.boxes.length + NB + 'repas. La veille, tu peux cuire le féculent (refroidi vite, au frigo) et laver et couper les légumes.'
+      : cookText(x.lead === 0 ? start : addDays(start, -1), r.boxes.length, ng, '')) + '</p>' + batchBody(r, x.isos);
+  };
+  /* Page du batch d'un petit-déjeuner ou d'une collation (5.2.0, bouton « Batch cooking » de sa carte) : comment il se garde,
+     ses fournées (le jour où la préparer, les portions, ce qu'il faut en tout), sa préparation */
+  const renderPrepPage = function(x){
+    const it = x.p, k = it.id.split(':'), day = function(i){ return i < 0 ? addDays(fromIso(x.isos[0]), -1) : fromIso(x.isos[i]); };
+    const short = function(d){ return d.toLocaleDateString('fr-FR', {weekday:'short'}) + ' ' + d.getDate(); };
+    const li = function(q, name){ return '<li><span class="b-q">' + q + '</span><span class="name">' + name + '</span></li>'; };
+    $('batchp-h').textContent = k[0] === 'pd' ? PD[k[1]].label : k[0] === 'co' ? SNACK[k[1]].label : 'Boules d’énergie';
+    $('batch-body').innerHTML = '<p class="calc">' + it.note + '</p>' + it.batches.map(function(bt){
+      const fr = bt.days.filter(function(dd){ return !dd.freezer; }), fz = bt.days.filter(function(dd){ return dd.freezer; });
+      const days = function(l){ return l.map(function(dd){ return short(day(dd.day)); }).join(', '); };
+      return '<h3 class="rec-h">À préparer ' + (dayDiff(day(bt.prep)) < 0 ? 'la veille (' + dayRel(day(bt.prep)) + ')' : dayRel(day(bt.prep))) + '</h3><p class="calc">Pour ' + bt.days.length + NB + 'portion' + (bt.days.length > 1 ? 's' : '') + NB + ': ' + days(fr) +
+        (fz.length ? NB + '; au congélateur' + NB + ': ' + days(fz) : '') + '.</p><ul class="b-list">' + bt.totals.map(function(t){ return li(t.qty, t.name); }).join('') + '</ul>';
+    }).join('') + '<h3 class="rec-h">Préparation</h3><ol class="rec-steps">' + FICHE[it.id].steps.map(function(z){ return '<li>' + z + '</li>'; }).join('') + '</ol>';
   };
   /* Changer une recette du batch cooking (3.16.0) : les jours de son bloc (7 jours à partir de start dans la planification),
      avec leurs plats et leur repas libre */
@@ -6669,7 +6773,8 @@ if (typeof document !== 'undefined'){
      Le découpage et la fusion sont dans engine/sync.js. Les changements venus d'un autre appareil ne sont écrits que quand
      rien n'est en cours ici (pas d'assistant, de formulaire des repas, de panneau ouvert, ni d'accueil refait), puis la
      page se recharge : l'état en mémoire ne peut pas les écraser.
-     Pour les tests : window.__repasSync = { adapter, reload, delay } remplace Firebase, le rechargement et le délai. */
+     Pour les tests : window.__repasSync = { adapter, reload, delay, poll } remplace Firebase, le rechargement, le délai et la
+     vérification en direct (0 : aucune). */
   const FB_VERSION = '12.19.0';
   const FB_CONFIG = {apiKey:'AIzaSyCFPLXWigZeEK4EFoejWKwqexEBKXaGSJA', authDomain:'nutriplan-a9b42.firebaseapp.com', projectId:'nutriplan-a9b42',
     storageBucket:'nutriplan-a9b42.firebasestorage.app', messagingSenderId:'336973795535', appId:'1:336973795535:web:48be16bbe0db54577c27ba'};
@@ -6738,7 +6843,7 @@ if (typeof document !== 'undefined'){
   };
 
   /* État affiché : off (pas connecté), wait (chargement, connexion), on ; msg : la dernière erreur */
-  const sync = {user:null, state:'off', msg:'', busy:null, again:false, listening:false, timer:null, held:false};
+  const sync = {user:null, state:'off', msg:'', busy:null, again:false, listening:false, timer:null, held:false, poll:null};
   const errText = function(e){
     const c = (e && e.code) || '';
     if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(c)) return 'Connexion annulée.';
@@ -6821,6 +6926,13 @@ if (typeof document !== 'undefined'){
     clearTimeout(sync.timer);
     sync.timer = setTimeout(syncRun, ms !== undefined ? ms : syncHooks && syncHooks.delay !== undefined ? syncHooks.delay : 3000);
   };
+  /* En direct (5.2.0) : connecté et l'appli à l'écran, une synchronisation toutes les 30 s (POLL), pour voir arriver ce qui
+     change sur un autre appareil sans rien faire ; arrêtée à la déconnexion */
+  const POLL = syncHooks && syncHooks.poll !== undefined ? syncHooks.poll : 30000;
+  const syncPoll = function(on){
+    clearInterval(sync.poll); sync.poll = null;
+    if (on && POLL > 0) sync.poll = setInterval(function(){ if (document.visibilityState !== 'hidden' && sync.user && !sync.busy) syncRun(); }, POLL);
+  };
   /* Compte connecté ou non (aussi au retour d'une connexion par redirection, ou après une session expirée) */
   const syncListen = function(a){
     if (sync.listening) return;
@@ -6830,6 +6942,7 @@ if (typeof document !== 'undefined'){
       sync.state = u ? 'on' : 'off';
       syncMeta.on = !!u; if (u) syncMeta.pending = false; saveSync();
       if (u) syncRun();
+      syncPoll(!!u);
       renderSync();
     });
   };
@@ -6851,7 +6964,7 @@ if (typeof document !== 'undefined'){
     },
     'sync-out': function(){
       fbAdapter().then(function(a){ return a.signOut(); }).then(function(){
-        sync.user = null; sync.state = 'off'; sync.msg = ''; syncMeta.on = false; saveSync(); renderSync();
+        sync.user = null; sync.state = 'off'; sync.msg = ''; syncMeta.on = false; saveSync(); syncPoll(false); renderSync();
         $('sync-st').textContent = 'Déconnecté. Tes données restent sur cet appareil.';
         $('sync-in').focus({preventScroll:true});
       }, function(e){ sync.msg = errText(e); renderSync(); });
@@ -6863,7 +6976,7 @@ if (typeof document !== 'undefined'){
       const u = sync.user;
       $('eff-msg').textContent = 'Effacement de ta copie en ligne…';
       fbAdapter().then(function(a){ return a.wipe(u.uid).then(function(){ return a.signOut(); }); }).then(function(){
-        sync.user = null; sync.state = 'off'; $('eff-msg').textContent = '';
+        sync.user = null; sync.state = 'off'; syncPoll(false); $('eff-msg').textContent = '';
         resetAll();
         syncMeta = cleanSyncMeta(null); renderSync();
       }, function(e){ $('eff-msg').textContent = 'Ta copie en ligne n’a pas pu être effacée' + NB + ': ' + errText(e).charAt(0).toLowerCase() + errText(e).slice(1) + ' Rien n’a été effacé.'; });

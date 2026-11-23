@@ -9,8 +9,8 @@ const m = html.match(/<script>([\s\S]*?)<\/script>/);
 assert(m, 'script introuvable dans index.html');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET, cleanLibre, libreOf, hasLibre, LIBRE_SLOTS};', ctx);
-const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET, cleanLibre, libreOf, hasLibre, LIBRE_SLOTS } = ctx.__api;
+vm.runInContext(m[1] + '\n;globalThis.__api = {onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET, cleanLibre, libreOf, hasLibre, LIBRE_SLOTS, prepCook, PREP};', ctx);
+const { onionQty, onionName, onionNote, cleanImprevu, recipePref, cleanRecipeIds, APP_VERSION, cleanEnv, envOff, envWants, envNeed, envPlan, envShort, PD, SNACK, SNACK_ORDER, SNACK_CS_ORDER, OATS_SKYR, buildDay, energy, bmr, restNeed, seanceCost, dayCost, cleanProfile, profileFields, cleanPlan, migratePlan, emptyPlan, scaleOf, DEFAULT_CHOICES, PROT_ORDER, STARCH_ORDER, STARCH_MIN, starchCap, FAT_MIN, FAT_MAX, DESSERT_ORDER, composeDay, protTarget, PF_MIN, PF_MAX, refTable, FOOD, UNIT, STARCH, PD_ORDER, WEEK_GOALS, weekBalance, weekNeeds, randomChoices, cleanWeek, cleanSeances, RECIPES, RFOOD, VEG_IDS, recipesFor, recipeOf, withAllowed, shoppingList, SHOP_AISLES, total, batchChoices, batchCook, FRIDGE_DAYS, YIELD, batchSwapOptions, batchSwap, batchSwapPick, batchRound, fixedGrams, HAM_SLICES, BATCH_GRAMS, PLAN_MAX, cleanCards, surprisePd, surpriseCo, surpriseMeal, planDays, pantryList, pantryName, FISH, LEGUMES, BATCH_BLOCK, FICHE, prefIdOk, prefName, SNACK_CS, EQ_GROUPS, EQ_ORDER, equivalents, eqUnits, eqRaw, eqOfBuy, eqItem, recipeItems, SEASONS, VEG_SEASONS, recipeSeasons, seasonOf, inSeason, seasonal, seasonsText, SEASON_SET, cleanLibre, libreOf, hasLibre, LIBRE_SLOTS, prepCook, PREP } = ctx.__api;
 // Petits-déjeuners avec une tranche de jambon (salé, wrap, 3.29.0)
 const isHam = b => !!PD[b].ham;
 
@@ -1416,6 +1416,42 @@ assert(/^≈\s50\sg, ou 2\séchalotes$/.test(onionNote(50)) && /^≈\s300\sg$/.t
     if (n.recette && !inSeason(n.recette, 'hiver')) out++;
   }
   assert(out > 20, 'sans le filtre : des recettes de toutes les saisons (' + out + ')');
+}
+
+// Batch cooking des petits-déjeuners et collations (5.2.0, prepCook) et des recettes qui ne se gardent pas (batchCook fresh)
+{
+  const wk = (pd, co, cs, seance) => Array.from({ length: 7 }, (_, i) => {
+    const ch = Object.assign({}, DEFAULT_CHOICES[3], { pdBase: typeof pd === 'function' ? pd(i) : pd, co: typeof co === 'function' ? co(i) : co, cs });
+    return { ch, res: buildDay({ seances: seance && seance(i) ? [seance(i)] : [], libre: {} }, ch) };
+  });
+  const item = (bl, id) => (bl[0] ? bl[0].items.find(x => x.id === id) : null);
+  // Bircher 7 matins, 2 jours au frigo : préparé la veille pour deux matins, 4 fournées ; les quantités = la somme des matins
+  const d1 = wk('bircher', 'oeufs'), b1 = prepCook(d1, 1), bir = item(b1, 'pd:bircher');
+  assert.deepStrictEqual(plain(bir.batches.map(b => [b.prep, b.days.map(x => x.day)])), [[-1, [0, 1]], [1, [2, 3]], [3, [4, 5]], [5, [6]]], 'bircher : fournées de deux matins');
+  const oats = d1.slice(0, 2).reduce((a, d) => a + d.res.secs.find(s => s.id === 'pd').items.find(x => x.buy.id === 'avoine').buy.g, 0);
+  assert.strictEqual(bir.batches[0].totals.find(t => t.id === 'avoine').qty, oats + ' g', 'bircher : flocons des deux matins');
+  assert.deepStrictEqual(plain(bir.batches[0].totals.find(t => t.id === 'pomme')), { id: 'pomme', qty: '2', name: 'pommes' }, 'deux pommes');
+  // Œufs durs : une semaine, une seule fournée la veille ; 14 œufs
+  const oe = item(b1, 'co:oeufs');
+  assert(oe.batches.length === 1 && oe.batches[0].prep === -1 && oe.batches[0].days.length === 7 && oe.batches[0].totals[0].qty === '14' && oe.batches[0].totals[0].name === 'œufs', 'œufs durs : ' + JSON.stringify(oe.batches[0].totals));
+  // Petit-déjeuner aux œufs : la collation œufs durs laisse la place au skyr, elle ne compte pas ; un seul jour : rien
+  assert(!item(prepCook(wk('sale', 'oeufs'), 1), 'co:oeufs'), 'œufs déjà au menu : pas de batch d’œufs durs');
+  assert(!item(prepCook(wk(i => (i === 3 ? 'bircher' : 'avoine'), 'mugcake'), 1), 'pd:bircher'), 'un seul bircher : pas de batch');
+  // Muffins : 3 jours au frigo, se congèlent → une fournée, les jours d'après au congélateur ; aujourd'hui (lead 0) : préparés le jour même
+  const mf = item(prepCook(wk('avoine', 'muffins'), 0), 'co:muffins');
+  assert(mf.batches.length === 1 && mf.batches[0].prep === 0 && plain(mf.batches[0].days.map(x => x.freezer)).join() === 'false,false,false,false,true,true,true', 'muffins : ' + JSON.stringify(mf.batches[0].days));
+  // Riz au lait : 3 jours, se congèle mal → fournées de 3 ; boules d'énergie seulement les jours de séance
+  const rz = item(prepCook(wk('avoine', 'rizaulait'), 1), 'co:rizaulait');
+  assert.deepStrictEqual(plain(rz.batches.map(b => b.days.length)), [3, 3, 1], 'riz au lait : fournées de 3');
+  const bo = item(prepCook(wk('avoine', 'mugcake', 'boules', i => (i % 2 ? { taille: 'petite', moment: 'soir' } : null)), 1), 'cs:boules');
+  assert(bo && plain(bo.batches[0].days.map(x => x.day)).join() === '1,3,5' && !item(prepCook(wk('avoine', 'mugcake', 'banane', () => ({ taille: 'petite', moment: 'soir' })), 1), 'cs:boules'), 'boules d’énergie : les jours de séance');
+  assert(Object.keys(PREP).every(id => FICHE[id] && FICHE[id].veille), 'ce qui se prépare à l’avance a sa fiche « la veille »');
+  // Recette qui ne se garde pas, deux fois : seulement avec fresh, marquée
+  const fr = Object.keys(RECIPES).find(id => !RECIPES[id].box && RECIPES[id].p === 'poisson'), x = RECIPES[fr];
+  const fd = Array.from({ length: 3 }, (_, i) => ({ res: buildDay({ seances: [], libre: {} }, Object.assign({}, DEFAULT_CHOICES[3], { dej: i < 2 ? { prot: x.p, starch: x.s, recette: fr } : DEFAULT_CHOICES[3].dej })) }));
+  assert(!batchCook(fd, 1).length, 'sans fresh : pas de recette qui ne se garde pas');
+  const fb = batchCook(fd, 1, true)[0].recipes;
+  assert(fb.length === 1 && fb[0].id === fr && fb[0].fresh === true && fb[0].boxes.length === 2, 'fresh : la recette fragile, marquée');
 }
 
 console.log(`moteur OK (${n} combinaisons vérifiées, ${nf} pour d'autres corpulences, ${nd} avec desserts, ${npt} objectifs de protéines, ${nr} avec recettes, ${nb} semaines en batch cooking)`);
